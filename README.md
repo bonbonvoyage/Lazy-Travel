@@ -36,6 +36,6 @@
 各組員在自己的 feature 分支開發負責模組,後台側欄選單對應的 Controller 請依 `_AdminLayout.cshtml` 內既定名稱建立(Reports、VlogPosts、Members、TravelGroups、Notifications、Subscriptions、Analytics、Forum、AdminLogs)。
 
 ## 設計規範
-- UI 規範 v3.0「有機自然 × 海岸旅行」;色票與元件樣式見 `wwwroot/css/brand.css`、`admin.css`
+- 色票與元件樣式見 `wwwroot/css/brand.css`、`admin.css`
 - 後台底色定案:深一階海藍 sea-200 (#ABC9D6)
 - 修改共用檔(Layout、brand.css)前請先在群組告知
