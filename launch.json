@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lazy-travel",
+      "runtimeExecutable": "C:\\Users\\ispan\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "3000"],
+      "port": 3000
+    }
+  ]
+}
