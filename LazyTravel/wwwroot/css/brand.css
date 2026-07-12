@@ -1,0 +1,219 @@
+/* ============================================================
+   慢遊 Lazy Travel — 品牌樣式(brand.css)
+   依據 UI 規範 v3.0「有機自然 × 海岸旅行」
+   放置:wwwroot/css/brand.css,於 _Layout.cshtml 在 bootstrap 之後引入
+   ============================================================ */
+
+/* ---------- 1. 設計 Token(CSS 變數) ---------- */
+:root {
+  /* 海洋藍 Sea(主) */
+  --sea-50:  #EDF3F6;
+  --sea-100: #D5E5EC;
+  --sea-200: #ABC9D6;
+  --sea-300: #7BA8BC;
+  --sea-400: #4F869F;
+  --sea-500: #356E88;   /* 品牌主色(logo、圖示) */
+  --sea-600: #2B5A72;   /* 主要按鈕底(配白字,過 AA) */
+  --sea-700: #244A5E;
+  --sea-800: #1F3D4E;
+  --sea-900: #1B3341;
+
+  /* 暖沙黃 Sand(中性基底) */
+  --sand-50:  #FAF7F0;  /* 頁面主背景(暖紙白) */
+  --sand-100: #F2EDE1;
+  --sand-200: #E7DECB;
+  --sand-300: #D8C9AC;
+  --sand-400: #C6B187;
+  --sand-500: #A8916A;
+
+  /* 珊瑚橘 Coral(暖強調,一個畫面最多一個重點) */
+  --coral-50:  #FBEDE7;
+  --coral-100: #F8DDD1;
+  --coral-200: #F1BFA9;
+  --coral-300: #EBA07F;
+  --coral-400: #E28461;
+  --coral-500: #D46A47;
+  --coral-600: #B85433;  /* 強調按鈕底(配白字,過 AA) */
+
+  /* 葉綠 Leaf(次要) */
+  --leaf-100: #E0E8D6;
+  --leaf-300: #A9C09A;
+  --leaf-500: #6E8F5E;
+  --leaf-600: #567049;
+
+  /* 表面 Surface(絕不用純白 #FFF 當大面積背景) */
+  --page:        #FAF7F0;
+  --surface:     #FFFDF8;  /* 卡片、彈窗(暖白) */
+  --surface-alt: #F2EDE1;
+  --border-soft: #E4DBCB;  /* 少用,層級優先靠留白與色塊過渡 */
+
+  /* 文字(不用純黑) */
+  --ink:            #22333B;  /* 主要文字(深海炭) */
+  --text-secondary: #4E5A5E;
+  --text-muted:     #8A9195;
+
+  /* 語意色 */
+  --success: #567049;
+  --info:    #356E88;
+  --warning: #D99A4E;
+  --danger:  #C15F4E;  /* 柔和磚紅,非刺眼正紅 */
+
+  /* 字體 */
+  --font-display: "LXGW WenKai TC", "Iansui", serif;      /* 標題 */
+  --font-body: "Noto Sans TC", "PingFang TC", sans-serif; /* 內文、數據 */
+
+  /* 圓角(曲線打破邊界) */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+}
+
+/* ---------- 2. Bootstrap 5.3 變數覆蓋 ---------- */
+:root {
+  --bs-primary: #2B5A72;
+  --bs-primary-rgb: 43, 90, 114;
+  --bs-secondary: #A8916A;
+  --bs-secondary-rgb: 168, 145, 106;
+  --bs-success: #567049;
+  --bs-success-rgb: 86, 112, 73;
+  --bs-info: #356E88;
+  --bs-info-rgb: 53, 110, 136;
+  --bs-warning: #D99A4E;
+  --bs-warning-rgb: 217, 154, 78;
+  --bs-danger: #C15F4E;
+  --bs-danger-rgb: 193, 95, 78;
+
+  --bs-body-bg: var(--page);
+  --bs-body-color: var(--ink);
+  --bs-body-font-family: var(--font-body);
+  --bs-border-color: var(--border-soft);
+  --bs-border-radius: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-md);
+  --bs-link-color: var(--sea-600);
+  --bs-link-hover-color: var(--sea-700);
+}
+
+/* ---------- 3. 全域基礎 ---------- */
+body {
+  background-color: var(--page);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6,
+.navbar-brand {
+  font-family: var(--font-display);
+  color: var(--sea-800);
+}
+
+/* ---------- 4. 按鈕 ---------- */
+/* 主要按鈕:海洋藍(白字最低用 -600 才過 WCAG AA) */
+.btn-primary {
+  --bs-btn-bg: var(--sea-600);
+  --bs-btn-border-color: var(--sea-600);
+  --bs-btn-hover-bg: var(--sea-700);
+  --bs-btn-hover-border-color: var(--sea-700);
+  --bs-btn-active-bg: var(--sea-800);
+  --bs-btn-active-border-color: var(--sea-800);
+  --bs-btn-color: #fff;
+  border-radius: var(--radius-pill);
+  padding-inline: 1.5rem;
+}
+
+/* 強調按鈕:珊瑚橘(關鍵情感 CTA 專用,一頁最多一個) */
+.btn-coral {
+  --bs-btn-bg: var(--coral-600);
+  --bs-btn-border-color: var(--coral-600);
+  --bs-btn-hover-bg: var(--coral-500);
+  --bs-btn-hover-border-color: var(--coral-500);
+  --bs-btn-active-bg: var(--coral-600);
+  --bs-btn-color: #fff;
+  border-radius: var(--radius-pill);
+  padding-inline: 1.5rem;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--sea-600);
+  --bs-btn-border-color: var(--sea-300);
+  --bs-btn-hover-bg: var(--sea-50);
+  --bs-btn-hover-color: var(--sea-700);
+  --bs-btn-hover-border-color: var(--sea-400);
+  border-radius: var(--radius-pill);
+}
+
+/* ---------- 5. 卡片與表面 ---------- */
+.card {
+  background-color: var(--surface);
+  border: none;                      /* 層級靠色塊與留白,不靠線 */
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(31, 61, 78, 0.06);
+}
+
+.bg-surface-alt { background-color: var(--surface-alt); }
+.bg-sea-soft    { background-color: var(--sea-50); }
+.bg-sand-soft   { background-color: var(--sand-100); }
+
+/* ---------- 6. 導覽列 ---------- */
+.navbar-lazy {
+  background-color: rgba(250, 247, 240, 0.85);  /* 暖紙白毛玻璃 */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.navbar-lazy .nav-link {
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill);
+  padding-inline: 1rem;
+  transition: background-color .25s ease, color .25s ease;
+}
+
+.navbar-lazy .nav-link:hover,
+.navbar-lazy .nav-link.active {
+  color: var(--sea-700);
+  background-color: var(--sea-50);
+}
+
+/* ---------- 7. 表單 ---------- */
+.form-control, .form-select {
+  background-color: var(--surface);
+  border-color: var(--border-soft);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+}
+
+.form-control::placeholder { color: var(--text-muted); }
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--sea-300);
+  box-shadow: 0 0 0 .25rem rgba(53, 110, 136, .12);
+}
+
+/* ---------- 8. 標籤(Tag / Badge) ---------- */
+.badge-sea   { background-color: var(--sea-100);   color: var(--sea-800);   border-radius: var(--radius-pill); font-weight: 500; }
+.badge-sand  { background-color: var(--sand-200);  color: var(--sand-500);  border-radius: var(--radius-pill); font-weight: 500; }
+.badge-coral { background-color: var(--coral-100); color: var(--coral-600); border-radius: var(--radius-pill); font-weight: 500; }
+.badge-leaf  { background-color: var(--leaf-100);  color: var(--leaf-600);  border-radius: var(--radius-pill); font-weight: 500; }
+
+/* ---------- 9. Footer ---------- */
+.footer-lazy {
+  background-color: var(--sea-900);
+  color: var(--sea-200);
+}
+.footer-lazy a { color: var(--sea-100); }
+
+/* ---------- 10. 波浪分隔(區塊間用波浪 SVG 取代分割線) ---------- */
+.wave-divider {
+  display: block;
+  width: 100%;
+  height: 48px;
+  line-height: 0;
+}
+.wave-divider svg { width: 100%; height: 100%; }
+
+/* ---------- 11. 動效基礎(尊重 reduced-motion) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .btn { transition: transform .2s ease, background-color .25s ease; }
+  .btn:hover { transform: translateY(-1px); }
+  .card { transition: transform .3s ease, box-shadow .3s ease; }
+}

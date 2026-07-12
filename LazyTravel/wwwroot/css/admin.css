@@ -1,0 +1,240 @@
+/* ============================================================
+   慢遊 Lazy Travel — 後台管理系統樣式(admin.css)
+   依據後台規格 v1.2.1:Ant Design 風格白色側欄 + 麵包屑 + 篩選列
+   放置:wwwroot/css/admin.css
+   引入順序:bootstrap → brand.css → admin.css(僅後台頁面引入)
+   ============================================================ */
+
+/* ---------- 1. 整體版面:側欄 + 主內容 ---------- */
+body.admin-body {
+  background-color: var(--sea-200);  /* 底色定案:深一階海藍 sea-200 */
+  min-height: 100vh;
+}
+
+.admin-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---------- 2. 白色側欄(固定 240px) ---------- */
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background-color: var(--surface);          /* 暖白,非純白 */
+  border-right: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.admin-sidebar .sidebar-brand {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--sea-800);
+  padding: 1.25rem 1.5rem;
+  text-decoration: none;
+}
+
+.admin-sidebar .nav {
+  flex-direction: column;
+  padding: 0 .75rem;
+  gap: 2px;
+}
+
+.admin-sidebar .nav-link {
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: .6rem 1rem;
+  font-size: .95rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.admin-sidebar .nav-link:hover {
+  background-color: var(--sand-100);
+  color: var(--sea-700);
+}
+
+/* Ant Design 式選中狀態:淡底 + 左側短色條 */
+.admin-sidebar .nav-link.active {
+  background-color: var(--sea-50);
+  color: var(--sea-700);
+  font-weight: 500;
+  position: relative;
+}
+.admin-sidebar .nav-link.active::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 3px;
+  border-radius: 2px;
+  background-color: var(--sea-600);
+}
+
+.admin-sidebar .sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.5rem;
+  font-size: .8rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ---------- 3. 主內容區 ---------- */
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 頂欄:頁面標題 + 使用者選單 */
+.admin-topbar {
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border-soft);
+  padding: .75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-topbar .page-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--sea-800);
+  margin: 0;
+}
+
+/* 麵包屑 */
+.admin-breadcrumb {
+  padding: .9rem 1.5rem 0;
+}
+.admin-breadcrumb .breadcrumb {
+  margin: 0;
+  font-size: .85rem;
+  --bs-breadcrumb-divider-color: var(--text-muted);
+}
+.admin-breadcrumb .breadcrumb-item a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.admin-breadcrumb .breadcrumb-item.active { color: var(--ink); }
+
+.admin-content {
+  padding: 1rem 1.5rem 2rem;
+}
+
+/* ---------- 4. 篩選列(filter row) ---------- */
+.filter-row {
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
+  padding: .9rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: 1rem;
+}
+
+.filter-chip {
+  border: 1px solid var(--border-soft);
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill);
+  padding: .3rem .95rem;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+.filter-chip:hover { background-color: var(--sand-100); }
+.filter-chip.on {
+  background-color: var(--sea-600);
+  border-color: var(--sea-600);
+  color: #fff;
+}
+
+/* ---------- 5. 統計卡與資料表 ---------- */
+.stat-card {
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+}
+.stat-card .stat-label { font-size: .82rem; color: var(--text-muted); }
+.stat-card .stat-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--sea-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-table-card {
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.admin-table-card .table { margin: 0; --bs-table-bg: transparent; }
+.admin-table-card thead th {
+  background-color: var(--sea-50);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: .85rem;
+  border-bottom: none;
+  padding: .75rem 1rem;
+}
+.admin-table-card tbody td {
+  padding: .8rem 1rem;
+  border-color: var(--sand-100);
+  vertical-align: middle;
+}
+.admin-table-card tbody tr:hover { background-color: var(--sea-50); }
+
+/* 狀態章(高風險用珊瑚橘) */
+.status-pill {
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: .2rem .7rem;
+  font-size: .8rem;
+  font-weight: 500;
+}
+.status-ok      { background-color: var(--leaf-100);  color: var(--leaf-600); }
+.status-pending { background-color: var(--sand-200);  color: var(--sand-500); }
+.status-risk    { background-color: var(--coral-100); color: var(--coral-600); }
+
+/* ---------- 6. 響應式:窄螢幕收合側欄 ---------- */
+@media (max-width: 991.98px) {
+  .admin-sidebar {
+    position: fixed;
+    left: -240px;
+    z-index: 1040;
+    transition: left .25s ease;
+  }
+  .admin-sidebar.show { left: 0; }
+}
+
+/* ---------- 7-1. 側欄分組與標籤 ---------- */
+.admin-sidebar .nav-group-label {
+  font-size: .72rem;
+  color: var(--text-muted);
+  padding: .9rem 1rem .25rem;
+  letter-spacing: .05em;
+}
+
+.nav-badge {
+  background-color: var(--coral-600);
+  color: #fff;
+  border-radius: var(--radius-pill);
+  font-size: .7rem;
+  padding: .1rem .45rem;
+  margin-left: auto;
+}
+
+.nav-tag {
+  background-color: var(--sand-200);
+  color: var(--sand-500);
+  border-radius: var(--radius-pill);
+  font-size: .68rem;
+  padding: .08rem .4rem;
+  margin-left: auto;
+}

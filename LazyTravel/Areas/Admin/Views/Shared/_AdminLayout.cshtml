@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LazyTravel 後台管理</title>
+
+    @* 字型 *@
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    @* 樣式：Bootstrap → 品牌色 → 後台專用 *@
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/brand.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="admin-body">
+<div class="admin-wrapper">
+
+    @* ── 左側選單 ── *@
+    <aside class="admin-sidebar" id="adminSidebar">
+
+        @* LOGO，點了回後台首頁 *@
+        <a class="sidebar-brand" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">LazyTravel 後台</a>
+
+        <nav class="nav">
+            @* 判斷目前在哪個頁面，自動幫對應連結加上 active（選中）樣式 *@
+            @{
+                var currentController = (string?)ViewContext.RouteData.Values["controller"];
+                string NavActive(string controller) =>
+                    string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+            }
+
+            <a class="nav-link @NavActive("Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">總覽</a>
+
+            <div class="nav-group-label">審核中心</div>
+            <a class="nav-link @NavActive("Reports")" asp-area="Admin" asp-controller="Reports" asp-action="Index">檢舉處理</a>
+
+            <div class="nav-group-label">內容管理</div>
+            <a class="nav-link @NavActive("VlogPosts")" asp-area="Admin" asp-controller="VlogPosts" asp-action="Index">Vlog 行程文章</a>
+            <a class="nav-link @NavActive("Forum")" asp-area="Admin" asp-controller="Forum" asp-action="Index">論壇管理</a>
+
+            <div class="nav-group-label">會員與社群</div>
+            <a class="nav-link @NavActive("Members")" asp-area="Admin" asp-controller="Members" asp-action="Index">會員管理</a>
+            <a class="nav-link @NavActive("TravelGroups")" asp-area="Admin" asp-controller="TravelGroups" asp-action="Index">揪團管理</a>
+
+            <div class="nav-group-label">系統</div>
+            <a class="nav-link @NavActive("Notifications")" asp-area="Admin" asp-controller="Notifications" asp-action="Index">公告與通知</a>
+            <a class="nav-link @NavActive("Subscriptions")" asp-area="Admin" asp-controller="Subscriptions" asp-action="Index">訂閱方案</a>
+            <a class="nav-link @NavActive("Analytics")" asp-area="Admin" asp-controller="Analytics" asp-action="Index">數據分析</a>
+            <a class="nav-link @NavActive("AdminLogs")" asp-area="Admin" asp-controller="AdminLogs" asp-action="Index">操作紀錄</a>
+        </nav>
+
+        <div class="sidebar-footer">LazyTravel v1.2.1</div>
+    </aside>
+
+    @* ── 右側主內容 ── *@
+    <div class="admin-main">
+
+        @* 頂欄：頁面標題 + 登入者名稱 + 登出按鈕 *@
+        <header class="admin-topbar">
+            <div class="d-flex align-items-center gap-2">
+                @* 手機版才會出現的開關選單按鈕 *@
+                <button class="btn btn-sm btn-outline-primary d-lg-none" type="button"
+                        onclick="document.getElementById('adminSidebar').classList.toggle('show')">
+                    選單
+                </button>
+                <h1 class="page-title">@ViewData["Title"]</h1>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-secondary small">@User.Identity?.Name</span>
+                <form asp-controller="Account" asp-action="Logout" asp-area="" method="post" class="m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">登出</button>
+                </form>
+            </div>
+        </header>
+
+        @* 麵包屑（路徑提示，例：後台 > 揪團管理）
+           各頁面可自訂 @section Breadcrumb，沒設定就顯示頁面標題 *@
+        <div class="admin-breadcrumb">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">後台</a></li>
+                    @if (IsSectionDefined("Breadcrumb"))
+                    {
+                        @await RenderSectionAsync("Breadcrumb")
+                    }
+                    else
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+                    }
+                </ol>
+            </nav>
+        </div>
+
+        @* 各頁面的內容放這裡 *@
+        <main class="admin-content">
+            @RenderBody()
+        </main>
+
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
