@@ -39,7 +39,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.ActiveGroups)
         {
             <tr ondblclick="location.href='@Url.Action("Details", "TravelGroups", new { area = "Admin", id = item.GroupId })'"
                 style="cursor:pointer;">
