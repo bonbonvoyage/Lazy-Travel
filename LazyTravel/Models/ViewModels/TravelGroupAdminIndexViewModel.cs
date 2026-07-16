@@ -4,7 +4,10 @@ namespace LazyTravel.Models.ViewModels
 {
     public class TravelGroupAdminIndexViewModel
     {
+        // 揪團清單
         public List<TravelGroup> ActiveGroups { get; set; } = new();
+
+        // 已刪除清單
         public List<TravelGroup> DeletedGroups { get; set; } = new();
 
         // 篩選條件
@@ -17,9 +20,11 @@ namespace LazyTravel.Models.ViewModels
         public string? ReviewStatus { get; set; }
         public bool? IsPublic { get; set; }
 
+        // 行程時間篩選
         public DateTime? StartDateFrom { get; set; }
         public DateTime? StartDateTo { get; set; }
 
+        // 建立時間篩選
         public DateTime? CreatedAtFrom { get; set; }
         public DateTime? CreatedAtTo { get; set; }
 
@@ -32,7 +37,16 @@ namespace LazyTravel.Models.ViewModels
 
         public int PageSize { get; set; } = 10;
 
-        // 目前停留在哪個頁籤
+        // 目前所在頁籤：active / deleted
         public string Tab { get; set; } = "active";
+
+        // 複選篩選條件
+        public List<string> SelectedJoinRules { get; set; } = new();
+        public List<string> SelectedGroupStatuses { get; set; } = new();
+        public List<string> SelectedReviewStatuses { get; set; } = new();
+        public List<string> SelectedPublicStatuses { get; set; } = new();
+
+        // 排序
+        public string SortOrder { get; set; } = "asc";
     }
 }
