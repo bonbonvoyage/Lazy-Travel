@@ -13,6 +13,16 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<LazyTravelContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// 通知 / 操作紀錄共用 Service(暫時實作,待 14 洪欣茹 完成 /Admin/Notifications、AdminLogs 後抽換)
+builder.Services.AddScoped<LazyTravel.Services.INotificationService, LazyTravel.Services.NotificationService>();
+builder.Services.AddScoped<LazyTravel.Services.IAdminLogService, LazyTravel.Services.AdminLogService>();
+
+// 會員停權 Service(暫時實作,待 10 黃浚翔 完成 /Admin/Members 後抽換)
+builder.Services.AddScoped<LazyTravel.Services.IMemberModerationService, LazyTravel.Services.MemberModerationService>();
+
+// 檢舉中心商業邏輯(藍培碩負責),Controller 只呼叫這層
+builder.Services.AddScoped<LazyTravel.Services.IReportService, LazyTravel.Services.ReportService>();
+
 var app = builder.Build();
 
 

@@ -1,0 +1,361 @@
+@model LazyTravel.ViewModels.ReportIndexViewModel
+@using LazyTravel.Models
+
+@{
+    ViewData["Title"] = "檢舉審核台";
+    var allTypes = Enum.GetValues<ReportTargetType>();
+    var allStatuses = Enum.GetValues<ReportStatus>();
+    var allReasonCategories = Enum.GetValues<ReportReasonCategory>();
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active" aria-current="page">檢舉審核台</li>
+}
+
+@section Styles {
+    <style>
+        .report-stat-card {
+            background-color: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: .9rem;
+            box-shadow: 0 2px 10px rgba(31, 61, 78, .05);
+        }
+        .report-stat-card .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .dot-total  { background-color: var(--sea-500); }
+        .dot-pending{ background-color: var(--sand-400); }
+        .dot-upheld { background-color: var(--coral-600); }
+        .dot-ok     { background-color: var(--leaf-600); }
+
+        .report-filter-bar {
+            background-color: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.1rem;
+            box-shadow: 0 2px 10px rgba(31, 61, 78, .05);
+            margin-bottom: 1rem;
+        }
+        .report-filter-field label {
+            display: block;
+            font-size: .72rem;
+            color: var(--text-muted);
+            margin-bottom: .25rem;
+        }
+        .report-section-title {
+            font-family: var(--font-display);
+            color: var(--sea-800);
+            font-size: 1rem;
+            margin: 1.75rem 0 .6rem;
+        }
+
+        /* 檢舉原因欄:類別標籤 + 原因文字放大 */
+        .report-reason-tag {
+            display: inline-block;
+            background-color: var(--sand-200);
+            color: var(--sand-500);
+            border-radius: var(--radius-pill);
+            font-size: .85rem;
+            font-weight: 500;
+            padding: .2rem .7rem;
+        }
+        .report-reason-text {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* 狀態章放大 */
+        .admin-table-card .status-pill {
+            font-size: .95rem;
+            padding: .3rem .9rem;
+        }
+
+        /* 整頁切換:檢舉審核台 / 操作紀錄 */
+        .report-view-tabs {
+            display: flex;
+            gap: .3rem;
+            border-bottom: 1px solid var(--border-soft);
+            margin-bottom: 1.25rem;
+        }
+        .report-view-tab {
+            border: none;
+            background: none;
+            padding: .6rem 1.1rem;
+            font-size: .92rem;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+        .report-view-tab:hover { color: var(--sea-700); }
+        .report-view-tab.active {
+            color: var(--sea-700);
+            font-weight: 500;
+            border-bottom-color: var(--sea-600);
+        }
+        .report-view-pane { display: none; }
+        .report-view-pane.active { display: block; }
+    </style>
+}
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success py-2">@TempData["Message"]</div>
+}
+
+@* 整頁切換籤:檢舉審核台 / 操作紀錄 *@
+<div class="report-view-tabs">
+    <button type="button" class="report-view-tab active" data-report-view="reportsView">檢舉審核台</button>
+    <button type="button" class="report-view-tab" data-report-view="logsView">操作紀錄</button>
+</div>
+
+<div id="reportsView" class="report-view-pane active">
+
+    @* 統計卡 *@
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="report-stat-card">
+                <span class="dot dot-total"></span>
+                <div>
+                    <div class="stat-label">全部案件</div>
+                    <div class="stat-value">@Model.TotalCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="report-stat-card">
+                <span class="dot dot-pending"></span>
+                <div>
+                    <div class="stat-label">待處理</div>
+                    <div class="stat-value">@Model.PendingCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="report-stat-card">
+                <span class="dot dot-upheld"></span>
+                <div>
+                    <div class="stat-label">檢舉成立</div>
+                    <div class="stat-value">@Model.UpheldCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="report-stat-card">
+                <span class="dot dot-ok"></span>
+                <div>
+                    <div class="stat-label">不成立</div>
+                    <div class="stat-value">@Model.DismissedCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* 搜尋 + 篩選 *@
+    <form method="get" asp-action="Index" class="report-filter-bar d-flex flex-wrap align-items-end gap-3">
+        <div class="report-filter-field">
+            <label>搜尋</label>
+            <input type="text" name="keyword" value="@Model.Keyword" class="form-control form-control-sm"
+                   style="width:220px;" placeholder="檢舉人帳號 / 被檢舉會員帳號" />
+        </div>
+
+        <div class="report-filter-field">
+            <label>類型</label>
+            <select name="type" class="form-select form-select-sm" style="width:170px;" onchange="this.form.submit()">
+                <option value="">全部類型</option>
+                @foreach (var t in allTypes)
+                {
+                    <option value="@t" selected="@(Model.Type == t ? "selected" : null)">@t.ToDisplayName()</option>
+                }
+            </select>
+        </div>
+
+        <div class="report-filter-field">
+            <label>狀態</label>
+            <select name="status" class="form-select form-select-sm" style="width:140px;" onchange="this.form.submit()">
+                <option value="">全部狀態</option>
+                @foreach (var s in allStatuses)
+                {
+                    <option value="@s" selected="@(Model.Status == s ? "selected" : null)">@s.ToDisplayName()</option>
+                }
+            </select>
+        </div>
+
+        <div class="report-filter-field">
+            <label>類別</label>
+            <select name="reasonCategory" class="form-select form-select-sm" style="width:170px;" onchange="this.form.submit()">
+                <option value="">全部類別</option>
+                @foreach (var c in allReasonCategories)
+                {
+                    <option value="@c" selected="@(Model.ReasonCategory == c ? "selected" : null)">@c.ToDisplayName()</option>
+                }
+            </select>
+        </div>
+
+        <div class="report-filter-field">
+            <label>檢舉時間(起)</label>
+            <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   class="form-control form-control-sm" style="width:150px;" onchange="this.form.submit()" />
+        </div>
+
+        <div class="report-filter-field">
+            <label>檢舉時間(迄)</label>
+            <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   class="form-control form-control-sm" style="width:150px;" onchange="this.form.submit()" />
+        </div>
+
+        <div class="report-filter-field d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-outline-primary">搜尋</button>
+            @if (Model.HasFilter)
+            {
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">清除</a>
+            }
+        </div>
+    </form>
+
+    <div class="admin-table-card">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>編號</th>
+                    <th>類型</th>
+                    <th>被檢舉對象</th>
+                    <th>檢舉人帳號</th>
+                    <th>檢舉原因</th>
+                    <th>檢舉時間</th>
+                    <th>狀態</th>
+                    <th class="text-end">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">目前沒有符合條件的檢舉案件</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var report in Model.Items)
+                    {
+                        <tr>
+                            <td class="text-muted">#@report.Id</td>
+                            <td>@report.TargetType.ToDisplayName()</td>
+                            <td>@report.TargetTitle</td>
+                            <td>@report.ReporterAccount</td>
+                            <td>
+                                <span class="report-reason-tag">@report.ReasonCategory.ToDisplayName()</span>
+                                <div class="report-reason-text mt-1">@report.Reason</div>
+                            </td>
+                            <td>@report.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                            <td><span class="status-pill @report.Status.ToPillClass()">@report.Status.ToDisplayName()</span></td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@report.Id">
+                                    查看
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="d-flex justify-content-center align-items-center gap-2 mt-3">
+            @if (Model.CurrentPage > 1)
+            {
+                <a class="btn btn-sm btn-outline-primary"
+                   asp-action="Index" asp-route-type="@Model.Type" asp-route-status="@Model.Status"
+                   asp-route-reasonCategory="@Model.ReasonCategory" asp-route-keyword="@Model.Keyword"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-page="@(Model.CurrentPage - 1)">
+                    ← 上一頁
+                </a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled">← 上一頁</span>
+            }
+
+            <span class="small text-muted">第 @Model.CurrentPage / @Model.TotalPages 頁</span>
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a class="btn btn-sm btn-outline-primary"
+                   asp-action="Index" asp-route-type="@Model.Type" asp-route-status="@Model.Status"
+                   asp-route-reasonCategory="@Model.ReasonCategory" asp-route-keyword="@Model.Keyword"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-page="@(Model.CurrentPage + 1)">
+                    下一頁 →
+                </a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled">下一頁 →</span>
+            }
+        </nav>
+    }
+
+</div>
+
+<div id="logsView" class="report-view-pane">
+    <div class="admin-table-card">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>時間</th>
+                    <th>操作人</th>
+                    <th>動作</th>
+                    <th>內容</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentLogs.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            尚無操作紀錄(對案件按下審核判定後會出現在這裡)
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var log in Model.RecentLogs)
+                    {
+                        <tr>
+                            <td class="small text-muted">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                            <td>@log.OperatorName</td>
+                            <td>@log.Action</td>
+                            <td class="small">@log.Detail</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-2">
+        <a asp-area="Admin" asp-controller="AdminLogs" asp-action="Index" class="small">
+            查看全站操作紀錄 →
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.report-view-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.report-view-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.report-view-pane').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.reportView).classList.add('active');
+            });
+        });
+    </script>
+}
