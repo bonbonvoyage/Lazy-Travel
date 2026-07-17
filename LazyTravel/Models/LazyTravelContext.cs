@@ -21,6 +21,8 @@ public partial class LazyTravelContext : DbContext
 
     public virtual DbSet<TravelGroup> TravelGroups { get; set; }
 
+    public virtual DbSet<TravelGroupsLog> TravelGroupsLogs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<GroupMember>(entity =>
@@ -74,6 +76,25 @@ public partial class LazyTravelContext : DbContext
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.OwnerMember).WithMany(p => p.TravelGroups).OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<TravelGroupsLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("PK__TravelGroupsLog");
+
+            entity.ToTable("TravelGroupsLog");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Group)
+                .WithMany(p => p.TravelGroupsLogs)
+                .HasForeignKey(d => d.GroupId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.ChangedByMember)
+                .WithMany()
+                .HasForeignKey(d => d.ChangedByMemberId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -64,4 +64,7 @@ public partial class TravelGroup
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 
+    [InverseProperty("Group")]
+    public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
+
 }

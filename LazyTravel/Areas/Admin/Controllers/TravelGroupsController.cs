@@ -1,4 +1,4 @@
-﻿using LazyTravel.Models;
+using LazyTravel.Models;
 using LazyTravel.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +10,12 @@ namespace LazyTravel.Areas.Admin.Controllers
     {
         private readonly LazyTravelContext _context;
 
+        // 審核狀態篩選僅開放這 4 種（配合前台簡化後的下拉選單）
+        private static readonly string[] AllowedReviewStatuses =
+        {
+            "正常", "檢舉審核中", "違規", "已下架"
+        };
+
         public TravelGroupsController(LazyTravelContext context)
         {
             _context = context;
@@ -19,21 +25,19 @@ namespace LazyTravel.Areas.Admin.Controllers
             string? keyword,
             DateTime? createdAtFrom,
             DateTime? createdAtTo,
-            List<string>? selectedJoinRules,
-            List<string>? selectedGroupStatuses,
             List<string>? selectedReviewStatuses,
-            List<string>? selectedPublicStatuses,
             string sortOrder = "asc",
             int activePage = 1,
             int deletedPage = 1,
+            int logPage = 1,
             string tab = "active")
         {
             int pageSize = 10;
 
-            selectedJoinRules ??= new List<string>();
-            selectedGroupStatuses ??= new List<string>();
             selectedReviewStatuses ??= new List<string>();
-            selectedPublicStatuses ??= new List<string>();
+            selectedReviewStatuses = selectedReviewStatuses
+                .Where(s => AllowedReviewStatuses.Contains(s))
+                .ToList();
 
             var query = _context.TravelGroups
                 .Include(g => g.OwnerMember)
@@ -66,44 +70,12 @@ namespace LazyTravel.Areas.Admin.Controllers
                 query = query.Where(g => g.CreatedAt <= endDate);
             }
 
-            // 加入規則複選
-            if (selectedJoinRules.Any())
-            {
-                query = query.Where(g =>
-                    g.JoinRule != null &&
-                    selectedJoinRules.Contains(g.JoinRule));
-            }
-
-            // 揪團狀態複選
-            if (selectedGroupStatuses.Any())
-            {
-                query = query.Where(g =>
-                    g.GroupStatus != null &&
-                    selectedGroupStatuses.Contains(g.GroupStatus));
-            }
-
-            // 審核狀態複選
+            // 審核狀態複選（唯一保留的篩選分類）
             if (selectedReviewStatuses.Any())
             {
                 query = query.Where(g =>
                     g.ReviewStatus != null &&
                     selectedReviewStatuses.Contains(g.ReviewStatus));
-            }
-
-            // 公開狀態複選
-            if (selectedPublicStatuses.Any())
-            {
-                bool hasPublic = selectedPublicStatuses.Contains("公開");
-                bool hasPrivate = selectedPublicStatuses.Contains("不公開");
-
-                if (hasPublic && !hasPrivate)
-                {
-                    query = query.Where(g => g.IsPublic == true);
-                }
-                else if (!hasPublic && hasPrivate)
-                {
-                    query = query.Where(g => g.IsPublic == false);
-                }
             }
 
             var activeQuery = query.Where(g => g.IsDelete == false);
@@ -131,8 +103,22 @@ namespace LazyTravel.Areas.Admin.Controllers
                 deletedPage = 1;
             }
 
+            if (logPage < 1)
+            {
+                logPage = 1;
+            }
+
             var activeTotalCount = await activeQuery.CountAsync();
             var deletedTotalCount = await deletedQuery.CountAsync();
+
+            // 異動紀錄清單：依建立時間新到舊排序，不套用揪團篩選條件（獨立瀏覽異動歷程）
+            var logQuery = _context.TravelGroupsLogs
+                .Include(l => l.Group)
+                .Include(l => l.ChangedByMember)
+                .OrderByDescending(l => l.CreatedAt)
+                .AsQueryable();
+
+            var logTotalCount = await logQuery.CountAsync();
 
             var vm = new TravelGroupAdminIndexViewModel
             {
@@ -146,21 +132,27 @@ namespace LazyTravel.Areas.Admin.Controllers
                     .Take(pageSize)
                     .ToListAsync(),
 
+                Logs = await logQuery
+                    .Skip((logPage - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync(),
+
                 Keyword = keyword,
                 CreatedAtFrom = createdAtFrom,
                 CreatedAtTo = createdAtTo,
 
-                SelectedJoinRules = selectedJoinRules,
-                SelectedGroupStatuses = selectedGroupStatuses,
                 SelectedReviewStatuses = selectedReviewStatuses,
-                SelectedPublicStatuses = selectedPublicStatuses,
 
                 SortOrder = sortOrder,
 
                 ActivePage = activePage,
                 DeletedPage = deletedPage,
+                LogPage = logPage,
+
                 ActiveTotalPages = (int)Math.Ceiling(activeTotalCount / (double)pageSize),
                 DeletedTotalPages = (int)Math.Ceiling(deletedTotalCount / (double)pageSize),
+                LogTotalPages = (int)Math.Ceiling(logTotalCount / (double)pageSize),
+
                 PageSize = pageSize,
                 Tab = tab
             };
@@ -209,6 +201,19 @@ namespace LazyTravel.Areas.Admin.Controllers
             group.IsPublic = false;
             group.UpdatedAt = DateTime.Now;
 
+            _context.TravelGroupsLogs.Add(new TravelGroupsLog
+            {
+                GroupId = group.GroupId,
+                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID
+                ChangedByMemberId = null,
+                ChangeType = "刪除",
+                FieldName = null,
+                OldValue = null,
+                NewValue = null,
+                Remark = $"審核狀態為「{group.ReviewStatus}」，移至已刪除清單。",
+                CreatedAt = DateTime.Now
+            });
+
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "揪團已移至已刪除清單。";
@@ -241,6 +246,19 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             group.UpdatedAt = DateTime.Now;
+
+            _context.TravelGroupsLogs.Add(new TravelGroupsLog
+            {
+                GroupId = group.GroupId,
+                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID
+                ChangedByMemberId = null,
+                ChangeType = "還原",
+                FieldName = null,
+                OldValue = null,
+                NewValue = null,
+                Remark = "由已刪除清單還原至正常清單。",
+                CreatedAt = DateTime.Now
+            });
 
             await _context.SaveChangesAsync();
 
