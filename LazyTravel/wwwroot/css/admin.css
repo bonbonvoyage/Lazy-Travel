@@ -238,3 +238,17 @@ body.admin-body {
   padding: .08rem .4rem;
   margin-left: auto;
 }
+
+/* ---------- 8. 官方帳號徽章(用在 Vlog 文章列表/詳情,標示官方 vs 一般會員) ---------- */
+.official-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .15rem;
+  background-color: var(--sea-600);
+  color: #fff;
+  border-radius: var(--radius-pill);
+  font-size: .68rem;
+  font-weight: 500;
+  padding: .05rem .5rem;
+  line-height: 1.5;
+}

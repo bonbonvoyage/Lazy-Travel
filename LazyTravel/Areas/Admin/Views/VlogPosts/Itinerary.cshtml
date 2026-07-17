@@ -1,0 +1,220 @@
+@model ItineraryViewModel
+@{
+    ViewData["Title"] = "行程列表";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">Vlog 行程文章</a></li>
+    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Post.PostID">@Model.Post.Title</a></li>
+    <li class="breadcrumb-item active" aria-current="page">行程列表</li>
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success py-2 mb-3" role="alert">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger py-2 mb-3" role="alert">@errorMessage</div>
+}
+
+<style>
+    /* 時間軸樣式：編號圓圈 + 連接線，跟前台的行程展示保持同一套視覺語言 */
+    .itinerary-node-row { position: relative; padding-left: 2.75rem; }
+    .itinerary-node-dot {
+        position: absolute;
+        left: 0;
+        top: .1rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background-color: var(--sea-600);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-size: .85rem;
+        flex-shrink: 0;
+        z-index: 1;
+    }
+    .itinerary-node-row:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 2.2rem;
+        bottom: -.6rem;
+        width: 2px;
+        background-color: var(--border-soft);
+    }
+</style>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="admin-table-card p-3 p-lg-4">
+            <h2 class="h6 mb-3" style="font-family:var(--font-display); color:var(--sea-800);">
+                🗓️ @Model.Post.Title － 共 @Model.Post.TravelDays 天
+            </h2>
+
+            @if (!Model.Nodes.Any())
+            {
+                <p class="text-muted small mb-0">還沒有任何行程，從右邊表單新增第一個吧。</p>
+            }
+            else
+            {
+                foreach (var dayGroup in Model.Nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key))
+                {
+                    <div class="mb-4">
+                        <div class="fw-medium mb-3">第 @dayGroup.Key 天</div>
+                        @{ var dayNodes = dayGroup.ToList(); }
+                        @for (var i = 0; i < dayNodes.Count; i++)
+                        {
+                            var node = dayNodes[i];
+                            <div class="itinerary-node-row mb-3 @(i == dayNodes.Count - 1 ? "" : "")">
+                                <div class="itinerary-node-dot">@(i + 1)</div>
+                                <div class="d-flex align-items-start justify-content-between gap-2 p-2"
+                                     style="background-color: @(Model.EditingNode?.NodeID == node.NodeID ? "var(--sea-50)" : "transparent"); border-radius:var(--radius-sm);">
+                                    <div class="d-flex gap-2">
+                                        @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
+                                        {
+                                            <img src="@node.MediaUrl" alt=""
+                                                 style="width:56px;height:56px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0;" />
+                                        }
+                                        <div>
+                                            <div class="small text-muted">
+                                                🕐 @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
+                                                @if (!string.IsNullOrWhiteSpace(node.StayTime))
+                                                {
+                                                    <text> （停留 @node.StayTime）</text>
+                                                }
+                                            </div>
+                                            <div class="fw-medium">📍 @node.LocationName</div>
+                                            @if (!string.IsNullOrWhiteSpace(node.Description))
+                                            {
+                                                <div class="text-muted small">@node.Description</div>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(node.Remarks))
+                                            {
+                                                <div class="text-muted small">備註：@node.Remarks</div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-column gap-1">
+                                        <a asp-action="Itinerary" asp-route-postId="@Model.Post.PostID" asp-route-editId="@node.NodeID"
+                                           class="btn btn-sm btn-outline-primary">編輯</a>
+                                        <form asp-action="DeleteNode" method="post" class="d-inline"
+                                              onsubmit="return confirm('確定要刪除「@node.LocationName」這個行程嗎？');">
+                                            <input type="hidden" name="nodeId" value="@node.NodeID" />
+                                            <input type="hidden" name="postId" value="@Model.Post.PostID" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="admin-table-card p-3 p-lg-4">
+            @{
+                var editing = Model.EditingNode;
+            }
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 mb-0" style="font-family:var(--font-display); color:var(--sea-800);">
+                    @(editing is null ? "➕ 新增行程" : $"✏️ 編輯行程－{editing.LocationName}")
+                </h2>
+                @if (editing is not null)
+                {
+                    <a asp-action="Itinerary" asp-route-postId="@Model.Post.PostID" class="btn btn-sm btn-link text-secondary">取消編輯</a>
+                }
+            </div>
+
+            <form asp-action="@(editing is null ? "AddNode" : "UpdateNode")" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="postId" value="@Model.Post.PostID" />
+                @if (editing is not null)
+                {
+                    <input type="hidden" name="nodeId" value="@editing.NodeID" />
+                    <input type="hidden" name="existingMediaUrl" value="@editing.MediaUrl" />
+                }
+
+                <div class="mb-2">
+                    <label class="form-label">第幾天</label>
+                    <input type="number" name="dayNumber" class="form-control" min="1"
+                           value="@(editing?.DayNumber ?? 1)" required />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">📍 地點名稱</label>
+                    <input type="text" name="locationName" class="form-control" placeholder="例如：七星潭"
+                           value="@editing?.LocationName" required />
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label">🕐 抵達</label>
+                        <input type="time" name="arrivalTime" class="form-control"
+                               value="@(editing?.ArrivalTime?.ToString("HH:mm"))" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">🕐 離開</label>
+                        <input type="time" name="departureTime" class="form-control"
+                               value="@(editing?.DepartureTime?.ToString("HH:mm"))" />
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">停留時間</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <select name="stayHours" class="form-select">
+                                @for (int h = 0; h <= 12; h++)
+                                {
+                                    <option value="@h" selected="@(h == Model.EditingStayHours)">@h 小時</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <select name="stayMinutes" class="form-select">
+                                <option value="0" selected="@(Model.EditingStayMinutes == 0)">0 分鐘</option>
+                                <option value="15" selected="@(Model.EditingStayMinutes == 15)">15 分鐘</option>
+                                <option value="30" selected="@(Model.EditingStayMinutes == 30)">30 分鐘</option>
+                                <option value="45" selected="@(Model.EditingStayMinutes == 45)">45 分鐘</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">🖼️ 景點圖片</label>
+                    <input type="file" name="mediaFile" accept="image/*" class="form-control" />
+                    <div class="form-text">支援 jpg / png / gif / webp，大小上限 5MB。@(editing is not null && !string.IsNullOrWhiteSpace(editing.MediaUrl) ? "上傳新圖片會取代目前的圖片。" : "")</div>
+                    @if (editing is not null && !string.IsNullOrWhiteSpace(editing.MediaUrl))
+                    {
+                        <img src="@editing.MediaUrl" alt="目前圖片"
+                             style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius-sm);margin-top:.5rem;" />
+                    }
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">📝 小編介紹</label>
+                    <textarea name="description" class="form-control" rows="2">@editing?.Description</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">備註（交通/門票）</label>
+                    <textarea name="remarks" class="form-control" rows="2">@editing?.Remarks</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">@(editing is null ? "➕ 新增下一個地點" : "儲存變更")</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Details" asp-route-id="@Model.Post.PostID" class="btn btn-outline-primary">返回文章詳情</a>
+</div>

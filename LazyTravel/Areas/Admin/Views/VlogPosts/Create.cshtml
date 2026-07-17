@@ -1,0 +1,25 @@
+@model VlogPost
+@{
+    ViewData["Title"] = "新增文章";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">Vlog 行程文章</a></li>
+    <li class="breadcrumb-item active" aria-current="page">新增文章</li>
+}
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    @await Html.PartialAsync("_Form", Model)
+
+    <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary">儲存文章</button>
+        <a asp-action="Index" class="btn btn-outline-primary">取消</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    @{ await Html.RenderPartialAsync("_ContentEditorAssets"); }
+}

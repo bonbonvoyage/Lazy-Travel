@@ -70,6 +70,9 @@
                 <h1 class="page-title">@ViewData["Title"]</h1>
             </div>
             <div class="d-flex align-items-center gap-3">
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-primary" target="_blank">
+                    回前台
+                </a>
                 <span class="text-secondary small">@User.Identity?.Name</span>
                 <form asp-controller="Account" asp-action="Logout" asp-area="" method="post" class="m-0">
                     <button type="submit" class="btn btn-sm btn-outline-primary">登出</button>
