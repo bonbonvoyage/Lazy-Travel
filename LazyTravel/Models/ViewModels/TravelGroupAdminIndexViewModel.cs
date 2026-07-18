@@ -34,10 +34,17 @@ namespace LazyTravel.Models.ViewModels
         // 目前所在頁籤：active / deleted / log
         public string Tab { get; set; } = "active";
 
-        // 審核狀態複選（唯一保留的篩選分類）
-        public List<string> SelectedReviewStatuses { get; set; } = new();
+        // 審核狀態單選（唯一保留的篩選分類）
+        public string? SelectedReviewStatus { get; set; }
 
         // 排序
         public string SortOrder { get; set; } = "asc";
+
+        // 儀表板統計
+        public int TotalGroupsCount { get; set; }
+        public int AbnormalGroupsCount { get; set; }
+
+        // 與上個月相比的新增揪團數增加率（%）；null 表示上個月無資料，無法計算比較
+        public double? NewGroupsGrowthRatePercent { get; set; }
     }
 }

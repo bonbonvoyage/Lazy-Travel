@@ -25,7 +25,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             string? keyword,
             DateTime? createdAtFrom,
             DateTime? createdAtTo,
-            List<string>? selectedReviewStatuses,
+            string? selectedReviewStatus,
             string sortOrder = "asc",
             int activePage = 1,
             int deletedPage = 1,
@@ -34,10 +34,11 @@ namespace LazyTravel.Areas.Admin.Controllers
         {
             int pageSize = 10;
 
-            selectedReviewStatuses ??= new List<string>();
-            selectedReviewStatuses = selectedReviewStatuses
-                .Where(s => AllowedReviewStatuses.Contains(s))
-                .ToList();
+            if (!string.IsNullOrWhiteSpace(selectedReviewStatus) &&
+                !AllowedReviewStatuses.Contains(selectedReviewStatus))
+            {
+                selectedReviewStatus = null;
+            }
 
             var query = _context.TravelGroups
                 .Include(g => g.OwnerMember)
@@ -70,12 +71,10 @@ namespace LazyTravel.Areas.Admin.Controllers
                 query = query.Where(g => g.CreatedAt <= endDate);
             }
 
-            // 審核狀態複選（唯一保留的篩選分類）
-            if (selectedReviewStatuses.Any())
+            // 審核狀態單選（唯一保留的篩選分類）
+            if (!string.IsNullOrWhiteSpace(selectedReviewStatus))
             {
-                query = query.Where(g =>
-                    g.ReviewStatus != null &&
-                    selectedReviewStatuses.Contains(g.ReviewStatus));
+                query = query.Where(g => g.ReviewStatus == selectedReviewStatus);
             }
 
             var activeQuery = query.Where(g => g.IsDelete == false);
@@ -120,6 +119,38 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             var logTotalCount = await logQuery.CountAsync();
 
+            // ---- 儀表板統計（不受篩選條件影響，反映全站現況） ----
+            var totalGroupsCount = await _context.TravelGroups
+                .Where(g => g.IsDelete == false)
+                .CountAsync();
+
+            var abnormalGroupsCount = await _context.TravelGroups
+                .Where(g => g.IsDelete == false && g.ReviewStatus != "正常")
+                .CountAsync();
+
+            var now = DateTime.Now;
+            var thisMonthStart = new DateTime(now.Year, now.Month, 1);
+            var lastMonthStart = thisMonthStart.AddMonths(-1);
+
+            var thisMonthNewCount = await _context.TravelGroups
+                .Where(g => g.CreatedAt >= thisMonthStart && g.CreatedAt < thisMonthStart.AddMonths(1))
+                .CountAsync();
+
+            var lastMonthNewCount = await _context.TravelGroups
+                .Where(g => g.CreatedAt >= lastMonthStart && g.CreatedAt < thisMonthStart)
+                .CountAsync();
+
+            double? growthRatePercent;
+            if (lastMonthNewCount == 0)
+            {
+                growthRatePercent = thisMonthNewCount > 0 ? (double?)null : 0;
+            }
+            else
+            {
+                growthRatePercent = Math.Round(
+                    (thisMonthNewCount - lastMonthNewCount) / (double)lastMonthNewCount * 100, 1);
+            }
+
             var vm = new TravelGroupAdminIndexViewModel
             {
                 ActiveGroups = await activeQuery
@@ -141,7 +172,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 CreatedAtFrom = createdAtFrom,
                 CreatedAtTo = createdAtTo,
 
-                SelectedReviewStatuses = selectedReviewStatuses,
+                SelectedReviewStatus = selectedReviewStatus,
 
                 SortOrder = sortOrder,
 
@@ -154,8 +185,18 @@ namespace LazyTravel.Areas.Admin.Controllers
                 LogTotalPages = (int)Math.Ceiling(logTotalCount / (double)pageSize),
 
                 PageSize = pageSize,
-                Tab = tab
+                Tab = tab,
+
+                TotalGroupsCount = totalGroupsCount,
+                AbnormalGroupsCount = abnormalGroupsCount,
+                NewGroupsGrowthRatePercent = growthRatePercent
             };
+
+            // AJAX 局部更新：只回傳頁籤與清單區塊，不重整整頁
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return PartialView("_TravelGroupsTabContent", vm);
+            }
 
             return View(vm);
         }

@@ -3,630 +3,129 @@
 @{
     ViewData["Title"] = "揪團管理";
 
-    string activeTabClass = Model.Tab == "deleted" || Model.Tab == "log" ? "" : "active";
-    string activePaneClass = Model.Tab == "deleted" || Model.Tab == "log" ? "tab-pane fade" : "tab-pane fade show active";
-
-    string deletedTabClass = Model.Tab == "deleted" ? "active" : "";
-    string deletedPaneClass = Model.Tab == "deleted" ? "tab-pane fade show active" : "tab-pane fade";
-
-    string logTabClass = Model.Tab == "log" ? "active" : "";
-    string logPaneClass = Model.Tab == "log" ? "tab-pane fade show active" : "tab-pane fade";
-
-    string BuildPageUrl(string tab, int activePage, int deletedPage, int logPage)
+    string FormatGrowthRate(double? rate)
     {
-        var query = new List<string>();
-
-        void Add(string name, string? value)
+        if (rate == null)
         {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                query.Add($"{name}={Uri.EscapeDataString(value)}");
-            }
+            return "N/A";
         }
 
-        Add("tab", tab);
-        Add("keyword", Model.Keyword);
-
-        if (Model.CreatedAtFrom.HasValue)
-        {
-            Add("createdAtFrom", Model.CreatedAtFrom.Value.ToString("yyyy-MM-dd"));
-        }
-
-        if (Model.CreatedAtTo.HasValue)
-        {
-            Add("createdAtTo", Model.CreatedAtTo.Value.ToString("yyyy-MM-dd"));
-        }
-
-        foreach (var item in Model.SelectedReviewStatuses)
-        {
-            Add("selectedReviewStatuses", item);
-        }
-
-        Add("sortOrder", Model.SortOrder);
-        Add("activePage", activePage.ToString());
-        Add("deletedPage", deletedPage.ToString());
-        Add("logPage", logPage.ToString());
-
-        return Url.Action("Index", "TravelGroups", new { area = "Admin" }) + "?" + string.Join("&", query);
+        var sign = rate.Value > 0 ? "+" : "";
+        return $"{sign}{rate.Value}%";
     }
 }
 
 <h1>揪團管理</h1>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
-    </div>
-}
+<div id="groupAlertRegion">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
 
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">
-        @TempData["ErrorMessage"]
-    </div>
-}
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+</div>
 
+<!-- 儀表板統計列 -->
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">全部揪團</div>
+            <div class="stat-value">@Model.TotalGroupsCount</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">異常揪團</div>
+            <div class="stat-value">@Model.AbnormalGroupsCount</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">與上個月新增揪團數增加率</div>
+            <div class="stat-value">@FormatGrowthRate(Model.NewGroupsGrowthRatePercent)</div>
+        </div>
+    </div>
+</div>
+
+<!-- 篩選列（滿版單排） -->
 <form asp-area="Admin"
       asp-controller="TravelGroups"
       asp-action="Index"
       method="get"
-      class="admin-table-card p-3 mb-3 admin-search-panel">
+      id="groupFilterForm"
+      class="filter-row">
 
-    <input type="hidden" name="tab" value="@Model.Tab" />
+    <input type="hidden" name="tab" id="filterTabInput" value="@Model.Tab" />
 
-    <!-- 第一列：關鍵字搜尋（滿版） -->
-    <div class="row g-3">
-        <div class="col-12">
-            <label class="form-label">關鍵字搜尋</label>
-            <input type="text"
-                   name="keyword"
-                   value="@Model.Keyword"
-                   class="form-control admin-field"
-                   placeholder="搜尋編號、房間名稱、說明、國家、地區、團主" />
-        </div>
+    <div class="flex-fill" style="min-width: 220px;">
+        <label class="form-label mb-1">關鍵字搜尋</label>
+        <input type="text"
+               name="keyword"
+               value="@Model.Keyword"
+               class="form-control admin-field"
+               placeholder="搜尋編號、房間名稱、說明、國家、地區、團主" />
     </div>
 
-    <!-- 第二列：建立時間區間 -->
-    <div class="row g-3 mt-1">
-        <div class="col-6">
-            <label class="form-label">建立時間起</label>
-            <input type="date"
-                   name="createdAtFrom"
-                   value="@Model.CreatedAtFrom?.ToString("yyyy-MM-dd")"
-                   class="form-control admin-field" />
-        </div>
-
-        <div class="col-6">
-            <label class="form-label">建立時間迄</label>
-            <input type="date"
-                   name="createdAtTo"
-                   value="@Model.CreatedAtTo?.ToString("yyyy-MM-dd")"
-                   class="form-control admin-field" />
-        </div>
+    <div class="flex-fill" style="min-width: 200px;">
+        <label class="form-label mb-1">審核狀態</label>
+        <select name="selectedReviewStatus" class="form-select admin-field">
+            <option value="" selected="@(string.IsNullOrEmpty(Model.SelectedReviewStatus))">全部狀態</option>
+            <option value="正常" selected="@(Model.SelectedReviewStatus == "正常")">正常</option>
+            <option value="檢舉審核中" selected="@(Model.SelectedReviewStatus == "檢舉審核中")">審核檢舉中</option>
+            <option value="違規" selected="@(Model.SelectedReviewStatus == "違規")">違規</option>
+            <option value="已下架" selected="@(Model.SelectedReviewStatus == "已下架")">已下架</option>
+        </select>
     </div>
 
-    <!-- 第三列：審核狀態 / 排序 / 搜尋・清除（窄版面下改為直向堆疊） -->
-    <div class="row g-3 mt-1 align-items-end">
-        <div class="col-12">
-            <label class="form-label">審核狀態</label>
-
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle admin-field w-100 text-start"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                    選擇審核狀態
-                </button>
-
-                <div class="dropdown-menu p-3 w-100">
-                    <div class="form-check">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               name="selectedReviewStatuses"
-                               value="正常"
-                               checked="@(Model.SelectedReviewStatuses.Contains("正常"))" />
-                        <label class="form-check-label">正常</label>
-                    </div>
-
-                    <div class="form-check">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               name="selectedReviewStatuses"
-                               value="檢舉審核中"
-                               checked="@(Model.SelectedReviewStatuses.Contains("檢舉審核中"))" />
-                        <label class="form-check-label">審核檢舉中</label>
-                    </div>
-
-                    <div class="form-check">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               name="selectedReviewStatuses"
-                               value="違規"
-                               checked="@(Model.SelectedReviewStatuses.Contains("違規"))" />
-                        <label class="form-check-label">違規</label>
-                    </div>
-
-                    <div class="form-check">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               name="selectedReviewStatuses"
-                               value="已下架"
-                               checked="@(Model.SelectedReviewStatuses.Contains("已下架"))" />
-                        <label class="form-check-label">已下架</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-6">
-            <label class="form-label">排序</label>
-            <select name="sortOrder" class="form-select admin-field">
-                <option value="asc" selected="@(Model.SortOrder == "asc")">編號小到大 ↑</option>
-                <option value="desc" selected="@(Model.SortOrder == "desc")">編號大到小 ↓</option>
-            </select>
-        </div>
-
-        <div class="col-6 d-flex gap-2">
-            <button type="submit" class="btn btn-primary admin-field flex-fill">搜尋</button>
-
-            <a asp-area="Admin"
-               asp-controller="TravelGroups"
-               asp-action="Index"
-               class="btn btn-secondary admin-field flex-fill">
-                清除
-            </a>
-        </div>
+    <div class="flex-fill" style="min-width: 160px;">
+        <label class="form-label mb-1">排序</label>
+        <select name="sortOrder" class="form-select admin-field">
+            <option value="asc" selected="@(Model.SortOrder == "asc")">編號小到大 ↑</option>
+            <option value="desc" selected="@(Model.SortOrder == "desc")">編號大到小 ↓</option>
+        </select>
     </div>
 
-    <!-- 第四列：已選取篩選條件（滿版，位於篩選條件下方） -->
-    <div class="row g-3 mt-1">
-        <div class="col-12">
-            <label class="form-label">已選取篩選條件</label>
+    <div class="flex-fill" style="min-width: 160px;">
+        <label class="form-label mb-1">建立時間(起)</label>
+        <input type="date"
+               name="createdAtFrom"
+               value="@Model.CreatedAtFrom?.ToString("yyyy-MM-dd")"
+               class="form-control admin-field" />
+    </div>
 
-            <div class="border rounded p-2 bg-light" style="min-height: 42px;">
-                @if (
-                                !string.IsNullOrWhiteSpace(Model.Keyword) ||
-                                Model.CreatedAtFrom.HasValue ||
-                                Model.CreatedAtTo.HasValue ||
-                                Model.SelectedReviewStatuses.Any() ||
-                                !string.IsNullOrWhiteSpace(Model.SortOrder)
-                                )
-                {
-                    @if (!string.IsNullOrWhiteSpace(Model.Keyword))
-                    {
-                        <span class="badge bg-dark me-1 mb-1">關鍵字：@Model.Keyword</span>
-                    }
+    <div class="flex-fill" style="min-width: 160px;">
+        <label class="form-label mb-1">建立時間(迄)</label>
+        <input type="date"
+               name="createdAtTo"
+               value="@Model.CreatedAtTo?.ToString("yyyy-MM-dd")"
+               class="form-control admin-field" />
+    </div>
 
-                    @if (Model.CreatedAtFrom.HasValue)
-                    {
-                        <span class="badge bg-dark me-1 mb-1">
-                            建立時間起：@Model.CreatedAtFrom?.ToString("yyyy/MM/dd")
-                        </span>
-                    }
+    <div class="d-flex gap-2" style="align-self: flex-end;">
+        <button type="submit" class="btn btn-primary admin-field">搜尋</button>
 
-                    @if (Model.CreatedAtTo.HasValue)
-                    {
-                        <span class="badge bg-dark me-1 mb-1">
-                            建立時間迄：@Model.CreatedAtTo?.ToString("yyyy/MM/dd")
-                        </span>
-                    }
-
-                    var reviewStatusLabels = new Dictionary<string, string>
-                    {
-                        ["正常"] = "正常",
-                        ["檢舉審核中"] = "審核檢舉中",
-                        ["違規"] = "違規",
-                        ["已下架"] = "已下架"
-                    };
-
-                    foreach (var item in Model.SelectedReviewStatuses)
-                    {
-                        <span class="badge bg-warning text-dark me-1 mb-1">
-                            審核狀態：@(reviewStatusLabels.ContainsKey(item) ? reviewStatusLabels[item] : item)
-                        </span>
-                    }
-
-                    @if (Model.SortOrder == "desc")
-                    {
-                        <span class="badge bg-secondary me-1 mb-1">排序：編號大到小 ↓</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary me-1 mb-1">排序：編號小到大 ↑</span>
-                    }
-                }
-                else
-                {
-                    <span class="text-muted">目前未選取篩選條件</span>
-                }
-            </div>
-        </div>
+        <div class="d-flex gap-2" style="align-self: flex-end;">
+        <a asp-area="Admin"
+           asp-controller="TravelGroups"
+           asp-action="Index"
+           class="btn admin-field btn-clear-pantone">
+            清除
+        </a>
     </div>
 </form>
 
-<ul class="nav nav-tabs mb-3" id="groupTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <a class="nav-link @activeTabClass"
-           href="@BuildPageUrl("active", Model.ActivePage, Model.DeletedPage, Model.LogPage)">
-            揪團清單
-        </a>
-    </li>
-
-    <li class="nav-item" role="presentation">
-        <a class="nav-link @deletedTabClass"
-           href="@BuildPageUrl("deleted", Model.ActivePage, Model.DeletedPage, Model.LogPage)">
-            已刪除清單
-        </a>
-    </li>
-
-    <li class="nav-item" role="presentation">
-        <a class="nav-link @logTabClass"
-           href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, Model.LogPage)">
-            異動紀錄
-        </a>
-    </li>
-</ul>
-
-<div class="tab-content" id="groupTabsContent">
-
-    <!-- 揪團清單 -->
-    <div class="@activePaneClass" id="activeGroups" role="tabpanel">
-
-        <table class="table table-bordered table-hover admin-table-card">
-            <thead>
-                <tr>
-                    <th>操作</th>
-                    <th>編號</th>
-                    <th>房間名稱</th>
-                    <th>國家</th>
-                    <th>地區</th>
-                    <th>團主</th>
-                    <th>目前人數</th>
-                    <th>人數上限</th>
-                    <th>加入規則</th>
-                    <th>揪團狀態</th>
-                    <th>審核狀態</th>
-                    <th>公開</th>
-                    <th>行程時間</th>
-                    <th>建立時間</th>
-                    <th>詳細</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.ActiveGroups != null && Model.ActiveGroups.Any())
-                {
-                    foreach (var item in Model.ActiveGroups)
-                    {
-                        <tr class="@(item.GroupId % 2 != 0 ? "zebra-row" : "")"
-                            ondblclick="location.href='@Url.Action("Details", "TravelGroups", new { area = "Admin", id = item.GroupId })'"
-                            style="cursor:pointer;">
-                            <td>
-                                @if (item.ReviewStatus == "檢舉審核中" ||
-                                                        item.ReviewStatus == "已下架" ||
-                                                        item.ReviewStatus == "違規")
-                                {
-                                    <form asp-area="Admin"
-                                          asp-controller="TravelGroups"
-                                          asp-action="Delete"
-                                          asp-route-id="@item.GroupId"
-                                          method="post"
-                                          onsubmit="return confirm('確定要將這筆揪團移至已刪除清單嗎？');">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-danger">刪除</button>
-                                    </form>
-                                }
-                            </td>
-                            <td>@item.GroupId</td>
-                            <td>@item.GroupTitle</td>
-                            <td>@item.Country</td>
-                            <td>@item.Region</td>
-                            <td>@item.OwnerMember?.Name</td>
-                            <td>@item.CurrentPeople</td>
-                            <td>@item.MaxPeople</td>
-                            <td>@item.JoinRule</td>
-                            <td>@item.GroupStatus</td>
-                            <td>@item.ReviewStatus</td>
-                            <td>@(item.IsPublic ? "公開" : "不公開")</td>
-                            <td>
-                                @if (item.StartDate != null && item.EndDate != null)
-                                {
-                                    @($"{item.StartDate:yyyy/MM/dd} ～ {item.EndDate:yyyy/MM/dd}")
-                                }
-                                else
-                                {
-                                    <span>尚未設定</span>
-                                }
-                            </td>
-                            <td>@item.CreatedAt</td>
-                            <td>
-                                <a asp-area="Admin"
-                                   asp-controller="TravelGroups"
-                                   asp-action="Details"
-                                   asp-route-id="@item.GroupId"
-                                   class="btn btn-sm btn-info">
-                                    詳細
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="15" class="text-center">目前沒有揪團資料</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        @if (Model.ActiveTotalPages > 1)
-        {
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item @(Model.ActivePage <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           href="@BuildPageUrl("active", Model.ActivePage - 1, Model.DeletedPage, Model.LogPage)">
-                            上一頁
-                        </a>
-                    </li>
-
-                    @for (int i = 1; i <= Model.ActiveTotalPages; i++)
-                    {
-                        <li class="page-item @(Model.ActivePage == i ? "active" : "")">
-                            <a class="page-link"
-                               href="@BuildPageUrl("active", i, Model.DeletedPage, Model.LogPage)">
-                                @i
-                            </a>
-                        </li>
-                    }
-
-                    <li class="page-item @(Model.ActivePage >= Model.ActiveTotalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           href="@BuildPageUrl("active", Model.ActivePage + 1, Model.DeletedPage, Model.LogPage)">
-                            下一頁
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
-
-        <div class="d-flex align-items-center gap-2 mt-2">
-            <span class="text-muted">目前第 @Model.ActivePage 頁，共 @Model.ActiveTotalPages 頁</span>
-            <input type="number" min="1" max="@(Math.Max(Model.ActiveTotalPages, 1))"
-                   id="activePageInput" value="@Model.ActivePage"
-                   class="form-control form-control-sm" style="width: 90px;" />
-            <button type="button" class="btn btn-sm btn-outline-primary"
-                    onclick="goToPage('activePageInput', 'active', @Model.ActiveTotalPages)">
-                前往
-            </button>
-        </div>
-    </div>
-
-    <!-- 已刪除清單 -->
-    <div class="@deletedPaneClass" id="deletedGroups" role="tabpanel">
-
-        <table class="table table-bordered table-hover admin-table-card">
-            <thead>
-                <tr>
-                    <th>操作</th>
-                    <th>編號</th>
-                    <th>房間名稱</th>
-                    <th>國家</th>
-                    <th>地區</th>
-                    <th>團主</th>
-                    <th>目前人數</th>
-                    <th>人數上限</th>
-                    <th>加入規則</th>
-                    <th>揪團狀態</th>
-                    <th>審核狀態</th>
-                    <th>公開</th>
-                    <th>行程時間</th>
-                    <th>建立時間</th>
-                    <th>詳細</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.DeletedGroups != null && Model.DeletedGroups.Any())
-                {
-                    foreach (var item in Model.DeletedGroups)
-                    {
-                        <tr class="@(item.GroupId % 2 != 0 ? "zebra-row" : "")"
-                            ondblclick="location.href='@Url.Action("Details", "TravelGroups", new { area = "Admin", id = item.GroupId })'"
-                            style="cursor:pointer;">
-                            <td>
-                                <form asp-area="Admin"
-                                      asp-controller="TravelGroups"
-                                      asp-action="Restore"
-                                      asp-route-id="@item.GroupId"
-                                      method="post"
-                                      onsubmit="return confirm('確定要還原這筆揪團嗎？');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-success">還原</button>
-                                </form>
-                            </td>
-                            <td>@item.GroupId</td>
-                            <td>@item.GroupTitle</td>
-                            <td>@item.Country</td>
-                            <td>@item.Region</td>
-                            <td>@item.OwnerMember?.Name</td>
-                            <td>@item.CurrentPeople</td>
-                            <td>@item.MaxPeople</td>
-                            <td>@item.JoinRule</td>
-                            <td>@item.GroupStatus</td>
-                            <td>@item.ReviewStatus</td>
-                            <td>@(item.IsPublic ? "公開" : "不公開")</td>
-                            <td>
-                                @if (item.StartDate != null && item.EndDate != null)
-                                {
-                                    @($"{item.StartDate:yyyy/MM/dd} ～ {item.EndDate:yyyy/MM/dd}")
-                                }
-                                else
-                                {
-                                    <span>尚未設定</span>
-                                }
-                            </td>
-                            <td>@item.CreatedAt</td>
-                            <td>
-                                <a asp-area="Admin"
-                                   asp-controller="TravelGroups"
-                                   asp-action="Details"
-                                   asp-route-id="@item.GroupId"
-                                   class="btn btn-sm btn-info">
-                                    詳細
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="15" class="text-center">目前沒有已刪除資料</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        @if (Model.DeletedTotalPages > 1)
-        {
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item @(Model.DeletedPage <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           href="@BuildPageUrl("deleted", Model.ActivePage, Model.DeletedPage - 1, Model.LogPage)">
-                            上一頁
-                        </a>
-                    </li>
-
-                    @for (int i = 1; i <= Model.DeletedTotalPages; i++)
-                    {
-                        <li class="page-item @(Model.DeletedPage == i ? "active" : "")">
-                            <a class="page-link"
-                               href="@BuildPageUrl("deleted", Model.ActivePage, i, Model.LogPage)">
-                                @i
-                            </a>
-                        </li>
-                    }
-
-                    <li class="page-item @(Model.DeletedPage >= Model.DeletedTotalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           href="@BuildPageUrl("deleted", Model.ActivePage, Model.DeletedPage + 1, Model.LogPage)">
-                            下一頁
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
-
-        <div class="d-flex align-items-center gap-2 mt-2">
-            <span class="text-muted">目前第 @Model.DeletedPage 頁，共 @Model.DeletedTotalPages 頁</span>
-            <input type="number" min="1" max="@(Math.Max(Model.DeletedTotalPages, 1))"
-                   id="deletedPageInput" value="@Model.DeletedPage"
-                   class="form-control form-control-sm" style="width: 90px;" />
-            <button type="button" class="btn btn-sm btn-outline-primary"
-                    onclick="goToPage('deletedPageInput', 'deleted', @Model.DeletedTotalPages)">
-                前往
-            </button>
-        </div>
-    </div>
-
-    <!-- 異動紀錄清單 -->
-    <div class="@logPaneClass" id="groupLogs" role="tabpanel">
-
-        <table class="table table-bordered table-hover admin-table-card">
-            <thead>
-                <tr>
-                    <th>編號</th>
-                    <th>揪團編號</th>
-                    <th>異動類型</th>
-                    <th>異動欄位</th>
-                    <th>異動前</th>
-                    <th>異動後</th>
-                    <th>備註</th>
-                    <th>操作人</th>
-                    <th>異動時間</th>
-                    <th>檢視揪團</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Logs != null && Model.Logs.Any())
-                {
-                    foreach (var item in Model.Logs)
-                    {
-                        <tr class="@(item.LogId % 2 != 0 ? "zebra-row" : "")">
-                            <td>@item.LogId</td>
-                            <td>@item.GroupId</td>
-                            <td>@item.ChangeType</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.FieldName) ? "—" : item.FieldName)</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.OldValue) ? "—" : item.OldValue)</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.NewValue) ? "—" : item.NewValue)</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.Remark) ? "—" : item.Remark)</td>
-                            <td>@(item.ChangedByMember?.Name ?? "系統")</td>
-                            <td>@item.CreatedAt</td>
-                            <td>
-                                <a asp-area="Admin"
-                                   asp-controller="TravelGroups"
-                                   asp-action="Details"
-                                   asp-route-id="@item.GroupId"
-                                   class="btn btn-sm btn-info">
-                                    詳細
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="10" class="text-center">目前沒有異動紀錄</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        @if (Model.LogTotalPages > 1)
-        {
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item @(Model.LogPage <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, Model.LogPage - 1)">
-                            上一頁
-                        </a>
-                    </li>
-
-                    @for (int i = 1; i <= Model.LogTotalPages; i++)
-                    {
-                        <li class="page-item @(Model.LogPage == i ? "active" : "")">
-                            <a class="page-link"
-                               href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, i)">
-                                @i
-                            </a>
-                        </li>
-                    }
-
-                    <li class="page-item @(Model.LogPage >= Model.LogTotalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, Model.LogPage + 1)">
-                            下一頁
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
-
-        <div class="d-flex align-items-center gap-2 mt-2">
-            <span class="text-muted">目前第 @Model.LogPage 頁，共 @Model.LogTotalPages 頁</span>
-            <input type="number" min="1" max="@(Math.Max(Model.LogTotalPages, 1))"
-                   id="logPageInput" value="@Model.LogPage"
-                   class="form-control form-control-sm" style="width: 90px;" />
-            <button type="button" class="btn btn-sm btn-outline-primary"
-                    onclick="goToPage('logPageInput', 'log', @Model.LogTotalPages)">
-                前往
-            </button>
-        </div>
-    </div>
+<div id="groupsRegion">
+    <partial name="_TravelGroupsTabContent" model="Model" />
 </div>
 
 <style>
@@ -644,10 +143,57 @@
         height: 42px;
     }
 
-    /* 搜尋面板寬度縮減為版面 30% */
-    .admin-search-panel {
-        width: 30%;
-        min-width: 340px;
+    /* 篩選列滿版：欄位平均撐開，右側不留白 */
+    .filter-row {
+        align-items: flex-start;
+    }
+
+    /* 清除鈕：外觀比照搜尋鈕，色號 PANTONE 184C */
+    .btn-clear-pantone {
+        background-color: #F65275;
+        border-color: #F65275;
+        color: #fff;
+    }
+    .btn-clear-pantone:hover,
+    .btn-clear-pantone:focus {
+        background-color: #e13d61;
+        border-color: #e13d61;
+        color: #fff;
+    }
+
+    /* 詳細鈕：色號 PANTONE 16-4032，文字白色 */
+    .btn-detail-pantone {
+        background-color: #658DC6;
+        border-color: #658DC6;
+        color: #fff;
+    }
+    .btn-detail-pantone:hover,
+    .btn-detail-pantone:focus {
+        background-color: #517aB4;
+        border-color: #517aB4;
+        color: #fff;
+    }
+
+    /* 頁籤與下方清單視窗連在一起，中間不留空白 */
+    .admin-tabs {
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--border-soft, #dee2e6);
+    }
+
+    .admin-tab-panel {
+        background-color: var(--surface, #fff);
+        border: 1px solid var(--border-soft, #dee2e6);
+        border-top: none;
+        border-radius: 0 0 var(--radius-md, .5rem) var(--radius-md, .5rem);
+        padding: 1rem;
+    }
+
+    .admin-tabs .nav-link {
+        border-radius: var(--radius-md, .5rem) var(--radius-md, .5rem) 0 0;
+    }
+
+    .admin-tabs .nav-link.active {
+        border-bottom-color: var(--surface, #fff);
     }
 </style>
 
@@ -675,6 +221,54 @@
             params.set('logPage', page);
         }
 
-        window.location.search = params.toString();
+        loadGroupsRegion('@Url.Action("Index", "TravelGroups", new { area = "Admin" })' + '?' + params.toString());
     }
+
+    function loadGroupsRegion(url) {
+        var region = document.getElementById('groupsRegion');
+        region.style.opacity = '0.5';
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('載入失敗');
+                }
+                return response.text();
+            })
+            .then(function (html) {
+                region.innerHTML = html;
+                region.style.opacity = '1';
+
+                // 同步網址列，避免重新整理後跳回第一頁／預設頁籤
+                try {
+                    window.history.replaceState(null, '', url);
+                } catch (e) {
+                    // 部分環境（例如檔案協定）不支援 history API，忽略即可
+                }
+
+                // 同步篩選表單中的目前頁籤，讓「搜尋」按鈕送出時能保留頁籤
+                var urlParams = new URLSearchParams(url.split('?')[1] || '');
+                var tabInput = document.getElementById('filterTabInput');
+                if (tabInput && urlParams.get('tab')) {
+                    tabInput.value = urlParams.get('tab');
+                }
+            })
+            .catch(function () {
+                region.style.opacity = '1';
+                window.location.href = url;
+            });
+    }
+
+    // 事件代理：攔截頁籤與分頁連結的點擊，改用 AJAX 載入，不重新整理頁面
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('.ajax-nav-link');
+        if (!link) {
+            return;
+        }
+
+        e.preventDefault();
+        loadGroupsRegion(link.getAttribute('href'));
+    });
 </script>
