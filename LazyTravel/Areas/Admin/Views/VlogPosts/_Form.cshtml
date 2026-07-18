@@ -88,7 +88,7 @@
 
         <div class="admin-table-card p-3 p-lg-4">
             <h2 class="h6 form-section-title mb-3">📝 內文</h2>
-            <div class="form-text mb-2">行程總體心得，每天的詳細景點請到「行程列表」管理。</div>
+            <div class="form-text mb-2">行程總體心得，每天的詳細景點請往下捲動至「每日行程列表」管理。</div>
             @* 實際送出表單的欄位：畫面上隱藏，送出前由下方 JS 把編輯器內容同步進來 *@
             <textarea asp-for="Content" style="display:none;"></textarea>
             <div id="content-editor"></div>
@@ -127,15 +127,11 @@
 
             <div class="mb-0">
                 <label asp-for="MemberID" class="form-label"></label>
-                <select asp-for="MemberID" class="form-select">
-                    <option value="0">請選擇發文會員</option>
-                    @foreach (var m in MemberLookup.Members)
-                    {
-                        <option value="@m.MemberID" selected="@(Model.MemberID == m.MemberID)">@m.Name@(m.IsOfficial ? "（官方帳號）" : "")</option>
-                    }
-                </select>
-                <span asp-validation-for="MemberID" class="text-danger small"></span>
-                <div class="form-text">Members 後台尚未建立，先從暫時對照表選擇。</div>
+                <div class="form-control-plaintext fw-medium">
+                    @MemberLookup.GetName(Model.MemberID)@(MemberLookup.IsOfficial(Model.MemberID) ? "（官方帳號）" : "")
+                </div>
+                <input type="hidden" asp-for="MemberID" />
+                <div class="form-text">Members 後台與 Cookie 認證尚未接上，先固定顯示此帳號。</div>
             </div>
         </div>
 

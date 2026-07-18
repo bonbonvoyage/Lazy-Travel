@@ -92,7 +92,8 @@ namespace LazyTravel.Areas.Admin.Controllers
         public IActionResult Create()
         {
             ViewData["Title"] = "新增文章";
-            return View(new VlogPost { TravelDays = 1 });
+            // Cookie 認證尚未接上，先固定用 LazyTravel 官方（MemberID 4）當發文會員
+            return View(new VlogPost { TravelDays = 1, MemberID = 4 });
         }
 
         // POST /Admin/VlogPosts/Create
@@ -122,7 +123,8 @@ namespace LazyTravel.Areas.Admin.Controllers
         }
 
         // GET /Admin/VlogPosts/Edit/5
-        public IActionResult Edit(int id)
+        // editId 有值時，下方行程表單切成「編輯行程」模式
+        public IActionResult Edit(int id, int? editId = null)
         {
             var post = VlogPostStore.GetById(id);
             if (post is null)
@@ -131,7 +133,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             ViewData["Title"] = "編輯文章";
-            return View(post);
+            return View(BuildItineraryViewModel(post, editId));
         }
 
         // POST /Admin/VlogPosts/Edit/5
@@ -150,7 +152,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             {
                 post.MediaUrl = existingMediaUrl;
                 ViewData["Title"] = "編輯文章";
-                return View(post);
+                return View(BuildItineraryViewModel(post, null));
             }
 
             post.MediaUrl = coverFile is not null && coverFile.Length > 0
@@ -235,26 +237,18 @@ namespace LazyTravel.Areas.Admin.Controllers
             return Json(new { url });
         }
 
-        // ---------- 每日行程列表管理 ----------
+        // ---------- 每日行程列表管理（併入「編輯文章」頁面下方） ----------
 
-        // GET /Admin/VlogPosts/Itinerary/5
-        // editId 有值時，右邊表單切成「編輯行程」模式
-        public IActionResult Itinerary(int postId, int? editId = null)
+        // 組出「編輯文章」頁面用的 ViewModel：文章本身 + 當天行程清單 + 目前正在編輯的行程節點
+        private static ItineraryViewModel BuildItineraryViewModel(VlogPost post, int? editId)
         {
-            var post = VlogPostStore.GetById(postId);
-            if (post is null)
-            {
-                return NotFound();
-            }
-
-            ViewData["Title"] = "行程列表";
-            var nodes = ItineraryNodeStore.GetByPostId(postId)
+            var nodes = ItineraryNodeStore.GetByPostId(post.PostID)
                 .OrderBy(n => n.DayNumber).ThenBy(n => n.ArrivalTime).ToList();
 
             var editingNode = editId.HasValue ? nodes.FirstOrDefault(n => n.NodeID == editId.Value) : null;
             var (editingHours, editingMinutes) = ParseStayTime(editingNode?.StayTime);
 
-            var vm = new ItineraryViewModel
+            return new ItineraryViewModel
             {
                 Post = post,
                 Nodes = nodes,
@@ -262,7 +256,6 @@ namespace LazyTravel.Areas.Admin.Controllers
                 EditingStayHours = editingHours,
                 EditingStayMinutes = editingMinutes,
             };
-            return View(vm);
         }
 
         // POST /Admin/VlogPosts/AddNode
@@ -282,13 +275,13 @@ namespace LazyTravel.Areas.Admin.Controllers
             if (string.IsNullOrWhiteSpace(locationName))
             {
                 TempData["ErrorMessage"] = "請輸入景點名稱。";
-                return RedirectToAction(nameof(Itinerary), new { postId });
+                return RedirectToAction(nameof(Edit), new { id = postId });
             }
 
             if (mediaFile is not null && mediaFile.Length > 0 && !IsAllowedImage(mediaFile))
             {
                 TempData["ErrorMessage"] = "圖片只接受 jpg / png / gif / webp，且大小上限 5MB。";
-                return RedirectToAction(nameof(Itinerary), new { postId });
+                return RedirectToAction(nameof(Edit), new { id = postId });
             }
 
             string? mediaUrl = null;
@@ -312,7 +305,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             });
 
             TempData["SuccessMessage"] = $"已新增行程「{locationName}」。";
-            return RedirectToAction(nameof(Itinerary), new { postId });
+            return RedirectToAction(nameof(Edit), new { id = postId });
         }
 
         // 把「停留時間」的小時/分鐘兩個下拉選單組合成一句文字存進 StayTime(nvarchar(50))
@@ -369,13 +362,13 @@ namespace LazyTravel.Areas.Admin.Controllers
             if (string.IsNullOrWhiteSpace(locationName))
             {
                 TempData["ErrorMessage"] = "請輸入景點名稱。";
-                return RedirectToAction(nameof(Itinerary), new { postId, editId = nodeId });
+                return RedirectToAction(nameof(Edit), new { id = postId, editId = nodeId });
             }
 
             if (mediaFile is not null && mediaFile.Length > 0 && !IsAllowedImage(mediaFile))
             {
                 TempData["ErrorMessage"] = "圖片只接受 jpg / png / gif / webp，且大小上限 5MB。";
-                return RedirectToAction(nameof(Itinerary), new { postId, editId = nodeId });
+                return RedirectToAction(nameof(Edit), new { id = postId, editId = nodeId });
             }
 
             var mediaUrl = mediaFile is not null && mediaFile.Length > 0
@@ -398,7 +391,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             });
 
             TempData["SuccessMessage"] = $"行程「{locationName}」已更新。";
-            return RedirectToAction(nameof(Itinerary), new { postId });
+            return RedirectToAction(nameof(Edit), new { id = postId });
         }
 
         // POST /Admin/VlogPosts/DeleteNode
@@ -408,7 +401,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         {
             ItineraryNodeStore.Delete(nodeId);
             TempData["SuccessMessage"] = "已刪除該行程。";
-            return RedirectToAction(nameof(Itinerary), new { postId });
+            return RedirectToAction(nameof(Edit), new { id = postId });
         }
 
         // ---------- 檔案上傳共用小工具 ----------

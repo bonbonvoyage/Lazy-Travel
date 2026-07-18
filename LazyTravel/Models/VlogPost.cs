@@ -52,7 +52,7 @@ public class VlogPost
     public int PostID { get; set; }
 
     // 發文者會員 ID。Members 資料表/後台尚未建立，先用 MemberLookup 暫時對照顯示姓名。
-    [Required(ErrorMessage = "請選擇發文會員")]
+    [Required(ErrorMessage = "缺少發文會員")]
     [Display(Name = "發文會員")]
     public int MemberID { get; set; }
 

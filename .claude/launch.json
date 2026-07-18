@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lazytravel",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "LazyTravel", "--launch-profile", "http"],
+      "port": 5180
+    }
+  ]
+}

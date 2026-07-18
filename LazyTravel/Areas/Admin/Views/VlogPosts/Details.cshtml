@@ -48,7 +48,7 @@
         <div class="admin-table-card p-3 p-lg-4">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h2 class="h6 mb-0" style="font-family:var(--font-display); color:var(--sea-800);">每日行程列表</h2>
-                <a asp-action="Itinerary" asp-route-postId="@Model.PostID" class="btn btn-sm btn-outline-primary">行程列表</a>
+                <a asp-action="Edit" asp-route-id="@Model.PostID" class="btn btn-sm btn-outline-primary">編輯行程</a>
             </div>
 
             @if (!nodes.Any())

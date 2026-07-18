@@ -145,22 +145,6 @@
                                 @if (!post.IsDelete)
                                 {
                                     <a asp-action="Edit" asp-route-id="@post.PostID" class="btn btn-sm btn-outline-primary">編輯</a>
-                                    <a asp-action="Itinerary" asp-route-postId="@post.PostID" class="btn btn-sm btn-outline-primary">行程列表</a>
-
-                                    @if (post.Status == VlogPostStatus.Published)
-                                    {
-                                        <form asp-action="ToggleStatus" asp-route-id="@post.PostID" method="post" class="d-inline">
-                                            <input type="hidden" name="to" value="@VlogPostStatus.Draft" />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">改草稿</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form asp-action="ToggleStatus" asp-route-id="@post.PostID" method="post" class="d-inline">
-                                            <input type="hidden" name="to" value="@VlogPostStatus.Published" />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">發布</button>
-                                        </form>
-                                    }
 
                                     <form asp-action="Delete" asp-route-id="@post.PostID" method="post" class="d-inline"
                                           onsubmit="return confirm('確定要刪除「@post.Title」嗎？');">
