@@ -314,8 +314,11 @@
             });
         });
 
-        document.getElementById('judgeConfirmSubmitBtn').addEventListener('click', function () {
-            judgeForm.submit();
-        });
+        var judgeConfirmSubmitBtn = document.getElementById('judgeConfirmSubmitBtn');
+        if (judgeConfirmSubmitBtn) {
+            judgeConfirmSubmitBtn.addEventListener('click', function () {
+                judgeForm.submit();
+            });
+        }
     </script>
 }

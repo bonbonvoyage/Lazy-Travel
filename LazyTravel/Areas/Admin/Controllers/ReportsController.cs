@@ -102,7 +102,8 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             if (request.Decision != ReportStatus.Upheld && request.Decision != ReportStatus.Dismissed)
             {
-                return BadRequest("判定結果只能是「檢舉成立」或「不成立」");
+                TempData["Message"] = "送出失敗:判定結果只能是「檢舉成立」或「不成立」";
+                return RedirectToAction(nameof(Details), new { id = request.Id });
             }
 
             var reviewerName = User.Identity?.Name ?? _reportService.GetRandomReviewerAlias();
