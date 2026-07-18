@@ -5,6 +5,16 @@
     ViewData["Title"] = $"檢舉案件 #{Model.Report.Id}";
     var suspendLevelClass = Model.PendingSuspensionDays >= 5 ? "level-severe" : "level-mild";
     var suspendLevelLabel = Model.PendingSuspensionDays >= 5 ? "重度累犯" : "輕度累犯";
+
+    // 被檢舉對象卡:依 TargetType 決定圖示/標籤,以及要不要給連結
+    // 會員/Vlog 文章對應的後台頁面(MembersController/VlogPostsController)還沒做出來,先不給連結,避免點了 404
+    var (targetIcon, targetLabel, targetLinkController, targetLinkAction) = Model.Report.TargetType switch
+    {
+        ReportTargetType.Member => ("👤", "被檢舉會員", (string?)null, (string?)null),
+        ReportTargetType.VlogPost => ("📝", "被檢舉文章", (string?)null, (string?)null),
+        ReportTargetType.TravelGroup => ("🧳", "被檢舉揪團", "TravelGroups", "Details"),
+        _ => ("❓", "被檢舉對象", (string?)null, (string?)null)
+    };
 }
 
 @section Breadcrumb {
@@ -82,6 +92,35 @@
         #judgeForm .form-check-label {
             font-size: .95rem;
         }
+
+        /* 案件內容 + 被檢舉對象卡 並排,螢幕太窄就自動疊下去 */
+        .report-detail-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .report-detail-layout > .report-detail-card {
+            flex: 1 1 520px;
+        }
+        .target-preview-card {
+            flex: 0 0 300px;
+            text-align: center;
+        }
+        .target-preview-card .icon {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+        .target-preview-card .label {
+            color: var(--text-secondary);
+            font-size: .9rem;
+            margin-top: .5rem;
+        }
+        .target-preview-card .title {
+            font-weight: 600;
+            margin: .3rem 0 1rem;
+            word-break: break-word;
+        }
     </style>
 }
 
@@ -90,6 +129,7 @@
     <div class="alert alert-success py-2">@TempData["Message"]</div>
 }
 
+<div class="report-detail-layout">
 <div class="admin-table-card report-detail-card p-4">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
@@ -237,6 +277,25 @@
         </table>
         <p class="small text-muted mt-2">審核人員/時間取自 AdminLogs 操作紀錄(符合官方 Reports 表不存審核人資訊的設計)。</p>
     }
+</div>
+
+<div class="admin-table-card target-preview-card p-4">
+    <div class="icon">@targetIcon</div>
+    <div class="label">@targetLabel</div>
+    <div class="title">@Model.Report.TargetTitle</div>
+    @if (targetLinkController != null)
+    {
+        <a class="btn btn-sm btn-outline-primary" asp-area="Admin" asp-controller="@targetLinkController" asp-action="@targetLinkAction" asp-route-id="@Model.Report.TargetId">
+            查看原始內容
+        </a>
+    }
+    else
+    {
+        <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="對應後台頁面尚未開發">
+            查看原始內容
+        </button>
+    }
+</div>
 </div>
 
 @if (Model.RelatedReports.Any())
