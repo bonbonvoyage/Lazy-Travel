@@ -75,7 +75,13 @@
         .suspend-warning-card.level-severe .days { color: var(--coral-600); }
 
         /* 整體字體放大,案件內容跟審核區的欄位比較好讀 */
-        .report-detail-card { font-size: 1.05rem; }
+        /* 內容本身沒那麼寬,卡片限制最大寬度並置中,避免寬螢幕時右側留一大片空白 */
+        .report-detail-card {
+            font-size: 1.05rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
         .report-detail-card th,
         .report-detail-card td { font-size: 1rem; }
         .report-detail-card h2.h5 { font-size: 1.3rem; }
