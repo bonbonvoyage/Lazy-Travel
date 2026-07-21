@@ -1,0 +1,154 @@
+﻿{
+   "CodeGenerationMode": 4,
+   "ContextClassName": "LazyTravelDBContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "IrregularWords": null,
+   "MinimumProductVersion": "2.6.1604",
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models\/EfModels",
+   "PluralRules": null,
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "LazyTravel",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "SingularRules": null,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[dbo].[AdminLogs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AdminPermissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Blocks]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Expenses]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExpenseSplits]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExternalLogins]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Follows]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumComments]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumImages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumInteracts]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumPosts]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FriendRequests]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Friendships]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[GroupMembers]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ItineraryNodes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[JoinRequests]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[LoginHistories]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Members]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MemberSubscriptions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MemberTokens]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Notifications]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PostInteractions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Reports]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SubscriptionPlans]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TravelGroups]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VlogPosts]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": false,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false,
+   "UseTypedTvpParameters": true
+}

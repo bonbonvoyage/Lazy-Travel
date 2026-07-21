@@ -1,0 +1,346 @@
+﻿@model IEnumerable<LazyTravel.Models.Services.EmployeeDto>
+
+@{
+    ViewData["Title"] = "系統員工與權限管理 (RBAC)";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    // 根據規格書定義的權限群組字典
+    var permissionMatrix = new Dictionary<string, string>
+    {
+        { "Mod_Content", "內容與社群" },
+        { "Mod_Audit", "檢舉與客服" },
+        { "Mod_Member", "會員基本管理" },
+        { "Mod_Security", "資安與防護" },
+        { "Mod_Finance", "財務與訂閱" },
+        { "Mod_Data", "數據分析" },
+        { "Mod_System", "系統與權限" }
+    };
+
+    // 🌟 商業邏輯：依據權限自動判定所屬部門
+    string GetDepartment(List<string> perms, byte role)
+    {
+        if (role == 2) return "管理高層";
+        if (perms.Contains("Mod_System")) return "資訊部";
+        if (perms.Contains("Mod_Security")) return "資安部";
+        if (perms.Contains("Mod_Finance")) return "財務部";
+        if (perms.Contains("Mod_Member") || perms.Contains("Mod_Audit")) return "客服營運部";
+        if (perms.Contains("Mod_Content")) return "行銷社群部";
+        if (perms.Contains("Mod_Data")) return "數據分析部";
+        return "一般行政";
+    }
+
+    // 🌟 商業邏輯：對應部門的 Badge 顏色
+    string GetDeptBadgeClass(string dept)
+    {
+        return dept switch
+        {
+            "管理高層" => "bg-danger text-white",
+            "資訊部" => "bg-dark text-white",
+            "資安部" => "bg-secondary text-white",
+            "財務部" => "bg-warning text-dark",
+            "客服營運部" => "badge-soft-primary",
+            "行銷社群部" => "badge-soft-success",
+            "數據分析部" => "badge-soft-info",
+            _ => "bg-light text-dark"
+        };
+    }
+}
+
+<style>
+    .premium-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        background-color: #ffffff;
+    }
+
+    .badge-soft-primary {
+        background-color: #e0f2fe;
+        color: #0284c7;
+    }
+
+    .badge-soft-danger {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .badge-soft-success {
+        background-color: #d1fae5;
+        color: #059669;
+    }
+
+    .badge-soft-info {
+        background-color: #cffafe;
+        color: #0891b2;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+        transition: background-color 0.2s;
+    }
+
+    /* 權限小方塊樣式 */
+    .perm-badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background-color: #f8fafc;
+        color: #475569;
+        display: inline-block;
+        margin: 2px;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1 text-gray-800 fw-bold">
+            <i class="fas fa-building text-primary me-2"></i>內部組織與權限管理
+        </h1>
+        <p class="text-muted mb-0 small">管理系統存取權限，落實最小授權原則 (RBAC)</p>
+    </div>
+    <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#promoteModal">
+        <i class="fas fa-user-plus me-1"></i> 指派新員工
+    </button>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+        <i class="fas fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+        <i class="fas fa-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="premium-card mb-4 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-light text-muted fw-bold" style="font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">
+                    <tr>
+                        <th class="py-3 px-4 w-25">員工資訊</th>
+                        <th class="py-3 px-4">歸屬部門 / 層級</th>
+                        <th class="py-3 px-4 w-35">授權模組明細</th>
+                        <th class="py-3 px-4 text-center">安全管理</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var emp in Model)
+                    {
+                        string dept = GetDepartment(emp.Permissions, emp.Role);
+
+                        <tr>
+                            <td class="px-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark fs-6">@emp.Name <span class="text-muted small ms-1">#@emp.MemberID</span></div>
+                                        <div class="text-muted small font-monospace">@emp.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4">
+                                <span class="badge @GetDeptBadgeClass(dept) rounded-pill px-3 py-2 mb-1 d-inline-block">
+                                    @dept
+                                </span>
+                                @if (emp.Role == 2)
+                                {
+                                    <div class="small fw-bold text-danger mt-1"><i class="fas fa-crown me-1"></i>系統擁有者</div>
+                                }
+                                else
+                                {
+                                    <div class="small text-muted mt-1"><i class="fas fa-briefcase me-1"></i>一般專員</div>
+                                }
+                            </td>
+                            <td class="px-4">
+                                @if (emp.Role == 2)
+                                {
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary rounded-pill py-2 px-3">
+                                        <i class="fas fa-star me-1"></i>全站最高控制權 (無須配置)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex flex-wrap">
+                                        @foreach (var perm in emp.Permissions)
+                                        {
+                                            <span class="perm-badge">
+                                                @(permissionMatrix.ContainsKey(perm) ? permissionMatrix[perm] : perm)
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <td class="px-4 text-center">
+                                @if (emp.Role == 1)
+                                {
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm rounded-3 shadow-sm border px-3" type="button" data-bs-toggle="dropdown">
+                                            操作 <i class="fas fa-chevron-down ms-1 small"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                            <li>
+                                                <button class="dropdown-item py-2" onclick="openEditModal(@emp.MemberID, '@emp.Name', '@string.Join(",", emp.Permissions)')">
+                                                    <i class="fas fa-sliders-h text-primary me-2"></i> 變更授權模組
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger py-2" onclick="confirmDemote(@emp.MemberID, '@emp.Name')">
+                                                    <i class="fas fa-user-times text-danger me-2"></i> 撤銷職務 (降為會員)
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small"><i class="fas fa-lock me-1"></i>受保護帳號</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="promoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2"></i>新增員工帳號 (職務指派)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Promote" method="post">
+                <div class="modal-body p-4 bg-light">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <label class="form-label fw-bold text-primary mb-2">1. 綁定目標會員 (Email) <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control form-control-lg rounded-3 bg-light" placeholder="請輸入欲指派為員工的會員信箱" required />
+                            <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i>基於資安考量，系統不允許直接建立管理員。請目標人員先註冊一般會員後，再由本系統進行職務升級。</div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <label class="form-label fw-bold text-primary mb-3">2. 配置存取權限 (至少勾選一項) <span class="text-danger">*</span></label>
+                            <div class="row g-3">
+                                @foreach (var perm in permissionMatrix)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-check custom-checkbox border rounded-3 p-3 bg-white h-100 shadow-sm transition-hover">
+                                            <input class="form-check-input ms-1 me-2" type="checkbox" name="permissions" value="@perm.Key" id="chk_@perm.Key">
+                                            <label class="form-check-label fw-bold w-100" style="cursor: pointer;" for="chk_@perm.Key">
+                                                @perm.Value
+                                                <div class="text-muted small fw-normal mt-1">授權代碼: <span class="font-monospace">@perm.Key</span></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-white">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">確認發配權限</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-warning border-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-sliders-h me-2"></i>變更員工授權模組</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="EditPermissions" method="post">
+                <input type="hidden" name="adminId" id="editAdminId" />
+                <div class="modal-body p-4 bg-light">
+                    <div class="alert alert-warning border-0 shadow-sm mb-4">
+                        正在變更 <strong id="editEmpName" class="fs-5"></strong> 的存取權限。部門歸屬將依據新權限自動重新判定。
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <label class="form-label fw-bold text-dark mb-3">勾選要保留或新增的權限：</label>
+                            <div class="row g-3">
+                                @foreach (var perm in permissionMatrix)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-check custom-checkbox border border-warning rounded-3 p-3 bg-white h-100 shadow-sm">
+                                            <input class="form-check-input edit-chk ms-1 me-2 border-warning" type="checkbox" name="permissions" value="@perm.Key" id="edit_chk_@perm.Key">
+                                            <label class="form-check-label fw-bold w-100 text-dark" style="cursor: pointer;" for="edit_chk_@perm.Key">
+                                                @perm.Value
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-white">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-5 fw-bold shadow-sm">儲存變更</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="demoteForm" asp-action="Demote" method="post" class="d-none">
+    <input type="hidden" name="adminId" id="demoteAdminId" />
+</form>
+
+<style>
+    .transition-hover:hover {
+        border-color: #0d6efd !important;
+        background-color: #f8f9fa !important;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function openEditModal(id, name, permissionsStr) {
+            document.getElementById('editAdminId').value = id;
+            document.getElementById('editEmpName').textContent = name;
+
+            // 清空所有勾選
+            document.querySelectorAll('.edit-chk').forEach(cb => cb.checked = false);
+
+            // 將傳入的字串切開，打勾現有的權限
+            if(permissionsStr) {
+                const perms = permissionsStr.split(',');
+                perms.forEach(p => {
+                    const cb = document.getElementById('edit_chk_' + p);
+                    if(cb) cb.checked = true;
+                });
+            }
+
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        function confirmDemote(id, name) {
+            if (confirm(`【重大資安操作】\n\n您即將撤銷 [${name}] 的員工職務。\n撤銷後該帳號將立刻失去後台登入資格，並降級為一般會員！\n\n請問確定要執行嗎？`)) {
+                document.getElementById('demoteAdminId').value = id;
+                document.getElementById('demoteForm').submit();
+            }
+        }
+    </script>
+}

@@ -47,6 +47,8 @@
             <a class="nav-link @NavActive("TravelGroups")" asp-area="Admin" asp-controller="TravelGroups" asp-action="Index">揪團管理</a>
 
             <div class="nav-group-label">系統</div>
+                <!-- 🌟 新增下面這一行 -->
+                <a class="nav-link @NavActive("Employees")" asp-area="Admin" asp-controller="Employees" asp-action="Index">員工與權限管理</a>
             <a class="nav-link @NavActive("Notifications")" asp-area="Admin" asp-controller="Notifications" asp-action="Index">公告與通知</a>
             <a class="nav-link @NavActive("Subscriptions")" asp-area="Admin" asp-controller="Subscriptions" asp-action="Index">訂閱方案</a>
             <a class="nav-link @NavActive("Analytics")" asp-area="Admin" asp-controller="Analytics" asp-action="Index">數據分析</a>
