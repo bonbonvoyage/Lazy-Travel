@@ -1,16 +1,20 @@
 @model LazyTravel.Models.ViewModels.TravelGroupAdminIndexViewModel
 
 @{
-    string activeTabClass = Model.Tab == "deleted" || Model.Tab == "log" ? "" : "active";
-    string activePaneClass = Model.Tab == "deleted" || Model.Tab == "log" ? "tab-pane fade" : "tab-pane fade show active";
+    bool IsTab(string tab) => Model.Tab == tab;
+    string activeTabClass = IsTab("deleted") || IsTab("log") || IsTab("abnormal") ? "" : "active";
+    string activePaneClass = IsTab("deleted") || IsTab("log") || IsTab("abnormal") ? "tab-pane fade" : "tab-pane fade show active";
 
-    string deletedTabClass = Model.Tab == "deleted" ? "active" : "";
-    string deletedPaneClass = Model.Tab == "deleted" ? "tab-pane fade show active" : "tab-pane fade";
+    string abnormalTabClass = IsTab("abnormal") ? "active" : "";
+    string abnormalPaneClass = IsTab("abnormal") ? "tab-pane fade show active" : "tab-pane fade";
 
-    string logTabClass = Model.Tab == "log" ? "active" : "";
-    string logPaneClass = Model.Tab == "log" ? "tab-pane fade show active" : "tab-pane fade";
+    string deletedTabClass = IsTab("deleted") ? "active" : "";
+    string deletedPaneClass = IsTab("deleted") ? "tab-pane fade show active" : "tab-pane fade";
 
-    string BuildPageUrl(string tab, int activePage, int deletedPage, int logPage)
+    string logTabClass = IsTab("log") ? "active" : "";
+    string logPaneClass = IsTab("log") ? "tab-pane fade show active" : "tab-pane fade";
+
+    string BuildPageUrl(string tab, int activePage, int abnormalPage, int deletedPage, int logPage)
     {
         var query = new List<string>();
 
@@ -36,45 +40,92 @@
         }
 
         Add("selectedReviewStatus", Model.SelectedReviewStatus);
-
         Add("sortOrder", Model.SortOrder);
         Add("activePage", activePage.ToString());
+        Add("abnormalPage", abnormalPage.ToString());
         Add("deletedPage", deletedPage.ToString());
         Add("logPage", logPage.ToString());
 
         return Url.Action("Index", "TravelGroups", new { area = "Admin" }) + "?" + string.Join("&", query);
+    }
+
+    (int Start, int End) GetPageWindow(int currentPage, int totalPages)
+    {
+        const int maxVisiblePages = 10;
+
+        if (totalPages <= maxVisiblePages)
+        {
+            return (1, totalPages);
+        }
+
+        var halfWindow = maxVisiblePages / 2;
+        var start = currentPage - halfWindow + 1;
+
+        if (start < 1)
+        {
+            start = 1;
+        }
+
+        var end = start + maxVisiblePages - 1;
+
+        if (end > totalPages)
+        {
+            end = totalPages;
+            start = end - maxVisiblePages + 1;
+        }
+
+        return (start, end);
     }
 }
 
 <ul class="nav nav-tabs admin-tabs" id="groupTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <a class="nav-link ajax-nav-link @activeTabClass"
-           href="@BuildPageUrl("active", Model.ActivePage, Model.DeletedPage, Model.LogPage)">
-            揪團清單
+           href="@BuildPageUrl("active", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage, Model.LogPage)">
+            所有揪團清單 <span class="tab-count">@Model.TotalGroupsCount</span>
+        </a>
+    </li>
+
+    <li class="nav-item" role="presentation">
+        <a class="nav-link ajax-nav-link @abnormalTabClass"
+           href="@BuildPageUrl("abnormal", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage, Model.LogPage)">
+            異常揪團清單 <span class="tab-count">@Model.AbnormalGroupsCount</span>
         </a>
     </li>
 
     <li class="nav-item" role="presentation">
         <a class="nav-link ajax-nav-link @deletedTabClass"
-           href="@BuildPageUrl("deleted", Model.ActivePage, Model.DeletedPage, Model.LogPage)">
-            已刪除清單
+           href="@BuildPageUrl("deleted", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage, Model.LogPage)">
+            已刪除清單 <span class="tab-count">@Model.DeletedGroupsCount</span>
         </a>
     </li>
 
     <li class="nav-item" role="presentation">
         <a class="nav-link ajax-nav-link @logTabClass"
-           href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, Model.LogPage)">
-            異動紀錄
+           href="@BuildPageUrl("log", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage, Model.LogPage)">
+            異動紀錄 <span class="tab-count">@Model.LogsCount</span>
         </a>
     </li>
 </ul>
 
 <div class="tab-content admin-tab-panel" id="groupTabsContent">
-
-    <!-- 揪團清單 -->
     <div class="@activePaneClass" id="activeGroups" role="tabpanel">
-
         <table class="table table-bordered table-hover admin-table-card">
+            <colgroup>
+                <col style="width: 4.8%;" />
+                <col style="width: 5%;" />
+                <col style="width: 19%;" />
+                <col style="width: 6.2%;" />
+                <col style="width: 5.2%;" />
+                <col style="width: 11.5%;" />
+                <col style="width: 5.7%;" />
+                <col style="width: 5.7%;" />
+                <col style="width: 6.2%;" />
+                <col style="width: 7.5%;" />
+                <col style="width: 14.2%;" />
+                <col style="width: 10.4%;" />
+                <col style="width: 4.6%;" />
+            </colgroup>
             <thead>
                 <tr>
                     <th>操作</th>
@@ -85,10 +136,8 @@
                     <th>團主</th>
                     <th>目前人數</th>
                     <th>人數上限</th>
-                    <th>加入規則</th>
                     <th>揪團狀態</th>
                     <th>審核狀態</th>
-                    <th>公開</th>
                     <th>行程時間</th>
                     <th>建立時間</th>
                     <th>詳細</th>
@@ -99,13 +148,11 @@
                 {
                     foreach (var item in Model.ActiveGroups)
                     {
-                        <tr class="@(item.GroupId % 2 != 0 ? "zebra-row" : "")"
-                            ondblclick="location.href='@Url.Action("Details", "TravelGroups", new { area = "Admin", id = item.GroupId })'"
+                        <tr class="group-detail-row @(item.GroupId % 2 != 0 ? "zebra-row" : "")"
+                            data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })"
                             style="cursor:pointer;">
                             <td>
-                                @if (item.ReviewStatus == "檢舉審核中" ||
-                                                        item.ReviewStatus == "已下架" ||
-                                                        item.ReviewStatus == "違規")
+                                @if (item.ReviewStatus == "違規")
                                 {
                                     <form asp-area="Admin"
                                           asp-controller="TravelGroups"
@@ -122,30 +169,38 @@
                             <td>@item.GroupTitle</td>
                             <td>@item.Country</td>
                             <td>@item.Region</td>
-                            <td>@item.OwnerMember?.Name</td>
+                            <td>
+                                @if (item.OwnerMember != null)
+                                {
+                                    <span>@item.OwnerMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a><span>)</span>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
-                            <td>@item.JoinRule</td>
                             <td>@item.GroupStatus</td>
                             <td>@item.ReviewStatus</td>
-                            <td>@(item.IsPublic ? "公開" : "不公開")</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
                                 {
-                                    @($"{item.StartDate:yyyy/MM/dd} ～ {item.EndDate:yyyy/MM/dd}")
+                                    @($"{item.StartDate:yyyy-MM-dd} ～ {item.EndDate:yyyy-MM-dd}")
                                 }
                                 else
                                 {
                                     <span>尚未設定</span>
                                 }
                             </td>
-                            <td>@item.CreatedAt</td>
+                            <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
                                 <a asp-area="Admin"
                                    asp-controller="TravelGroups"
                                    asp-action="Details"
                                    asp-route-id="@item.GroupId"
-                                   class="btn btn-sm btn-detail-pantone">
+                                   class="btn btn-sm btn-detail-pantone ajax-detail-link"
+                                   data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })">
                                     詳細
                                 </a>
                             </td>
@@ -155,7 +210,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="15" class="text-center">目前沒有揪團資料</td>
+                        <td colspan="13" class="text-center">目前沒有揪團資料</td>
                     </tr>
                 }
             </tbody>
@@ -164,19 +219,23 @@
         @if (Model.ActiveTotalPages > 1)
         {
             <nav>
-                <ul class="pagination">
+                <ul class="pagination justify-content-center">
                     <li class="page-item @(Model.ActivePage <= 1 ? "disabled" : "")">
                         <a class="page-link ajax-nav-link"
-                           href="@BuildPageUrl("active", Model.ActivePage - 1, Model.DeletedPage, Model.LogPage)">
+                           href="@BuildPageUrl("active", Model.ActivePage - 1, Model.AbnormalPage, Model.DeletedPage, Model.LogPage)">
                             上一頁
                         </a>
                     </li>
 
-                    @for (int i = 1; i <= Model.ActiveTotalPages; i++)
+                    @{
+                        var activePageWindow = GetPageWindow(Model.ActivePage, Model.ActiveTotalPages);
+                    }
+
+                    @for (int i = activePageWindow.Start; i <= activePageWindow.End; i++)
                     {
                         <li class="page-item @(Model.ActivePage == i ? "active" : "")">
                             <a class="page-link ajax-nav-link"
-                               href="@BuildPageUrl("active", i, Model.DeletedPage, Model.LogPage)">
+                               href="@BuildPageUrl("active", i, Model.AbnormalPage, Model.DeletedPage, Model.LogPage)">
                                 @i
                             </a>
                         </li>
@@ -184,7 +243,7 @@
 
                     <li class="page-item @(Model.ActivePage >= Model.ActiveTotalPages ? "disabled" : "")">
                         <a class="page-link ajax-nav-link"
-                           href="@BuildPageUrl("active", Model.ActivePage + 1, Model.DeletedPage, Model.LogPage)">
+                           href="@BuildPageUrl("active", Model.ActivePage + 1, Model.AbnormalPage, Model.DeletedPage, Model.LogPage)">
                             下一頁
                         </a>
                     </li>
@@ -192,7 +251,7 @@
             </nav>
         }
 
-        <div class="d-flex align-items-center gap-2 mt-2">
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
             <span class="text-muted">目前第 @Model.ActivePage 頁，共 @Model.ActiveTotalPages 頁</span>
             <input type="number" min="1" max="@(Math.Max(Model.ActiveTotalPages, 1))"
                    id="activePageInput" value="@Model.ActivePage"
@@ -204,10 +263,23 @@
         </div>
     </div>
 
-    <!-- 已刪除清單 -->
-    <div class="@deletedPaneClass" id="deletedGroups" role="tabpanel">
-
+    <div class="@abnormalPaneClass" id="abnormalGroups" role="tabpanel">
         <table class="table table-bordered table-hover admin-table-card">
+            <colgroup>
+                <col style="width: 4.8%;" />
+                <col style="width: 5%;" />
+                <col style="width: 19%;" />
+                <col style="width: 6.2%;" />
+                <col style="width: 5.2%;" />
+                <col style="width: 11.5%;" />
+                <col style="width: 5.7%;" />
+                <col style="width: 5.7%;" />
+                <col style="width: 6.2%;" />
+                <col style="width: 7.5%;" />
+                <col style="width: 14.2%;" />
+                <col style="width: 10.4%;" />
+                <col style="width: 4.6%;" />
+            </colgroup>
             <thead>
                 <tr>
                     <th>操作</th>
@@ -218,10 +290,162 @@
                     <th>團主</th>
                     <th>目前人數</th>
                     <th>人數上限</th>
-                    <th>加入規則</th>
                     <th>揪團狀態</th>
                     <th>審核狀態</th>
-                    <th>公開</th>
+                    <th>行程時間</th>
+                    <th>建立時間</th>
+                    <th>詳細</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.AbnormalGroups != null && Model.AbnormalGroups.Any())
+                {
+                    foreach (var item in Model.AbnormalGroups)
+                    {
+                        <tr class="group-detail-row @(item.GroupId % 2 != 0 ? "zebra-row" : "")"
+                            data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })"
+                            style="cursor:pointer;">
+                            <td>
+                                @if (item.ReviewStatus == "違規")
+                                {
+                                    <form asp-area="Admin"
+                                          asp-controller="TravelGroups"
+                                          asp-action="Delete"
+                                          asp-route-id="@item.GroupId"
+                                          method="post"
+                                          onsubmit="return confirm('確定要將這筆揪團移至已刪除清單嗎？');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-danger">刪除</button>
+                                    </form>
+                                }
+                            </td>
+                            <td>@item.GroupId</td>
+                            <td>@item.GroupTitle</td>
+                            <td>@item.Country</td>
+                            <td>@item.Region</td>
+                            <td>
+                                @if (item.OwnerMember != null)
+                                {
+                                    <span>@item.OwnerMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a><span>)</span>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                            <td>@item.CurrentPeople</td>
+                            <td>@item.MaxPeople</td>
+                            <td>@item.GroupStatus</td>
+                            <td>@item.ReviewStatus</td>
+                            <td>
+                                @if (item.StartDate != null && item.EndDate != null)
+                                {
+                                    @($"{item.StartDate:yyyy-MM-dd} ～ {item.EndDate:yyyy-MM-dd}")
+                                }
+                                else
+                                {
+                                    <span>尚未設定</span>
+                                }
+                            </td>
+                            <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <a asp-area="Admin"
+                                   asp-controller="TravelGroups"
+                                   asp-action="Details"
+                                   asp-route-id="@item.GroupId"
+                                   class="btn btn-sm btn-detail-pantone ajax-detail-link"
+                                   data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })">
+                                    詳細
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="13" class="text-center">目前沒有異常揪團資料</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.AbnormalTotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.AbnormalPage <= 1 ? "disabled" : "")">
+                        <a class="page-link ajax-nav-link"
+                           href="@BuildPageUrl("abnormal", Model.ActivePage, Model.AbnormalPage - 1, Model.DeletedPage, Model.LogPage)">
+                            上一頁
+                        </a>
+                    </li>
+
+                    @{
+                        var abnormalPageWindow = GetPageWindow(Model.AbnormalPage, Model.AbnormalTotalPages);
+                    }
+
+                    @for (int i = abnormalPageWindow.Start; i <= abnormalPageWindow.End; i++)
+                    {
+                        <li class="page-item @(Model.AbnormalPage == i ? "active" : "")">
+                            <a class="page-link ajax-nav-link"
+                               href="@BuildPageUrl("abnormal", Model.ActivePage, i, Model.DeletedPage, Model.LogPage)">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.AbnormalPage >= Model.AbnormalTotalPages ? "disabled" : "")">
+                        <a class="page-link ajax-nav-link"
+                           href="@BuildPageUrl("abnormal", Model.ActivePage, Model.AbnormalPage + 1, Model.DeletedPage, Model.LogPage)">
+                            下一頁
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
+            <span class="text-muted">目前第 @Model.AbnormalPage 頁，共 @Model.AbnormalTotalPages 頁</span>
+            <input type="number" min="1" max="@(Math.Max(Model.AbnormalTotalPages, 1))"
+                   id="abnormalPageInput" value="@Model.AbnormalPage"
+                   class="form-control form-control-sm" style="width: 90px;" />
+            <button type="button" class="btn btn-sm btn-outline-primary"
+                    onclick="goToPage('abnormalPageInput', 'abnormal', @Model.AbnormalTotalPages)">
+                前往
+            </button>
+        </div>
+    </div>
+
+    <div class="@deletedPaneClass" id="deletedGroups" role="tabpanel">
+        <table class="table table-bordered table-hover admin-table-card">
+            <colgroup>
+                <col style="width: 4.8%;" />
+                <col style="width: 5%;" />
+                <col style="width: 19%;" />
+                <col style="width: 6.2%;" />
+                <col style="width: 5.2%;" />
+                <col style="width: 11.5%;" />
+                <col style="width: 5.7%;" />
+                <col style="width: 5.7%;" />
+                <col style="width: 6.2%;" />
+                <col style="width: 7.5%;" />
+                <col style="width: 14.2%;" />
+                <col style="width: 10.4%;" />
+                <col style="width: 4.6%;" />
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>操作</th>
+                    <th>編號</th>
+                    <th>房間名稱</th>
+                    <th>國家</th>
+                    <th>地區</th>
+                    <th>團主</th>
+                    <th>目前人數</th>
+                    <th>人數上限</th>
+                    <th>揪團狀態</th>
+                    <th>審核狀態</th>
                     <th>行程時間</th>
                     <th>建立時間</th>
                     <th>詳細</th>
@@ -232,8 +456,8 @@
                 {
                     foreach (var item in Model.DeletedGroups)
                     {
-                        <tr class="@(item.GroupId % 2 != 0 ? "zebra-row" : "")"
-                            ondblclick="location.href='@Url.Action("Details", "TravelGroups", new { area = "Admin", id = item.GroupId })'"
+                        <tr class="group-detail-row @(item.GroupId % 2 != 0 ? "zebra-row" : "")"
+                            data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })"
                             style="cursor:pointer;">
                             <td>
                                 <form asp-area="Admin"
@@ -250,30 +474,38 @@
                             <td>@item.GroupTitle</td>
                             <td>@item.Country</td>
                             <td>@item.Region</td>
-                            <td>@item.OwnerMember?.Name</td>
+                            <td>
+                                @if (item.OwnerMember != null)
+                                {
+                                    <span>@item.OwnerMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a><span>)</span>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
-                            <td>@item.JoinRule</td>
                             <td>@item.GroupStatus</td>
                             <td>@item.ReviewStatus</td>
-                            <td>@(item.IsPublic ? "公開" : "不公開")</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
                                 {
-                                    @($"{item.StartDate:yyyy/MM/dd} ～ {item.EndDate:yyyy/MM/dd}")
+                                    @($"{item.StartDate:yyyy-MM-dd} ～ {item.EndDate:yyyy-MM-dd}")
                                 }
                                 else
                                 {
                                     <span>尚未設定</span>
                                 }
                             </td>
-                            <td>@item.CreatedAt</td>
+                            <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
                                 <a asp-area="Admin"
                                    asp-controller="TravelGroups"
                                    asp-action="Details"
                                    asp-route-id="@item.GroupId"
-                                   class="btn btn-sm btn-detail-pantone">
+                                   class="btn btn-sm btn-detail-pantone ajax-detail-link"
+                                   data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })">
                                     詳細
                                 </a>
                             </td>
@@ -283,7 +515,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="15" class="text-center">目前沒有已刪除資料</td>
+                        <td colspan="13" class="text-center">目前沒有已刪除資料</td>
                     </tr>
                 }
             </tbody>
@@ -292,19 +524,23 @@
         @if (Model.DeletedTotalPages > 1)
         {
             <nav>
-                <ul class="pagination">
+                <ul class="pagination justify-content-center">
                     <li class="page-item @(Model.DeletedPage <= 1 ? "disabled" : "")">
                         <a class="page-link ajax-nav-link"
-                           href="@BuildPageUrl("deleted", Model.ActivePage, Model.DeletedPage - 1, Model.LogPage)">
+                           href="@BuildPageUrl("deleted", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage - 1, Model.LogPage)">
                             上一頁
                         </a>
                     </li>
 
-                    @for (int i = 1; i <= Model.DeletedTotalPages; i++)
+                    @{
+                        var deletedPageWindow = GetPageWindow(Model.DeletedPage, Model.DeletedTotalPages);
+                    }
+
+                    @for (int i = deletedPageWindow.Start; i <= deletedPageWindow.End; i++)
                     {
                         <li class="page-item @(Model.DeletedPage == i ? "active" : "")">
                             <a class="page-link ajax-nav-link"
-                               href="@BuildPageUrl("deleted", Model.ActivePage, i, Model.LogPage)">
+                               href="@BuildPageUrl("deleted", Model.ActivePage, Model.AbnormalPage, i, Model.LogPage)">
                                 @i
                             </a>
                         </li>
@@ -312,7 +548,7 @@
 
                     <li class="page-item @(Model.DeletedPage >= Model.DeletedTotalPages ? "disabled" : "")">
                         <a class="page-link ajax-nav-link"
-                           href="@BuildPageUrl("deleted", Model.ActivePage, Model.DeletedPage + 1, Model.LogPage)">
+                           href="@BuildPageUrl("deleted", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage + 1, Model.LogPage)">
                             下一頁
                         </a>
                     </li>
@@ -320,7 +556,7 @@
             </nav>
         }
 
-        <div class="d-flex align-items-center gap-2 mt-2">
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
             <span class="text-muted">目前第 @Model.DeletedPage 頁，共 @Model.DeletedTotalPages 頁</span>
             <input type="number" min="1" max="@(Math.Max(Model.DeletedTotalPages, 1))"
                    id="deletedPageInput" value="@Model.DeletedPage"
@@ -332,9 +568,7 @@
         </div>
     </div>
 
-    <!-- 異動紀錄清單 -->
     <div class="@logPaneClass" id="groupLogs" role="tabpanel">
-
         <table class="table table-bordered table-hover admin-table-card">
             <thead>
                 <tr>
@@ -355,7 +589,9 @@
                 {
                     foreach (var item in Model.Logs)
                     {
-                        <tr class="@(item.LogId % 2 != 0 ? "zebra-row" : "")">
+                        <tr class="group-detail-row @(item.LogId % 2 != 0 ? "zebra-row" : "")"
+                            data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })"
+                            style="cursor:pointer;">
                             <td>@item.LogId</td>
                             <td>@item.GroupId</td>
                             <td>@item.ChangeType</td>
@@ -363,14 +599,24 @@
                             <td>@(string.IsNullOrWhiteSpace(item.OldValue) ? "—" : item.OldValue)</td>
                             <td>@(string.IsNullOrWhiteSpace(item.NewValue) ? "—" : item.NewValue)</td>
                             <td>@(string.IsNullOrWhiteSpace(item.Remark) ? "—" : item.Remark)</td>
-                            <td>@(item.ChangedByMember?.Name ?? "系統")</td>
-                            <td>@item.CreatedAt</td>
+                            <td>
+                                @if (item.ChangedByMember != null)
+                                {
+                                    <span>@item.ChangedByMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.ChangedByMember.MemberId">@item.ChangedByMember.MemberId</a><span>)</span>
+                                }
+                                else
+                                {
+                                    <span>系統</span>
+                                }
+                            </td>
+                            <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
                                 <a asp-area="Admin"
                                    asp-controller="TravelGroups"
                                    asp-action="Details"
                                    asp-route-id="@item.GroupId"
-                                   class="btn btn-sm btn-detail-pantone">
+                                   class="btn btn-sm btn-detail-pantone ajax-detail-link"
+                                   data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })">
                                     詳細
                                 </a>
                             </td>
@@ -389,19 +635,23 @@
         @if (Model.LogTotalPages > 1)
         {
             <nav>
-                <ul class="pagination">
+                <ul class="pagination justify-content-center">
                     <li class="page-item @(Model.LogPage <= 1 ? "disabled" : "")">
                         <a class="page-link ajax-nav-link"
-                           href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, Model.LogPage - 1)">
+                           href="@BuildPageUrl("log", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage, Model.LogPage - 1)">
                             上一頁
                         </a>
                     </li>
 
-                    @for (int i = 1; i <= Model.LogTotalPages; i++)
+                    @{
+                        var logPageWindow = GetPageWindow(Model.LogPage, Model.LogTotalPages);
+                    }
+
+                    @for (int i = logPageWindow.Start; i <= logPageWindow.End; i++)
                     {
                         <li class="page-item @(Model.LogPage == i ? "active" : "")">
                             <a class="page-link ajax-nav-link"
-                               href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, i)">
+                               href="@BuildPageUrl("log", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage, i)">
                                 @i
                             </a>
                         </li>
@@ -409,7 +659,7 @@
 
                     <li class="page-item @(Model.LogPage >= Model.LogTotalPages ? "disabled" : "")">
                         <a class="page-link ajax-nav-link"
-                           href="@BuildPageUrl("log", Model.ActivePage, Model.DeletedPage, Model.LogPage + 1)">
+                           href="@BuildPageUrl("log", Model.ActivePage, Model.AbnormalPage, Model.DeletedPage, Model.LogPage + 1)">
                             下一頁
                         </a>
                     </li>
@@ -417,7 +667,7 @@
             </nav>
         }
 
-        <div class="d-flex align-items-center gap-2 mt-2">
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
             <span class="text-muted">目前第 @Model.LogPage 頁，共 @Model.LogTotalPages 頁</span>
             <input type="number" min="1" max="@(Math.Max(Model.LogTotalPages, 1))"
                    id="logPageInput" value="@Model.LogPage"

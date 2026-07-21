@@ -7,6 +7,9 @@ namespace LazyTravel.Models.ViewModels
         // 揪團清單
         public List<TravelGroup> ActiveGroups { get; set; } = new();
 
+        // 異常揪團清單
+        public List<TravelGroup> AbnormalGroups { get; set; } = new();
+
         // 已刪除清單
         public List<TravelGroup> DeletedGroups { get; set; } = new();
 
@@ -22,16 +25,18 @@ namespace LazyTravel.Models.ViewModels
 
         // 分頁
         public int ActivePage { get; set; } = 1;
+        public int AbnormalPage { get; set; } = 1;
         public int DeletedPage { get; set; } = 1;
         public int LogPage { get; set; } = 1;
 
         public int ActiveTotalPages { get; set; }
+        public int AbnormalTotalPages { get; set; }
         public int DeletedTotalPages { get; set; }
         public int LogTotalPages { get; set; }
 
         public int PageSize { get; set; } = 10;
 
-        // 目前所在頁籤：active / deleted / log
+        // 目前所在頁籤：active / abnormal / deleted / log
         public string Tab { get; set; } = "active";
 
         // 審核狀態單選（唯一保留的篩選分類）
@@ -43,8 +48,7 @@ namespace LazyTravel.Models.ViewModels
         // 儀表板統計
         public int TotalGroupsCount { get; set; }
         public int AbnormalGroupsCount { get; set; }
-
-        // 與上個月相比的新增揪團數增加率（%）；null 表示上個月無資料，無法計算比較
-        public double? NewGroupsGrowthRatePercent { get; set; }
+        public int DeletedGroupsCount { get; set; }
+        public int LogsCount { get; set; }
     }
 }

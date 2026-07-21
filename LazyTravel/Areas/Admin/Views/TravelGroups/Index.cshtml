@@ -2,17 +2,6 @@
 
 @{
     ViewData["Title"] = "揪團管理";
-
-    string FormatGrowthRate(double? rate)
-    {
-        if (rate == null)
-        {
-            return "N/A";
-        }
-
-        var sign = rate.Value > 0 ? "+" : "";
-        return $"{sign}{rate.Value}%";
-    }
 }
 
 <h1>揪團管理</h1>
@@ -31,30 +20,6 @@
             @TempData["ErrorMessage"]
         </div>
     }
-</div>
-
-<!-- 儀表板統計列 -->
-<div class="row g-3 mb-3">
-    <div class="col-md-4">
-        <div class="stat-card">
-            <div class="stat-label">全部揪團</div>
-            <div class="stat-value">@Model.TotalGroupsCount</div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="stat-card">
-            <div class="stat-label">異常揪團</div>
-            <div class="stat-value">@Model.AbnormalGroupsCount</div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="stat-card">
-            <div class="stat-label">與上個月新增揪團數增加率</div>
-            <div class="stat-value">@FormatGrowthRate(Model.NewGroupsGrowthRatePercent)</div>
-        </div>
-    </div>
 </div>
 
 <!-- 篩選列（滿版單排） -->
@@ -83,7 +48,6 @@
             <option value="正常" selected="@(Model.SelectedReviewStatus == "正常")">正常</option>
             <option value="檢舉審核中" selected="@(Model.SelectedReviewStatus == "檢舉審核中")">審核檢舉中</option>
             <option value="違規" selected="@(Model.SelectedReviewStatus == "違規")">違規</option>
-            <option value="已下架" selected="@(Model.SelectedReviewStatus == "已下架")">已下架</option>
         </select>
     </div>
 
@@ -112,20 +76,29 @@
     </div>
 
     <div class="d-flex gap-2" style="align-self: flex-end;">
-        <button type="submit" class="btn btn-primary admin-field">搜尋</button>
-
-        
         <a asp-area="Admin"
            asp-controller="TravelGroups"
            asp-action="Index"
            class="btn admin-field btn-clear-pantone">
-            清除
+            重設
         </a>
     </div>
 </form>
 
-<div id="groupsRegion">
-    <partial name="_TravelGroupsTabContent" model="Model" />
+<div class="groups-workspace">
+    <div id="groupsRegion" class="groups-list-region">
+        <partial name="_TravelGroupsTabContent" model="Model" />
+    </div>
+
+    <div id="groupDetailsBackdrop" class="group-details-backdrop" hidden></div>
+
+    <aside id="groupDetailsPanel" class="group-details-panel" aria-live="polite" aria-hidden="true">
+        <div class="details-panel-header">
+            <h2 class="details-panel-title">揪團詳細內容</h2>
+            <button type="button" class="btn-close" id="closeGroupDetailsPanel" aria-label="關閉詳細內容"></button>
+        </div>
+        <div id="groupDetailsContent" class="details-panel-content"></div>
+    </aside>
 </div>
 
 <style>
@@ -148,17 +121,132 @@
         align-items: flex-start;
     }
 
-    /* 清除鈕：外觀比照搜尋鈕，色號 PANTONE 184C */
+    /* 重設鈕：使用品牌規格的海洋藍 */
     .btn-clear-pantone {
-        background-color: #F65275;
-        border-color: #F65275;
+        background-color: var(--sea-600);
+        border-color: var(--sea-600);
         color: #fff;
     }
     .btn-clear-pantone:hover,
     .btn-clear-pantone:focus {
-        background-color: #e13d61;
-        border-color: #e13d61;
+        background-color: var(--sea-700);
+        border-color: var(--sea-700);
         color: #fff;
+    }
+
+    .member-link {
+        color: var(--sea-600);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .member-link:hover,
+    .member-link:focus {
+        color: var(--sea-700);
+        text-decoration: underline;
+    }
+
+    .groups-workspace {
+        position: relative;
+        transition: padding-right .25s ease;
+    }
+
+    .groups-workspace.details-open {
+        padding-right: min(520px, 42vw);
+    }
+
+    .groups-list-region {
+        overflow-x: auto;
+    }
+
+    #activeGroups .admin-table-card,
+    #abnormalGroups .admin-table-card,
+    #deletedGroups .admin-table-card {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    #activeGroups .admin-table-card th,
+    #activeGroups .admin-table-card td,
+    #abnormalGroups .admin-table-card th,
+    #abnormalGroups .admin-table-card td,
+    #deletedGroups .admin-table-card th,
+    #deletedGroups .admin-table-card td {
+        overflow-wrap: anywhere;
+        vertical-align: middle;
+    }
+
+    .groups-list-region .admin-table-card td:first-child {
+        width: 56px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .groups-list-region .admin-table-card td:first-child form {
+        margin: 0;
+    }
+
+    .groups-list-region .admin-table-card td:first-child .btn-sm {
+        min-width: 44px;
+        padding: .16rem .45rem;
+        font-size: .78rem;
+        line-height: 1.25;
+    }
+
+    .group-details-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1040;
+        background-color: transparent;
+        pointer-events: none;
+    }
+
+    .group-details-backdrop.is-open {
+        pointer-events: none;
+    }
+
+    .group-details-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+        width: min(520px, 42vw);
+        overflow: auto;
+        background-color: var(--surface, #fff);
+        border-left: 1px solid var(--border-soft, #dee2e6);
+        box-shadow: -12px 0 28px rgba(31, 61, 78, .16);
+        padding: 1rem;
+        transform: translateX(100%);
+        transition: transform .25s ease;
+    }
+
+    .group-details-panel.is-open {
+        transform: translateX(0);
+    }
+
+    .details-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: .75rem;
+    }
+
+    .details-panel-title {
+        font-size: 1.05rem;
+        margin-bottom: 0;
+        color: var(--sea-800);
+    }
+
+    .group-details-panel .table {
+        margin-bottom: 0;
+    }
+
+    .group-details-panel th {
+        width: 110px;
+        white-space: nowrap;
+        color: var(--text-secondary);
     }
 
     /* 詳細鈕：色號 PANTONE 16-4032，文字白色 */
@@ -195,6 +283,46 @@
     .admin-tabs .nav-link.active {
         border-bottom-color: var(--surface, #fff);
     }
+
+    .tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.5rem;
+        margin-left: .35rem;
+        padding: .05rem .45rem;
+        border-radius: var(--radius-pill, 999px);
+        background-color: var(--sea-100);
+        color: var(--sea-800);
+        font-size: .78rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .groups-workspace,
+        .group-details-panel {
+            transition: none;
+        }
+    }
+
+    @@media (max-width: 1199.98px) {
+        .groups-workspace.details-open {
+            padding-right: 0;
+        }
+
+        .group-details-panel {
+            width: min(520px, 92vw);
+        }
+
+        .group-details-backdrop {
+            background-color: rgba(31, 61, 78, .18);
+        }
+
+        .group-details-backdrop.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
 </style>
 
 <script>
@@ -215,6 +343,8 @@
 
         if (tabName === 'active') {
             params.set('activePage', page);
+        } else if (tabName === 'abnormal') {
+            params.set('abnormalPage', page);
         } else if (tabName === 'deleted') {
             params.set('deletedPage', page);
         } else if (tabName === 'log') {
@@ -261,8 +391,91 @@
             });
     }
 
+    function openGroupDetailsPanel() {
+        var panel = document.getElementById('groupDetailsPanel');
+        var backdrop = document.getElementById('groupDetailsBackdrop');
+        var workspace = document.querySelector('.groups-workspace');
+
+        if (!panel) {
+            return;
+        }
+
+        panel.classList.add('is-open');
+        panel.setAttribute('aria-hidden', 'false');
+
+        if (workspace) {
+            workspace.classList.add('details-open');
+        }
+
+        if (backdrop) {
+            backdrop.hidden = false;
+            window.requestAnimationFrame(function () {
+                backdrop.classList.add('is-open');
+            });
+        }
+    }
+
+    function closeGroupDetailsPanel() {
+        var panel = document.getElementById('groupDetailsPanel');
+        var backdrop = document.getElementById('groupDetailsBackdrop');
+        var workspace = document.querySelector('.groups-workspace');
+
+        if (panel) {
+            panel.classList.remove('is-open');
+            panel.setAttribute('aria-hidden', 'true');
+        }
+
+        if (workspace) {
+            workspace.classList.remove('details-open');
+        }
+
+        if (backdrop) {
+            backdrop.classList.remove('is-open');
+            window.setTimeout(function () {
+                backdrop.hidden = true;
+            }, 200);
+        }
+    }
+
+    function loadGroupDetails(url, fallbackUrl) {
+        var panel = document.getElementById('groupDetailsPanel');
+        var content = document.getElementById('groupDetailsContent');
+        if (!panel || !content) {
+            window.location.href = fallbackUrl || url;
+            return;
+        }
+
+        openGroupDetailsPanel();
+        content.style.opacity = '0.5';
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('載入失敗');
+                }
+                return response.text();
+            })
+            .then(function (html) {
+                content.innerHTML = html;
+                content.style.opacity = '1';
+            })
+            .catch(function () {
+                content.style.opacity = '1';
+                window.location.href = fallbackUrl || url;
+            });
+    }
+
     // 事件代理：攔截頁籤與分頁連結的點擊，改用 AJAX 載入，不重新整理頁面
     document.addEventListener('click', function (e) {
+        var detailLink = e.target.closest('.ajax-detail-link');
+        if (detailLink) {
+            e.preventDefault();
+            loadGroupDetails(detailLink.dataset.detailUrl || detailLink.getAttribute('href'), detailLink.getAttribute('href'));
+            return;
+        }
+
         var link = e.target.closest('.ajax-nav-link');
         if (!link) {
             return;
@@ -271,4 +484,76 @@
         e.preventDefault();
         loadGroupsRegion(link.getAttribute('href'));
     });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.ajax-detail-link')) {
+            return;
+        }
+
+        if (e.target.closest('#closeGroupDetailsPanel') || e.target.closest('#groupDetailsBackdrop')) {
+            closeGroupDetailsPanel();
+            return;
+        }
+
+        var panel = document.getElementById('groupDetailsPanel');
+        if (panel && panel.classList.contains('is-open') &&
+            !e.target.closest('#groupDetailsPanel') &&
+            !e.target.closest('.ajax-detail-link')) {
+            closeGroupDetailsPanel();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeGroupDetailsPanel();
+        }
+    });
+
+    document.addEventListener('dblclick', function (e) {
+        if (e.target.closest('a, button, input, select, textarea, form')) {
+            return;
+        }
+
+        var row = e.target.closest('.group-detail-row');
+        if (!row || !row.dataset.detailUrl) {
+            return;
+        }
+
+        loadGroupDetails(row.dataset.detailUrl);
+    });
+
+    (function () {
+        var form = document.getElementById('groupFilterForm');
+        if (!form) {
+            return;
+        }
+
+        var debounceTimer;
+        var baseUrl = form.getAttribute('action') || '@Url.Action("Index", "TravelGroups", new { area = "Admin" })';
+
+        function submitFilter(delay) {
+            window.clearTimeout(debounceTimer);
+            debounceTimer = window.setTimeout(function () {
+                var params = new URLSearchParams(new FormData(form));
+                params.set('activePage', '1');
+                params.set('abnormalPage', '1');
+                params.set('deletedPage', '1');
+                params.set('logPage', '1');
+
+                loadGroupsRegion(baseUrl + '?' + params.toString());
+            }, delay || 0);
+        }
+
+        form.addEventListener('change', function (e) {
+            if (e.target.matches('select, input[type="date"]')) {
+                submitFilter(0);
+            }
+        });
+
+        form.addEventListener('input', function (e) {
+            if (e.target.matches('input[name="keyword"]')) {
+                submitFilter(500);
+            }
+        });
+    })();
 </script>

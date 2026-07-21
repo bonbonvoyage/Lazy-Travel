@@ -10,10 +10,15 @@ namespace LazyTravel.Areas.Admin.Controllers
     {
         private readonly LazyTravelContext _context;
 
-        // 審核狀態篩選僅開放這 4 種（配合前台簡化後的下拉選單）
+        // 審核狀態篩選僅開放這 3 種（配合前台簡化後的下拉選單）
         private static readonly string[] AllowedReviewStatuses =
         {
-            "正常", "檢舉審核中", "違規", "已下架"
+            "正常", "檢舉審核中", "違規"
+        };
+
+        private static readonly string[] AbnormalReviewStatuses =
+        {
+            "檢舉審核中", "違規"
         };
 
         public TravelGroupsController(LazyTravelContext context)
@@ -28,6 +33,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             string? selectedReviewStatus,
             string sortOrder = "asc",
             int activePage = 1,
+            int abnormalPage = 1,
             int deletedPage = 1,
             int logPage = 1,
             string tab = "active")
@@ -78,23 +84,31 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             var activeQuery = query.Where(g => g.IsDelete == false);
+            var abnormalQuery = query.Where(g => g.IsDelete == false && AbnormalReviewStatuses.Contains(g.ReviewStatus));
             var deletedQuery = query.Where(g => g.IsDelete == true);
 
             // 排序：預設編號小到大
             if (sortOrder == "desc")
             {
                 activeQuery = activeQuery.OrderByDescending(g => g.GroupId);
+                abnormalQuery = abnormalQuery.OrderByDescending(g => g.GroupId);
                 deletedQuery = deletedQuery.OrderByDescending(g => g.GroupId);
             }
             else
             {
                 activeQuery = activeQuery.OrderBy(g => g.GroupId);
+                abnormalQuery = abnormalQuery.OrderBy(g => g.GroupId);
                 deletedQuery = deletedQuery.OrderBy(g => g.GroupId);
             }
 
             if (activePage < 1)
             {
                 activePage = 1;
+            }
+
+            if (abnormalPage < 1)
+            {
+                abnormalPage = 1;
             }
 
             if (deletedPage < 1)
@@ -108,6 +122,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             var activeTotalCount = await activeQuery.CountAsync();
+            var abnormalTotalCount = await abnormalQuery.CountAsync();
             var deletedTotalCount = await deletedQuery.CountAsync();
 
             // 異動紀錄清單：依建立時間新到舊排序，不套用揪團篩選條件（獨立瀏覽異動歷程）
@@ -119,42 +134,15 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             var logTotalCount = await logQuery.CountAsync();
 
-            // ---- 儀表板統計（不受篩選條件影響，反映全站現況） ----
-            var totalGroupsCount = await _context.TravelGroups
-                .Where(g => g.IsDelete == false)
-                .CountAsync();
-
-            var abnormalGroupsCount = await _context.TravelGroups
-                .Where(g => g.IsDelete == false && g.ReviewStatus != "正常")
-                .CountAsync();
-
-            var now = DateTime.Now;
-            var thisMonthStart = new DateTime(now.Year, now.Month, 1);
-            var lastMonthStart = thisMonthStart.AddMonths(-1);
-
-            var thisMonthNewCount = await _context.TravelGroups
-                .Where(g => g.CreatedAt >= thisMonthStart && g.CreatedAt < thisMonthStart.AddMonths(1))
-                .CountAsync();
-
-            var lastMonthNewCount = await _context.TravelGroups
-                .Where(g => g.CreatedAt >= lastMonthStart && g.CreatedAt < thisMonthStart)
-                .CountAsync();
-
-            double? growthRatePercent;
-            if (lastMonthNewCount == 0)
-            {
-                growthRatePercent = thisMonthNewCount > 0 ? (double?)null : 0;
-            }
-            else
-            {
-                growthRatePercent = Math.Round(
-                    (thisMonthNewCount - lastMonthNewCount) / (double)lastMonthNewCount * 100, 1);
-            }
-
             var vm = new TravelGroupAdminIndexViewModel
             {
                 ActiveGroups = await activeQuery
                     .Skip((activePage - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync(),
+
+                AbnormalGroups = await abnormalQuery
+                    .Skip((abnormalPage - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync(),
 
@@ -177,19 +165,22 @@ namespace LazyTravel.Areas.Admin.Controllers
                 SortOrder = sortOrder,
 
                 ActivePage = activePage,
+                AbnormalPage = abnormalPage,
                 DeletedPage = deletedPage,
                 LogPage = logPage,
 
                 ActiveTotalPages = (int)Math.Ceiling(activeTotalCount / (double)pageSize),
+                AbnormalTotalPages = (int)Math.Ceiling(abnormalTotalCount / (double)pageSize),
                 DeletedTotalPages = (int)Math.Ceiling(deletedTotalCount / (double)pageSize),
                 LogTotalPages = (int)Math.Ceiling(logTotalCount / (double)pageSize),
 
                 PageSize = pageSize,
                 Tab = tab,
 
-                TotalGroupsCount = totalGroupsCount,
-                AbnormalGroupsCount = abnormalGroupsCount,
-                NewGroupsGrowthRatePercent = growthRatePercent
+                TotalGroupsCount = activeTotalCount,
+                AbnormalGroupsCount = abnormalTotalCount,
+                DeletedGroupsCount = deletedTotalCount,
+                LogsCount = logTotalCount
             };
 
             // AJAX 局部更新：只回傳頁籤與清單區塊，不重整整頁
@@ -203,11 +194,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
-            var group = await _context.TravelGroups
-                .Include(g => g.OwnerMember)
-                .Include(g => g.GroupMembers)
-                    .ThenInclude(gm => gm.Member)
-                .FirstOrDefaultAsync(g => g.GroupId == id);
+            var group = await FindGroupDetailsAsync(id);
 
             if (group == null)
             {
@@ -215,6 +202,18 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             return View(group);
+        }
+
+        public async Task<IActionResult> DetailsPanel(int id)
+        {
+            var group = await FindGroupDetailsAsync(id);
+
+            if (group == null)
+            {
+                return NotFound();
+            }
+
+            return PartialView("_TravelGroupDetailsContent", group);
         }
 
         [HttpPost]
@@ -229,12 +228,10 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            // 只有異常審核狀態才允許後台軟刪除
-            if (group.ReviewStatus != "檢舉審核中" &&
-                group.ReviewStatus != "已下架" &&
-                group.ReviewStatus != "違規")
+            // 只有已判定違規的揪團才允許後台軟刪除
+            if (group.ReviewStatus != "違規")
             {
-                TempData["ErrorMessage"] = "只有檢舉或異常狀態的揪團可以刪除。";
+                TempData["ErrorMessage"] = "只有已判定違規的揪團可以刪除。";
                 return RedirectToAction(nameof(Index), new { tab = "active" });
             }
 
@@ -245,12 +242,13 @@ namespace LazyTravel.Areas.Admin.Controllers
             _context.TravelGroupsLogs.Add(new TravelGroupsLog
             {
                 GroupId = group.GroupId,
-                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID
-                ChangedByMemberId = null,
+                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID。
+                // 目前資料庫欄位不可為 NULL，暫以團主 ID 作為系統操作紀錄的占位值。
+                ChangedByMemberId = group.OwnerMemberId,
                 ChangeType = "刪除",
-                FieldName = null,
-                OldValue = null,
-                NewValue = null,
+                FieldName = "IsDelete",
+                OldValue = "0",
+                NewValue = "1",
                 Remark = $"審核狀態為「{group.ReviewStatus}」，移至已刪除清單。",
                 CreatedAt = DateTime.Now
             });
@@ -273,31 +271,25 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            // 還原只代表從已刪除清單移回正常清單
+            var oldReviewStatus = group.ReviewStatus;
+
+            // 還原代表從已刪除清單移回所有揪團清單，審核狀態回復正常
             group.IsDelete = false;
-
-            // 不主動把 ReviewStatus 改成正常，避免覆蓋原本的檢舉狀態
-            if (group.ReviewStatus == "正常" || group.ReviewStatus == "無違規")
-            {
-                group.IsPublic = true;
-            }
-            else
-            {
-                group.IsPublic = false;
-            }
-
+            group.ReviewStatus = "正常";
+            group.IsPublic = true;
             group.UpdatedAt = DateTime.Now;
 
             _context.TravelGroupsLogs.Add(new TravelGroupsLog
             {
                 GroupId = group.GroupId,
-                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID
-                ChangedByMemberId = null,
+                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID。
+                // 目前資料庫欄位不可為 NULL，暫以團主 ID 作為系統操作紀錄的占位值。
+                ChangedByMemberId = group.OwnerMemberId,
                 ChangeType = "還原",
-                FieldName = null,
-                OldValue = null,
-                NewValue = null,
-                Remark = "由已刪除清單還原至正常清單。",
+                FieldName = "ReviewStatus",
+                OldValue = oldReviewStatus,
+                NewValue = "正常",
+                Remark = "由已刪除清單還原至所有揪團清單，審核狀態回復正常。",
                 CreatedAt = DateTime.Now
             });
 
@@ -305,6 +297,15 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             TempData["SuccessMessage"] = "揪團已還原至正常清單。";
             return RedirectToAction(nameof(Index), new { tab = "active" });
+        }
+
+        private Task<TravelGroup?> FindGroupDetailsAsync(int id)
+        {
+            return _context.TravelGroups
+                .Include(g => g.OwnerMember)
+                .Include(g => g.GroupMembers)
+                    .ThenInclude(gm => gm.Member)
+                .FirstOrDefaultAsync(g => g.GroupId == id);
         }
     }
 }
