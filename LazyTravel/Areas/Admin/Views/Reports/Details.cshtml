@@ -1,0 +1,389 @@
+@model LazyTravel.ViewModels.ReportDetailsViewModel
+@using LazyTravel.Models
+
+@{
+    ViewData["Title"] = $"檢舉案件 #{Model.Report.Id}";
+    var suspendLevelClass = Model.PendingSuspensionDays >= 5 ? "level-severe" : "level-mild";
+    var suspendLevelLabel = Model.PendingSuspensionDays >= 5 ? "重度累犯" : "輕度累犯";
+
+    // 被檢舉對象卡:依 TargetType 決定圖示/標籤,以及要不要給連結
+    // 會員/Vlog 文章對應的後台頁面(MembersController/VlogPostsController)還沒做出來,先不給連結,避免點了 404
+    var (targetIcon, targetLabel, targetLinkController, targetLinkAction) = Model.Report.TargetType switch
+    {
+        ReportTargetType.Member => ("👤", "被檢舉會員", (string?)null, (string?)null),
+        ReportTargetType.VlogPost => ("📝", "被檢舉文章", (string?)null, (string?)null),
+        ReportTargetType.TravelGroup => ("🧳", "被檢舉揪團", "TravelGroups", "Details"),
+        _ => ("❓", "被檢舉對象", (string?)null, (string?)null)
+    };
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">檢舉審核台</a></li>
+    <li class="breadcrumb-item active" aria-current="page">案件 #@Model.Report.Id</li>
+}
+
+@section Styles {
+    <style>
+        /* 跟檢舉審核台列表一致:類別標籤 + 原因文字 + 狀態章放大 */
+        .report-reason-tag {
+            display: inline-block;
+            background-color: var(--sand-200);
+            color: var(--sand-500);
+            border-radius: var(--radius-pill);
+            font-size: .85rem;
+            font-weight: 500;
+            padding: .2rem .7rem;
+        }
+        .report-reason-text {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+        .status-pill {
+            font-size: .95rem;
+            padding: .3rem .9rem;
+        }
+
+        /* 判定成立會觸發停權時的提示卡:輕度(3天)/重度(5天以上)兩級 */
+        .suspend-warning-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-radius: var(--radius-md);
+            padding: .9rem 1.15rem;
+            margin-bottom: 1rem;
+        }
+        .suspend-warning-card .icon {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+        .suspend-warning-card .title {
+            font-weight: 600;
+            margin-bottom: .15rem;
+        }
+        .suspend-warning-card .days {
+            font-weight: 700;
+        }
+        .suspend-warning-card.level-mild {
+            background-color: var(--sand-100);
+            border: 1px solid var(--sand-400);
+        }
+        .suspend-warning-card.level-mild .days { color: var(--sand-500); }
+        .suspend-warning-card.level-severe {
+            background-color: var(--coral-100);
+            border: 1px solid var(--coral-600);
+        }
+        .suspend-warning-card.level-severe .days { color: var(--coral-600); }
+
+        /* 整體字體放大,案件內容跟審核區的欄位比較好讀 */
+        /* 內容本身沒那麼寬,卡片限制最大寬度並置中,避免寬螢幕時右側留一大片空白 */
+        .report-detail-card {
+            font-size: 1.05rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .report-detail-card th,
+        .report-detail-card td { font-size: 1rem; }
+        .report-detail-card h2.h5 { font-size: 1.3rem; }
+        .report-detail-card h3.h6 { font-size: 1.05rem; }
+
+        /* 處置備註欄放大,打字的人才看得清楚自己打了什麼,提示文字(括號那段)跟著一起放大 */
+        #judgeForm textarea.form-control {
+            font-size: 1.05rem;
+            padding: .65rem .8rem;
+        }
+        #judgeForm textarea.form-control::placeholder {
+            font-size: 1.05rem;
+        }
+        #judgeForm .form-check-label {
+            font-size: .95rem;
+        }
+
+        /* 被檢舉對象預覽,跟案件內容表格並排放在同一張卡片裡,不另外分欄 */
+        .report-info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .target-preview-inline {
+            flex: 0 0 220px;
+            text-align: center;
+            background-color: var(--sand-100);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+        }
+        .target-preview-inline .icon {
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+        .target-preview-inline .label {
+            color: var(--text-secondary);
+            font-size: .85rem;
+            margin-top: .4rem;
+        }
+        .target-preview-inline .title {
+            font-weight: 600;
+            margin: .25rem 0 .75rem;
+            word-break: break-word;
+        }
+    </style>
+}
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success py-2">@TempData["Message"]</div>
+}
+
+<div class="admin-table-card report-detail-card p-4">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h2 class="h5" style="font-family:var(--font-display); color:var(--sea-800); margin-bottom:.4rem;">
+                案件 #@Model.Report.Id・@Model.Report.TargetType.ToDisplayName()
+            </h2>
+            <span class="status-pill @Model.Report.Status.ToPillClass()">@Model.Report.Status.ToDisplayName()</span>
+        </div>
+        <a class="btn btn-sm btn-outline-primary" asp-action="Index">返回列表</a>
+    </div>
+
+    <div class="report-info-row">
+        <table class="table table-borderless" style="max-width:560px; flex:1 1 400px;">
+            <tbody>
+                <tr>
+                    <th class="text-muted" style="width:140px;">被檢舉對象</th>
+                    <td>
+                        @Model.Report.TargetTitle <span class="text-muted small">(Id: @Model.Report.TargetId)</span>
+                        @if (Model.RelatedReports.Any())
+                        {
+                            <span class="status-pill status-risk ms-2">
+                                此對象累計被檢舉 @(Model.RelatedReports.Count + 1) 次
+                            </span>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <th class="text-muted">被檢舉會員帳號</th>
+                    <td>
+                        @Model.Report.ReportedMemberAccount
+                        <span class="status-pill @(Model.UpheldCountForAccount > Model.SuspendThreshold ? "status-risk" : "status-pending") ms-2">
+                            已查證違規 @Model.UpheldCountForAccount 次(門檻 @Model.SuspendThreshold 次)
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="text-muted">檢舉人帳號</th>
+                    <td>
+                        @Model.Report.ReporterAccount
+                        @if (Model.MaliciousCountForReporter > 0)
+                        {
+                            <span class="status-pill @(Model.MaliciousCountForReporter > Model.SuspendThreshold ? "status-risk" : "status-pending") ms-2">
+                                已標記惡意檢舉 @Model.MaliciousCountForReporter 次(門檻 @Model.SuspendThreshold 次)
+                            </span>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <th class="text-muted">檢舉類別</th>
+                    <td><span class="report-reason-tag">@Model.Report.ReasonCategory.ToDisplayName()</span></td>
+                </tr>
+                <tr>
+                    <th class="text-muted">檢舉原因</th>
+                    <td class="report-reason-text">@Model.Report.Reason</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">補充說明</th>
+                    <td>@(string.IsNullOrEmpty(Model.Report.Description) ? "—" : Model.Report.Description)</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">檢舉時間</th>
+                    <td>@Model.Report.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="target-preview-inline">
+            <div class="icon">@targetIcon</div>
+            <div class="label">@targetLabel</div>
+            <div class="title">@Model.Report.TargetTitle</div>
+            @if (targetLinkController != null)
+            {
+                <a class="btn btn-sm btn-outline-primary" asp-area="Admin" asp-controller="@targetLinkController" asp-action="@targetLinkAction" asp-route-id="@Model.Report.TargetId">
+                    查看原始內容
+                </a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="對應後台頁面尚未開發">
+                    查看原始內容
+                </button>
+            }
+        </div>
+    </div>
+
+    <hr />
+
+    @if (Model.Report.Status == ReportStatus.Pending)
+    {
+        <h3 class="h6 mb-2" style="color:var(--text-secondary);">審核</h3>
+        @if (Model.PendingSuspensionDays.HasValue)
+        {
+            <div class="suspend-warning-card @suspendLevelClass">
+                <span class="icon">@(Model.PendingSuspensionDays >= 5 ? "🚫" : "⚠")</span>
+                <div>
+                    <div class="title">若判定「檢舉成立」將觸發自動停權・@suspendLevelLabel</div>
+                    <div class="small">
+                        此帳號累計違規將達 @(Model.UpheldCountForAccount + 1) 次,停權
+                        <span class="days">@Model.PendingSuspensionDays 天</span>
+                    </div>
+                </div>
+            </div>
+        }
+        <form asp-action="Judge" method="post" id="judgeForm" style="max-width:480px;">
+            <input type="hidden" name="id" value="@Model.Report.Id" />
+            <input type="hidden" name="decision" id="decisionInput" />
+            <textarea name="note" class="form-control mb-2" rows="4" maxlength="200"
+                      placeholder="處置備註(選填,最多 200 字)"></textarea>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="isMalicious" value="true" id="isMaliciousCheckbox" />
+                <label class="form-check-label small" for="isMaliciousCheckbox">
+                    標記為惡意檢舉(非單純誤判或證據不足)——只有判定「不成立」時生效
+                </label>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-danger judge-confirm-btn"
+                        data-decision="Upheld"
+                        data-confirm="確定要判定「檢舉成立」嗎?此動作無法復原,系統會通知被檢舉會員。@(Model.PendingSuspensionDays.HasValue ? $"⚠ 此帳號將觸發自動停權,共 {Model.PendingSuspensionDays} 天。" : "")">
+                    檢舉成立
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary judge-confirm-btn"
+                        id="dismissBtn" data-decision="Dismissed"
+                        data-confirm-base="確定要判定「不成立」嗎?此動作無法復原。"
+                        data-confirm-malicious="@(Model.PendingReporterSuspensionDays.HasValue ? $"⚠ 已勾選惡意檢舉,此檢舉人帳號將觸發自動停權,共 {Model.PendingReporterSuspensionDays} 天。" : "已勾選惡意檢舉,將計入該檢舉人的惡意檢舉次數。")">
+                    不成立
+                </button>
+            </div>
+        </form>
+
+        @* 判定確認彈窗,取代瀏覽器原生 confirm(),位置置中、樣式可控 *@
+        <div class="modal fade" id="judgeConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" style="font-family:var(--font-display); color:var(--sea-800);">確認判定</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                    </div>
+                    <div class="modal-body" id="judgeConfirmModalBody"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="judgeConfirmSubmitBtn">確定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <h3 class="h6 mb-2" style="color:var(--text-secondary);">審核結果</h3>
+        <table class="table table-borderless" style="max-width:480px;">
+            <tbody>
+                <tr>
+                    <th class="text-muted" style="width:110px;">審核人員</th>
+                    <td>@(Model.ReviewLog?.OperatorName ?? "—")</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">審核時間</th>
+                    <td>@(Model.ReviewLog != null ? Model.ReviewLog.CreatedAt.ToString("yyyy/MM/dd HH:mm") : "—")</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">處置備註</th>
+                    <td>@(string.IsNullOrEmpty(Model.Report.AdminNotes) ? "—" : Model.Report.AdminNotes)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="small text-muted mt-2">審核人員/時間取自 AdminLogs 操作紀錄(符合官方 Reports 表不存審核人資訊的設計)。</p>
+    }
+</div>
+
+@if (Model.RelatedReports.Any())
+{
+    <h3 class="h6 mt-4 mb-2" style="color:var(--text-secondary);">同一對象的其他檢舉紀錄</h3>
+    <div class="admin-table-card">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>案件</th>
+                    <th>檢舉人帳號</th>
+                    <th>檢舉原因</th>
+                    <th>檢舉時間</th>
+                    <th>狀態</th>
+                    <th class="text-end">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var related in Model.RelatedReports)
+                {
+                    <tr>
+                        <td>#@related.Id</td>
+                        <td>@related.ReporterAccount</td>
+                        <td>@related.Reason</td>
+                        <td>@related.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                        <td><span class="status-pill @related.Status.ToPillClass()">@related.Status.ToDisplayName()</span></td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@related.Id">
+                                查看
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        var judgeConfirmModalEl = document.getElementById('judgeConfirmModal');
+        var judgeConfirmModal = judgeConfirmModalEl ? new bootstrap.Modal(judgeConfirmModalEl) : null;
+        var modalBody = document.getElementById('judgeConfirmModalBody');
+        var decisionInput = document.getElementById('decisionInput');
+        var judgeForm = document.getElementById('judgeForm');
+        var maliciousCheckbox = document.getElementById('isMaliciousCheckbox');
+
+        document.querySelectorAll('.judge-confirm-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var baseMessage = btn.dataset.confirm;
+                var warning = null;
+
+                // 「不成立」按鈕的提示要看當下有沒有勾選惡意檢舉才能決定
+                if (btn.id === 'dismissBtn') {
+                    baseMessage = btn.dataset.confirmBase;
+                    var isMalicious = maliciousCheckbox.checked;
+                    if (isMalicious) {
+                        warning = btn.dataset.confirmMalicious;
+                    }
+                } else {
+                    // 判定「檢舉成立」的話,惡意檢舉勾選對這次判定無效,直接取消勾選避免混淆
+                    maliciousCheckbox.checked = false;
+                    if (baseMessage.indexOf('⚠') !== -1) {
+                        var parts = baseMessage.split('⚠');
+                        baseMessage = parts[0].trim();
+                        warning = '⚠' + parts[1];
+                    }
+                }
+
+                modalBody.innerHTML = '<p class="mb-' + (warning ? '2' : '0') + '">' + baseMessage + '</p>' +
+                    (warning ? '<p class="mb-0 small" style="color:var(--coral-600); font-weight:600;">' + warning + '</p>' : '');
+
+                decisionInput.value = btn.dataset.decision;
+                judgeConfirmModal.show();
+            });
+        });
+
+        var judgeConfirmSubmitBtn = document.getElementById('judgeConfirmSubmitBtn');
+        if (judgeConfirmSubmitBtn) {
+            judgeConfirmSubmitBtn.addEventListener('click', function () {
+                judgeForm.submit();
+            });
+        }
+    </script>
+}
