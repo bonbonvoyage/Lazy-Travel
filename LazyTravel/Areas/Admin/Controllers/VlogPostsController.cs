@@ -16,14 +16,16 @@ namespace LazyTravel.Areas.Admin.Controllers
         private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
 
         private readonly IWebHostEnvironment _env;
+        private readonly IAdminLogService _adminLogService;
 
-        public VlogPostsController(IWebHostEnvironment env)
+        public VlogPostsController(IWebHostEnvironment env, IAdminLogService adminLogService)
         {
             _env = env;
+            _adminLogService = adminLogService;
         }
 
         // GET /Admin/VlogPosts
-        public IActionResult Index(string? keyword, string? status, bool showDeleted = false, string? sort = "updated_desc", int page = 1)
+        public async Task<IActionResult> Index(string? keyword, string? status, bool showDeleted = false, string? sort = "updated_desc", int page = 1)
         {
             var all = VlogPostStore.GetAll();
 
@@ -66,6 +68,9 @@ namespace LazyTravel.Areas.Admin.Controllers
                 DraftCount = all.Count(p => !p.IsDelete && p.Status == VlogPostStatus.Draft),
                 DeletedCount = all.Count(p => p.IsDelete),
             };
+
+            var recentLogs = await _adminLogService.GetRecentAsync(50);
+            vm.RecentLogs = recentLogs.Where(l => l.TargetTable == "VlogPosts").Take(20).ToList();
 
             ViewData["Title"] = "Vlog 行程文章";
             return View(vm);
@@ -118,6 +123,14 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             VlogPostStore.Add(post);
+
+            await _adminLogService.WriteAsync(
+                User.Identity?.Name ?? "管理員",
+                "新增文章",
+                $"新增文章「{post.Title}」",
+                targetTable: "VlogPosts",
+                targetId: post.PostID);
+
             TempData["SuccessMessage"] = $"文章「{post.Title}」已新增。";
             return RedirectToAction(nameof(Index));
         }
@@ -164,6 +177,13 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            await _adminLogService.WriteAsync(
+                User.Identity?.Name ?? "管理員",
+                "編輯文章",
+                $"編輯文章「{post.Title}」",
+                targetTable: "VlogPosts",
+                targetId: post.PostID);
+
             TempData["SuccessMessage"] = $"文章「{post.Title}」已更新。";
             return RedirectToAction(nameof(Index));
         }
@@ -171,7 +191,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // POST /Admin/VlogPosts/Delete/5（軟刪除，設定 IsDelete = true）
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var post = VlogPostStore.GetById(id);
             if (post is null)
@@ -180,6 +200,14 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             VlogPostStore.Delete(id);
+
+            await _adminLogService.WriteAsync(
+                User.Identity?.Name ?? "管理員",
+                "刪除文章",
+                $"刪除文章「{post.Title}」",
+                targetTable: "VlogPosts",
+                targetId: post.PostID);
+
             TempData["SuccessMessage"] = $"文章「{post.Title}」已刪除，可在「已刪除」分頁還原。";
             return RedirectToAction(nameof(Index));
         }
@@ -187,7 +215,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // POST /Admin/VlogPosts/Restore/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Restore(int id)
+        public async Task<IActionResult> Restore(int id)
         {
             var post = VlogPostStore.GetById(id);
             if (post is null)
@@ -196,6 +224,14 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             VlogPostStore.Restore(id);
+
+            await _adminLogService.WriteAsync(
+                User.Identity?.Name ?? "管理員",
+                "還原文章",
+                $"還原文章「{post.Title}」",
+                targetTable: "VlogPosts",
+                targetId: post.PostID);
+
             TempData["SuccessMessage"] = $"文章「{post.Title}」已還原。";
             return RedirectToAction(nameof(Index));
         }
@@ -203,7 +239,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // POST /Admin/VlogPosts/ToggleStatus/5（草稿 <-> 已發布 快速切換）
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ToggleStatus(int id, VlogPostStatus to)
+        public async Task<IActionResult> ToggleStatus(int id, VlogPostStatus to)
         {
             var post = VlogPostStore.GetById(id);
             if (post is null)
@@ -213,6 +249,14 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             post.Status = to;
             post.UpdatedAt = DateTime.Now;
+
+            await _adminLogService.WriteAsync(
+                User.Identity?.Name ?? "管理員",
+                "切換狀態",
+                $"文章「{post.Title}」狀態改為「{to.ToLabel()}」",
+                targetTable: "VlogPosts",
+                targetId: post.PostID);
+
             TempData["SuccessMessage"] = $"文章「{post.Title}」已更新為「{to.ToLabel()}」。";
             return RedirectToAction(nameof(Index));
         }

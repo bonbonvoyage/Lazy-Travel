@@ -202,6 +202,32 @@ body.admin-body {
 .status-pending { background-color: var(--sand-200);  color: var(--sand-500); }
 .status-risk    { background-color: var(--coral-100); color: var(--coral-600); }
 
+/* 頁內籤切換(例如:列表 / 操作紀錄),原本只寫在檢舉審核台裡，
+   Vlog 行程文章也要用同一套籤，所以搬來這裡共用 */
+.admin-view-tabs {
+  display: flex;
+  gap: .3rem;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 1.25rem;
+}
+.admin-view-tab {
+  border: none;
+  background: none;
+  padding: .6rem 1.1rem;
+  font-size: .92rem;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.admin-view-tab:hover { color: var(--sea-700); }
+.admin-view-tab.active {
+  color: var(--sea-700);
+  font-weight: 500;
+  border-bottom-color: var(--sea-600);
+}
+.admin-view-pane { display: none; }
+.admin-view-pane.active { display: block; }
+
 /* ---------- 6. 響應式:窄螢幕收合側欄 ---------- */
 @media (max-width: 991.98px) {
   .admin-sidebar {

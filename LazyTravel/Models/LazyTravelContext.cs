@@ -29,7 +29,7 @@ public partial class LazyTravelContext : DbContext
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.JoinedAt).HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.MemberRole).HasDefaultValue("成員");
+            entity.Property(e => e.MemberRole).HasDefaultValue((byte)0);
 
             entity.HasOne(d => d.Group).WithMany(p => p.GroupMembers).OnDelete(DeleteBehavior.ClientSetNull);
 
@@ -41,7 +41,7 @@ public partial class LazyTravelContext : DbContext
             entity.HasKey(e => e.RequestId).HasName("PK__JoinRequ__33A8519AE6BDCA5C");
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.RequestStatus).HasDefaultValue("待審核");
+            entity.Property(e => e.RequestStatus).HasDefaultValue((byte)0);
 
             entity.HasOne(d => d.Group).WithMany(p => p.JoinRequests).OnDelete(DeleteBehavior.ClientSetNull);
 
@@ -52,7 +52,6 @@ public partial class LazyTravelContext : DbContext
         {
             entity.HasKey(e => e.MemberId).HasName("PK__Members__0CF04B386BB05866");
 
-            entity.Property(e => e.AuthProvider).HasDefaultValue("Local");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Status).HasDefaultValue((byte)1);
         });
@@ -63,9 +62,9 @@ public partial class LazyTravelContext : DbContext
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.CurrentPeople).HasDefaultValue(1);
-            entity.Property(e => e.GroupStatus).HasDefaultValue("等待中");
+            entity.Property(e => e.GroupStatus).HasDefaultValue((byte)0);
             entity.Property(e => e.IsPublic).HasDefaultValue(true);
-            entity.Property(e => e.JoinRule).HasDefaultValue("需團主審核");
+            entity.Property(e => e.JoinRule).HasDefaultValue((byte)1);
             entity.Property(e => e.MaxPeople).HasDefaultValue(10);
             entity.Property(e => e.MinPeople).HasDefaultValue(2);
             entity.Property(e => e.ReviewStatus)

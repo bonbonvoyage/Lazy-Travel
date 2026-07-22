@@ -12,8 +12,8 @@ namespace LazyTravel.Models.ViewModels
         public string? Country { get; set; }
         public string? Region { get; set; }
         public string? OwnerName { get; set; }
-        public string? JoinRule { get; set; }
-        public string? GroupStatus { get; set; }
+        public byte? JoinRule { get; set; }
+        public byte? GroupStatus { get; set; }
         public string? ReviewStatus { get; set; }
         public bool? IsPublic { get; set; }
 

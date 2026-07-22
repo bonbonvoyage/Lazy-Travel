@@ -6,9 +6,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models;
+namespace LazyTravel.Models.EfModels;
 
-[Index("GroupId", "MemberId", Name = "UX_GroupMembers_GroupID_MemberID", IsUnique = true)]
 public partial class GroupMember
 {
     [Key]

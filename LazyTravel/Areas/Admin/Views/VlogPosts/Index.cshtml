@@ -12,33 +12,13 @@
     <div class="alert alert-success py-2 mb-3" role="alert">@successMessage</div>
 }
 
-@* ---------- 統計卡 ---------- *@
-<div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-label">文章總數（未刪除）</div>
-            <div class="stat-value">@Model.TotalPosts</div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-label">已發布</div>
-            <div class="stat-value">@Model.PublishedCount</div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-label">草稿</div>
-            <div class="stat-value">@Model.DraftCount</div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
-            <div class="stat-label">已刪除</div>
-            <div class="stat-value">@Model.DeletedCount</div>
-        </div>
-    </div>
+@* 整頁切換籤:文章列表 / 操作紀錄(.admin-view-* 樣式跟檢舉審核台共用) *@
+<div class="admin-view-tabs">
+    <button type="button" class="admin-view-tab active" data-admin-view="postsView">文章列表</button>
+    <button type="button" class="admin-view-tab" data-admin-view="logsView">操作紀錄</button>
 </div>
+
+<div id="postsView" class="admin-view-pane active">
 
 @* ---------- 篩選列 ---------- *@
 <div class="filter-row">
@@ -69,13 +49,13 @@
 @* ---------- 狀態篩選 chips ---------- *@
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a class="filter-chip @(!Model.ShowDeleted && string.IsNullOrEmpty(Model.Status) ? "on" : "")"
-       asp-action="Index" asp-route-status="" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部</a>
+       asp-action="Index" asp-route-status="" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部 (@Model.TotalPosts)</a>
     <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Draft) ? "on" : "")"
-       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Draft)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">草稿</a>
+       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Draft)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">草稿 (@Model.DraftCount)</a>
     <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Published) ? "on" : "")"
-       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Published)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已發布</a>
+       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Published)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已發布 (@Model.PublishedCount)</a>
     <a class="filter-chip @(Model.ShowDeleted ? "on" : "")"
-       asp-action="Index" asp-route-showDeleted="true" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已刪除</a>
+       asp-action="Index" asp-route-showDeleted="true" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已刪除 (@Model.DeletedCount)</a>
 </div>
 
 @* ---------- 資料表 ---------- *@
@@ -183,3 +163,40 @@
         </ul>
     </nav>
 }
+
+</div>
+
+<div id="logsView" class="admin-view-pane">
+    <div class="admin-table-card">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>時間</th>
+                    <th>操作人</th>
+                    <th>動作</th>
+                    <th>內容</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentLogs.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">尚無操作紀錄</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var log in Model.RecentLogs)
+                    {
+                        <tr>
+                            <td class="small text-muted">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                            <td>@log.OperatorName</td>
+                            <td>@log.Action</td>
+                            <td class="small">@log.Detail</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

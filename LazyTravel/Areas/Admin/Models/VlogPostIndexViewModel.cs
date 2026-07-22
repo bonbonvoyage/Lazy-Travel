@@ -23,4 +23,7 @@ public class VlogPostIndexViewModel
     public int PublishedCount { get; set; }
     public int DraftCount { get; set; }
     public int DeletedCount { get; set; }
+
+    // 操作紀錄籤用，只取 TargetTable="VlogPosts" 的紀錄
+    public List<AdminLog> RecentLogs { get; set; } = new();
 }

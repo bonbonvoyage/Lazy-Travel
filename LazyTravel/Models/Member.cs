@@ -30,8 +30,6 @@ public partial class Member
     [Unicode(false)]
     public string Phone { get; set; }
 
-    public bool IsPhonePublic { get; set; }
-
     [StringLength(255)]
     public string InstagramUrl { get; set; }
 
@@ -41,7 +39,9 @@ public partial class Member
     [StringLength(50)]
     public string LineId { get; set; }
 
-    public byte SocialLinksPrivacy { get; set; }
+    public bool IsPrivateAccount { get; set; }
+
+    public byte ContactBookVisibility { get; set; }
 
     public bool IsEmailConfirmed { get; set; }
 
@@ -64,14 +64,22 @@ public partial class Member
 
     public byte Status { get; set; }
 
+    public byte Role { get; set; }
+
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [StringLength(50)]
-    public string AuthProvider { get; set; }
+    [Column(TypeName = "datetime")]
+    public DateTime? LastLoginAt { get; set; }
 
-    [StringLength(255)]
-    public string ProviderKey { get; set; }
+    [StringLength(50)]
+    [Unicode(false)]
+    public string LastLoginIp { get; set; }
+
+    public int FailedLoginCount { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? LockoutEndDate { get; set; }
 
     [InverseProperty("Member")]
     public virtual ICollection<GroupMember> GroupMemberMembers { get; set; } = new List<GroupMember>();

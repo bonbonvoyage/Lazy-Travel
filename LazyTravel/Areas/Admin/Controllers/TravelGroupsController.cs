@@ -20,8 +20,8 @@ namespace LazyTravel.Areas.Admin.Controllers
     string? country,
     string? region,
     string? ownerName,
-    string? joinRule,
-    string? groupStatus,
+    byte? joinRule,
+    byte? groupStatus,
     string? reviewStatus,
     bool? isPublic,
     DateTime? startDateFrom,
@@ -65,15 +65,15 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             // 加入規則
-            if (!string.IsNullOrWhiteSpace(joinRule))
+            if (joinRule.HasValue)
             {
-                query = query.Where(g => g.JoinRule == joinRule);
+                query = query.Where(g => g.JoinRule == joinRule.Value);
             }
 
             // 揪團狀態
-            if (!string.IsNullOrWhiteSpace(groupStatus))
+            if (groupStatus.HasValue)
             {
-                query = query.Where(g => g.GroupStatus == groupStatus);
+                query = query.Where(g => g.GroupStatus == groupStatus.Value);
             }
 
             // 審核狀態
