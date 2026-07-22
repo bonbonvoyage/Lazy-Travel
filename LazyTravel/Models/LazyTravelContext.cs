@@ -84,7 +84,9 @@ public partial class LazyTravelContext : DbContext
 
             entity.ToTable("TravelGroupsLog");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("CreateAt")
+                .HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Group)
                 .WithMany(p => p.TravelGroupsLogs)
