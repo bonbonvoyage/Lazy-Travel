@@ -255,7 +255,10 @@
             <span class="text-muted">目前第 @Model.ActivePage 頁，共 @Model.ActiveTotalPages 頁</span>
             <input type="number" min="1" max="@(Math.Max(Model.ActiveTotalPages, 1))"
                    id="activePageInput" value="@Model.ActivePage"
-                   class="form-control form-control-sm" style="width: 90px;" />
+                   class="form-control form-control-sm page-jump-input"
+                   data-tab-name="active"
+                   data-total-pages="@Model.ActiveTotalPages"
+                   style="width: 90px;" />
             <button type="button" class="btn btn-sm btn-outline-primary"
                     onclick="goToPage('activePageInput', 'active', @Model.ActiveTotalPages)">
                 前往
@@ -409,7 +412,10 @@
             <span class="text-muted">目前第 @Model.AbnormalPage 頁，共 @Model.AbnormalTotalPages 頁</span>
             <input type="number" min="1" max="@(Math.Max(Model.AbnormalTotalPages, 1))"
                    id="abnormalPageInput" value="@Model.AbnormalPage"
-                   class="form-control form-control-sm" style="width: 90px;" />
+                   class="form-control form-control-sm page-jump-input"
+                   data-tab-name="abnormal"
+                   data-total-pages="@Model.AbnormalTotalPages"
+                   style="width: 90px;" />
             <button type="button" class="btn btn-sm btn-outline-primary"
                     onclick="goToPage('abnormalPageInput', 'abnormal', @Model.AbnormalTotalPages)">
                 前往
@@ -560,7 +566,10 @@
             <span class="text-muted">目前第 @Model.DeletedPage 頁，共 @Model.DeletedTotalPages 頁</span>
             <input type="number" min="1" max="@(Math.Max(Model.DeletedTotalPages, 1))"
                    id="deletedPageInput" value="@Model.DeletedPage"
-                   class="form-control form-control-sm" style="width: 90px;" />
+                   class="form-control form-control-sm page-jump-input"
+                   data-tab-name="deleted"
+                   data-total-pages="@Model.DeletedTotalPages"
+                   style="width: 90px;" />
             <button type="button" class="btn btn-sm btn-outline-primary"
                     onclick="goToPage('deletedPageInput', 'deleted', @Model.DeletedTotalPages)">
                 前往
@@ -671,7 +680,10 @@
             <span class="text-muted">目前第 @Model.LogPage 頁，共 @Model.LogTotalPages 頁</span>
             <input type="number" min="1" max="@(Math.Max(Model.LogTotalPages, 1))"
                    id="logPageInput" value="@Model.LogPage"
-                   class="form-control form-control-sm" style="width: 90px;" />
+                   class="form-control form-control-sm page-jump-input"
+                   data-tab-name="log"
+                   data-total-pages="@Model.LogTotalPages"
+                   style="width: 90px;" />
             <button type="button" class="btn btn-sm btn-outline-primary"
                     onclick="goToPage('logPageInput', 'log', @Model.LogTotalPages)">
                 前往

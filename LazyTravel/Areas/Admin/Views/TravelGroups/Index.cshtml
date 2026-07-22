@@ -506,7 +506,20 @@
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeGroupDetailsPanel();
+            return;
         }
+
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        var pageInput = e.target.closest('.page-jump-input');
+        if (!pageInput) {
+            return;
+        }
+
+        e.preventDefault();
+        goToPage(pageInput.id, pageInput.dataset.tabName, parseInt(pageInput.dataset.totalPages, 10));
     });
 
     document.addEventListener('dblclick', function (e) {
