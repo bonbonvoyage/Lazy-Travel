@@ -1,15 +1,10 @@
 ﻿using LazyTravel.Models.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
 	[Area("Admin")]
-	// 🌟 【資安門禁】只有帶有 "Mod_System" 權限的「超級管理員」能進來這裡。
-	// ⚠️ 備註：因為我們還沒實作登入畫面，我先暫時把這行註解起來讓你測試畫面。
-	// 等下一關我們做完 Login 登入，記得把這行的 // 拿掉！
-	// [Authorize(Policy = "RequireSystemPermission")]
 	public class EmployeesController : Controller
 	{
 		private readonly IEmployeeService _employeeService;
@@ -19,53 +14,68 @@ namespace LazyTravel.Areas.Admin.Controllers
 			_employeeService = employeeService;
 		}
 
-		public IActionResult Index()
+		// ==========================================
+		// 頁面進入點 (雙頁籤)
+		// ==========================================
+		public IActionResult Index(string keyword, string subTab = "list", int page = 1)
 		{
-			// 直接呼叫 Service 取得整理好的員工列表 DTO
-			var employees = _employeeService.GetAllEmployees();
-			return View(employees);
-		}
+			ViewBag.SubTab = subTab;
+			ViewBag.Keyword = keyword;
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public IActionResult Promote(string email, List<string> permissions)
-		{
-			if (string.IsNullOrWhiteSpace(email) || permissions == null || permissions.Count == 0)
+			if (subTab == "list")
 			{
-				TempData["ErrorMessage"] = "指派失敗：請輸入會員 Email 並至少勾選一項權限！";
-				return RedirectToAction(nameof(Index));
+				var employees = _employeeService.GetAllEmployees(keyword);
+				ViewBag.Roles = _employeeService.GetAllRoles(); // 供彈窗選角色用
+				return View(employees);
+			}
+			else if (subTab == "logs")
+			{
+				var logsResult = _employeeService.GetEmployeeAdminLogs(keyword, page);
+				ViewBag.EmployeeLogs = logsResult.Data;
+				ViewBag.CurrentPage = page;
+				ViewBag.TotalPages = (int)System.Math.Ceiling(logsResult.TotalCount / 10.0);
+				ViewBag.TotalCount = logsResult.TotalCount;
+				return View();
 			}
 
-			// TODO: 等實作登入後，改成從 Cookie Claims 抓取當前登入者的 ID
-			// int currentAdminId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-			int currentAdminId = 1; // 暫時寫死超級管理員 ID = 1 測試
-
-			var result = _employeeService.PromoteToAdmin(email, permissions, currentAdminId);
-
-			if (result.Success) TempData["SuccessMessage"] = result.Message;
-			else TempData["ErrorMessage"] = result.Message;
-
-			return RedirectToAction(nameof(Index));
+			return View();
 		}
 
+		// ==========================================
+		// 員工管理 POST
+		// ==========================================
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public IActionResult EditPermissions(int adminId, List<string> permissions)
+		public IActionResult Promote(string email, List<int> roleIds)
 		{
-			if (permissions == null || permissions.Count == 0)
+			if (string.IsNullOrWhiteSpace(email) || roleIds == null || roleIds.Count == 0)
 			{
-				TempData["ErrorMessage"] = "修改失敗：至少必須保留一項權限！";
-				return RedirectToAction(nameof(Index));
+				TempData["ErrorMessage"] = "指派失敗：請輸入會員 Email 並至少勾選一項職務角色！";
+				return RedirectToAction(nameof(Index), new { subTab = "list" });
 			}
 
 			int currentAdminId = 1;
+			var result = _employeeService.PromoteToEmployee(email, roleIds, currentAdminId);
 
-			var result = _employeeService.EditPermissions(adminId, permissions, currentAdminId);
+			SetTempDataMessage(result.Success, result.Message);
+			return RedirectToAction(nameof(Index), new { subTab = "list" });
+		}
 
-			if (result.Success) TempData["SuccessMessage"] = result.Message;
-			else TempData["ErrorMessage"] = result.Message;
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult EditEmployeeRoles(int employeeId, List<int> roleIds)
+		{
+			if (roleIds == null || roleIds.Count == 0)
+			{
+				TempData["ErrorMessage"] = "修改失敗：員工至少必須保留一項職務角色！";
+				return RedirectToAction(nameof(Index), new { subTab = "list" });
+			}
 
-			return RedirectToAction(nameof(Index));
+			int currentAdminId = 1;
+			var result = _employeeService.EditEmployeeRoles(employeeId, roleIds, currentAdminId);
+
+			SetTempDataMessage(result.Success, result.Message);
+			return RedirectToAction(nameof(Index), new { subTab = "list" });
 		}
 
 		[HttpPost]
@@ -73,13 +83,16 @@ namespace LazyTravel.Areas.Admin.Controllers
 		public IActionResult Demote(int adminId)
 		{
 			int currentAdminId = 1;
+			var result = _employeeService.DemoteEmployee(adminId, currentAdminId);
 
-			var result = _employeeService.DemoteAdmin(adminId, currentAdminId);
+			SetTempDataMessage(result.Success, result.Message);
+			return RedirectToAction(nameof(Index), new { subTab = "list" });
+		}
 
-			if (result.Success) TempData["SuccessMessage"] = result.Message;
-			else TempData["ErrorMessage"] = result.Message;
-
-			return RedirectToAction(nameof(Index));
+		private void SetTempDataMessage(bool success, string message)
+		{
+			if (success) TempData["SuccessMessage"] = message;
+			else TempData["ErrorMessage"] = message;
 		}
 	}
 }

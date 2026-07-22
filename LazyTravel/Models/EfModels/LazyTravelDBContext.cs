@@ -13,11 +13,13 @@ public partial class LazyTravelDBContext : DbContext
     {
     }
 
-    public virtual DbSet<AdminLog> AdminLogs { get; set; }
-
-    public virtual DbSet<AdminPermission> AdminPermissions { get; set; }
+    public virtual DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 
     public virtual DbSet<Block> Blocks { get; set; }
+
+    public virtual DbSet<Employee> Employees { get; set; }
+
+    public virtual DbSet<EmployeeRole> EmployeeRoles { get; set; }
 
     public virtual DbSet<Expense> Expenses { get; set; }
 
@@ -55,9 +57,13 @@ public partial class LazyTravelDBContext : DbContext
 
     public virtual DbSet<Notification> Notifications { get; set; }
 
+    public virtual DbSet<Permission> Permissions { get; set; }
+
     public virtual DbSet<PostInteraction> PostInteractions { get; set; }
 
     public virtual DbSet<Report> Reports { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
 
@@ -67,22 +73,11 @@ public partial class LazyTravelDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AdminLog>(entity =>
-        {
-            entity.HasKey(e => e.LogId).HasName("PK__AdminLog__5E5499A8B71F8697");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.Admin).WithMany(p => p.AdminLogs)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__AdminLogs__Admin__3493CFA7");
-        });
-
-        modelBuilder.Entity<AdminPermission>(entity =>
+        modelBuilder.Entity<AdminAuditLog>(entity =>
         {
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.Admin).WithMany(p => p.AdminPermissions).HasConstraintName("FK_AdminPermissions_Members");
+            entity.HasOne(d => d.Employee).WithMany(p => p.AdminAuditLogs).HasConstraintName("FK_AdminAuditLogs_Employees");
         });
 
         modelBuilder.Entity<Block>(entity =>
@@ -98,6 +93,21 @@ public partial class LazyTravelDBContext : DbContext
             entity.HasOne(d => d.Blocker).WithMany(p => p.BlockBlockers)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Blocks__BlockerI__37703C52");
+        });
+
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
+        });
+
+        modelBuilder.Entity<EmployeeRole>(entity =>
+        {
+            entity.Property(e => e.GrantedAt).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Employee).WithMany(p => p.EmployeeRoles).HasConstraintName("FK_EmployeeRoles_Employees");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.EmployeeRoles).HasConstraintName("FK_EmployeeRoles_Roles");
         });
 
         modelBuilder.Entity<Expense>(entity =>
@@ -356,6 +366,26 @@ public partial class LazyTravelDBContext : DbContext
             entity.HasOne(d => d.Reporter).WithMany(p => p.ReportReporters)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Reports__Reporte__55F4C372");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasMany(d => d.Permissions).WithMany(p => p.Roles)
+                .UsingEntity<Dictionary<string, object>>(
+                    "RolePermission",
+                    r => r.HasOne<Permission>().WithMany()
+                        .HasForeignKey("PermissionId")
+                        .HasConstraintName("FK_RolePermissions_Permissions"),
+                    l => l.HasOne<Role>().WithMany()
+                        .HasForeignKey("RoleId")
+                        .HasConstraintName("FK_RolePermissions_Roles"),
+                    j =>
+                    {
+                        j.HasKey("RoleId", "PermissionId");
+                        j.ToTable("RolePermissions");
+                        j.IndexerProperty<int>("RoleId").HasColumnName("RoleID");
+                        j.IndexerProperty<int>("PermissionId").HasColumnName("PermissionID");
+                    });
         });
 
         modelBuilder.Entity<SubscriptionPlan>(entity =>

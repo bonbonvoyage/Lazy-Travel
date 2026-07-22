@@ -47,12 +47,16 @@
             <a class="nav-link @NavActive("TravelGroups")" asp-area="Admin" asp-controller="TravelGroups" asp-action="Index">揪團管理</a>
 
             <div class="nav-group-label">系統</div>
-                <!-- 🌟 新增下面這一行 -->
-                <a class="nav-link @NavActive("Employees")" asp-area="Admin" asp-controller="Employees" asp-action="Index">員工與權限管理</a>
             <a class="nav-link @NavActive("Notifications")" asp-area="Admin" asp-controller="Notifications" asp-action="Index">公告與通知</a>
             <a class="nav-link @NavActive("Subscriptions")" asp-area="Admin" asp-controller="Subscriptions" asp-action="Index">訂閱方案</a>
             <a class="nav-link @NavActive("Analytics")" asp-area="Admin" asp-controller="Analytics" asp-action="Index">數據分析</a>
-            <a class="nav-link @NavActive("AdminLogs")" asp-area="Admin" asp-controller="AdminLogs" asp-action="Index">操作紀錄</a>
+
+            <!-- 全新的內部管理區塊 -->
+            <div class="nav-group-label">內部管理</div>
+            <a class="nav-link @NavActive("Employees")" asp-area="Admin" asp-controller="Employees" asp-action="Index">員工管理</a>
+            <a class="nav-link @NavActive("Roles")" asp-area="Admin" asp-controller="Roles" asp-action="Index">權限(角色)管理</a>
+            <!-- 結束 -->
+
         </nav>
 
         <div class="sidebar-footer">LazyTravel v1.2.1</div>

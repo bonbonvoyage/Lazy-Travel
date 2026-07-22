@@ -1,5 +1,5 @@
-using LazyTravel.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
+using LazyTravel.Models.EfModels; // 引入 EF Core 產生的 Context 命名空間
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,19 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // TODO(後續):註冊 DbContext 與 Cookie 認證
-// builder.Services.AddDbContext<AppDbContext>(options =>
-//     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddDbContext<LazyTravelDBContext>(options =>
 	 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 註冊會員管理服務 (IMemberService -> MemberService)
-// 會員管理 Service
-// 負責會員相關功能，例如：會員資料查詢、新增、修改、停權等
 builder.Services.AddScoped<LazyTravel.Models.Services.IMemberService, LazyTravel.Models.Services.MemberService>();
-
-// 註冊員工管理服務 (IEmployeeService -> EmployeeService)
-// 員工管理 Service
-// 負責後台員工相關功能，例如：登入、管理員資料、權限管理等
+// 加入新的員工管理 Service
 builder.Services.AddScoped<LazyTravel.Models.Services.IEmployeeService, LazyTravel.Models.Services.EmployeeService>();
 
 // ========================================================
@@ -58,12 +50,10 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
 // ========================================================
 // 3. 啟用驗證與授權 (⚠️ 注意：這兩行必須放在 UseRouting 和 MapControllerRoute 之間)
 // ========================================================
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 // Area 路由(必須排在 default 之前)

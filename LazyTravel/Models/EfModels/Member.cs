@@ -56,8 +56,6 @@ public partial class Member
 
     public byte Status { get; set; }
 
-    public byte Role { get; set; }
-
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
@@ -80,12 +78,6 @@ public partial class Member
 
     [Column(TypeName = "datetime")]
     public DateTime? LockoutEndDate { get; set; }
-
-    [InverseProperty("Admin")]
-    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
-
-    [InverseProperty("Admin")]
-    public virtual ICollection<AdminPermission> AdminPermissions { get; set; } = new List<AdminPermission>();
 
     [InverseProperty("Blocked")]
     public virtual ICollection<Block> BlockBlockeds { get; set; } = new List<Block>();

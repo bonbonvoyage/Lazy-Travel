@@ -19,15 +19,19 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[dbo].[AdminLogs]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[AdminPermissions]",
+         "Name": "[dbo].[AdminAuditLogs]",
          "ObjectType": 0
       },
       {
          "Name": "[dbo].[Blocks]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EmployeeRoles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Employees]",
          "ObjectType": 0
       },
       {
@@ -103,11 +107,23 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Permissions]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[PostInteractions]",
          "ObjectType": 0
       },
       {
          "Name": "[dbo].[Reports]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RolePermissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Roles]",
          "ObjectType": 0
       },
       {
