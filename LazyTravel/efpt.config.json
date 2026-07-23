@@ -1,6 +1,5 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "LazyTravelContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
@@ -8,7 +7,6 @@
    "MinimumProductVersion": "2.6.1604",
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models",
    "PluralRules": null,
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "LazyTravel",
@@ -19,7 +17,67 @@
    "T4TemplatePath": null,
    "Tables": [
       {
+         "Name": "[dbo].[AdminAuditLogs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Blocks]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EmployeeRoles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Employees]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Expenses]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExpenseSplits]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExternalLogins]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Follows]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumComments]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumImages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumInteracts]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ForumPosts]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FriendRequests]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Friendships]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[GroupMembers]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ItineraryNodes]",
          "ObjectType": 0
       },
       {
@@ -27,11 +85,55 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[LoginHistories]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Members]",
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[MemberSubscriptions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MemberTokens]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Notifications]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Permissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PostInteractions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Reports]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RolePermissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Roles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SubscriptionPlans]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[TravelGroups]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VlogPosts]",
          "ObjectType": 0
       }
    ],
