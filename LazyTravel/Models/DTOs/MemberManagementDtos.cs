@@ -12,7 +12,6 @@ namespace LazyTravel.Models.DTOs
 		public string Email { get; set; }
 		public string Name { get; set; }
 
-		// 聯絡資訊與隱私 (5大欄位)
 		public string Phone { get; set; }
 		public string LineId { get; set; }
 		public string InstagramUrl { get; set; }
@@ -26,16 +25,13 @@ namespace LazyTravel.Models.DTOs
 		public string MBTI { get; set; }
 		public string Bio { get; set; }
 
-		// 系統狀態
 		public byte Status { get; set; }
-		public byte Role { get; set; }
+		// 🌟 已移除：public byte Role { get; set; } 
 		public DateTime CreatedAt { get; set; }
 
-		// 訂閱狀態 (供檢視用)
 		public string CurrentPlanName { get; set; }
 		public DateTime? PlanExpiryDate { get; set; }
 
-		// 🌟 新增登入稽核
 		public DateTime? LastLoginAt { get; set; }
 		public string LastLoginIp { get; set; }
 	}

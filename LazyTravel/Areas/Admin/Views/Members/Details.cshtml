@@ -210,7 +210,8 @@
         </div>
     </div>
 
-    <!-- 右側：1.3 會員資料處分與停權管制 -->
+
+  <!-- 右側：1.3 會員資料處分與停權管制 -->
     <div class="col-lg-6 mb-4">
         <div class="card shadow-sm h-100 border-primary">
             <div class="card-header bg-primary text-white">
@@ -219,8 +220,9 @@
             <div class="card-body">
                 <!-- 編輯表單開始 -->
                 <form asp-action="Edit" method="post">
-                    <!-- 隱藏欄位傳遞 ID -->
-                    <input type="hidden" asp-for="@editDto.MemberID" name="MemberID" />
+                    
+                    <!-- 強制傳遞 ID 給 DTO -->
+                    <input type="hidden" name="MemberID" value="@Model.MemberID" />
 
                     <!-- 重置違規資料區塊 -->
                     <div class="mb-4 border border-warning p-3 rounded bg-light">
@@ -228,19 +230,19 @@
                         <div class="form-text mb-3">勾選後，該欄位資料將被系統清空或改為預設值，並要求會員重新填寫。</div>
 
                         <div class="form-check mb-2">
-                            <input asp-for="@editDto.ResetName" class="form-check-input border-secondary" type="checkbox" name="ResetName" id="resetName">
+                            <input type="checkbox" class="form-check-input border-secondary" name="ResetName" id="resetName" value="true">
                             <label class="form-check-label text-dark" for="resetName">
                                 強制重置 <strong>姓名/暱稱</strong> (將變更為「違規暱稱_請修改」)
                             </label>
                         </div>
                         <div class="form-check mb-2">
-                            <input asp-for="@editDto.ResetBio" class="form-check-input border-secondary" type="checkbox" name="ResetBio" id="resetBio">
+                            <input type="checkbox" class="form-check-input border-secondary" name="ResetBio" id="resetBio" value="true">
                             <label class="form-check-label text-dark" for="resetBio">
                                 強制清空 <strong>個人簡介</strong>
                             </label>
                         </div>
                         <div class="form-check mb-2">
-                            <input asp-for="@editDto.RemoveAvatar" class="form-check-input border-secondary" type="checkbox" name="RemoveAvatar" id="removeAvatar">
+                            <input type="checkbox" class="form-check-input border-secondary" name="RemoveAvatar" id="removeAvatar" value="true">
                             <label class="form-check-label text-dark" for="removeAvatar">
                                 強制移除 <strong>大頭貼</strong> (回復預設頭像)
                             </label>
@@ -249,24 +251,26 @@
 
                     <!-- 帳號停權區塊 -->
                     <div class="mb-4 border p-3 rounded bg-light">
-                        <label asp-for="@editDto.Status" class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i>帳號管制狀態</label>
-                        <select asp-for="@editDto.Status" name="Status" class="form-select border-danger">
-                            <option value="1">🟢 正常啟用</option>
-                            <option value="2">🔴 強制停權 (鎖定發文與互動權限)</option>
+                        <label class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i>帳號管制狀態</label>
+                        <!-- 下拉選單 name="Status" 對應 DTO 的 Status 屬性 -->
+                        <select name="Status" class="form-select border-danger">
+                            <option value="1" selected="@(Model.Status == 1 ? "selected" : null)">🟢 正常啟用</option>
+                            <option value="2" selected="@(Model.Status == 2 ? "selected" : null)">🔴 強制停權 (鎖定發文與互動權限)</option>
                         </select>
                     </div>
 
                     <div class="mb-3 form-check">
-                        <input asp-for="@editDto.SendNotification" class="form-check-input" type="checkbox" name="SendNotification" id="sendNotifyCheck" checked>
+                        <!-- name="SendNotification" 對應 DTO 屬性 -->
+                        <input type="checkbox" class="form-check-input" name="SendNotification" id="sendNotifyCheck" value="true" checked>
                         <label class="form-check-label fw-bold text-primary" for="sendNotifyCheck">
                             發送系統通知信告知會員 (包含處分原因)
                         </label>
                     </div>
 
                     <div class="mb-4">
-                        <label asp-for="@editDto.AdminReason" class="form-label fw-bold text-danger">操作原因 (必填稽核用) *</label>
-                        <input asp-for="@editDto.AdminReason" name="AdminReason" class="form-control" placeholder="例如：大頭貼及簡介涉及不雅內容，強制移除" required />
-                        <span asp-validation-for="@editDto.AdminReason" class="text-danger small"></span>
+                        <label class="form-label fw-bold text-danger">操作原因 (必填稽核用) *</label>
+                        <!-- name="AdminReason" 對應 DTO 屬性 -->
+                        <input type="text" name="AdminReason" class="form-control" placeholder="例如：大頭貼及簡介涉及不雅內容，強制移除" required />
                     </div>
 
                     <div class="d-grid gap-2">
@@ -280,7 +284,3 @@
     </div>
 </div>
 
-@section Scripts {
-    <!-- 載入前端驗證腳本 -->
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
