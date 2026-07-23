@@ -133,14 +133,17 @@ namespace LazyTravel.Areas.Admin.Controllers
 		// ==========================================
 		[HttpPost]
 		[ValidateAntiForgeryToken]
+		// 🌟 恢復優雅的 Model Binding
 		public IActionResult Edit(MemberEditDto editDto)
 		{
+			// 防呆：如果 Model 驗證失敗，直接退回
 			if (!ModelState.IsValid)
 			{
-				TempData["ErrorMessage"] = "資料格式錯誤，請重新確認。";
+				TempData["ErrorMessage"] = "資料格式錯誤，請重新確認並填寫所有必填欄位。";
 				return RedirectToAction(nameof(Details), new { id = editDto.MemberID });
 			}
 
+			// 執行資料庫更新邏輯
 			bool isSuccess = _memberService.EditMember(editDto);
 
 			if (isSuccess)
@@ -149,7 +152,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 			}
 			else
 			{
-				TempData["ErrorMessage"] = "會員資料更新失敗，找不到該會員。";
+				TempData["ErrorMessage"] = "會員資料更新失敗，系統找不到該會員。";
 			}
 
 			return RedirectToAction(nameof(Details), new { id = editDto.MemberID });
