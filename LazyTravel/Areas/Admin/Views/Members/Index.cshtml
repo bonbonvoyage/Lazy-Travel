@@ -335,13 +335,15 @@
                             <th class="py-3 text-start">詳細異動說明</th>
                             <th class="py-3">操作來源 IP</th>
                             <th class="py-3">執行時間</th>
+                            <!-- 🌟 新增一欄：查看原因 -->
+                            <th class="py-3">查看原因</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (logList == null || !logList.Any())
                         {
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="8" class="text-center py-5 text-muted">
                                     <div class="display-1 text-light mb-3"><i class="fas fa-clipboard"></i></div>
                                     <p class="mb-0 fs-5">此條件下無任何會員操作紀錄</p>
                                 </td>
@@ -351,6 +353,16 @@
                         {
                             foreach (var log in logList)
                             {
+                                // 解析出原因字串
+                                string desc = log.Description;
+                                string reason = "";
+                                if (desc.Contains("。備註："))
+                                {
+                                    var parts = desc.Split("。備註：");
+                                    desc = parts[0];
+                                    reason = parts.Length > 1 ? parts[1] : "";
+                                }
+
                                 <tr>
                                     <td class="text-muted">#@log.LogID</td>
                                     <td class="fw-bold"><i class="fas fa-user-shield text-info me-1"></i>@log.AdminName</td>
@@ -365,9 +377,22 @@
                                         }
                                     </td>
                                     <td class="fw-bold text-dark">@log.TargetMemberName</td>
-                                    <td class="text-start small text-muted">@log.Description</td>
+                                    <td class="text-start small text-muted">@desc</td> <!-- 這裡只顯示乾淨的異動說明 -->
                                     <td><span class="badge bg-light text-secondary border">@log.IPAddress</span></td>
                                     <td class="text-muted">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                                    <td>
+                                        <!-- 🌟 如果有原因，顯示按鈕 -->
+                                        @if (!string.IsNullOrWhiteSpace(reason))
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="alert('管理員操作原因：\n\n@reason')">
+                                                <i class="fas fa-comment-dots"></i> 內容
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         }
