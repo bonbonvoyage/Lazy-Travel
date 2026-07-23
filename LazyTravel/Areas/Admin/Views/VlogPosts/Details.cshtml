@@ -1,0 +1,123 @@
+@model VlogPost
+@{
+    ViewData["Title"] = "文章詳情";
+    var nodes = (List<ItineraryNode>)ViewBag.Nodes;
+    var likeCount = (int)ViewBag.LikeCount;
+    var favoriteCount = (int)ViewBag.FavoriteCount;
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">Vlog 行程文章</a></li>
+    <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+}
+
+<style>
+    .post-content-preview { color: var(--ink); line-height: 1.8; }
+    .post-content-preview h2 { font-family: var(--font-display); font-size: 1.3rem; color: var(--sea-800); margin-top: 1rem; }
+    .post-content-preview h3 { font-family: var(--font-display); font-size: 1.1rem; color: var(--sea-800); margin-top: .8rem; }
+    .post-content-preview img { max-width: 100%; border-radius: var(--radius-sm); margin: .5rem 0; }
+    .post-content-preview p:last-child { margin-bottom: 0; }
+</style>
+
+@if (Model.IsDelete)
+{
+    <div class="alert alert-danger py-2 mb-3">此文章已被軟刪除，僅發文會員與後台看得到，可在列表頁「已刪除」分頁還原。</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @if (!string.IsNullOrWhiteSpace(Model.MediaUrl))
+        {
+            <div class="admin-table-card p-0 mb-3" style="overflow:hidden;">
+                <img src="@Model.MediaUrl" alt="" style="width:100%; max-height:320px; object-fit:cover;" />
+            </div>
+        }
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 style="font-family:var(--font-display); color:var(--sea-800);">@Model.Title</h2>
+            @if (string.IsNullOrWhiteSpace(Model.Content))
+            {
+                <p class="text-muted mb-0">（尚未填寫心得）</p>
+            }
+            else
+            {
+                <div class="post-content-preview">@Html.Raw(Model.Content)</div>
+            }
+        </div>
+
+        @* ---------- 每日行程列表 ---------- *@
+        <div class="admin-table-card p-3 p-lg-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 mb-0" style="font-family:var(--font-display); color:var(--sea-800);">每日行程列表</h2>
+                <a asp-action="Edit" asp-route-id="@Model.PostID" class="btn btn-sm btn-outline-primary">編輯行程</a>
+            </div>
+
+            @if (!nodes.Any())
+            {
+                <p class="text-muted small mb-0">這篇文章還沒有行程資料。</p>
+            }
+            else
+            {
+                foreach (var dayGroup in nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key))
+                {
+                    <div class="mb-3">
+                        <div class="fw-medium mb-2">第 @dayGroup.Key 天</div>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var node in dayGroup)
+                            {
+                                <li class="d-flex gap-2 mb-2">
+                                    <span class="text-muted small" style="width:90px;flex-shrink:0;">
+                                        @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
+                                    </span>
+                                    <span>
+                                        <span class="fw-medium">@node.LocationName</span>
+                                        @if (!string.IsNullOrWhiteSpace(node.Description))
+                                        {
+                                            <div class="text-muted small">@node.Description</div>
+                                        }
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <div class="mb-3">
+                <span class="status-pill @Model.Status.ToPillClass()">@Model.Status.ToLabel()</span>
+            </div>
+            <dl class="row small mb-0">
+                <dt class="col-5 text-muted">發文會員</dt>
+                <dd class="col-7 d-flex align-items-center gap-1">
+                    <span>@MemberLookup.GetName(Model.MemberID)</span>
+                    @if (MemberLookup.IsOfficial(Model.MemberID))
+                    {
+                        <span class="official-badge">✓ 官方</span>
+                    }
+                </dd>
+                <dt class="col-5 text-muted">目的地</dt><dd class="col-7">@Model.Destination</dd>
+                <dt class="col-5 text-muted">天數</dt><dd class="col-7">@Model.TravelDays 天</dd>
+                <dt class="col-5 text-muted">出遊日期</dt><dd class="col-7">@(Model.TravelDate?.ToString("yyyy/MM/dd") ?? "—")</dd>
+                <dt class="col-5 text-muted">讚數</dt><dd class="col-7">@likeCount</dd>
+                <dt class="col-5 text-muted">收藏數</dt><dd class="col-7">@favoriteCount</dd>
+                <dt class="col-5 text-muted">建立時間</dt><dd class="col-7">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</dd>
+                <dt class="col-5 text-muted">更新時間</dt><dd class="col-7">@(Model.UpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</dd>
+            </dl>
+        </div>
+
+        @if (!Model.IsDelete)
+        {
+            <div class="d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.PostID" class="btn btn-primary flex-fill">編輯</a>
+                <a asp-action="Index" class="btn btn-outline-primary flex-fill">返回列表</a>
+            </div>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-outline-primary w-100">返回列表</a>
+        }
+    </div>
+</div>

@@ -1,0 +1,202 @@
+@model VlogPostIndexViewModel
+@{
+    ViewData["Title"] = "Vlog 行程文章";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item active" aria-current="page">Vlog 行程文章</li>
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success py-2 mb-3" role="alert">@successMessage</div>
+}
+
+@* 整頁切換籤:文章列表 / 操作紀錄(.admin-view-* 樣式跟檢舉審核台共用) *@
+<div class="admin-view-tabs">
+    <button type="button" class="admin-view-tab active" data-admin-view="postsView">文章列表</button>
+    <button type="button" class="admin-view-tab" data-admin-view="logsView">操作紀錄</button>
+</div>
+
+<div id="postsView" class="admin-view-pane active">
+
+@* ---------- 篩選列 ---------- *@
+<div class="filter-row">
+    <form method="get" asp-action="Index" class="d-flex flex-wrap align-items-center gap-2">
+        <input type="hidden" name="status" value="@Model.Status" />
+        <input type="hidden" name="showDeleted" value="@Model.ShowDeleted" />
+
+        <div class="input-group input-group-sm" style="max-width:320px;">
+            <input type="text" name="keyword" value="@Model.Keyword" class="form-control"
+                   placeholder="搜尋標題或目的地" />
+            <button type="submit" class="btn btn-outline-primary">搜尋</button>
+        </div>
+
+        <select name="sort" class="form-select form-select-sm" style="max-width:190px;" onchange="this.form.submit()">
+            <option value="updated_desc" selected="@(Model.Sort == "updated_desc")">更新時間：新到舊</option>
+            <option value="updated_asc" selected="@(Model.Sort == "updated_asc")">更新時間：舊到新</option>
+        </select>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.Status) || Model.ShowDeleted || Model.Sort != "updated_desc")
+        {
+            <a asp-action="Index" class="btn btn-sm btn-link text-secondary">清除篩選</a>
+        }
+    </form>
+
+    <a asp-action="Create" class="btn btn-sm btn-coral ms-auto">＋ 新增文章</a>
+</div>
+
+@* ---------- 狀態篩選 chips ---------- *@
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="filter-chip @(!Model.ShowDeleted && string.IsNullOrEmpty(Model.Status) ? "on" : "")"
+       asp-action="Index" asp-route-status="" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部 (@Model.TotalPosts)</a>
+    <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Draft) ? "on" : "")"
+       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Draft)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">草稿 (@Model.DraftCount)</a>
+    <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Published) ? "on" : "")"
+       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Published)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已發布 (@Model.PublishedCount)</a>
+    <a class="filter-chip @(Model.ShowDeleted ? "on" : "")"
+       asp-action="Index" asp-route-showDeleted="true" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已刪除 (@Model.DeletedCount)</a>
+</div>
+
+@* ---------- 資料表 ---------- *@
+<div class="admin-table-card">
+    @if (!Model.Posts.Any())
+    {
+        <div class="text-center text-muted py-5">沒有符合條件的文章</div>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width:64px;"></th>
+                    <th>標題</th>
+                    <th>目的地／天數</th>
+                    <th>狀態</th>
+                    <th>讚 / 收藏</th>
+                    <th>更新時間</th>
+                    <th class="text-end">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var post in Model.Posts)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(post.MediaUrl))
+                            {
+                                <img src="@post.MediaUrl" alt=""
+                                     style="width:48px;height:48px;object-fit:cover;border-radius:var(--radius-sm);" />
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-medium">@post.Title</div>
+                            <div class="text-muted small d-flex align-items-center gap-1">
+                                <span>@MemberLookup.GetName(post.MemberID) 撰寫</span>
+                                @if (MemberLookup.IsOfficial(post.MemberID))
+                                {
+                                    <span class="official-badge">✓ 官方</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            @post.Destination · @post.TravelDays 天
+                            @if (post.TravelDate is not null)
+                            {
+                                <div class="text-muted small">出遊：@post.TravelDate.Value.ToString("yyyy/MM/dd")</div>
+                            }
+                        </td>
+                        <td>
+                            @if (post.IsDelete)
+                            {
+                                <span class="status-pill status-risk">已刪除</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span>
+                            }
+                        </td>
+                        <td>@PostInteractionStore.GetLikeCount(post.PostID) / @PostInteractionStore.GetFavoriteCount(post.PostID)</td>
+                        <td>@((post.UpdatedAt ?? post.CreatedAt).ToString("yyyy/MM/dd HH:mm"))</td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a asp-action="Details" asp-route-id="@post.PostID" class="btn btn-sm btn-outline-primary">檢視</a>
+
+                                @if (!post.IsDelete)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@post.PostID" class="btn btn-sm btn-outline-primary">編輯</a>
+
+                                    <form asp-action="Delete" asp-route-id="@post.PostID" method="post" class="d-inline"
+                                          onsubmit="return confirm('確定要刪除「@post.Title」嗎？');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="Restore" asp-route-id="@post.PostID" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">還原</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@* ---------- 分頁 ---------- *@
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-3" aria-label="文章分頁">
+        <ul class="pagination pagination-sm justify-content-center">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-page="@i" asp-route-keyword="@Model.Keyword"
+                       asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted"
+                       asp-route-sort="@Model.Sort">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+</div>
+
+<div id="logsView" class="admin-view-pane">
+    <div class="admin-table-card">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>時間</th>
+                    <th>操作人</th>
+                    <th>動作</th>
+                    <th>內容</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.RecentLogs.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">尚無操作紀錄</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var log in Model.RecentLogs)
+                    {
+                        <tr>
+                            <td class="small text-muted">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                            <td>@log.OperatorName</td>
+                            <td>@log.Action</td>
+                            <td class="small">@log.Detail</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

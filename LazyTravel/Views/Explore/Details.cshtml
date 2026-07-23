@@ -1,0 +1,214 @@
+@model VlogPost
+@{
+    ViewData["Title"] = Model.Title;
+    var nodes = (List<ItineraryNode>)ViewBag.Nodes;
+    var likeCount = (int)ViewBag.LikeCount;
+    var favoriteCount = (int)ViewBag.FavoriteCount;
+}
+
+<style>
+    .post-content { color: var(--ink); line-height: 1.8; }
+    .post-content h2 { font-family: var(--font-display); font-size: 1.3rem; color: var(--sea-800); margin-top: 1rem; }
+    .post-content h3 { font-family: var(--font-display); font-size: 1.1rem; color: var(--sea-800); margin-top: .8rem; }
+    .post-content img { max-width: 100%; border-radius: var(--radius-sm); margin: .5rem 0; }
+    .explore-official-badge {
+        display: inline-flex; align-items: center; gap: .15rem;
+        background-color: var(--coral-600); color: #fff; border-radius: var(--radius-pill);
+        font-size: .72rem; font-weight: 500; padding: .1rem .6rem;
+    }
+
+    /* 主圖 + 標題疊字，跟參考圖右半邊的呈現方式一致 */
+    .detail-hero {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        background-size: cover;
+        background-position: center;
+        background-color: var(--sea-800);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-end;
+    }
+    .detail-hero-overlay {
+        width: 100%;
+        padding: 3rem 1.5rem 1.5rem;
+        background: linear-gradient(to top, rgba(15,30,40,.88), rgba(15,30,40,0));
+        color: #fff;
+    }
+    .detail-hero-title { color: #fff; font-family: var(--font-display); margin-bottom: .5rem; }
+    .detail-hero-meta {
+        font-size: .88rem;
+        opacity: .95;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+
+    /* 每日行程時間軸：時間文字疊在連接線中間，內容區塊在右邊 */
+    .timeline-row { position: relative; padding-left: 4.5rem; padding-bottom: 1.75rem; }
+    .timeline-row:last-child { padding-bottom: 0; }
+    .timeline-dot {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 50%;
+        background-color: var(--coral-600);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-weight: 600;
+        z-index: 2;
+    }
+    .timeline-row:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 1.125rem;
+        top: 2.25rem;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--border-soft);
+    }
+    .timeline-time {
+        position: absolute;
+        left: -.15rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4.5rem;
+        background-color: var(--surface);
+        text-align: center;
+        font-size: .8rem;
+        color: var(--ink);
+        line-height: 1.4;
+        padding: .2rem 0;
+        z-index: 1;
+    }
+    .timeline-card {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background-color: var(--surface);
+        padding: 1rem;
+    }
+    .timeline-image { width: 100%; max-height: 220px; object-fit: cover; border-radius: var(--radius-md); margin: .5rem 0; }
+
+    /* 底部社交互動列 */
+    .social-bar {
+        position: sticky;
+        bottom: 0;
+        background-color: var(--surface);
+        border-top: 1px solid var(--border-soft);
+        padding: .85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        box-shadow: 0 -4px 16px rgba(31, 61, 78, .08);
+        margin-top: 2rem;
+    }
+    .social-bar .social-stat {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        color: var(--text-secondary);
+        font-size: .92rem;
+        background: none;
+        border: none;
+        padding: 0;
+    }
+</style>
+
+<div class="container py-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-primary mb-3">← 回行程靈感</a>
+
+    <div class="detail-hero" style="background-image:url('@Model.MediaUrl')">
+        <div class="detail-hero-overlay">
+            <h1 class="h3 detail-hero-title mb-2">@Model.Title</h1>
+            <div class="detail-hero-meta">
+                @if (Model.TravelDate is not null)
+                {
+                    <span>@Model.TravelDate.Value.ToString("yyyy-MM")</span>
+                    <span>·</span>
+                }
+                <span>@Model.TravelDays 天</span>
+                <span>·</span>
+                <span>@MemberLookup.GetName(Model.MemberID)</span>
+                @if (MemberLookup.IsOfficial(Model.MemberID))
+                {
+                    <span class="explore-official-badge">✓ 官方合作</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            @if (!string.IsNullOrWhiteSpace(Model.Content))
+            {
+                <div class="post-content mb-4">@Html.Raw(Model.Content)</div>
+            }
+
+            @if (nodes.Any())
+            {
+                <h2 class="h5 mt-4 mb-3">🗓️ 每日行程</h2>
+                foreach (var dayGroup in nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key))
+                {
+                    <div class="mb-4">
+                        <div class="fw-medium mb-3">第 @dayGroup.Key 天</div>
+                        @{ var dayNodes = dayGroup.ToList(); }
+                        @for (var i = 0; i < dayNodes.Count; i++)
+                        {
+                            var node = dayNodes[i];
+                            <div class="timeline-row">
+                                <div class="timeline-dot">@(i + 1)</div>
+                                <div class="timeline-time">
+                                    @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
+                                    @if (!string.IsNullOrWhiteSpace(node.StayTime))
+                                    {
+                                        <div>（停留 @node.StayTime）</div>
+                                    }
+                                </div>
+                                <div class="timeline-card">
+                                    <div class="fw-medium mb-1">@node.LocationName</div>
+                                    @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
+                                    {
+                                        <img src="@node.MediaUrl" alt="" class="timeline-image" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(node.Description))
+                                    {
+                                        <p class="text-secondary mb-1">@node.Description</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(node.Remarks))
+                                    {
+                                        <p class="text-muted small mb-0">備註：@node.Remarks</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card p-3">
+                <dl class="row small mb-0">
+                    <dt class="col-5 text-muted">目的地</dt><dd class="col-7">@Model.Destination</dd>
+                    <dt class="col-5 text-muted">天數</dt><dd class="col-7">@Model.TravelDays 天</dd>
+                    <dt class="col-5 text-muted">出遊日期</dt><dd class="col-7">@(Model.TravelDate?.ToString("yyyy/MM/dd") ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- 底部互動列：只留讚/收藏(真實資料)，不放分享跟留言 ---------- *@
+    <div class="social-bar">
+        <span class="social-stat">❤️ @likeCount</span>
+        <span class="social-stat">🔖 @favoriteCount 收藏</span>
+    </div>
+</div>

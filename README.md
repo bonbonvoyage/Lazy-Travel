@@ -19,11 +19,11 @@
    ```json
    {
      "ConnectionStrings": {
-       "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=LazyTravel;Trusted_Connection=True;MultipleActiveResultSets=true"
+       "DefaultConnection": "Server=.\\SQL2025;Database=LazyTravelDB;User Id=sa5;Password=123456;TrustServerCertificate=True;MultipleActiveResultSets=true"
      }
    }
    ```
-   連線字串依自己電腦環境調整。此檔已被 .gitignore 排除,不會進版控。
+   統一用 `sa5`/`123456` 這組 SQL 帳密連線,方便大家在 SSMS 用同一組帳密互相排查。`Server=` 請改成自己電腦實際的 SQL Server 執行個體名稱(在 SSMS 伺服器總管裡看得到,可能是 `.`、`localhost` 或 `.\你的執行個體名稱`);`sa5` 帳號要先在自己的 SQL Server 上建立(開啟「SQL Server 及 Windows 驗證模式」+ 新增登入),且需要是 `LazyTravelDB` 的 sysadmin 或 db_owner。此檔已被 .gitignore 排除,不會進版控。
 3. 開啟 `LazyTravel.sln`,按 F5 執行
 4. 前台:`/`;後台:`/Admin`
 

@@ -70,6 +70,9 @@
                 <h1 class="page-title">@ViewData["Title"]</h1>
             </div>
             <div class="d-flex align-items-center gap-3">
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-primary" target="_blank">
+                    回前台
+                </a>
                 <span class="text-secondary small">@User.Identity?.Name</span>
                 <form asp-controller="Account" asp-action="Logout" asp-area="" method="post" class="m-0">
                     <button type="submit" class="btn btn-sm btn-outline-primary">登出</button>
@@ -77,23 +80,11 @@
             </div>
         </header>
 
-        @* 麵包屑（路徑提示，例：後台 > 揪團管理）
-           各頁面可自訂 @section Breadcrumb，沒設定就顯示頁面標題 *@
-        <div class="admin-breadcrumb">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">後台</a></li>
-                    @if (IsSectionDefined("Breadcrumb"))
-                    {
-                        @await RenderSectionAsync("Breadcrumb")
-                    }
-                    else
-                    {
-                        <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
-                    }
-                </ol>
-            </nav>
-        </div>
+        @{
+            // 麵包屑小字已經拿掉了，但各頁面裡還留著沒刪的 @section Breadcrumb 定義；
+            // Razor 規定「定義了就一定要被算繪」，不然會直接丟例外炸整頁，這裡明講「不用管它」。
+            IgnoreSection("Breadcrumb");
+        }
 
         @* 各頁面的內容放這裡 *@
         <main class="admin-content">
@@ -104,6 +95,7 @@
 </div>
 
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/admin-view-tabs.js"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
