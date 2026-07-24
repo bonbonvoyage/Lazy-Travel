@@ -16,6 +16,25 @@ public static class VlogPostDbSeeder
             return;
         }
 
+        // VlogPostStore 的示範資料寫死用 MemberID 1~4 對應 MemberLookup(阿慢/小海/阿凱/LazyTravel官方)。
+        // VlogPosts/PostInteractions 都有外鍵指到 Members，全新建置的資料庫 Members 是空的，
+        // 直接塞 VlogPosts 會因為外鍵找不到對應會員而整個失敗。這裡先確認 Members 是空的話，
+        // 把這 4 筆示範會員建起來——IDENTITY 從空表開始會依序配到 1~4，剛好對上 MemberLookup。
+        // Members 已經有資料(例如共用開發資料庫)就不動，直接沿用既有帳號。
+        if (!await context.Members.AnyAsync())
+        {
+            foreach (var (memberId, name, isOfficial) in MemberLookup.Members)
+            {
+                context.Members.Add(new Member
+                {
+                    Email = $"demo-member-{memberId}@lazytravel.local",
+                    Name = name,
+                    CreatedAt = DateTime.Now,
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+
         foreach (var demoPost in VlogPostStore.GetAll())
         {
             var demoNodes = ItineraryNodeStore.GetByPostId(demoPost.PostID);
