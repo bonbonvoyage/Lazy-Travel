@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using LazyTravel.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +56,15 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+// 開發環境專用：VlogPosts 資料表是空的時候，把示範資料塞進去（只塞 VlogPosts/ItineraryNodes/
+// PostInteractions 這三張表，不動 Members 等其他組員負責的表）。已經有資料就不會重複塞。
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<LazyTravelContext>();
+    await VlogPostDbSeeder.SeedAsync(context);
+}
 
 if (!app.Environment.IsDevelopment())
 {

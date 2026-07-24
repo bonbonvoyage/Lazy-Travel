@@ -323,11 +323,11 @@ CREATE TABLE dbo.VlogPosts (
     Content      nvarchar(max) NULL,
     Destination  nvarchar(100) NOT NULL,
     TravelDays   int           NOT NULL DEFAULT 1,
-    Status       tinyint       NOT NULL DEFAULT 0,   -- 0:草稿 1:發布
+    Status       tinyint       NOT NULL DEFAULT 0,   -- 0:草稿 1:待審核 2:發布
     CreatedAt    datetime      NOT NULL DEFAULT GETDATE(),
     UpdatedAt    datetime      NULL,
     TravelDate   datetime      NULL,                 -- v2 新增：旅遊日期
-    TravelPeople nvarchar(50)  NOT NULL,              -- v2 新增：旅遊人數
+    TravelPeople tinyint       NOT NULL DEFAULT 0,    -- v2 新增：旅遊人數（0:1人獨旅 1:2-4人精緻團 2:5人以上團體）
     IsDelete     bit           NOT NULL DEFAULT 0,
     CONSTRAINT PK_VlogPosts PRIMARY KEY (PostID),
     CONSTRAINT FK_VlogPosts_Member FOREIGN KEY (MemberID) REFERENCES dbo.Members(MemberID)

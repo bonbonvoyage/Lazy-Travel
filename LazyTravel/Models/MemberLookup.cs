@@ -9,6 +9,10 @@ namespace LazyTravel.Models;
 // 跟 Members.Role（一般會員/管理員/超級管理員，權限用）是兩件事，先分開處理。
 public static class MemberLookup
 {
+    // 後台目前只有 LazyTravel 官方帳號能登入管理（Cookie 認證接上前先寫死），
+    // Controller 判斷「目前登入的管理員是誰」都從這裡拿，不要各處各自寫 4 這個魔術數字。
+    public const int OfficialMemberId = 4;
+
     public static readonly List<(int MemberID, string Name, bool IsOfficial)> Members = new()
     {
         (1, "阿慢", false),

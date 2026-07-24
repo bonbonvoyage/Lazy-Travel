@@ -1,6 +1,14 @@
 @model VlogPostIndexViewModel
 @{
     ViewData["Title"] = "Vlog 行程文章";
+
+    // 排序用的小工具：目前排序中的欄位顯示 ↑/↓，其餘顯示 ↕；點擊後在升冪/降冪之間切換
+    string SortIcon(string field) =>
+        Model.Sort == $"{field}_desc" ? "↓" :
+        Model.Sort == $"{field}_asc" ? "↑" : "↕";
+
+    string NextSort(string field) =>
+        Model.Sort == $"{field}_desc" ? $"{field}_asc" : $"{field}_desc";
 }
 
 @section Breadcrumb {
@@ -25,19 +33,16 @@
     <form method="get" asp-action="Index" class="d-flex flex-wrap align-items-center gap-2">
         <input type="hidden" name="status" value="@Model.Status" />
         <input type="hidden" name="showDeleted" value="@Model.ShowDeleted" />
+        <input type="hidden" name="onlyMine" value="@Model.OnlyMine" />
+        <input type="hidden" name="sort" value="@Model.Sort" />
 
         <div class="input-group input-group-sm" style="max-width:320px;">
             <input type="text" name="keyword" value="@Model.Keyword" class="form-control"
-                   placeholder="搜尋標題或目的地" />
+                   placeholder="搜尋標題、目的地或作者" />
             <button type="submit" class="btn btn-outline-primary">搜尋</button>
         </div>
 
-        <select name="sort" class="form-select form-select-sm" style="max-width:190px;" onchange="this.form.submit()">
-            <option value="updated_desc" selected="@(Model.Sort == "updated_desc")">更新時間：新到舊</option>
-            <option value="updated_asc" selected="@(Model.Sort == "updated_asc")">更新時間：舊到新</option>
-        </select>
-
-        @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.Status) || Model.ShowDeleted || Model.Sort != "updated_desc")
+        @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.Status) || Model.ShowDeleted || Model.Sort != "updated_desc" || Model.OnlyMine)
         {
             <a asp-action="Index" class="btn btn-sm btn-link text-secondary">清除篩選</a>
         }
@@ -46,16 +51,26 @@
     <a asp-action="Create" class="btn btn-sm btn-coral ms-auto">＋ 新增文章</a>
 </div>
 
+@* ---------- 發文者篩選：後台目前只有官方能登入，這裡讓官方可以只看自己發布的文章 ---------- *@
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="filter-chip @(!Model.OnlyMine ? "on" : "")"
+       asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部會員</a>
+    <a class="filter-chip @(Model.OnlyMine ? "on" : "")"
+       asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">只看我的文章</a>
+</div>
+
 @* ---------- 狀態篩選 chips ---------- *@
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a class="filter-chip @(!Model.ShowDeleted && string.IsNullOrEmpty(Model.Status) ? "on" : "")"
-       asp-action="Index" asp-route-status="" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部 (@Model.TotalPosts)</a>
+       asp-action="Index" asp-route-status="" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部 (@Model.TotalPosts)</a>
     <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Draft) ? "on" : "")"
-       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Draft)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">草稿 (@Model.DraftCount)</a>
+       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Draft)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">草稿 (@Model.DraftCount)</a>
+    <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.PendingReview) ? "on" : "")"
+       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.PendingReview)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">待審核 (@Model.PendingReviewCount)</a>
     <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Published) ? "on" : "")"
-       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Published)" asp-route-showDeleted="false" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已發布 (@Model.PublishedCount)</a>
+       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Published)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已發布 (@Model.PublishedCount)</a>
     <a class="filter-chip @(Model.ShowDeleted ? "on" : "")"
-       asp-action="Index" asp-route-showDeleted="true" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已刪除 (@Model.DeletedCount)</a>
+       asp-action="Index" asp-route-showDeleted="true" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已刪除 (@Model.DeletedCount)</a>
 </div>
 
 @* ---------- 資料表 ---------- *@
@@ -70,12 +85,25 @@
             <thead>
                 <tr>
                     <th style="width:64px;"></th>
-                    <th>標題</th>
-                    <th>目的地／天數</th>
-                    <th>狀態</th>
-                    <th>讚 / 收藏</th>
-                    <th>更新時間</th>
-                    <th class="text-end">操作</th>
+                    <th class="text-center">標題</th>
+                    <th class="text-center">目的地／天數</th>
+                    <th class="text-center">狀態</th>
+                    <th class="text-center">
+                        <a asp-action="Index" asp-route-sort="@NextSort("likes")" asp-route-status="@Model.Status"
+                           asp-route-showDeleted="@Model.ShowDeleted" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword"
+                           class="text-decoration-none text-reset">讚數 @SortIcon("likes")</a>
+                    </th>
+                    <th class="text-center">
+                        <a asp-action="Index" asp-route-sort="@NextSort("favorites")" asp-route-status="@Model.Status"
+                           asp-route-showDeleted="@Model.ShowDeleted" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword"
+                           class="text-decoration-none text-reset">收藏數 @SortIcon("favorites")</a>
+                    </th>
+                    <th class="text-center">
+                        <a asp-action="Index" asp-route-sort="@NextSort("updated")" asp-route-status="@Model.Status"
+                           asp-route-showDeleted="@Model.ShowDeleted" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword"
+                           class="text-decoration-none text-reset">更新時間 @SortIcon("updated")</a>
+                    </th>
+                    <th class="text-center">操作</th>
                 </tr>
             </thead>
             <tbody>
@@ -89,9 +117,9 @@
                                      style="width:48px;height:48px;object-fit:cover;border-radius:var(--radius-sm);" />
                             }
                         </td>
-                        <td>
+                        <td class="text-center">
                             <div class="fw-medium">@post.Title</div>
-                            <div class="text-muted small d-flex align-items-center gap-1">
+                            <div class="text-muted small d-flex align-items-center justify-content-center gap-1">
                                 <span>@MemberLookup.GetName(post.MemberID) 撰寫</span>
                                 @if (MemberLookup.IsOfficial(post.MemberID))
                                 {
@@ -99,14 +127,14 @@
                                 }
                             </div>
                         </td>
-                        <td>
+                        <td class="text-center">
                             @post.Destination · @post.TravelDays 天
                             @if (post.TravelDate is not null)
                             {
                                 <div class="text-muted small">出遊：@post.TravelDate.Value.ToString("yyyy/MM/dd")</div>
                             }
                         </td>
-                        <td>
+                        <td class="text-center">
                             @if (post.IsDelete)
                             {
                                 <span class="status-pill status-risk">已刪除</span>
@@ -116,10 +144,16 @@
                                 <span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span>
                             }
                         </td>
-                        <td>@PostInteractionStore.GetLikeCount(post.PostID) / @PostInteractionStore.GetFavoriteCount(post.PostID)</td>
-                        <td>@((post.UpdatedAt ?? post.CreatedAt).ToString("yyyy/MM/dd HH:mm"))</td>
-                        <td class="text-end">
+                        <td class="text-center">@Model.LikeCounts.GetValueOrDefault(post.PostID)</td>
+                        <td class="text-center">@Model.FavoriteCounts.GetValueOrDefault(post.PostID)</td>
+                        <td class="text-center">@((post.UpdatedAt ?? post.CreatedAt).ToString("yyyy/MM/dd HH:mm"))</td>
+                        <td class="text-center">
                             <div class="d-inline-flex gap-1">
+                                @if (!post.IsDelete && post.Status == VlogPostStatus.PendingReview)
+                                {
+                                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostID" class="btn btn-sm btn-outline-warning">查看檢舉</a>
+                                }
+
                                 <a asp-action="Details" asp-route-id="@post.PostID" class="btn btn-sm btn-outline-primary">檢視</a>
 
                                 @if (!post.IsDelete)

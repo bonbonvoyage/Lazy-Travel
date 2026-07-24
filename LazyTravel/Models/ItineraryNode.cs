@@ -2,11 +2,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LazyTravel.Models;
 
-// 對應規格書第 13 表「每日行程節點明細表 (ItineraryNodes)」
+// 對應規格書 (0722 最新版) 第 14 表「每日行程節點明細表 (ItineraryNodes)」
 public class ItineraryNode
 {
+    [Key]
     public int NodeID { get; set; }
 
+    // FK -> VlogPosts.PostID，在 LazyTravelContext.OnModelCreating 設定。
     public int PostID { get; set; }
 
     [Range(1, 60, ErrorMessage = "第幾天請輸入 1-60 之間")]
