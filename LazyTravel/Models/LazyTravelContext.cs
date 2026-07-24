@@ -19,7 +19,15 @@ public partial class LazyTravelContext : DbContext
 
     public virtual DbSet<Member> Members { get; set; }
 
+    public virtual DbSet<Report> Reports { get; set; }
+
     public virtual DbSet<TravelGroup> TravelGroups { get; set; }
+
+    public virtual DbSet<ReportTargetTypeLookup> ReportTargetTypeLookups { get; set; }
+
+    public virtual DbSet<ReportReasonCategoryLookup> ReportReasonCategoryLookups { get; set; }
+
+    public virtual DbSet<ReportStatusLookup> ReportStatusLookups { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,6 +62,25 @@ public partial class LazyTravelContext : DbContext
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Status).HasDefaultValue((byte)1);
+        });
+
+        modelBuilder.Entity<Report>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+
+            // Reports 對 Members 有兩條各自獨立的外鍵(誰檢舉的、被檢舉的是誰),
+            // 兩條都指向同一張表,EF Core 沒辦法自己猜,必須各自明講要用哪個外鍵、不要牽連對方
+            entity.HasOne(d => d.Reporter)
+                .WithMany()
+                .HasForeignKey(d => d.ReporterId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.ReportedMember)
+                .WithMany()
+                .HasForeignKey(d => d.ReportedMemberId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<TravelGroup>(entity =>

@@ -1,3 +1,4 @@
+using Amazon.S3;
 using LazyTravel.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,6 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
+
+// 讓 Service 層(例如 AdminLogService)能拿到目前這次請求的 HttpContext,藉此取得真實來源 IP
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<LazyTravelContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -28,6 +32,22 @@ builder.Services.AddScoped<LazyTravel.Models.Services.IEmployeeService, LazyTrav
 
 // 檢舉中心商業邏輯(藍培碩負責),Controller 只呼叫這層
 builder.Services.AddScoped<LazyTravel.Services.IReportService, LazyTravel.Services.ReportService>();
+
+// 檢舉「類型/類別/狀態」中文對照,查資料庫的 ReportTargetTypes/ReportReasonCategories/ReportStatuses
+builder.Services.AddScoped<LazyTravel.Services.IReportLookupService, LazyTravel.Services.ReportLookupService>();
+
+// 圖床(Cloudflare R2)用的 S3 相容用戶端,設定值來自 appsettings.Development.json 的 CloudflareR2 區塊
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var s3Config = new AmazonS3Config
+    {
+        ServiceURL = config["CloudflareR2:ServiceUrl"],
+        ForcePathStyle = true
+    };
+    return new AmazonS3Client(config["CloudflareR2:AccessKey"], config["CloudflareR2:SecretKey"], s3Config);
+});
+builder.Services.AddScoped<LazyTravel.Services.IImageStorageService, LazyTravel.Services.R2ImageStorageService>();
 
 // ========================================================
 // 1. 註冊 Cookie 身分驗證機制
