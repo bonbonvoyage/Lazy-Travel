@@ -273,7 +273,7 @@ public static class VlogPostStore
                 Content = seed.Content,
                 Destination = seed.Destination,
                 TravelDays = seed.Days,
-                TravelDate = seed.TravelDate,
+                TravelDate = seed.TravelDate?.ToDateTime(TimeOnly.MinValue),
                 Status = seed.Status,
                 GroupSize = seed.GroupSize,
             }, createdAt, updatedAt);

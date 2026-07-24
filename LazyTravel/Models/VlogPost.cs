@@ -118,8 +118,9 @@ public class VlogPost
     public TravelGroupSize GroupSize { get; set; } = TravelGroupSize.Solo;
 
     // 規格書 0722 版已經正式收錄（原本 v1.2.1 沒有，是先前額外加的）。
+    // 型別對齊資料庫實際的 datetime 欄位（不是 date），避免型別不一致。
     [Display(Name = "出遊日期")]
-    public DateOnly? TravelDate { get; set; }
+    public DateTime? TravelDate { get; set; }
 
     [Display(Name = "文章狀態")]
     public VlogPostStatus Status { get; set; } = VlogPostStatus.Draft;

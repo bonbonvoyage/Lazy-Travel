@@ -91,6 +91,7 @@ public partial class LazyTravelContext : DbContext
             entity.Property(e => e.TravelDays).HasDefaultValue(1);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("(getdate())");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.TravelDate).HasColumnType("datetime");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
         });
 
