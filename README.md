@@ -1,4 +1,4 @@
-# LazyTravel  — 全端期中專題
+# LazyTravel 
 
 旅遊揪團社群平台,以後台管理系統為主。
 
