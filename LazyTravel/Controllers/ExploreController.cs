@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,9 +8,9 @@ namespace LazyTravel.Controllers
     // 前台「找行程」頁面：只給看已發布、未刪除的文章，跟後台管理邏輯分開。
     public class ExploreController : Controller
     {
-        private readonly LazyTravelContext _context;
+        private readonly LazyTravelDBContext _context;
 
-        public ExploreController(LazyTravelContext context)
+        public ExploreController(LazyTravelDBContext context)
         {
             _context = context;
         }
@@ -35,31 +36,31 @@ namespace LazyTravel.Controllers
             }
 
             var list = published.ToList();
-            var postIds = list.Select(p => p.PostID).ToList();
+            var postIds = list.Select(p => p.PostId).ToList();
 
             var interactionCounts = await _context.PostInteractions
-                .Where(i => postIds.Contains(i.PostID))
-                .GroupBy(i => new { i.PostID, i.ActionType })
-                .Select(g => new { g.Key.PostID, g.Key.ActionType, Count = g.Count() })
+                .Where(i => postIds.Contains(i.PostId))
+                .GroupBy(i => new { i.PostId, i.ActionType })
+                .Select(g => new { g.Key.PostId, g.Key.ActionType, Count = g.Count() })
                 .ToListAsync();
             int InteractionCount(int postId) =>
-                interactionCounts.Where(c => c.PostID == postId).Sum(c => c.Count);
+                interactionCounts.Where(c => c.PostId == postId).Sum(c => c.Count);
 
             // 精選文章：優先挑官方帳號發的，沒有的話退而求其次選最新更新的一篇
             var featured = list
-                .Where(p => MemberLookup.IsOfficial(p.MemberID))
+                .Where(p => MemberLookup.IsOfficial(p.MemberId))
                 .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
                 .FirstOrDefault()
                 ?? list.OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt).FirstOrDefault();
 
             var sideList = list
-                .Where(p => featured is null || p.PostID != featured.PostID)
+                .Where(p => featured is null || p.PostId != featured.PostId)
                 .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
                 .Take(3)
                 .ToList();
 
             var ranking = list
-                .OrderByDescending(p => InteractionCount(p.PostID))
+                .OrderByDescending(p => InteractionCount(p.PostId))
                 .ThenByDescending(p => p.UpdatedAt ?? p.CreatedAt)
                 .Take(10)
                 .ToList();
@@ -89,7 +90,7 @@ namespace LazyTravel.Controllers
         // GET /Explore/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var post = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostID == id);
+            var post = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null || post.IsDelete || post.Status != VlogPostStatus.Published)
             {
                 return NotFound();
@@ -99,12 +100,12 @@ namespace LazyTravel.Controllers
 
             ViewData["Title"] = post.Title;
             ViewBag.Nodes = await _context.ItineraryNodes.AsNoTracking()
-                .Where(n => n.PostID == id)
+                .Where(n => n.PostId == id)
                 .OrderBy(n => n.DayNumber).ThenBy(n => n.ArrivalTime).ToListAsync();
-            ViewBag.LikeCount = await _context.PostInteractions.CountAsync(i => i.PostID == id && i.ActionType == PostInteractionType.Like);
-            ViewBag.FavoriteCount = await _context.PostInteractions.CountAsync(i => i.PostID == id && i.ActionType == PostInteractionType.Favorite);
-            ViewBag.IsLiked = await _context.PostInteractions.AnyAsync(i => i.PostID == id && i.MemberID == visitorId && i.ActionType == PostInteractionType.Like);
-            ViewBag.IsFavorited = await _context.PostInteractions.AnyAsync(i => i.PostID == id && i.MemberID == visitorId && i.ActionType == PostInteractionType.Favorite);
+            ViewBag.LikeCount = await _context.PostInteractions.CountAsync(i => i.PostId == id && i.ActionType == PostInteractionType.Like);
+            ViewBag.FavoriteCount = await _context.PostInteractions.CountAsync(i => i.PostId == id && i.ActionType == PostInteractionType.Favorite);
+            ViewBag.IsLiked = await _context.PostInteractions.AnyAsync(i => i.PostId == id && i.MemberId == visitorId && i.ActionType == PostInteractionType.Like);
+            ViewBag.IsFavorited = await _context.PostInteractions.AnyAsync(i => i.PostId == id && i.MemberId == visitorId && i.ActionType == PostInteractionType.Favorite);
             return View(post);
         }
 
@@ -129,7 +130,7 @@ namespace LazyTravel.Controllers
 
         private async Task ToggleInteractionAsync(int postId, PostInteractionType actionType)
         {
-            var postExists = await _context.VlogPosts.AnyAsync(p => p.PostID == postId && !p.IsDelete && p.Status == VlogPostStatus.Published);
+            var postExists = await _context.VlogPosts.AnyAsync(p => p.PostId == postId && !p.IsDelete && p.Status == VlogPostStatus.Published);
             if (!postExists)
             {
                 return;
@@ -137,7 +138,7 @@ namespace LazyTravel.Controllers
 
             var visitorId = GetOrCreateVisitorId();
             var existing = await _context.PostInteractions
-                .FirstOrDefaultAsync(i => i.PostID == postId && i.MemberID == visitorId && i.ActionType == actionType);
+                .FirstOrDefaultAsync(i => i.PostId == postId && i.MemberId == visitorId && i.ActionType == actionType);
 
             if (existing is not null)
             {
@@ -145,7 +146,7 @@ namespace LazyTravel.Controllers
             }
             else
             {
-                _context.PostInteractions.Add(new PostInteraction { PostID = postId, MemberID = visitorId, ActionType = actionType });
+                _context.PostInteractions.Add(new PostInteraction { PostId = postId, MemberId = visitorId, ActionType = actionType });
             }
 
             await _context.SaveChangesAsync();

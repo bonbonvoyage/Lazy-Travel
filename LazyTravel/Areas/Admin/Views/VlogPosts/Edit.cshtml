@@ -28,7 +28,9 @@
         <div class="small mb-2">
             @(Model.Post.IsDelete
                 ? "文章已被刪除，請聯絡主管或系統管理員還原後才能編輯。"
-                : "文章已送出審核或已發布，請聯絡主管把文章「退回草稿」後才能再編輯。")
+                : !Model.Permissions.IsOfficial
+                    ? "這是會員自己發表的文章，不是官方文章，小編不能編輯。如果內容有問題，請到「檢視」頁提出檢舉。"
+                    : "文章已送出審核或已發布，請聯絡主管把文章「退回草稿」後才能再編輯。")
         </div>
         <a asp-action="Index" class="btn btn-sm btn-outline-primary">返回列表</a>
     </div>
@@ -47,7 +49,7 @@
     </div>
 }
 
-<form asp-action="Edit" asp-route-id="@Model.Post.PostID" method="post" enctype="multipart/form-data" novalidate>
+<form asp-action="Edit" asp-route-id="@Model.Post.PostId" method="post" enctype="multipart/form-data" novalidate>
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
     @await Html.PartialAsync("_Form", Model.Post)
@@ -155,7 +157,7 @@
                             <div class="itinerary-node-row mb-3">
                                 <div class="itinerary-node-dot">@(i + 1)</div>
                                 <div class="d-flex align-items-start justify-content-between gap-2 p-2"
-                                     style="background-color: @(Model.EditingNode?.NodeID == node.NodeID ? "var(--sea-50)" : "transparent"); border-radius:var(--radius-sm);">
+                                     style="background-color: @(Model.EditingNode?.NodeId == node.NodeId ? "var(--sea-50)" : "transparent"); border-radius:var(--radius-sm);">
                                     <div class="d-flex gap-2">
                                         @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
                                         {
@@ -182,12 +184,12 @@
                                         </div>
                                     </div>
                                     <div class="d-flex flex-column gap-1">
-                                        <a asp-action="Edit" asp-route-id="@Model.Post.PostID" asp-route-editId="@node.NodeID" asp-fragment="itinerary-section"
+                                        <a asp-action="Edit" asp-route-id="@Model.Post.PostId" asp-route-editId="@node.NodeId" asp-fragment="itinerary-section"
                                            class="btn btn-sm btn-outline-primary">編輯</a>
                                         <form asp-action="DeleteNode" method="post" class="d-inline"
                                               onsubmit="return confirm('確定要刪除「@node.LocationName」這個行程嗎？');">
-                                            <input type="hidden" name="nodeId" value="@node.NodeID" />
-                                            <input type="hidden" name="postId" value="@Model.Post.PostID" />
+                                            <input type="hidden" name="nodeId" value="@node.NodeId" />
+                                            <input type="hidden" name="postId" value="@Model.Post.PostId" />
                                             <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
                                         </form>
                                     </div>
@@ -218,15 +220,15 @@
                 </h2>
                 @if (editing is not null)
                 {
-                    <a asp-action="Edit" asp-route-id="@Model.Post.PostID" asp-fragment="itinerary-section" class="btn btn-sm btn-link text-secondary">取消編輯</a>
+                    <a asp-action="Edit" asp-route-id="@Model.Post.PostId" asp-fragment="itinerary-section" class="btn btn-sm btn-link text-secondary">取消編輯</a>
                 }
             </div>
 
             <form asp-action="@(editing is null ? "AddNode" : "UpdateNode")" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="postId" value="@Model.Post.PostID" />
+                <input type="hidden" name="postId" value="@Model.Post.PostId" />
                 @if (editing is not null)
                 {
-                    <input type="hidden" name="nodeId" value="@editing.NodeID" />
+                    <input type="hidden" name="nodeId" value="@editing.NodeId" />
                     <input type="hidden" name="existingMediaUrl" value="@editing.MediaUrl" />
                 }
 

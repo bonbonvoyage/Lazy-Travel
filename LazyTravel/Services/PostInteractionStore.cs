@@ -1,4 +1,4 @@
-using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 
 namespace LazyTravel.Services;
 
@@ -14,10 +14,10 @@ public static class PostInteractionStore
     }
 
     public static int GetLikeCount(int postId) =>
-        _interactions.Count(i => i.PostID == postId && i.ActionType == PostInteractionType.Like);
+        _interactions.Count(i => i.PostId == postId && i.ActionType == PostInteractionType.Like);
 
     public static int GetFavoriteCount(int postId) =>
-        _interactions.Count(i => i.PostID == postId && i.ActionType == PostInteractionType.Favorite);
+        _interactions.Count(i => i.PostId == postId && i.ActionType == PostInteractionType.Favorite);
 
     private static void Seed()
     {
@@ -25,11 +25,11 @@ public static class PostInteractionStore
         {
             for (var m = 0; m < likeCount; m++)
             {
-                _interactions.Add(new PostInteraction { PostID = postId, MemberID = (m % 4) + 1, ActionType = PostInteractionType.Like });
+                _interactions.Add(new PostInteraction { PostId = postId, MemberId = (m % 4) + 1, ActionType = PostInteractionType.Like });
             }
             for (var m = 0; m < favoriteCount; m++)
             {
-                _interactions.Add(new PostInteraction { PostID = postId, MemberID = (m % 4) + 1, ActionType = PostInteractionType.Favorite });
+                _interactions.Add(new PostInteraction { PostId = postId, MemberId = (m % 4) + 1, ActionType = PostInteractionType.Favorite });
             }
         }
 

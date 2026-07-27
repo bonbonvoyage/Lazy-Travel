@@ -139,10 +139,10 @@
                     }
                     <div class="d-flex flex-wrap gap-2 mb-2">
                         <span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span>
-                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-person"></i> @MemberLookup.GetName(post.MemberID)</span>
+                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-person"></i> @MemberLookup.GetName(post.MemberId)</span>
                         <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-geo-alt"></i> @post.Destination</span>
                         <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-calendar3"></i> @post.TravelDays 天</span>
-                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-people"></i> @post.GroupSize.ToLabel()</span>
+                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-people"></i> @post.TravelPeople.ToLabel()</span>
                     </div>
                     <div class="text-muted small d-flex flex-wrap column-gap-3 row-gap-1">
                         @if (post.TravelDate is not null)
@@ -240,15 +240,15 @@
                 <dd class="col-7"><span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span></dd>
                 <dt class="col-5 text-muted">發布會員</dt>
                 <dd class="col-7 d-flex align-items-center gap-1">
-                    <span>@MemberLookup.GetName(post.MemberID)</span>
-                    @if (MemberLookup.IsOfficial(post.MemberID))
+                    <span>@MemberLookup.GetName(post.MemberId)</span>
+                    @if (MemberLookup.IsOfficial(post.MemberId))
                     {
                         <span class="official-badge">✓ 官方</span>
                     }
                 </dd>
                 <dt class="col-5 text-muted">目的地</dt><dd class="col-7">@post.Destination</dd>
                 <dt class="col-5 text-muted">天數</dt><dd class="col-7">@post.TravelDays 天</dd>
-                <dt class="col-5 text-muted">旅遊人數</dt><dd class="col-7">@post.GroupSize.ToLabel()</dd>
+                <dt class="col-5 text-muted">旅遊人數</dt><dd class="col-7">@post.TravelPeople.ToLabel()</dd>
                 <dt class="col-5 text-muted">讚數</dt><dd class="col-7"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> @Model.LikeCount</dd>
                 <dt class="col-5 text-muted">收藏數</dt><dd class="col-7"><i class="bi bi-bookmark-fill text-warning"></i> @Model.FavoriteCount</dd>
                 <dt class="col-5 text-muted">建立時間</dt><dd class="col-7">@post.CreatedAt.ToString("yyyy/MM/dd HH:mm")</dd>
@@ -260,10 +260,36 @@
                 <div class="alert alert-warning py-2 px-3 mt-3 mb-0">
                     <div class="fw-medium mb-1">審核提醒</div>
                     <div class="small mb-2">此文章目前有待處理檢舉</div>
-                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostID" class="btn btn-sm btn-outline-warning">查看檢舉內容</a>
+                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostId" class="btn btn-sm btn-outline-warning">查看檢舉內容</a>
                 </div>
             }
         </div>
+
+        @* ---------- 提出檢舉：會員文章專用，小編（或任何看到這頁的人）覺得內容有問題可以在這裡送出 ---------- *@
+        @if (Model.Permissions.CanReport)
+        {
+            <div id="report-section" class="admin-table-card p-3 p-lg-4 mb-3" style="scroll-margin-top: 1rem;">
+                <h2 class="h6 form-section-title mb-3"><i class="bi bi-flag"></i> 提出檢舉</h2>
+                <p class="small text-secondary mb-2">這是會員自己發表的文章，小編不能編輯或刪除，如果內容有問題可以在這裡提出檢舉，交給主管處理。</p>
+                <form asp-action="ReportPost" asp-route-id="@post.PostId" method="post">
+                    <div class="mb-2">
+                        <label class="form-label">檢舉類別</label>
+                        <select name="reasonCategory" class="form-select form-select-sm">
+                            @foreach (var category in Enum.GetValues<ReportReasonCategory>())
+                            {
+                                <option value="@category">@category.ToDisplayName()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">檢舉原因<span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control form-control-sm" rows="3" maxlength="200" required
+                                  placeholder="請說明這篇文章有什麼問題"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-warning w-100">送出檢舉</button>
+                </form>
+            </div>
+        }
 
         @* ---------- 審核資訊：檢舉次數/狀態/最後審核結果，讀自檢舉中心(IReportService)的資料，不動它既有邏輯 ---------- *@
         <div class="admin-table-card p-3 p-lg-4 mb-3">
@@ -290,19 +316,27 @@
 
                 @if (Model.Permissions.CanRestore)
                 {
-                    <form asp-action="Restore" asp-route-id="@post.PostID" method="post" class="d-inline">
+                    <form asp-action="Restore" asp-route-id="@post.PostId" method="post" class="d-inline">
                         <button type="submit" class="btn btn-sm btn-outline-primary">還原文章</button>
                     </form>
                 }
 
                 @if (Model.Permissions.CanViewReport)
                 {
-                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostID" class="btn btn-sm btn-outline-warning">查看檢舉</a>
+                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostId" class="btn btn-sm btn-outline-warning">查看檢舉</a>
+                }
+
+                @if (Model.Permissions.CanDismissReport)
+                {
+                    <form asp-action="DismissReport" asp-route-id="@post.PostId" method="post" class="d-inline"
+                          onsubmit="return confirm('確定要把「@post.Title」的檢舉判定為不成立嗎？');">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">檢舉不成立</button>
+                    </form>
                 }
 
                 @if (Model.Permissions.CanApprove)
                 {
-                    <form asp-action="ToggleStatus" asp-route-id="@post.PostID" method="post" class="d-inline"
+                    <form asp-action="ToggleStatus" asp-route-id="@post.PostId" method="post" class="d-inline"
                           onsubmit="return confirm('確定要通過「@post.Title」的審核，讓文章正式發布嗎？');">
                         <input type="hidden" name="to" value="@VlogPostStatus.Published" />
                         <input type="hidden" name="fromDetails" value="true" />
@@ -319,7 +353,7 @@
 
                 @if (Model.Permissions.CanDelete)
                 {
-                    <form asp-action="Delete" asp-route-id="@post.PostID" method="post" class="d-inline"
+                    <form asp-action="Delete" asp-route-id="@post.PostId" method="post" class="d-inline"
                           onsubmit="return confirm('確定要刪除「@post.Title」嗎？');">
                         <button type="submit" class="btn btn-sm btn-outline-danger">刪除文章</button>
                     </form>
@@ -339,7 +373,7 @@
                     <h5 class="modal-title" style="font-family:var(--font-display); color:var(--sea-800);">退回草稿</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
                 </div>
-                <form asp-action="ToggleStatus" asp-route-id="@post.PostID" method="post">
+                <form asp-action="ToggleStatus" asp-route-id="@post.PostId" method="post">
                     <div class="modal-body">
                         <p class="small text-secondary mb-2">
                             @(post.Status == VlogPostStatus.Published

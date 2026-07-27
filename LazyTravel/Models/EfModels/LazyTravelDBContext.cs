@@ -303,6 +303,8 @@ public partial class LazyTravelDBContext : DbContext
         {
             entity.HasKey(e => e.NodeId).HasName("PK__Itinerar__6BAE224383D52036");
 
+            entity.Property(e => e.MediaType).HasColumnType("tinyint").HasConversion<byte>();
+
             entity.HasOne(d => d.Post).WithMany(p => p.ItineraryNodes)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Itinerary__PostI__4B7734FF");
@@ -384,6 +386,7 @@ public partial class LazyTravelDBContext : DbContext
         {
             entity.HasKey(e => new { e.PostId, e.MemberId, e.ActionType }).HasName("PK__PostInte__55DB8F3BB779147E");
 
+            entity.Property(e => e.ActionType).HasColumnType("tinyint").HasConversion<byte>();
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Member).WithMany(p => p.PostInteractions)
@@ -468,6 +471,9 @@ public partial class LazyTravelDBContext : DbContext
         {
             entity.HasKey(e => e.PostId).HasName("PK__VlogPost__AA126038E4AC2808");
 
+            entity.Property(e => e.MediaType).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(VlogMediaType.Photo);
+            entity.Property(e => e.Status).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(VlogPostStatus.Draft);
+            entity.Property(e => e.TravelPeople).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(TravelGroupSize.Solo);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.TravelDays).HasDefaultValue(1);
 

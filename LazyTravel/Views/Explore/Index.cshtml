@@ -119,8 +119,8 @@
             <div class="col-lg-7">
                 <div class="featured-card h-100 d-flex flex-column">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="fw-medium">@MemberLookup.GetName(Model.Featured.MemberID)</span>
-                        @if (MemberLookup.IsOfficial(Model.Featured.MemberID))
+                        <span class="fw-medium">@MemberLookup.GetName(Model.Featured.MemberId)</span>
+                        @if (MemberLookup.IsOfficial(Model.Featured.MemberId))
                         {
                             <span class="explore-official-badge">✓ 官方合作</span>
                         }
@@ -132,7 +132,7 @@
                         <img src="@Model.Featured.MediaUrl" alt=""
                              style="width:100%; max-height:280px; object-fit:cover; border-radius:var(--radius-md); margin-bottom:1rem;" />
                     }
-                    <a asp-action="Details" asp-route-id="@Model.Featured.PostID" class="btn btn-primary align-self-start">詳細行程</a>
+                    <a asp-action="Details" asp-route-id="@Model.Featured.PostId" class="btn btn-primary align-self-start">詳細行程</a>
                 </div>
             </div>
 
@@ -140,15 +140,15 @@
                 <div class="d-flex flex-column gap-3 h-100">
                     @foreach (var p in Model.SideList)
                     {
-                        <a asp-action="Details" asp-route-id="@p.PostID" class="side-card d-flex flex-md-row flex-column">
+                        <a asp-action="Details" asp-route-id="@p.PostId" class="side-card d-flex flex-md-row flex-column">
                             @if (!string.IsNullOrWhiteSpace(p.MediaUrl))
                             {
                                 <img src="@p.MediaUrl" alt="" style="width:100%; max-width:160px;" />
                             }
                             <div class="side-card-body">
                                 <div class="text-muted small d-flex align-items-center gap-1">
-                                    <span>@MemberLookup.GetName(p.MemberID)</span>
-                                    @if (MemberLookup.IsOfficial(p.MemberID))
+                                    <span>@MemberLookup.GetName(p.MemberId)</span>
+                                    @if (MemberLookup.IsOfficial(p.MemberId))
                                     {
                                         <span class="explore-official-badge">✓</span>
                                     }
@@ -171,7 +171,7 @@
                     @foreach (var p in Model.Ranking)
                     {
                         <div class="col-6 col-md-3">
-                            <a asp-action="Details" asp-route-id="@p.PostID" class="ranking-card">
+                            <a asp-action="Details" asp-route-id="@p.PostId" class="ranking-card">
                                 <div class="ranking-img" style="background-image:url('@p.MediaUrl')">
                                     <span class="ranking-badge">TOP<br />@rank.ToString("00")</span>
                                 </div>

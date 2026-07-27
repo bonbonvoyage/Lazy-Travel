@@ -42,7 +42,7 @@
             <button type="submit" class="btn btn-outline-primary">搜尋</button>
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.Status) || Model.ShowDeleted || Model.Sort != "updated_desc" || Model.OnlyMine)
+        @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.Status) || Model.ShowDeleted || Model.Sort != "updated_desc" || !Model.OnlyMine)
         {
             <a asp-action="Index" class="btn btn-sm btn-link text-secondary">清除篩選</a>
         }
@@ -51,12 +51,12 @@
     <a asp-action="Create" class="btn btn-sm btn-coral ms-auto">＋ 新增文章</a>
 </div>
 
-@* ---------- 發文者篩選：後台目前只有官方能登入，這裡讓官方可以只看自己發布的文章 ---------- *@
+@* ---------- 發文者篩選：後台目前只有官方能登入，這裡讓官方可以切換「我的文章」跟「其他會員的文章」，兩者互斥 ---------- *@
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="filter-chip @(!Model.OnlyMine ? "on" : "")"
-       asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部會員</a>
     <a class="filter-chip @(Model.OnlyMine ? "on" : "")"
        asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">只看我的文章</a>
+    <a class="filter-chip @(!Model.OnlyMine ? "on" : "")"
+       asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部會員</a>
 </div>
 
 @* ---------- 狀態篩選 chips ---------- *@
@@ -120,8 +120,8 @@
                         <td class="text-center">
                             <div class="fw-medium">@post.Title</div>
                             <div class="text-muted small d-flex align-items-center justify-content-center gap-1">
-                                <span>@MemberLookup.GetName(post.MemberID) 撰寫</span>
-                                @if (MemberLookup.IsOfficial(post.MemberID))
+                                <span>@MemberLookup.GetName(post.MemberId) 撰寫</span>
+                                @if (MemberLookup.IsOfficial(post.MemberId))
                                 {
                                     <span class="official-badge">✓ 官方</span>
                                 }
@@ -144,32 +144,49 @@
                                 <span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span>
                             }
                         </td>
-                        <td class="text-center">@Model.LikeCounts.GetValueOrDefault(post.PostID)</td>
-                        <td class="text-center">@Model.FavoriteCounts.GetValueOrDefault(post.PostID)</td>
+                        <td class="text-center">@Model.LikeCounts.GetValueOrDefault(post.PostId)</td>
+                        <td class="text-center">@Model.FavoriteCounts.GetValueOrDefault(post.PostId)</td>
                         <td class="text-center">@((post.UpdatedAt ?? post.CreatedAt).ToString("yyyy/MM/dd HH:mm"))</td>
                         <td class="text-center">
+                            @{
+                                var rowIsOfficial = MemberLookup.IsOfficial(post.MemberId);
+                            }
                             <div class="d-inline-flex gap-1">
                                 @if (!post.IsDelete && post.Status == VlogPostStatus.PendingReview)
                                 {
-                                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostID" class="btn btn-sm btn-outline-warning">查看檢舉</a>
+                                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostId" class="btn btn-sm btn-outline-warning">查看檢舉</a>
                                 }
 
-                                <a asp-action="Details" asp-route-id="@post.PostID" class="btn btn-sm btn-outline-primary">檢視</a>
+                                <a asp-action="Details" asp-route-id="@post.PostId" class="btn btn-sm btn-outline-primary">檢視</a>
 
-                                @if (!post.IsDelete)
+                                @if (post.IsDelete)
                                 {
-                                    <a asp-action="Edit" asp-route-id="@post.PostID" class="btn btn-sm btn-outline-primary">編輯</a>
-
-                                    <form asp-action="Delete" asp-route-id="@post.PostID" method="post" class="d-inline"
-                                          onsubmit="return confirm('確定要刪除「@post.Title」嗎？');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <form asp-action="Restore" asp-route-id="@post.PostID" method="post" class="d-inline">
+                                    <form asp-action="Restore" asp-route-id="@post.PostId" method="post" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-outline-primary">還原</button>
                                     </form>
+                                }
+                                else if (rowIsOfficial)
+                                {
+                                    @* 官方文章：小編只能編輯／送審／刪除還在草稿階段的文章，送審之後要等主管審核 *@
+                                    if (post.Status == VlogPostStatus.Draft)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@post.PostId" class="btn btn-sm btn-outline-primary">編輯</a>
+
+                                        <form asp-action="ToggleStatus" asp-route-id="@post.PostId" method="post" class="d-inline">
+                                            <input type="hidden" name="to" value="@VlogPostStatus.PendingReview" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">送審</button>
+                                        </form>
+
+                                        <form asp-action="Delete" asp-route-id="@post.PostId" method="post" class="d-inline"
+                                              onsubmit="return confirm('確定要刪除「@post.Title」嗎？');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                        </form>
+                                    }
+                                }
+                                else if (!Model.PostIdsWithPendingReport.Contains(post.PostId))
+                                {
+                                    @* 會員文章：不是小編寫的，不能編輯／刪除，只能看到有問題時提出檢舉；已經有待處理檢舉的就不用再顯示這顆 *@
+                                    <a asp-action="Details" asp-route-id="@post.PostId" asp-fragment="report-section" class="btn btn-sm btn-outline-danger">提出檢舉</a>
                                 }
                             </div>
                         </td>

@@ -132,8 +132,8 @@
                 }
                 <span>@Model.TravelDays 天</span>
                 <span>·</span>
-                <span>@MemberLookup.GetName(Model.MemberID)</span>
-                @if (MemberLookup.IsOfficial(Model.MemberID))
+                <span>@MemberLookup.GetName(Model.MemberId)</span>
+                @if (MemberLookup.IsOfficial(Model.MemberId))
                 {
                     <span class="explore-official-badge">✓ 官方合作</span>
                 }
@@ -202,12 +202,12 @@
 
     @* ---------- 底部互動列：只留讚/收藏(真實資料，點下去會真的加減)，不放分享跟留言 ---------- *@
     <div class="social-bar">
-        <form asp-controller="Explore" asp-action="ToggleLike" asp-route-id="@Model.PostID" method="post" class="d-inline">
+        <form asp-controller="Explore" asp-action="ToggleLike" asp-route-id="@Model.PostId" method="post" class="d-inline">
             <button type="submit" class="social-stat @(ViewBag.IsLiked ? "active" : "")">
                 @(ViewBag.IsLiked ? "❤️" : "🤍") @likeCount
             </button>
         </form>
-        <form asp-controller="Explore" asp-action="ToggleFavorite" asp-route-id="@Model.PostID" method="post" class="d-inline">
+        <form asp-controller="Explore" asp-action="ToggleFavorite" asp-route-id="@Model.PostId" method="post" class="d-inline">
             <button type="submit" class="social-stat @(ViewBag.IsFavorited ? "active" : "")">
                 🔖 @favoriteCount 收藏
             </button>

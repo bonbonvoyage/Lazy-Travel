@@ -62,7 +62,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<LazyTravelContext>();
+    var context = scope.ServiceProvider.GetRequiredService<LazyTravel.Models.EfModels.LazyTravelDBContext>();
     await VlogPostDbSeeder.SeedAsync(context);
 }
 

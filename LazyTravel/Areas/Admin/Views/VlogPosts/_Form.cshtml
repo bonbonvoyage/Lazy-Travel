@@ -107,11 +107,11 @@
                 </div>
 
                 <div class="col-sm-6">
-                    <label asp-for="GroupSize" class="form-label"></label>
-                    <select asp-for="GroupSize" class="form-select">
-                        <option value="@TravelGroupSize.Solo" selected="@(Model.GroupSize == TravelGroupSize.Solo)">1人 獨旅</option>
-                        <option value="@TravelGroupSize.Small" selected="@(Model.GroupSize == TravelGroupSize.Small)">2-4人 精緻團</option>
-                        <option value="@TravelGroupSize.Large" selected="@(Model.GroupSize == TravelGroupSize.Large)">5人以上 團體</option>
+                    <label asp-for="TravelPeople" class="form-label"></label>
+                    <select asp-for="TravelPeople" class="form-select">
+                        <option value="@TravelGroupSize.Solo" selected="@(Model.TravelPeople == TravelGroupSize.Solo)">1人 獨旅</option>
+                        <option value="@TravelGroupSize.Small" selected="@(Model.TravelPeople == TravelGroupSize.Small)">2-4人 精緻團</option>
+                        <option value="@TravelGroupSize.Large" selected="@(Model.TravelPeople == TravelGroupSize.Large)">5人以上 團體</option>
                     </select>
                 </div>
 
@@ -136,7 +136,7 @@
 
     <div class="col-lg-4">
         <div class="d-flex justify-content-end gap-2 mb-3" style="margin-top:-12px;">
-            @if (Model.PostID > 0)
+            @if (Model.PostId > 0)
             {
                 <a asp-action="Index" class="btn btn-outline-primary">取消</a>
                 <button type="submit" name="action" value="draft" class="btn btn-outline-primary">儲存草稿</button>
@@ -175,22 +175,22 @@
                     <span class="status-pill @Model.Status.ToPillClass()">@Model.Status.ToLabel()</span>
                 </div>
                 <div class="form-text">
-                    @(Model.PostID > 0
+                    @(Model.PostId > 0
                         ? "用右上角「儲存草稿」／「送出審核」切換，這裡不能直接改。"
                         : "新文章一律先存成草稿，之後在編輯頁再送出審核。")
                 </div>
             </div>
 
-            <div class="@(Model.PostID > 0 ? "mb-3" : "mb-0")">
-                <label asp-for="MemberID" class="form-label"></label>
+            <div class="@(Model.PostId > 0 ? "mb-3" : "mb-0")">
+                <label asp-for="MemberId" class="form-label"></label>
                 <div class="form-control-plaintext fw-medium">
-                    @MemberLookup.GetName(Model.MemberID)@(MemberLookup.IsOfficial(Model.MemberID) ? "（官方帳號）" : "")
+                    @MemberLookup.GetName(Model.MemberId)@(MemberLookup.IsOfficial(Model.MemberId) ? "（官方帳號）" : "")
                 </div>
-                <input type="hidden" asp-for="MemberID" />
+                <input type="hidden" asp-for="MemberId" />
                 <div class="form-text">Members 後台與 Cookie 認證尚未接上，先固定顯示此帳號。</div>
             </div>
 
-            @if (Model.PostID > 0)
+            @if (Model.PostId > 0)
             {
                 <div class="mb-3">
                     <label class="form-label">建立時間</label>

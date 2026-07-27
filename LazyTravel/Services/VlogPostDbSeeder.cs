@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Services;
@@ -9,7 +10,7 @@ namespace LazyTravel.Services;
 // 只碰 VlogPosts / ItineraryNodes / PostInteractions 這三張「我負責的」表，不動 Members 等其他表。
 public static class VlogPostDbSeeder
 {
-    public static async Task SeedAsync(LazyTravelContext context)
+    public static async Task SeedAsync(LazyTravelDBContext context)
     {
         if (await context.VlogPosts.AnyAsync())
         {
@@ -25,7 +26,7 @@ public static class VlogPostDbSeeder
         {
             foreach (var (memberId, name, isOfficial) in MemberLookup.Members)
             {
-                context.Members.Add(new Member
+                context.Members.Add(new LazyTravel.Models.EfModels.Member
                 {
                     Email = $"demo-member-{memberId}@lazytravel.local",
                     Name = name,
@@ -37,20 +38,20 @@ public static class VlogPostDbSeeder
 
         foreach (var demoPost in VlogPostStore.GetAll())
         {
-            var demoNodes = ItineraryNodeStore.GetByPostId(demoPost.PostID);
-            var likeCount = PostInteractionStore.GetLikeCount(demoPost.PostID);
-            var favoriteCount = PostInteractionStore.GetFavoriteCount(demoPost.PostID);
+            var demoNodes = ItineraryNodeStore.GetByPostId(demoPost.PostId);
+            var likeCount = PostInteractionStore.GetLikeCount(demoPost.PostId);
+            var favoriteCount = PostInteractionStore.GetFavoriteCount(demoPost.PostId);
 
             var post = new VlogPost
             {
-                MemberID = demoPost.MemberID,
+                MemberId = demoPost.MemberId,
                 Title = demoPost.Title,
                 MediaUrl = demoPost.MediaUrl,
                 MediaType = demoPost.MediaType,
                 Content = demoPost.Content,
                 Destination = demoPost.Destination,
                 TravelDays = demoPost.TravelDays,
-                GroupSize = demoPost.GroupSize,
+                TravelPeople = demoPost.TravelPeople,
                 TravelDate = demoPost.TravelDate,
                 Status = demoPost.Status,
                 CreatedAt = demoPost.CreatedAt,
@@ -58,13 +59,13 @@ public static class VlogPostDbSeeder
                 IsDelete = demoPost.IsDelete,
             };
             context.VlogPosts.Add(post);
-            await context.SaveChangesAsync(); // 存檔後 post.PostID 才會是資料庫真正配的 IDENTITY 值
+            await context.SaveChangesAsync(); // 存檔後 post.PostId 才會是資料庫真正配的 IDENTITY 值
 
             foreach (var demoNode in demoNodes)
             {
                 context.ItineraryNodes.Add(new ItineraryNode
                 {
-                    PostID = post.PostID,
+                    PostId = post.PostId,
                     DayNumber = demoNode.DayNumber,
                     LocationName = demoNode.LocationName,
                     ArrivalTime = demoNode.ArrivalTime,
@@ -77,17 +78,17 @@ public static class VlogPostDbSeeder
                 });
             }
 
-            // PostInteractions 的複合主鍵是 (PostID, MemberID, ActionType)，不能塞重複組合。
+            // PostInteractions 的複合主鍵是 (PostId, MemberId, ActionType)，不能塞重複組合。
             // 假資料倉儲原本是「每個讚一筆、MemberID 用 1~4 輪流」，會撞到唯一鍵，
-            // 這裡改成讚/收藏各自用 1..count 當 MemberID（兩種 ActionType 的鍵不會互撞），
+            // 這裡改成讚/收藏各自用 1..count 當 MemberId（兩種 ActionType 的鍵不會互撞），
             // 純粹是為了讓資料庫塞得進去且讚數/收藏數的「總數」跟原本假資料一致，不代表真的有這麼多會員。
             for (var m = 1; m <= likeCount; m++)
             {
-                context.PostInteractions.Add(new PostInteraction { PostID = post.PostID, MemberID = m, ActionType = PostInteractionType.Like });
+                context.PostInteractions.Add(new PostInteraction { PostId = post.PostId, MemberId = m, ActionType = PostInteractionType.Like });
             }
             for (var m = 1; m <= favoriteCount; m++)
             {
-                context.PostInteractions.Add(new PostInteraction { PostID = post.PostID, MemberID = m, ActionType = PostInteractionType.Favorite });
+                context.PostInteractions.Add(new PostInteraction { PostId = post.PostId, MemberId = m, ActionType = PostInteractionType.Favorite });
             }
 
             await context.SaveChangesAsync();

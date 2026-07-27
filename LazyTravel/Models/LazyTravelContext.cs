@@ -21,13 +21,6 @@ public partial class LazyTravelContext : DbContext
 
     public virtual DbSet<TravelGroup> TravelGroups { get; set; }
 
-    // VlogPosts 模組（Vlog 行程文章）：手動加的，不是 Power Tools 反向工程出來的。
-    public virtual DbSet<VlogPost> VlogPosts { get; set; }
-
-    public virtual DbSet<ItineraryNode> ItineraryNodes { get; set; }
-
-    public virtual DbSet<PostInteraction> PostInteractions { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<GroupMember>(entity =>
@@ -80,36 +73,6 @@ public partial class LazyTravelContext : DbContext
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.OwnerMember).WithMany(p => p.TravelGroups).OnDelete(DeleteBehavior.ClientSetNull);
-        });
-
-        // ---------- VlogPosts 模組：手動設定，對齊《Lazy Travel 旅遊平台資料表》0722 最新版 ----------
-        modelBuilder.Entity<VlogPost>(entity =>
-        {
-            entity.Property(e => e.MediaType).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(VlogMediaType.Photo);
-            entity.Property(e => e.Status).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(VlogPostStatus.Draft);
-            entity.Property(e => e.GroupSize).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(TravelGroupSize.Solo);
-            entity.Property(e => e.TravelDays).HasDefaultValue(1);
-            entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-            entity.Property(e => e.TravelDate).HasColumnType("datetime");
-            entity.Property(e => e.IsDelete).HasDefaultValue(false);
-        });
-
-        modelBuilder.Entity<ItineraryNode>(entity =>
-        {
-            entity.Property(e => e.MediaType).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(VlogMediaType.Photo);
-
-            entity.HasOne<VlogPost>().WithMany().HasForeignKey(e => e.PostID).OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<PostInteraction>(entity =>
-        {
-            entity.HasKey(e => new { e.PostID, e.MemberID, e.ActionType });
-
-            entity.Property(e => e.ActionType).HasColumnType("tinyint").HasConversion<byte>();
-            entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("(getdate())");
-
-            entity.HasOne<VlogPost>().WithMany().HasForeignKey(e => e.PostID).OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);

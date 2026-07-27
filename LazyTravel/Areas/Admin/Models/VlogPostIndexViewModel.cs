@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 
 namespace LazyTravel.Areas.Admin.Models;
 
@@ -10,6 +11,9 @@ public class VlogPostIndexViewModel
     // View 不再各自呼叫 PostInteractionStore，避免每一列各打一次資料庫。
     public Dictionary<int, int> LikeCounts { get; set; } = new();
     public Dictionary<int, int> FavoriteCounts { get; set; } = new();
+
+    // 這一頁的會員文章裡，哪些 PostId 目前已經有待處理檢舉——已經被檢舉過的就不用再顯示「提出檢舉」
+    public HashSet<int> PostIdsWithPendingReport { get; set; } = new();
 
     // 目前的篩選條件，換頁時要一併帶著，避免篩選被重置
     public string? Keyword { get; set; }
@@ -34,5 +38,5 @@ public class VlogPostIndexViewModel
     public int DeletedCount { get; set; }
 
     // 操作紀錄籤用，只取 TargetTable="VlogPosts" 的紀錄
-    public List<AdminLog> RecentLogs { get; set; } = new();
+    public List<LazyTravel.Models.AdminLog> RecentLogs { get; set; } = new();
 }

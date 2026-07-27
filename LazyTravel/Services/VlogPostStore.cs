@@ -1,13 +1,9 @@
-using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 
 namespace LazyTravel.Services;
 
-// 暫時的假資料倉儲：專題目前還沒接 EF Core，先用記憶體 List 模擬 VlogPosts 資料表。
-// 之後接上 EF Core 後，把這個 class 換成注入的 AppDbContext（DbSet<VlogPost> VlogPosts），
-// Controller 呼叫的 GetAll / GetById / Add / Update / Delete / Restore 直接對應換掉即可。
-//
-// 注意：static List 只是開發階段方便，重啟網站資料就會重置，也不是執行緒安全，
-// 正式環境請務必換成資料庫。
+// 開發用的假資料倉儲：後台已經改讀寫真正的資料庫（LazyTravelDBContext），這裡只在
+// VlogPostDbSeeder.SeedAsync 幫全新資料庫灌一次示範資料時被用到，不是給 Controller 用的。
 //
 // 假資料的每日行程節點（ItineraryNodes）也一併在這裡的 Seed() 建立，
 // 因為只有這裡在建立文章的當下才拿得到剛產生的 PostID，避免像舊版那樣
@@ -28,23 +24,13 @@ public static class VlogPostStore
 
     public static IReadOnlyList<VlogPost> GetAll() => _posts;
 
-    public static VlogPost? GetById(int id) => _posts.FirstOrDefault(p => p.PostID == id);
-
-    public static VlogPost Add(VlogPost post)
-    {
-        post.PostID = _nextId++;
-        post.CreatedAt = DateTime.Now;
-        post.UpdatedAt = null;
-        post.IsDelete = false;
-        _posts.Add(post);
-        return post;
-    }
+    public static VlogPost? GetById(int id) => _posts.FirstOrDefault(p => p.PostId == id);
 
     // 只有 Seed() 拿假資料用的版本，讓每篇文章可以有不同的建立/更新時間，
-    // 不然假資料全部都是「剛剛」，看起來會很不真實。真的透過後台新增文章請走上面那個 Add(VlogPost)。
+    // 不然假資料全部都是「剛剛」，看起來會很不真實。
     private static VlogPost AddSeed(VlogPost post, DateTime createdAt, DateTime? updatedAt)
     {
-        post.PostID = _nextId++;
+        post.PostId = _nextId++;
         post.CreatedAt = createdAt;
         post.UpdatedAt = updatedAt;
         post.IsDelete = false;
@@ -52,32 +38,8 @@ public static class VlogPostStore
         return post;
     }
 
-    // 只更新允許被編輯的欄位，PostID / CreatedAt / IsDelete 不從表單覆蓋回來
-    public static bool Update(VlogPost updated)
-    {
-        var existing = GetById(updated.PostID);
-        if (existing is null)
-        {
-            return false;
-        }
-
-        existing.MemberID = updated.MemberID;
-        existing.Title = updated.Title;
-        existing.MediaUrl = updated.MediaUrl;
-        existing.MediaType = updated.MediaType;
-        existing.Content = updated.Content;
-        existing.Destination = updated.Destination;
-        existing.TravelDays = updated.TravelDays;
-        existing.GroupSize = updated.GroupSize;
-        existing.TravelDate = updated.TravelDate;
-        existing.Status = updated.Status;
-        existing.UpdatedAt = DateTime.Now;
-
-        return true;
-    }
-
-    // 軟刪除：對應 IsDelete 欄位，不是真的從清單移除
-    public static bool Delete(int id)
+    // 軟刪除：對應 IsDelete 欄位，不是真的從清單移除。只有 Seed() 內部用來標記示範用的已刪除文章。
+    private static bool Delete(int id)
     {
         var post = GetById(id);
         if (post is null)
@@ -86,19 +48,6 @@ public static class VlogPostStore
         }
 
         post.IsDelete = true;
-        post.UpdatedAt = DateTime.Now;
-        return true;
-    }
-
-    public static bool Restore(int id)
-    {
-        var post = GetById(id);
-        if (post is null)
-        {
-            return false;
-        }
-
-        post.IsDelete = false;
         post.UpdatedAt = DateTime.Now;
         return true;
     }
@@ -266,7 +215,7 @@ public static class VlogPostStore
 
             var post = AddSeed(new VlogPost
             {
-                MemberID = seed.MemberId,
+                MemberId = seed.MemberId,
                 Title = seed.Title,
                 MediaUrl = seed.ImageUrl,
                 MediaType = seed.MediaType,
@@ -275,14 +224,14 @@ public static class VlogPostStore
                 TravelDays = seed.Days,
                 TravelDate = seed.TravelDate?.ToDateTime(TimeOnly.MinValue),
                 Status = seed.Status,
-                GroupSize = seed.GroupSize,
+                TravelPeople = seed.GroupSize,
             }, createdAt, updatedAt);
 
             foreach (var stop in seed.Stops)
             {
                 ItineraryNodeStore.Add(new ItineraryNode
                 {
-                    PostID = post.PostID,
+                    PostId = post.PostId,
                     DayNumber = stop.Day,
                     LocationName = stop.Name,
                     ArrivalTime = stop.Arrival,
@@ -297,7 +246,7 @@ public static class VlogPostStore
 
             if (seed.SoftDeleted)
             {
-                Delete(post.PostID);
+                Delete(post.PostId);
             }
         }
     }

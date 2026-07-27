@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 
 namespace LazyTravel.Areas.Admin.Models;
 
