@@ -414,6 +414,14 @@ public partial class LazyTravelDBContext : DbContext
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.RoleId).HasName("PK_Roles");
+
+            // Role.Permissions / Permission.Roles 多對多,共用既有的 RolePermissions 中介表
+            // (RolePermission 實體本身保留,兩種存取方式並存)
+            entity.HasMany(r => r.Permissions)
+                .WithMany(p => p.Roles)
+                .UsingEntity<RolePermission>(
+                    right => right.HasOne(rp => rp.Permission).WithMany(p => p.RolePermissions),
+                    left => left.HasOne(rp => rp.Role).WithMany(r => r.RolePermissions));
         });
 
         modelBuilder.Entity<RolePermission>(entity =>
@@ -458,13 +466,16 @@ public partial class LazyTravelDBContext : DbContext
         {
             entity.HasKey(e => e.LogId).HasName("PK_TravelGroupsLog");
 
+            // 資料表名稱是單數 TravelGroupsLog,跟 DbSet 屬性名稱(複數)不一致,要明確指定
+            entity.ToTable("TravelGroupsLog");
+
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupsLogs)
                 .HasConstraintName("FK_TravelGroupsLog_Group");
 
-            entity.HasOne(d => d.ChangeByMember).WithMany(p => p.TravelGroupsLogs)
-                .HasConstraintName("FK_TravelGroupsLog_ChangeByMember");
+            entity.HasOne(d => d.ChangedByEmployee).WithMany(p => p.TravelGroupsLogs)
+                .HasConstraintName("FK_TravelGroupsLog_ChangeByEmployee");
         });
 
         modelBuilder.Entity<VlogPost>(entity =>

@@ -1,12 +1,13 @@
-﻿@model IEnumerable<LazyTravel.Models.Services.EmployeeDto>
+﻿@model IEnumerable<EmployeeDto>
 @using System.Linq
+@using LazyTravel.Services
 
 @{
     ViewData["Title"] = "員工管理";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 
     string subTab = ViewBag.SubTab as string ?? "list";
-    var systemRoles = ViewBag.Roles as IEnumerable<LazyTravel.Models.Services.RoleDto>;
+    var systemRoles = ViewBag.Roles as IEnumerable<RoleDto>;
 
     string GetDepartment(List<string> perms, string roleNameStr)
     {
@@ -179,16 +180,19 @@
             <table class="table mb-0 align-middle">
                 <thead>
                     <tr>
-                        <th class="px-4 w-25">員工資訊</th>
+                        <th class="px-4">員工資訊</th>
                         <th class="px-4">歸屬部門 / 層級</th>
-                        <th class="px-4 w-35">擔任職務 (Roles)</th>
+                        <th class="px-4 w-25">擔任職務 (Roles)</th>
+                        <!-- 🌟 新增：狀態與時間欄位表頭 -->
+                        <th class="px-4">狀態</th>
+                        <th class="px-4">最後登入 / 建立時間</th>
                         <th class="px-4 text-center">安全管理</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model == null || !Model.Any())
                     {
-                        <tr><td colspan="4" class="text-center py-4 text-muted">找不到符合條件的員工。</td></tr>
+                        <tr><td colspan="6" class="text-center py-4 text-muted">找不到符合條件的員工。</td></tr>
                     }
                     else
                     {
@@ -196,7 +200,7 @@
                         {
                             bool isInactive = emp.Status == 2;
                             string combinedRoles = string.Join(",", emp.Roles);
-                            string dept = GetDepartment(emp.Permissions, combinedRoles);
+                            string dept = emp.Department ?? GetDepartment(emp.Permissions, combinedRoles);
                             string badgeClass = isInactive ? "dept-normal" : dept switch
                             {
                                 "管理高層" => "dept-admin",
@@ -213,14 +217,10 @@
                                         @emp.Name <span class="text-muted small ms-1">(@emp.EmployeeNo)</span>
                                     </div>
                                     <div class="text-muted small font-monospace">@emp.Email</div>
-                                    @if (isInactive)
-                                    {
-                                        <span class="badge bg-danger mt-1">已停權 / 離職</span>
-                                    }
                                 </td>
                                 <td class="px-4">
                                     <span class="dept-badge @badgeClass d-inline-block mb-1">@(isInactive ? "無歸屬" : dept)</span>
-                                    @if (combinedRoles.Contains("擁有者") || combinedRoles.Contains("SUPER"))
+                                    @if (combinedRoles.Contains("系統擁有者") || combinedRoles.Contains("SUPER"))
                                     {
                                         <div class="small fw-bold text-danger mt-1">👑 系統擁有者</div>
                                     }
@@ -231,7 +231,7 @@
                                     }
                                 </td>
                                 <td class="px-4">
-                                    @if (combinedRoles.Contains("擁有者") || combinedRoles.Contains("SUPER"))
+                                    @if (combinedRoles.Contains("系統擁有者") || combinedRoles.Contains("SUPER"))
                                     {
                                         <span class="perm-badge" style="background-color: var(--sea-50); color: var(--sea-700); border-color: var(--sea-300);">全站最高控制權</span>
                                     }
@@ -250,6 +250,31 @@
                                         </div>
                                     }
                                 </td>
+
+                                <!-- 🌟 新增：顯示在職狀態 -->
+                                <td class="px-4">
+                                    @if (emp.Status == 1)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>正常在職</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fas fa-ban me-1"></i>停權 / 離職</span>
+                                    }
+                                </td>
+
+                                <!-- 🌟 新增：顯示最後登入時間與建立時間 -->
+                                <td class="px-4">
+                                    <div class="small text-muted mb-1" title="最後登入時間">
+                                        <i class="fas fa-sign-in-alt me-1"></i>
+                                        @(emp.LastLoginAt.HasValue? emp.LastLoginAt.Value.ToString("yyyy/MM/dd HH:mm") : "從未登入")
+                                    </div>
+                                    <div class="small text-muted" title="帳號建立時間" style="opacity: 0.7;">
+                                        <i class="fas fa-calendar-plus me-1"></i>
+                                        @emp.CreatedAt.ToString("yyyy/MM/dd")
+                                    </div>
+                                </td>
+
                                 <td class="px-4 text-center">
                                     @if (emp.EmployeeID != 1 && !isInactive)
                                     {

@@ -36,7 +36,7 @@ namespace LazyTravel.Services
                 TargetTable = targetTable ?? "Unknown",
                 TargetId = targetId,
                 Description = detail,
-                Ipaddress = "127.0.0.1",
+                IPAddress = "127.0.0.1",
                 CreatedAt = DateTime.Now,
             });
 
