@@ -262,41 +262,10 @@
         color: #fff;
     }
 
-    /* 頁籤與下方清單視窗連在一起，中間不留空白 */
-    .admin-tabs {
-        margin-bottom: 0;
-        border-bottom: 1px solid var(--border-soft, #dee2e6);
-    }
-
-    .admin-tab-panel {
-        background-color: var(--surface, #fff);
-        border: 1px solid var(--border-soft, #dee2e6);
-        border-top: none;
-        border-radius: 0 0 var(--radius-md, .5rem) var(--radius-md, .5rem);
-        padding: 1rem;
-    }
-
-    .admin-tabs .nav-link {
-        border-radius: var(--radius-md, .5rem) var(--radius-md, .5rem) 0 0;
-    }
-
-    .admin-tabs .nav-link.active {
-        border-bottom-color: var(--surface, #fff);
-    }
-
-    .tab-count {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 1.5rem;
-        margin-left: .35rem;
-        padding: .05rem .45rem;
-        border-radius: var(--radius-pill, 999px);
-        background-color: var(--sea-100);
-        color: var(--sea-800);
-        font-size: .78rem;
-        font-variant-numeric: tabular-nums;
-    }
+    /* 頁籤與下方清單視窗連在一起的「資料夾式」樣式（.admin-tabs / .admin-tab-panel /
+       .tab-count）原本寫在這裡，現在已抽到 wwwroot/css/admin.css 的
+       「5-2. 資料夾式頁內籤」，改由 Vlog 行程文章、檢舉審核台一起共用。
+       這頁的 HTML 沒有變動，外觀維持原樣，要調樣式請改 admin.css。 */
 
     @@media (prefers-reduced-motion: reduce) {
         .groups-workspace,
