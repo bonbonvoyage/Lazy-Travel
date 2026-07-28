@@ -29,4 +29,7 @@ public partial class Permission
 
     [InverseProperty("Permission")]
     public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+
+    // Role.Permissions 的反向端,見 LazyTravelDBContext 的 UsingEntity<RolePermission>
+    public virtual ICollection<Role> Roles { get; set; } = new List<Role>();
 }

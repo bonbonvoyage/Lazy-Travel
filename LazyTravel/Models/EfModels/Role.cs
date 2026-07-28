@@ -32,4 +32,9 @@ public partial class Role
 
     [InverseProperty("Role")]
     public virtual ICollection<EmployeeRole> EmployeeRoles { get; set; } = new List<EmployeeRole>();
+
+    // 透過 RolePermissions 中介表直達權限(EF Core skip navigation),
+    // 讓 EmployeeService 可以直接 Include(r => r.Permissions) / role.Permissions.Clear()。
+    // 對應設定在 LazyTravelDBContext 的 UsingEntity<RolePermission>。
+    public virtual ICollection<Permission> Permissions { get; set; } = new List<Permission>();
 }
