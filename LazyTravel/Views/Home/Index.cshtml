@@ -1,11 +1,208 @@
 @{
     ViewData["Title"] = "首頁";
+    // 這頁是整張設計圖 + 透明熱區，圖裡面自己就有導覽列和 footer，
+    // 所以不套 _Layout（不然會多出一組重複的選單）。
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
 
-<div class="container py-5 text-center">
-    <h1 class="mb-3">Lazy Travel</h1>
-    <p class="text-secondary mb-4">前台頁面由負責組員開發(期末部分...行有餘可以一起做。</p>
-    <div class="d-flex justify-content-center gap-2 flex-wrap">
-        <a class="btn btn-outline-primary" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">進入後台管理</a>
+    <style>
+        /* ============================================================
+           首頁：整張設計圖 + 透明熱區覆蓋
+           ------------------------------------------------------------
+           圖：wwwroot/img/pic.png（1536 × 1024）
+
+           熱區全部用「百分比」定位，圖片放大縮小時熱區會自己跟著跑，
+           不用針對每種螢幕各寫一組座標。
+
+           百分比不是目測的，是掃描 pic.png 的像素量出來的，
+           註解裡有原始像素座標，之後換圖可以照同樣方式重算。
+           ============================================================ */
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #FBF9F2;            /* 跟圖片底色一致，兩側留白不會突兀 */
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 圖片外框：position:relative 是熱區定位的基準。
+           用 inline-block 讓外框剛好貼合圖片，百分比才不會偏掉。 */
+        .stage {
+            position: relative;
+            display: inline-block;
+            line-height: 0;                 /* 消掉 <img> 底下的行高空隙 */
+            max-width: 100%;
+        }
+
+        .stage img {
+            display: block;
+            max-width: 100%;
+            max-height: 100dvh;             /* 保證整張圖一屏看得完，不用捲動 */
+            width: auto;
+            height: auto;
+        }
+
+        /* ---------- 透明熱區共用樣式 ---------- */
+        .hotspot {
+            position: absolute;
+            display: block;
+            z-index: 2;
+            border-radius: 6px;
+            /* 想確認位置時把下面這行的註解拿掉，會出現半透明紅框。
+               （也可以直接在網址後面加 ?debug，或在頁面上按鍵盤 D，不用改程式碼） */
+            /* background-color: rgba(255, 0, 0, 0.4); */
+        }
+
+        .hotspot:hover {
+            background-color: rgba(29, 99, 196, 0.13);
+            outline: 2px solid rgba(29, 99, 196, 0.45);
+        }
+        .hotspot:focus-visible {
+            outline: 3px solid #1D63C4;
+            outline-offset: 2px;
+            background-color: rgba(29, 99, 196, 0.13);
+        }
+
+        /* ============================================================
+           熱區座標（要微調就改這四個百分比：top / left / width / height）
+           每行後面是圖片上的實際像素範圍，已各留約 14px 的點擊緩衝
+           ============================================================ */
+
+        /* ★ CMS → 後台管理系統   文字實際落在 x 622-663, y 54-70 */
+        .hs-cms      { top:  3.91%; left: 39.45%; width:  4.75%; height:  4.30%; }
+
+        .hs-home     { top:  4.10%; left: 12.11%; width:  5.66%; height:  5.08%; } /* x 198-261, y 54-88（含底線） */
+        .hs-about    { top:  3.91%; left: 20.70%; width:  5.99%; height:  4.30%; } /* x 330-398 */
+        .hs-contact  { top:  3.91%; left: 29.49%; width:  7.55%; height:  4.30%; } /* x 465-557 */
+        .hs-logo     { top:  3.91%; left:  3.91%; width:  4.04%; height:  8.11%; } /* x 60-121, y 40-122 */
+        .hs-search   { top:  3.52%; left: 94.08%; width:  3.26%; height:  4.88%; } /* x 1453-1487 */
+        .hs-readmore { top: 64.65%; left:  5.40%; width: 17.97%; height:  8.11%; } /* x 83-358, y 662-744 */
+
+        .hs-fb       { top: 91.99%; left:  3.52%; width:  2.86%; height:  4.30%; } /* x 60-91   */
+        .hs-ig       { top: 91.99%; left:  8.27%; width:  2.86%; height:  4.30%; } /* x 134-164 */
+        .hs-tw       { top: 91.99%; left: 13.15%; width:  2.86%; height:  4.30%; } /* x 208-239 */
+        .hs-yt       { top: 91.99%; left: 18.29%; width:  2.86%; height:  4.30%; } /* x 283-324 */
+        .hs-help     { top: 91.99%; left: 27.15%; width:  7.03%; height:  4.30%; } /* x 425-517 */
+
+        /* ---------- 除錯模式 ----------
+           網址加 ?debug，或在頁面上按鍵盤 D，會顯示所有熱區的紅框與名稱 */
+        body.debug .hotspot {
+            background-color: rgba(255, 0, 0, 0.4);
+            outline: 1px solid #C00;
+        }
+        body.debug .hotspot::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 0; top: 100%;
+            font: 11px/1.4 monospace;
+            color: #C00;
+            background: #fff;
+            padding: 1px 4px;
+            white-space: nowrap;
+        }
+
+        /* ============================================================
+           手機：圖片縮小後熱區會小到點不到（CMS 在 375px 寬只剩約 18px），
+           所以窄螢幕改在圖片下方補一排真的文字選單。
+           ============================================================ */
+        .mobile-nav { display: none; }
+
+        @@media (max-width: 767.98px) {
+            body { justify-content: flex-start; }
+            .stage img { max-height: none; }
+            .hotspot { pointer-events: none; }   /* 手機停用熱區，避免誤觸 */
+
+            .mobile-nav {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: .25rem 1.5rem;
+                padding: 1rem 1rem 1.5rem;
+                font: 500 .82rem/1 system-ui, "Noto Sans TC", sans-serif;
+                letter-spacing: .1em;
+            }
+            .mobile-nav a {
+                display: block;
+                padding: 1rem .5rem;             /* 撐到 44px 以上的觸控高度 */
+                color: #55565A;
+                text-decoration: none;
+            }
+            .mobile-nav a.on { color: #1D63C4; }
+        }
+
+        /* 螢幕閱讀器專用（整頁只有一張圖對 SEO 和無障礙不利，補一份純文字導覽） */
+        .sr-only {
+            position: absolute; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden;
+            clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+        }
+    </style>
+</head>
+<body>
+
+    @* 純文字導覽：畫面上看不到，但螢幕閱讀器與搜尋引擎讀得到 *@
+    <nav class="sr-only" aria-label="主選單">
+        <ul>
+            <li><a asp-controller="Home" asp-action="Index">首頁</a></li>
+            <li><a asp-controller="Explore" asp-action="Index">找行程</a></li>
+            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">CMS 後台管理系統</a></li>
+        </ul>
+    </nav>
+
+    <div class="stage">
+
+        <img src="~/img/pic.png" asp-append-version="true"
+             width="1536" height="1024"
+             alt="Lazy Travel 首頁：背包客站在海岸懸崖上眺望遠方，左側是 Lazy Travel 標題與 READ MORE 按鈕" />
+
+        @* ★ CMS → 後台管理系統。未登入會被 Admin 的 Cookie 認證導去 Admin/Auth/Login *@
+        <a class="hotspot hs-cms" data-label="CMS" aria-label="CMS 後台管理系統"
+           asp-area="Admin" asp-controller="Dashboard" asp-action="Index"></a>
+
+        <a class="hotspot hs-logo" data-label="LOGO" aria-label="回首頁"
+           asp-controller="Home" asp-action="Index"></a>
+        <a class="hotspot hs-home" data-label="HOME" aria-label="首頁"
+           asp-controller="Home" asp-action="Index"></a>
+        <a class="hotspot hs-about" data-label="ABOUT" aria-label="關於我們" href="#"></a>
+        <a class="hotspot hs-contact" data-label="CONTACT" aria-label="聯絡我們" href="#"></a>
+        <a class="hotspot hs-search" data-label="SEARCH" aria-label="搜尋"
+           asp-controller="Explore" asp-action="Index"></a>
+        <a class="hotspot hs-readmore" data-label="READ MORE" aria-label="了解更多"
+           asp-controller="Explore" asp-action="Index"></a>
+
+        <a class="hotspot hs-fb"   data-label="FB"   aria-label="Facebook"  href="#"></a>
+        <a class="hotspot hs-ig"   data-label="IG"   aria-label="Instagram" href="#"></a>
+        <a class="hotspot hs-tw"   data-label="TW"   aria-label="Twitter"   href="#"></a>
+        <a class="hotspot hs-yt"   data-label="YT"   aria-label="YouTube"   href="#"></a>
+        <a class="hotspot hs-help" data-label="HELP" aria-label="說明"      href="#"></a>
+
     </div>
-</div>
+
+    @* 手機用的真文字選單 *@
+    <nav class="mobile-nav" aria-label="主選單（行動版）">
+        <a class="on" asp-controller="Home" asp-action="Index">HOME</a>
+        <a href="#">ABOUT</a>
+        <a href="#">CONTACT</a>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">CMS</a>
+    </nav>
+
+    <script>
+        // ?debug 或按 D 鍵切換紅框
+        if (location.search.indexOf('debug') > -1) document.body.classList.add('debug');
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'd' || e.key === 'D') document.body.classList.toggle('debug');
+        });
+    </script>
+</body>
+</html>

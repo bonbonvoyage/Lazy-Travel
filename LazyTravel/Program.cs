@@ -106,7 +106,27 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<LazyTravel.Models.EfModels.LazyTravelDBContext>();
-    await VlogPostDbSeeder.SeedAsync(context);
+
+    // 換一台電腦(教室/別人的機器)時常常還沒建好 appsettings.Development.json，
+    // 這段以前會直接拋 SqlException 讓整個服務起不來，連純靜態的前台首頁都看不到。
+    // 改成連不上就跳過灌資料，讓 app 照常啟動，並在主控台留下明確訊息。
+    try
+    {
+        if (await context.Database.CanConnectAsync())
+        {
+            await VlogPostDbSeeder.SeedAsync(context);
+        }
+        else
+        {
+            app.Logger.LogWarning(
+                "資料庫連不上，已略過示範資料。請確認 LazyTravel/appsettings.Development.json 的 Server= " +
+                "是否為這台電腦實際的 SQL Server 執行個體名稱。前台靜態頁仍可瀏覽，需要撈資料的頁面會失敗。");
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "灌示範資料時發生錯誤，已略過，不影響服務啟動。");
+    }
 }
 
 if (!app.Environment.IsDevelopment())
