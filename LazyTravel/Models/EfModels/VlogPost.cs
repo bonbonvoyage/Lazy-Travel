@@ -116,6 +116,7 @@ public partial class VlogPost
     [Display(Name = "旅遊人數")]
     public TravelGroupSize TravelPeople { get; set; } = TravelGroupSize.Solo;
 
+    [Required(ErrorMessage = "請輸入出遊日期")]
     [Column(TypeName = "datetime")]
     [Display(Name = "出遊日期")]
     public DateTime? TravelDate { get; set; }

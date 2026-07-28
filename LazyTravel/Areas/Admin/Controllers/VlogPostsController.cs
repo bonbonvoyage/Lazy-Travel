@@ -2,7 +2,6 @@ using LazyTravel.Areas.Admin.Models;
 using LazyTravel.Models;
 using LazyTravel.Models.EfModels;
 using LazyTravel.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,21 +19,22 @@ namespace LazyTravel.Areas.Admin.Controllers
         // 官方帳號的 MemberID 查一次就快取起來，不用每個請求都查一次資料庫。
         private static int? _cachedOfficialMemberId;
 
-        private readonly IWebHostEnvironment _env;
         private readonly LazyTravelDBContext _context;
         private readonly IAdminLogService _adminLogService;
         private readonly IReportService _reportService;
+        private readonly VlogPostImageUploadService _imageUploadService;
 
-        public VlogPostsController(IWebHostEnvironment env, LazyTravelDBContext context, IAdminLogService adminLogService, IReportService reportService)
+        public VlogPostsController(LazyTravelDBContext context, IAdminLogService adminLogService,
+            IReportService reportService, VlogPostImageUploadService imageUploadService)
         {
-            _env = env;
             _context = context;
             _adminLogService = adminLogService;
             _reportService = reportService;
+            _imageUploadService = imageUploadService;
         }
 
         // GET /Admin/VlogPosts
-        // 預設一進來是「全部會員」
+        // 預設一進來是「會員文章」
         public async Task<IActionResult> Index(string? keyword, string? status, bool showDeleted = false, string? sort = "updated_desc", int page = 1, bool onlyMine = false)
         {
             var all = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).ToListAsync();
@@ -49,7 +49,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             // 後台目前只有 LazyTravel 官方帳號能登入，這裡先用官方帳號的 Email 篩「我的文章」；
             // 之後 Cookie 認證接上後，改成比對目前登入者的 MemberID 即可。
-            // 「全部會員」現在是「我的以外的會員文章」，不是「全部」，跟「我的文章」互斥、不重疊。
+            // 「會員文章」是「官方以外的會員文章」，跟「官方文章」互斥、不重疊。
             IEnumerable<VlogPost> filtered = onlyMine
                 ? all.Where(p => MemberLookup.IsOfficial(p.Member))
                 : all.Where(p => !MemberLookup.IsOfficial(p.Member));
@@ -99,14 +99,6 @@ namespace LazyTravel.Areas.Admin.Controllers
                 ? all.Where(p => MemberLookup.IsOfficial(p.Member))
                 : all.Where(p => !MemberLookup.IsOfficial(p.Member));
 
-            // 這一頁裡的會員文章，先各自查一次是否有待處理檢舉，讓「提出檢舉」按鈕在已經被檢舉時不要重複顯示。
-            var postIdsWithPendingReport = pageItems
-                .Where(p => !MemberLookup.IsOfficial(p.Member))
-                .Where(p => _reportService.GetRelatedReports(new LazyTravel.Models.Report { Id = -1, TargetType = ReportTargetType.VlogPost, TargetId = p.PostId })
-                    .Any(r => r.Status == ReportStatus.Pending))
-                .Select(p => p.PostId)
-                .ToHashSet();
-
             var vm = new VlogPostIndexViewModel
             {
                 Posts = pageItems,
@@ -125,7 +117,6 @@ namespace LazyTravel.Areas.Admin.Controllers
                 DeletedCount = mineBase.Count(p => p.IsDelete),
                 LikeCounts = pageItems.ToDictionary(p => p.PostId, p => LikeCount(p.PostId)),
                 FavoriteCounts = pageItems.ToDictionary(p => p.PostId, p => FavoriteCount(p.PostId)),
-                PostIdsWithPendingReport = postIdsWithPendingReport,
             };
 
             var recentLogs = await _adminLogService.GetRecentAsync(50);
@@ -206,6 +197,20 @@ namespace LazyTravel.Areas.Admin.Controllers
                 ModelState.AddModelError(string.Empty, "封面只接受 jpg / png / gif / webp 圖片檔，且大小上限 5MB。");
             }
 
+            if (coverFile is null || coverFile.Length == 0)
+            {
+                ModelState.AddModelError(string.Empty, "請上傳封面圖片。");
+            }
+
+            if (string.IsNullOrWhiteSpace(ContentModerationHelper.StripHtml(post.Content)))
+            {
+                ModelState.AddModelError(nameof(VlogPost.Content), "請輸入行程總體心得。");
+            }
+            else if (ContentModerationHelper.ContainsProfanity(post.Content))
+            {
+                ModelState.AddModelError(nameof(VlogPost.Content), "內容包含不當字眼，請修改後再送出。");
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewData["Title"] = "新增文章";
@@ -215,7 +220,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             if (coverFile is not null && coverFile.Length > 0)
             {
-                post.MediaUrl = await SaveUploadedFileAsync(coverFile, "cover");
+                post.MediaUrl = await _imageUploadService.UploadAsync(coverFile, "cover");
             }
 
             post.CreatedAt = DateTime.Now;
@@ -277,6 +282,20 @@ namespace LazyTravel.Areas.Admin.Controllers
                 ModelState.AddModelError(string.Empty, "封面只接受 jpg / png / gif / webp 圖片檔，且大小上限 5MB。");
             }
 
+            if ((coverFile is null || coverFile.Length == 0) && string.IsNullOrWhiteSpace(existingMediaUrl))
+            {
+                ModelState.AddModelError(string.Empty, "請上傳封面圖片。");
+            }
+
+            if (string.IsNullOrWhiteSpace(ContentModerationHelper.StripHtml(post.Content)))
+            {
+                ModelState.AddModelError(nameof(VlogPost.Content), "請輸入行程總體心得。");
+            }
+            else if (ContentModerationHelper.ContainsProfanity(post.Content))
+            {
+                ModelState.AddModelError(nameof(VlogPost.Content), "內容包含不當字眼，請修改後再送出。");
+            }
+
             if (!ModelState.IsValid)
             {
                 post.MediaUrl = existingMediaUrl;
@@ -286,7 +305,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             post.MediaUrl = coverFile is not null && coverFile.Length > 0
-                ? await SaveUploadedFileAsync(coverFile, "cover")
+                ? await _imageUploadService.UploadAsync(coverFile, "cover")
                 : existingMediaUrl;
 
             // 只更新允許被編輯的欄位，PostId / CreatedAt / IsDelete 不從表單覆蓋回來
@@ -433,7 +452,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReportPost(int id, ReportReasonCategory reasonCategory, string reason)
         {
-            var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
             {
                 return NotFound();
@@ -459,6 +478,12 @@ namespace LazyTravel.Areas.Admin.Controllers
                 reasonCategory,
                 reason);
 
+            // 會員文章被檢舉後，Status 跟著改成「待審核」，讓列表頁可以直接靠 Status 判斷要顯示
+            // 「查看檢舉」還是「提出檢舉」，不用另外查 Reports 表。判定不成立後會改回「已發布」。
+            post.Status = VlogPostStatus.PendingReview;
+            post.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
             TempData["SuccessMessage"] = $"已對文章「{post.Title}」提出檢舉，主管會盡快處理。";
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -468,7 +493,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DismissReport(int id)
         {
-            var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
             {
                 return NotFound();
@@ -489,6 +514,11 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             var reviewerName = User.Identity?.Name ?? _reportService.GetRandomReviewerAlias();
             await _reportService.JudgeAsync(pendingReport.Id, ReportStatus.Dismissed, "於 Vlog 行程文章後台判定不成立", isMalicious: false, reviewerName);
+
+            // 檢舉不成立，文章 Status 改回「已發布」，跟「提出檢舉時改成待審核」互相對應。
+            post.Status = VlogPostStatus.Published;
+            post.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = $"文章「{post.Title}」的檢舉已判定為不成立。";
             return RedirectToAction(nameof(Details), new { id });
@@ -556,7 +586,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             string? mediaUrl = null;
             if (mediaFile is not null && mediaFile.Length > 0)
             {
-                mediaUrl = await SaveUploadedFileAsync(mediaFile, "itinerary");
+                mediaUrl = await _imageUploadService.UploadAsync(mediaFile, "itinerary");
             }
 
             _context.ItineraryNodes.Add(new ItineraryNode
@@ -677,7 +707,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             }
 
             var mediaUrl = mediaFile is not null && mediaFile.Length > 0
-                ? await SaveUploadedFileAsync(mediaFile, "itinerary")
+                ? await _imageUploadService.UploadAsync(mediaFile, "itinerary")
                 : existingMediaUrl;
 
             node.DayNumber = dayNumber < 1 ? 1 : dayNumber;
@@ -752,23 +782,5 @@ namespace LazyTravel.Areas.Admin.Controllers
             return file.Length <= MaxUploadSizeBytes && AllowedImageExtensions.Contains(ext);
         }
 
-        // 存到 wwwroot/uploads/vlog/{subFolder}/，回傳可直接放進 <img src> 的相對路徑。
-        // 檔名用 GUID 避免撞名/覆蓋別人的檔案。
-        private async Task<string> SaveUploadedFileAsync(IFormFile file, string subFolder)
-        {
-            var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads", "vlog", subFolder);
-            Directory.CreateDirectory(uploadsRoot);
-
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var fileName = $"{Guid.NewGuid():N}{ext}";
-            var fullPath = Path.Combine(uploadsRoot, fileName);
-
-            using (var stream = new FileStream(fullPath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            return $"/uploads/vlog/{subFolder}/{fileName}";
-        }
     }
 }

@@ -116,10 +116,10 @@
                 </div>
 
                 <div class="col-sm-6">
-                    <label class="form-label">出遊日期</label>
+                    <label asp-for="TravelDate" class="form-label"></label>
                     <input type="date" name="TravelDate" class="form-control"
                            value="@(Model.TravelDate?.ToString("yyyy-MM-dd"))" />
-                    <div class="form-text">選填，讓讀者知道這趟行程大概是什麼時候去的。</div>
+                    <span asp-validation-for="TravelDate" class="text-danger small"></span>
                 </div>
             </div>
         </div>

@@ -1,3 +1,4 @@
+using Amazon.S3;
 using LazyTravel.Models;
 using LazyTravel.Services;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,20 @@ builder.Services.AddScoped<LazyTravel.Models.Services.IEmployeeService, LazyTrav
 
 // 檢舉中心商業邏輯(藍培碩負責),Controller 只呼叫這層
 builder.Services.AddScoped<LazyTravel.Services.IReportService, LazyTravel.Services.ReportService>();
+
+// VlogPosts 圖床(Cloudflare R2, S3 相容 API)：新增圖片才上傳到這裡，舊圖維持存在本機。
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var r2Config = new AmazonS3Config
+    {
+        ServiceURL = config["CloudflareR2:ServiceUrl"],
+        ForcePathStyle = true,
+        AuthenticationRegion = "auto",
+    };
+    return new AmazonS3Client(config["CloudflareR2:AccessKey"], config["CloudflareR2:SecretKey"], r2Config);
+});
+builder.Services.AddScoped<LazyTravel.Services.VlogPostImageUploadService>();
 
 // ========================================================
 // 1. 註冊 Cookie 身分驗證機制

@@ -477,6 +477,12 @@ public partial class LazyTravelDBContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.TravelDays).HasDefaultValue(1);
 
+            // TravelDate 在 C# 屬性上有 [Required]（給新增/編輯文章的表單驗證用），但 EF Core 建 model 時
+            // 也會讀 Data Annotations，[Required] 會讓 EF 誤以為這個資料庫欄位不可為 null，對舊資料裡
+            // TravelDate 本來就是 NULL 的文章讀取時會直接丟 SqlNullValueException。這裡明確覆寫成
+            // IsRequired(false)，讓 EF 的 model 跟 MVC 表單驗證脫鉤——欄位本身在資料庫仍然允許 NULL。
+            entity.Property(e => e.TravelDate).IsRequired(false);
+
             entity.HasOne(d => d.Member).WithMany(p => p.VlogPosts)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__VlogPosts__Membe__58D1301D");

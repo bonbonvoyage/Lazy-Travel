@@ -54,9 +54,9 @@
 @* ---------- 發文者篩選：後台目前只有官方能登入，這裡讓官方可以切換「我的文章」跟「其他會員的文章」，兩者互斥 ---------- *@
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a class="filter-chip @(!Model.OnlyMine ? "on" : "")"
-       asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部會員</a>
+       asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">會員文章</a>
     <a class="filter-chip @(Model.OnlyMine ? "on" : "")"
-       asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">只看我的文章</a>
+       asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">官方文章</a>
 </div>
 
 @* ---------- 狀態篩選 chips ---------- *@
@@ -152,7 +152,7 @@
                                 var rowIsOfficial = MemberLookup.IsOfficial(post.Member);
                             }
                             <div class="d-inline-flex gap-1">
-                                @if (!post.IsDelete && post.Status == VlogPostStatus.PendingReview)
+                                @if (!post.IsDelete && !rowIsOfficial && post.Status == VlogPostStatus.PendingReview)
                                 {
                                     <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostId" class="btn btn-sm btn-outline-warning">查看檢舉</a>
                                 }
@@ -183,9 +183,9 @@
                                         </form>
                                     }
                                 }
-                                else if (!Model.PostIdsWithPendingReport.Contains(post.PostId))
+                                else if (post.Status != VlogPostStatus.PendingReview)
                                 {
-                                    @* 會員文章：不是小編寫的，不能編輯／刪除，只能看到有問題時提出檢舉；已經有待處理檢舉的就不用再顯示這顆 *@
+                                    @* 會員文章：不是小編寫的，不能編輯／刪除，只能看到有問題時提出檢舉；已經是待審核（有檢舉）的話改顯示上面的「查看檢舉」 *@
                                     <a asp-action="Details" asp-route-id="@post.PostId" asp-fragment="report-section" class="btn btn-sm btn-outline-danger">提出檢舉</a>
                                 }
                             </div>
