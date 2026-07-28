@@ -34,7 +34,7 @@ public partial class AdminLog
     [Column("IPAddress")]
     [StringLength(50)]
     [Unicode(false)]
-    public string Ipaddress { get; set; }
+    public string IPAddress { get; set; }
 
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }

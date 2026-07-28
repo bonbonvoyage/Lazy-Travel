@@ -411,6 +411,14 @@ public partial class LazyTravelDBContext : DbContext
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.RoleId).HasName("PK_Roles");
+
+            // Role.Permissions / Permission.Roles 多對多,共用既有的 RolePermissions 中介表
+            // (RolePermission 實體本身保留,兩種存取方式並存)
+            entity.HasMany(r => r.Permissions)
+                .WithMany(p => p.Roles)
+                .UsingEntity<RolePermission>(
+                    right => right.HasOne(rp => rp.Permission).WithMany(p => p.RolePermissions),
+                    left => left.HasOne(rp => rp.Role).WithMany(r => r.RolePermissions));
         });
 
         modelBuilder.Entity<RolePermission>(entity =>
