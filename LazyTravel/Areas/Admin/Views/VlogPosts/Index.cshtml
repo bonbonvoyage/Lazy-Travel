@@ -53,10 +53,10 @@
 
 @* ---------- 發文者篩選：後台目前只有官方能登入，這裡讓官方可以切換「我的文章」跟「其他會員的文章」，兩者互斥 ---------- *@
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="filter-chip @(Model.OnlyMine ? "on" : "")"
-       asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">只看我的文章</a>
     <a class="filter-chip @(!Model.OnlyMine ? "on" : "")"
        asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部會員</a>
+    <a class="filter-chip @(Model.OnlyMine ? "on" : "")"
+       asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">只看我的文章</a>
 </div>
 
 @* ---------- 狀態篩選 chips ---------- *@
@@ -120,8 +120,8 @@
                         <td class="text-center">
                             <div class="fw-medium">@post.Title</div>
                             <div class="text-muted small d-flex align-items-center justify-content-center gap-1">
-                                <span>@MemberLookup.GetName(post.MemberId) 撰寫</span>
-                                @if (MemberLookup.IsOfficial(post.MemberId))
+                                <span>@(post.Member?.Name ?? $"會員 #{post.MemberId}") 撰寫</span>
+                                @if (MemberLookup.IsOfficial(post.Member))
                                 {
                                     <span class="official-badge">✓ 官方</span>
                                 }
@@ -149,7 +149,7 @@
                         <td class="text-center">@((post.UpdatedAt ?? post.CreatedAt).ToString("yyyy/MM/dd HH:mm"))</td>
                         <td class="text-center">
                             @{
-                                var rowIsOfficial = MemberLookup.IsOfficial(post.MemberId);
+                                var rowIsOfficial = MemberLookup.IsOfficial(post.Member);
                             }
                             <div class="d-inline-flex gap-1">
                                 @if (!post.IsDelete && post.Status == VlogPostStatus.PendingReview)

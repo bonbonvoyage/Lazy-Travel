@@ -139,7 +139,7 @@
                     }
                     <div class="d-flex flex-wrap gap-2 mb-2">
                         <span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span>
-                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-person"></i> @MemberLookup.GetName(post.MemberId)</span>
+                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-person"></i> @(post.Member?.Name ?? $"會員 #{post.MemberId}")</span>
                         <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-geo-alt"></i> @post.Destination</span>
                         <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-calendar3"></i> @post.TravelDays 天</span>
                         <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-people"></i> @post.TravelPeople.ToLabel()</span>
@@ -240,8 +240,8 @@
                 <dd class="col-7"><span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span></dd>
                 <dt class="col-5 text-muted">發布會員</dt>
                 <dd class="col-7 d-flex align-items-center gap-1">
-                    <span>@MemberLookup.GetName(post.MemberId)</span>
-                    @if (MemberLookup.IsOfficial(post.MemberId))
+                    <span>@(post.Member?.Name ?? $"會員 #{post.MemberId}")</span>
+                    @if (MemberLookup.IsOfficial(post.Member))
                     {
                         <span class="official-badge">✓ 官方</span>
                     }

@@ -119,8 +119,8 @@
             <div class="col-lg-7">
                 <div class="featured-card h-100 d-flex flex-column">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="fw-medium">@MemberLookup.GetName(Model.Featured.MemberId)</span>
-                        @if (MemberLookup.IsOfficial(Model.Featured.MemberId))
+                        <span class="fw-medium">@(Model.Featured.Member?.Name ?? $"會員 #{Model.Featured.MemberId}")</span>
+                        @if (MemberLookup.IsOfficial(Model.Featured.Member))
                         {
                             <span class="explore-official-badge">✓ 官方合作</span>
                         }
@@ -147,8 +147,8 @@
                             }
                             <div class="side-card-body">
                                 <div class="text-muted small d-flex align-items-center gap-1">
-                                    <span>@MemberLookup.GetName(p.MemberId)</span>
-                                    @if (MemberLookup.IsOfficial(p.MemberId))
+                                    <span>@(p.Member?.Name ?? $"會員 #{p.MemberId}")</span>
+                                    @if (MemberLookup.IsOfficial(p.Member))
                                     {
                                         <span class="explore-official-badge">✓</span>
                                     }

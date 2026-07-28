@@ -132,8 +132,8 @@
                 }
                 <span>@Model.TravelDays 天</span>
                 <span>·</span>
-                <span>@MemberLookup.GetName(Model.MemberId)</span>
-                @if (MemberLookup.IsOfficial(Model.MemberId))
+                <span>@(Model.Member?.Name ?? $"會員 #{Model.MemberId}")</span>
+                @if (MemberLookup.IsOfficial(Model.Member))
                 {
                     <span class="explore-official-badge">✓ 官方合作</span>
                 }

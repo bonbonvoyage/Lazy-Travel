@@ -1,4 +1,5 @@
-@* 共用：載入 Quill 圖文編輯器並初始化，讓 Content 欄位可以編輯粗體/標題/清單/連結/插圖 *@
+@* 共用：載入 Quill 圖文編輯器並初始化，讓 Content 欄位可以編輯粗體/標題/清單。
+   不開放連結跟插圖，圖片一律只用上面的封面大圖。 *@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script>
@@ -11,57 +12,14 @@
 
         var quill = new Quill(editorContainer, {
             theme: 'snow',
-            placeholder: '行程總體心得……可以加標題、粗體、清單、連結或插圖',
+            placeholder: '行程總體心得……可以加標題、粗體、清單',
             modules: {
-                toolbar: {
-                    container: [
-                        [{ header: [2, 3, false] }],
-                        ['bold', 'italic', 'underline'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        ['link', 'image'],
-                        ['clean']
-                    ],
-                    handlers: {
-                        image: function () {
-                            var input = document.createElement('input');
-                            input.setAttribute('type', 'file');
-                            input.setAttribute('accept', 'image/*');
-                            input.click();
-
-                            input.onchange = function () {
-                                var file = input.files && input.files[0];
-                                if (!file) {
-                                    return;
-                                }
-
-                                var formData = new FormData();
-                                formData.append('file', file);
-                                var tokenInput = editorContainer.closest('form')?.querySelector('input[name="__RequestVerificationToken"]');
-                                if (tokenInput) {
-                                    formData.append('__RequestVerificationToken', tokenInput.value);
-                                }
-
-                                fetch('@Url.Action("UploadImage", "VlogPosts", new { area = "Admin" })', {
-                                    method: 'POST',
-                                    body: formData
-                                })
-                                    .then(function (res) { return res.json(); })
-                                    .then(function (data) {
-                                        if (data && data.url) {
-                                            var range = quill.getSelection(true);
-                                            quill.insertEmbed(range.index, 'image', data.url, 'user');
-                                            quill.setSelection(range.index + 1);
-                                        } else {
-                                            alert('圖片上傳失敗，請再試一次。');
-                                        }
-                                    })
-                                    .catch(function () {
-                                        alert('圖片上傳失敗，請再試一次。');
-                                    });
-                            };
-                        }
-                    }
-                }
+                toolbar: [
+                    [{ header: [2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['clean']
+                ]
             }
         });
 

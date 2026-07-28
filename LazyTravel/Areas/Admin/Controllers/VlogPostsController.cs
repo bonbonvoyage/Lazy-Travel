@@ -17,6 +17,9 @@ namespace LazyTravel.Areas.Admin.Controllers
         private const long MaxUploadSizeBytes = 5 * 1024 * 1024; // 5MB
         private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
 
+        // 官方帳號的 MemberID 查一次就快取起來，不用每個請求都查一次資料庫。
+        private static int? _cachedOfficialMemberId;
+
         private readonly IWebHostEnvironment _env;
         private readonly LazyTravelDBContext _context;
         private readonly IAdminLogService _adminLogService;
@@ -31,10 +34,10 @@ namespace LazyTravel.Areas.Admin.Controllers
         }
 
         // GET /Admin/VlogPosts
-        // 預設一進來就是「只看我的文章」，官方文章跟一堆會員文章混在一起看起來太亂
-        public async Task<IActionResult> Index(string? keyword, string? status, bool showDeleted = false, string? sort = "updated_desc", int page = 1, bool onlyMine = true)
+        // 預設一進來是「全部會員」
+        public async Task<IActionResult> Index(string? keyword, string? status, bool showDeleted = false, string? sort = "updated_desc", int page = 1, bool onlyMine = false)
         {
-            var all = await _context.VlogPosts.AsNoTracking().ToListAsync();
+            var all = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).ToListAsync();
 
             // 讚數/收藏數一次查完存字典，避免排序/分頁時對每一篇文章各自打一次資料庫。
             var interactionCounts = await _context.PostInteractions
@@ -44,12 +47,12 @@ namespace LazyTravel.Areas.Admin.Controllers
             int LikeCount(int postId) => interactionCounts.FirstOrDefault(c => c.PostId == postId && c.ActionType == PostInteractionType.Like)?.Count ?? 0;
             int FavoriteCount(int postId) => interactionCounts.FirstOrDefault(c => c.PostId == postId && c.ActionType == PostInteractionType.Favorite)?.Count ?? 0;
 
-            // 後台目前只有 LazyTravel 官方帳號能登入，這裡先用固定的官方 MemberID 篩「我的文章」；
+            // 後台目前只有 LazyTravel 官方帳號能登入，這裡先用官方帳號的 Email 篩「我的文章」；
             // 之後 Cookie 認證接上後，改成比對目前登入者的 MemberID 即可。
             // 「全部會員」現在是「我的以外的會員文章」，不是「全部」，跟「我的文章」互斥、不重疊。
             IEnumerable<VlogPost> filtered = onlyMine
-                ? all.Where(p => p.MemberId == MemberLookup.OfficialMemberId)
-                : all.Where(p => p.MemberId != MemberLookup.OfficialMemberId);
+                ? all.Where(p => MemberLookup.IsOfficial(p.Member))
+                : all.Where(p => !MemberLookup.IsOfficial(p.Member));
 
             filtered = showDeleted
                 ? filtered.Where(p => p.IsDelete)
@@ -65,7 +68,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 filtered = filtered.Where(p =>
                     p.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                     p.Destination.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    MemberLookup.GetName(p.MemberId).Contains(keyword, StringComparison.OrdinalIgnoreCase));
+                    (p.Member?.Name ?? string.Empty).Contains(keyword, StringComparison.OrdinalIgnoreCase));
             }
 
             // 支援的排序欄位：更新時間（預設）、讚數、收藏數，各自可以升冪/降冪
@@ -93,12 +96,12 @@ namespace LazyTravel.Areas.Admin.Controllers
             var pageItems = ordered.Skip((page - 1) * PageSize).Take(PageSize).ToList();
 
             var mineBase = onlyMine
-                ? all.Where(p => p.MemberId == MemberLookup.OfficialMemberId)
-                : all.Where(p => p.MemberId != MemberLookup.OfficialMemberId);
+                ? all.Where(p => MemberLookup.IsOfficial(p.Member))
+                : all.Where(p => !MemberLookup.IsOfficial(p.Member));
 
             // 這一頁裡的會員文章，先各自查一次是否有待處理檢舉，讓「提出檢舉」按鈕在已經被檢舉時不要重複顯示。
             var postIdsWithPendingReport = pageItems
-                .Where(p => !MemberLookup.IsOfficial(p.MemberId))
+                .Where(p => !MemberLookup.IsOfficial(p.Member))
                 .Where(p => _reportService.GetRelatedReports(new LazyTravel.Models.Report { Id = -1, TargetType = ReportTargetType.VlogPost, TargetId = p.PostId })
                     .Any(r => r.Status == ReportStatus.Pending))
                 .Select(p => p.PostId)
@@ -136,7 +139,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // 唯讀審核頁，給主管／系統管理員用；小編看不到這頁的操作按鈕。
         public async Task<IActionResult> Details(int id)
         {
-            var post = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
             {
                 return NotFound();
@@ -184,11 +187,13 @@ namespace LazyTravel.Areas.Admin.Controllers
         }
 
         // GET /Admin/VlogPosts/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             ViewData["Title"] = "新增文章";
             // Cookie 認證尚未接上，先固定用 LazyTravel 官方當發文會員
-            return View(new VlogPost { TravelDays = 1, MemberId = MemberLookup.OfficialMemberId });
+            var officialId = await ResolveOfficialMemberIdAsync();
+            var official = await _context.Members.AsNoTracking().FirstOrDefaultAsync(m => m.MemberId == officialId);
+            return View(new VlogPost { TravelDays = 1, MemberId = officialId, Member = official });
         }
 
         // POST /Admin/VlogPosts/Create
@@ -204,6 +209,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             if (!ModelState.IsValid)
             {
                 ViewData["Title"] = "新增文章";
+                post.Member = await _context.Members.AsNoTracking().FirstOrDefaultAsync(m => m.MemberId == post.MemberId);
                 return View(post);
             }
 
@@ -226,15 +232,15 @@ namespace LazyTravel.Areas.Admin.Controllers
                 targetTable: "VlogPosts",
                 targetId: post.PostId);
 
-            TempData["SuccessMessage"] = $"文章「{post.Title}」已新增。";
-            return RedirectToAction(nameof(Index));
+            TempData["SuccessMessage"] = $"文章「{post.Title}」已新增，可以繼續往下新增每日行程。";
+            return RedirectToAction(nameof(Edit), new { id = post.PostId });
         }
 
         // GET /Admin/VlogPosts/Edit/5
         // 小編編輯自己草稿用的頁面。editId 有值時，下方行程表單切成「編輯行程」模式。
         public async Task<IActionResult> Edit(int id, int? editId = null)
         {
-            var post = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
             {
                 return NotFound();
@@ -252,7 +258,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         {
             post.PostId = id;
 
-            var existing = await _context.VlogPosts.FirstOrDefaultAsync(p => p.PostId == id);
+            var existing = await _context.VlogPosts.Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (existing is null)
             {
                 return NotFound();
@@ -261,7 +267,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             // Edit 頁只給小編編輯「官方文章」的草稿：會員文章一律不能編輯，
             // 官方文章已送審/已發布/已刪除的話要先請主管退回草稿才能再編輯。
             // 防止有人繞過畫面上的權限判斷直接送 POST。
-            if (!MemberLookup.IsOfficial(existing.MemberId) || existing.IsDelete || existing.Status != VlogPostStatus.Draft)
+            if (!MemberLookup.IsOfficial(existing.Member) || existing.IsDelete || existing.Status != VlogPostStatus.Draft)
             {
                 return Forbid();
             }
@@ -274,6 +280,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             if (!ModelState.IsValid)
             {
                 post.MediaUrl = existingMediaUrl;
+                post.Member = existing.Member;
                 ViewData["Title"] = "編輯文章";
                 return View(await BuildItineraryViewModelAsync(post, null));
             }
@@ -368,14 +375,14 @@ namespace LazyTravel.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id, VlogPostStatus to, string? note = null, bool fromDetails = false)
         {
-            var post = await _context.VlogPosts.FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
             {
                 return NotFound();
             }
 
             // 草稿/送審/已發布這條流程只適用官方文章：會員文章不是小編寫的，沒有送審/退回草稿這件事。
-            if (post.IsDelete || !MemberLookup.IsOfficial(post.MemberId))
+            if (post.IsDelete || !MemberLookup.IsOfficial(post.Member))
             {
                 return Forbid();
             }
@@ -426,13 +433,13 @@ namespace LazyTravel.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReportPost(int id, ReportReasonCategory reasonCategory, string reason)
         {
-            var post = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
             {
                 return NotFound();
             }
 
-            if (MemberLookup.IsOfficial(post.MemberId))
+            if (MemberLookup.IsOfficial(post.Member))
             {
                 return Forbid();
             }
@@ -447,7 +454,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 ReportTargetType.VlogPost,
                 post.PostId,
                 post.Title,
-                MemberLookup.GetName(post.MemberId),
+                post.Member?.Name ?? $"會員 #{post.MemberId}",
                 User.Identity?.Name ?? "小編",
                 reasonCategory,
                 reason);
@@ -461,13 +468,13 @@ namespace LazyTravel.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DismissReport(int id)
         {
-            var post = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
             {
                 return NotFound();
             }
 
-            if (MemberLookup.IsOfficial(post.MemberId))
+            if (MemberLookup.IsOfficial(post.Member))
             {
                 return Forbid();
             }
@@ -485,26 +492,6 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             TempData["SuccessMessage"] = $"文章「{post.Title}」的檢舉已判定為不成立。";
             return RedirectToAction(nameof(Details), new { id });
-        }
-
-        // POST /Admin/VlogPosts/UploadImage
-        // 給 Quill 圖文編輯器的插圖按鈕用：上傳後回傳圖片網址，前端再把網址插進內文。
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadImage(IFormFile? file)
-        {
-            if (file is null || file.Length == 0)
-            {
-                return BadRequest(new { message = "沒有收到檔案。" });
-            }
-
-            if (!IsAllowedImage(file))
-            {
-                return BadRequest(new { message = "只接受 jpg / png / gif / webp 圖片檔，且大小上限 5MB。" });
-            }
-
-            var url = await SaveUploadedFileAsync(file, "content");
-            return Json(new { url });
         }
 
         // ---------- 每日行程列表管理（併入「編輯文章」頁面下方） ----------
@@ -543,13 +530,13 @@ namespace LazyTravel.Areas.Admin.Controllers
             string? stayDuration, string? departureTime, IFormFile? mediaFile,
             string? description, string? remarks)
         {
-            var parentPost = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == postId);
+            var parentPost = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == postId);
             if (parentPost is null)
             {
                 return NotFound();
             }
 
-            if (!MemberLookup.IsOfficial(parentPost.MemberId) || parentPost.IsDelete || parentPost.Status != VlogPostStatus.Draft)
+            if (!MemberLookup.IsOfficial(parentPost.Member) || parentPost.IsDelete || parentPost.Status != VlogPostStatus.Draft)
             {
                 return Forbid();
             }
@@ -666,13 +653,13 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            var parentPost = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == postId);
+            var parentPost = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == postId);
             if (parentPost is null)
             {
                 return NotFound();
             }
 
-            if (!MemberLookup.IsOfficial(parentPost.MemberId) || parentPost.IsDelete || parentPost.Status != VlogPostStatus.Draft)
+            if (!MemberLookup.IsOfficial(parentPost.Member) || parentPost.IsDelete || parentPost.Status != VlogPostStatus.Draft)
             {
                 return Forbid();
             }
@@ -714,13 +701,13 @@ namespace LazyTravel.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteNode(int nodeId, int postId)
         {
-            var parentPost = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == postId);
+            var parentPost = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == postId);
             if (parentPost is null)
             {
                 return NotFound();
             }
 
-            if (!MemberLookup.IsOfficial(parentPost.MemberId) || parentPost.IsDelete || parentPost.Status != VlogPostStatus.Draft)
+            if (!MemberLookup.IsOfficial(parentPost.Member) || parentPost.IsDelete || parentPost.Status != VlogPostStatus.Draft)
             {
                 return Forbid();
             }
@@ -734,6 +721,27 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             TempData["SuccessMessage"] = "已刪除該行程。";
             return RedirectToAction(nameof(Edit), null, new { id = postId }, "itinerary-section");
+        }
+
+        // Cookie 認證尚未接上，新增文章時先固定用「LazyTravel 官方」這筆 Member 當發文會員。
+        // 用 Email(MemberLookup.OfficialAccountEmail) 查真的 MemberID，不寫死數字，換資料庫也不會查錯。
+        private async Task<int> ResolveOfficialMemberIdAsync()
+        {
+            if (_cachedOfficialMemberId.HasValue)
+            {
+                return _cachedOfficialMemberId.Value;
+            }
+
+            var official = await _context.Members.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Email == MemberLookup.OfficialAccountEmail);
+            if (official is null)
+            {
+                throw new InvalidOperationException(
+                    $"找不到官方帳號（Email = {MemberLookup.OfficialAccountEmail}），請先在 Members 資料表建立這筆資料。");
+            }
+
+            _cachedOfficialMemberId = official.MemberId;
+            return official.MemberId;
         }
 
         // ---------- 檔案上傳共用小工具 ----------

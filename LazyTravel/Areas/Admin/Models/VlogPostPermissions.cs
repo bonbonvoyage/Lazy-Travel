@@ -36,7 +36,7 @@ public class VlogPostPermissions
 
     public static VlogPostPermissions For(VlogPost post, bool hasPendingReport)
     {
-        var isOfficial = MemberLookup.IsOfficial(post.MemberId);
+        var isOfficial = MemberLookup.IsOfficial(post.Member);
         var permissions = new VlogPostPermissions { IsOfficial = isOfficial };
 
         if (post.IsDelete)

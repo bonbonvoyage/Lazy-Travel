@@ -19,6 +19,7 @@ namespace LazyTravel.Controllers
         public async Task<IActionResult> Index(string? region, string? keyword)
         {
             var published = (await _context.VlogPosts.AsNoTracking()
+                .Include(p => p.Member)
                 .Where(p => !p.IsDelete && p.Status == VlogPostStatus.Published)
                 .ToListAsync())
                 .AsEnumerable();
@@ -48,7 +49,7 @@ namespace LazyTravel.Controllers
 
             // 精選文章：優先挑官方帳號發的，沒有的話退而求其次選最新更新的一篇
             var featured = list
-                .Where(p => MemberLookup.IsOfficial(p.MemberId))
+                .Where(p => MemberLookup.IsOfficial(p.Member))
                 .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
                 .FirstOrDefault()
                 ?? list.OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt).FirstOrDefault();
@@ -90,7 +91,7 @@ namespace LazyTravel.Controllers
         // GET /Explore/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var post = await _context.VlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.PostId == id);
+            var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null || post.IsDelete || post.Status != VlogPostStatus.Published)
             {
                 return NotFound();
