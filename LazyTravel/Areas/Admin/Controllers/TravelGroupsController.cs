@@ -1,7 +1,9 @@
 ﻿using LazyTravel.Models.EfModels;
 using LazyTravel.Models.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
@@ -129,7 +131,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             // 異動紀錄清單：依建立時間新到舊排序，不套用揪團篩選條件（獨立瀏覽異動歷程）
             var logQuery = _context.TravelGroupsLogs
                 .Include(l => l.Group)
-                .Include(l => l.ChangedByMember)
+                .Include(l => l.ChangedByEmployee)
                 .OrderByDescending(l => l.CreatedAt)
                 .AsQueryable();
 
@@ -240,19 +242,17 @@ namespace LazyTravel.Areas.Admin.Controllers
             group.IsPublic = false;
             group.UpdatedAt = DateTime.Now;
 
-            _context.TravelGroupsLogs.Add(new TravelGroupsLog
-            {
-                GroupId = group.GroupId,
-                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID。
-                // 目前資料庫欄位不可為 NULL，暫以團主 ID 作為系統操作紀錄的占位值。
-                ChangedByMemberId = group.OwnerMemberId,
-                ChangeType = "刪除",
-                FieldName = "IsDelete",
-                OldValue = "0",
-                NewValue = "1",
-                Remark = $"審核狀態為「{group.ReviewStatus}」，移至已刪除清單。",
-                CreatedAt = DateTime.Now
-            });
+            var reportReason = NormalizeOperationRemark(await GetLatestTravelGroupReportReasonAsync(group.GroupId));
+
+            _context.TravelGroupsLogs.Add(CreateLog(
+                group,
+                "刪除",
+                "IsDelete",
+                "0",
+                "1",
+                string.IsNullOrWhiteSpace(reportReason)
+                    ? $"審核狀態為「{group.ReviewStatus}」，移至已刪除清單。"
+                    : reportReason));
 
             await _context.SaveChangesAsync();
 
@@ -262,8 +262,15 @@ namespace LazyTravel.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Restore(int id)
+        public async Task<IActionResult> Restore(int id, string? operationRemark)
         {
+            operationRemark = NormalizeOperationRemark(operationRemark);
+            if (string.IsNullOrWhiteSpace(operationRemark))
+            {
+                TempData["ErrorMessage"] = "還原揪團前，請填寫操作異動說明。";
+                return RedirectToAction(nameof(Index), new { tab = "deleted" });
+            }
+
             var group = await _context.TravelGroups
                 .FirstOrDefaultAsync(g => g.GroupId == id);
 
@@ -280,24 +287,147 @@ namespace LazyTravel.Areas.Admin.Controllers
             group.IsPublic = true;
             group.UpdatedAt = DateTime.Now;
 
-            _context.TravelGroupsLogs.Add(new TravelGroupsLog
-            {
-                GroupId = group.GroupId,
-                // TODO(後續)：串接登入驗證後，改寫入實際操作的管理員 MemberID。
-                // 目前資料庫欄位不可為 NULL，暫以團主 ID 作為系統操作紀錄的占位值。
-                ChangedByMemberId = group.OwnerMemberId,
-                ChangeType = "還原",
-                FieldName = "ReviewStatus",
-                OldValue = oldReviewStatus,
-                NewValue = "正常",
-                Remark = "由已刪除清單還原至所有揪團清單，審核狀態回復正常。",
-                CreatedAt = DateTime.Now
-            });
+            _context.TravelGroupsLogs.Add(CreateLog(
+                group,
+                "還原",
+                "ReviewStatus",
+                oldReviewStatus,
+                "正常",
+                operationRemark));
 
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "揪團已還原至正常清單。";
             return RedirectToAction(nameof(Index), new { tab = "active" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveOperationRemark(int id, string? operationRemark)
+        {
+            operationRemark = NormalizeOperationRemark(operationRemark);
+            if (string.IsNullOrWhiteSpace(operationRemark))
+            {
+                TempData["ErrorMessage"] = "請填寫操作異動說明。";
+                return RedirectToAction(nameof(Index), new { tab = "log" });
+            }
+
+            var group = await _context.TravelGroups
+                .FirstOrDefaultAsync(g => g.GroupId == id);
+
+            if (group == null)
+            {
+                return NotFound();
+            }
+
+            _context.TravelGroupsLogs.Add(CreateLog(
+                group,
+                "新增說明",
+                "Remark",
+                "",
+                operationRemark,
+                operationRemark));
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "操作異動說明已儲存。";
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                var refreshedGroup = await FindGroupDetailsAsync(id);
+                return refreshedGroup == null
+                    ? NotFound()
+                    : PartialView("_TravelGroupDetailsContent", refreshedGroup);
+            }
+
+            return RedirectToAction(nameof(Index), new { tab = "log" });
+        }
+
+        private TravelGroupsLog CreateLog(
+            TravelGroup group,
+            string changeType,
+            string fieldName,
+            string oldValue,
+            string newValue,
+            string remark)
+        {
+            return new TravelGroupsLog
+            {
+                GroupId = group.GroupId,
+                ChangedByEmployeeId = GetCurrentEmployeeId(),
+                ChangeType = changeType,
+                FieldName = fieldName,
+                OldValue = oldValue,
+                NewValue = newValue,
+                Remark = remark,
+                CreatedAt = DateTime.Now
+            };
+        }
+
+        private async Task<string?> GetLatestTravelGroupReportReasonAsync(int groupId)
+        {
+            return await _context.Reports
+                .Where(r => r.ReportType == 4 && r.TargetId == groupId)
+                .OrderByDescending(r => r.CreatedAt)
+                .Select(r => r.Reason)
+                .FirstOrDefaultAsync();
+        }
+
+        private static string? NormalizeOperationRemark(string? remark)
+        {
+            if (string.IsNullOrWhiteSpace(remark))
+            {
+                return null;
+            }
+
+            remark = remark.Trim();
+            return remark.Length <= 200 ? remark : remark[..200];
+        }
+
+        private int GetCurrentEmployeeId()
+        {
+            var claimKeys = new[]
+            {
+                ClaimTypes.NameIdentifier,
+                "EmployeeId",
+                "EmployeeID",
+                "AdminId",
+                "AdminID"
+            };
+
+            foreach (var key in claimKeys)
+            {
+                var value = User.FindFirstValue(key);
+                if (int.TryParse(value, out var employeeId))
+                {
+                    return employeeId;
+                }
+            }
+
+            var sessionKeys = new[]
+            {
+                "EmployeeId",
+                "EmployeeID",
+                "AdminId",
+                "AdminID"
+            };
+
+            foreach (var key in sessionKeys)
+            {
+                try
+                {
+                    var employeeId = HttpContext.Session.GetInt32(key);
+                    if (employeeId.HasValue)
+                    {
+                        return employeeId.Value;
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    break;
+                }
+            }
+
+            return 1;
         }
 
         private Task<TravelGroup?> FindGroupDetailsAsync(int id)
@@ -306,6 +436,8 @@ namespace LazyTravel.Areas.Admin.Controllers
                 .Include(g => g.OwnerMember)
                 .Include(g => g.GroupMembers)
                     .ThenInclude(gm => gm.Member)
+                .Include(g => g.TravelGroupsLogs)
+                    .ThenInclude(l => l.ChangedByEmployee)
                 .FirstOrDefaultAsync(g => g.GroupId == id);
         }
     }

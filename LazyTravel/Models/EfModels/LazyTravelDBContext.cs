@@ -463,8 +463,8 @@ public partial class LazyTravelDBContext : DbContext
             entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupsLogs)
                 .HasConstraintName("FK_TravelGroupsLog_Group");
 
-            entity.HasOne(d => d.ChangedByMember).WithMany(p => p.TravelGroupsLogs)
-                .HasConstraintName("FK_TravelGroupsLog_ChangeByMember");
+            entity.HasOne(d => d.ChangedByEmployee).WithMany(p => p.TravelGroupsLogs)
+                .HasConstraintName("FK_TravelGroupsLog_ChangeByEmployee");
         });
 
         modelBuilder.Entity<VlogPost>(entity =>

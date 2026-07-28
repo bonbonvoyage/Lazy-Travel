@@ -1,5 +1,13 @@
 @model LazyTravel.Models.EfModels.TravelGroup
 
+@{
+    var recentOperationRemarks = (Model.TravelGroupsLogs ?? Enumerable.Empty<LazyTravel.Models.EfModels.TravelGroupsLog>())
+        .Where(log => !string.IsNullOrWhiteSpace(log.Remark))
+        .OrderByDescending(log => log.CreatedAt)
+        .Take(3)
+        .ToList();
+}
+
 <table class="table table-bordered">
     <tr>
         <th>編號</th>
@@ -136,5 +144,55 @@
     <tr>
         <th>更新時間</th>
         <td>@Model.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+    </tr>
+
+    <tr>
+        <th>操作異動說明</th>
+        <td>
+            <form asp-area="Admin"
+                  asp-controller="TravelGroups"
+                  asp-action="SaveOperationRemark"
+                  asp-route-id="@Model.GroupId"
+                  method="post"
+                  class="operation-remark-form">
+                @Html.AntiForgeryToken()
+                <textarea name="operationRemark"
+                          class="form-control"
+                          maxlength="200"
+                          rows="3"
+                          placeholder="請填寫本次操作或補充說明，最多 200 字"
+                          required></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">最多 200 字</small>
+                    <button type="submit" class="btn btn-sm btn-save-pantone">儲存</button>
+                </div>
+            </form>
+
+            <div class="operation-remark-history mt-3">
+                <div class="small text-muted mb-2">最近操作異動說明</div>
+                @if (recentOperationRemarks.Any())
+                {
+                    <div class="list-group list-group-flush border rounded">
+                        @foreach (var log in recentOperationRemarks)
+                        {
+                            <div class="list-group-item px-2 py-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <span class="fw-semibold">@log.ChangeType</span>
+                                    <span class="text-muted small">@log.CreatedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                                </div>
+                                <div class="small mt-1">@log.Remark</div>
+                                <div class="text-muted small mt-1">
+                                    @(log.ChangedByEmployee != null ? $"{log.ChangedByEmployee.Name}(Id={log.ChangedByEmployee.EmployeeId})" : "系統管理員")
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted small border rounded px-2 py-2">目前沒有操作異動說明紀錄</div>
+                }
+            </div>
+        </td>
     </tr>
 </table>

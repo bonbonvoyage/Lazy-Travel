@@ -535,6 +535,72 @@
         loadGroupDetails(row.dataset.detailUrl);
     });
 
+    document.addEventListener('submit', function (e) {
+        var restoreForm = e.target.closest('.restore-form');
+        if (restoreForm) {
+            var input = restoreForm.querySelector('input[name="operationRemark"]');
+            var remark = window.prompt('請輸入還原此揪團的操作異動說明：');
+
+            if (remark === null) {
+                e.preventDefault();
+                return;
+            }
+
+            remark = remark.trim();
+            if (!remark) {
+                e.preventDefault();
+                window.alert('請填寫操作異動說明。');
+                return;
+            }
+
+            if (remark.length > 200) {
+                remark = remark.substring(0, 200);
+            }
+
+            if (input) {
+                input.value = remark;
+            }
+
+            return;
+        }
+
+        var remarkForm = e.target.closest('.operation-remark-form');
+        if (!remarkForm) {
+            return;
+        }
+
+        var textarea = remarkForm.querySelector('textarea[name="operationRemark"]');
+        if (!textarea || !textarea.value.trim()) {
+            e.preventDefault();
+            window.alert('請填寫操作異動說明。');
+            return;
+        }
+
+        e.preventDefault();
+
+        fetch(remarkForm.getAttribute('action'), {
+            method: 'POST',
+            body: new FormData(remarkForm),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('儲存失敗');
+                }
+
+                return response.text();
+            })
+            .then(function (html) {
+                var content = document.getElementById('groupDetailsContent');
+                if (content) {
+                    content.innerHTML = html;
+                }
+            })
+            .catch(function () {
+                HTMLFormElement.prototype.submit.call(remarkForm);
+            });
+    });
+
     (function () {
         var form = document.getElementById('groupFilterForm');
         if (!form) {

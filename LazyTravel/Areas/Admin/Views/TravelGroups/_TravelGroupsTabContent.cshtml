@@ -76,6 +76,30 @@
 
         return (start, end);
     }
+
+    string GetFieldDisplayName(string? fieldName)
+    {
+        return fieldName switch
+        {
+            "IsDelete" => "刪除狀態",
+            "ReviewStatus" => "審核狀態",
+            "Remark" => "操作異動說明",
+            "IsPublic" => "公開狀態",
+            "GroupStatus" => "揪團狀態",
+            "GroupTitle" => "房間名稱",
+            "Description" => "說明",
+            "Country" => "國家",
+            "Region" => "地區",
+            "StartDate" => "開始日期",
+            "EndDate" => "結束日期",
+            "CurrentPeople" => "目前人數",
+            "MinPeople" => "最少成行人數",
+            "MaxPeople" => "人數上限",
+            "JoinRule" => "加入規則",
+            _ when string.IsNullOrWhiteSpace(fieldName) => "—",
+            _ => fieldName
+        };
+    }
 }
 
 <ul class="nav nav-tabs admin-tabs" id="groupTabs" role="tablist">
@@ -471,8 +495,9 @@
                                       asp-action="Restore"
                                       asp-route-id="@item.GroupId"
                                       method="post"
-                                      onsubmit="return confirm('確定要還原這筆揪團嗎？');">
+                                      class="restore-form">
                                     @Html.AntiForgeryToken()
+                                    <input type="hidden" name="operationRemark" />
                                     <button type="submit" class="btn btn-sm btn-success">還原</button>
                                 </form>
                             </td>
@@ -587,7 +612,7 @@
                     <th>異動欄位</th>
                     <th>異動前</th>
                     <th>異動後</th>
-                    <th>備註</th>
+                    <th class="text-start">操作異動說明</th>
                     <th>操作人</th>
                     <th>異動時間</th>
                     <th>檢視揪團</th>
@@ -604,14 +629,14 @@
                             <td>@item.LogId</td>
                             <td>@item.GroupId</td>
                             <td>@item.ChangeType</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.FieldName) ? "—" : item.FieldName)</td>
+                            <td>@GetFieldDisplayName(item.FieldName)</td>
                             <td>@(string.IsNullOrWhiteSpace(item.OldValue) ? "—" : item.OldValue)</td>
                             <td>@(string.IsNullOrWhiteSpace(item.NewValue) ? "—" : item.NewValue)</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.Remark) ? "—" : item.Remark)</td>
+                            <td class="text-start">@(string.IsNullOrWhiteSpace(item.Remark) ? "—" : item.Remark)</td>
                             <td>
-                                @if (item.ChangedByMember != null)
+                                @if (item.ChangedByEmployee != null)
                                 {
-                                    <span>@item.ChangedByMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.ChangedByMember.MemberId">@item.ChangedByMember.MemberId</a><span>)</span>
+                                    <span>@item.ChangedByEmployee.Name</span><span>(Id=@item.ChangedByEmployee.EmployeeId)</span>
                                 }
                                 else
                                 {
