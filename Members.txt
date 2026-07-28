@@ -79,12 +79,6 @@ public partial class Member
     [InverseProperty("RemovedByMember")]
     public virtual ICollection<GroupMember> GroupMemberRemovedByMembers { get; set; } = new List<GroupMember>();
 
-    [InverseProperty("Member")]
-    public virtual ICollection<JoinRequest> JoinRequestMembers { get; set; } = new List<JoinRequest>();
-
-    [InverseProperty("ReviewedByMember")]
-    public virtual ICollection<JoinRequest> JoinRequestReviewedByMembers { get; set; } = new List<JoinRequest>();
-
     [InverseProperty("OwnerMember")]
     public virtual ICollection<TravelGroup> TravelGroups { get; set; } = new List<TravelGroup>();
 }

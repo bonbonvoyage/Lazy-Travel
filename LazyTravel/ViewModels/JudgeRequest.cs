@@ -17,5 +17,8 @@ namespace LazyTravel.ViewModels
 
         // 只有判定「不成立」時才有意義,判定成立時忽略
         public bool IsMalicious { get; set; }
+
+        // 從 Details 頁帶回來的篩選條件,判定完導回 Details 時要原樣帶著走,不能弄丟
+        public string? ReturnUrl { get; set; }
     }
 }

@@ -25,6 +25,15 @@ namespace LazyTravel.ViewModels
 
         public List<AdminLog> RecentLogs { get; set; } = new();
 
+        // 操作紀錄分頁的篩選條件跟分頁資訊(版面比照會員管理的操作紀錄分頁)
+        public string? LogOperatorKeyword { get; set; }
+        public string? LogDetailKeyword { get; set; }
+        public string? LogAction { get; set; }
+        public int LogCurrentPage { get; set; } = 1;
+        public int LogTotalPages { get; set; }
+        public int LogTotalCount { get; set; }
+        public List<AdminLog> Logs { get; set; } = new();
+
         public bool HasFilter =>
             Type != null || Status != null || ReasonCategory != null ||
             !string.IsNullOrWhiteSpace(Keyword) || StartDate != null || EndDate != null;
