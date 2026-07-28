@@ -1,4 +1,4 @@
-using LazyTravel.Models;
+﻿using LazyTravel.Models.EfModels;
 using LazyTravel.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +8,8 @@ namespace LazyTravel.Areas.Admin.Controllers
     [Area("Admin")]
     public class TravelGroupsController : Controller
     {
-        private readonly LazyTravelContext _context;
+        // 改用完整版的 LazyTravelDBContext,不用範圍只有 4 張表、即將淘汰的 LazyTravelContext
+        private readonly LazyTravelDBContext _context;
 
         // 審核狀態篩選僅開放這 3 種（配合前台簡化後的下拉選單）
         private static readonly string[] AllowedReviewStatuses =
@@ -21,7 +22,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             "檢舉審核中", "違規"
         };
 
-        public TravelGroupsController(LazyTravelContext context)
+        public TravelGroupsController(LazyTravelDBContext context)
         {
             _context = context;
         }

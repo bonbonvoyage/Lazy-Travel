@@ -6,9 +6,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models;
+namespace LazyTravel.Models.EfModels;
 
-[Index("GroupId", "MemberId", Name = "UX_JoinRequests_GroupID_MemberID", IsUnique = true)]
 public partial class JoinRequest
 {
     [Key]
@@ -24,9 +23,7 @@ public partial class JoinRequest
     [StringLength(500)]
     public string Message { get; set; }
 
-    [Required]
-    [StringLength(30)]
-    public string RequestStatus { get; set; }
+    public byte RequestStatus { get; set; }
 
     [Column("ReviewedByMemberID")]
     public int? ReviewedByMemberId { get; set; }

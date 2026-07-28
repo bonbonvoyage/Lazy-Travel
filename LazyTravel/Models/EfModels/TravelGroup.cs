@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models;
+namespace LazyTravel.Models.EfModels;
 
 public partial class TravelGroup
 {
@@ -24,19 +24,19 @@ public partial class TravelGroup
     [StringLength(1000)]
     public string Description { get; set; }
 
+    public DateOnly? StartDate { get; set; }
+
+    public DateOnly? EndDate { get; set; }
+
     public int MinPeople { get; set; }
 
     public int MaxPeople { get; set; }
 
     public int CurrentPeople { get; set; }
 
-    [Required]
-    [StringLength(50)]
-    public string JoinRule { get; set; }
+    public byte JoinRule { get; set; }
 
-    [Required]
-    [StringLength(30)]
-    public string GroupStatus { get; set; }
+    public byte GroupStatus { get; set; }
 
     public bool IsPublic { get; set; }
 
@@ -48,6 +48,24 @@ public partial class TravelGroup
 
     public bool IsDelete { get; set; }
 
+    [Required]
+    [StringLength(30)]
+    public string ReviewStatus { get; set; }
+
+    [Required]
+    [StringLength(50)]
+    public string Country { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string Region { get; set; }
+
+    [InverseProperty("Group")]
+    public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+
+    [InverseProperty("Group")]
+    public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
+
     [InverseProperty("Group")]
     public virtual ICollection<GroupMember> GroupMembers { get; set; } = new List<GroupMember>();
 
@@ -57,14 +75,4 @@ public partial class TravelGroup
     [ForeignKey("OwnerMemberId")]
     [InverseProperty("TravelGroups")]
     public virtual Member OwnerMember { get; set; }
-
-    public string ReviewStatus { get; set; } = null!;
-    public string? Country { get; set; }
-    public string? Region { get; set; }
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-
-    [InverseProperty("Group")]
-    public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
-
 }

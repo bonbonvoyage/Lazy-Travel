@@ -11,3 +11,4 @@ appsettings.Development.json
 ## 其他
 *.log
 node_modules/
+~$*.docx

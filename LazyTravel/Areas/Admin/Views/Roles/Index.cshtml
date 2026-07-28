@@ -1,0 +1,592 @@
+﻿@{
+    ViewData["Title"] = "權限與角色管理";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    string activeTab = ViewBag.ActiveTab as string ?? "roles";
+    var rolesList = ViewBag.RolesList as IEnumerable<LazyTravel.Models.Services.RoleDto>;
+    var allPermissions = ViewBag.AllPermissions as IEnumerable<LazyTravel.Models.Services.PermissionDto>;
+    var permissionsList = ViewBag.PermissionsList as IEnumerable<LazyTravel.Models.Services.PermissionDto>;
+    var groupedPermissions = allPermissions?.GroupBy(p => p.ModuleName);
+}
+
+<style>
+    .modern-tabs-wrapper {
+        display: inline-flex;
+        background-color: var(--surface-alt);
+        padding: 0.35rem;
+        border-radius: var(--radius-pill);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+        margin-bottom: 1.5rem;
+    }
+
+    .modern-tab {
+        color: var(--text-secondary);
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-pill);
+        text-decoration: none;
+        transition: all 0.25s ease-in-out;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .modern-tab:hover {
+            color: var(--sea-800);
+            background-color: var(--sand-100);
+        }
+
+        .modern-tab.active {
+            background-color: #ffffff;
+            color: var(--sea-700);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+    .perm-badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-soft);
+        background-color: var(--surface-alt);
+        color: var(--text-secondary);
+        display: inline-block;
+        margin: 2px;
+    }
+
+    .hover-bg-light:hover {
+        background-color: var(--sand-100) !important;
+    }
+
+    .premium-card {
+        border: none;
+        border-radius: var(--radius-md);
+        box-shadow: 0 4px 20px rgba(31, 61, 78, 0.06);
+        background-color: var(--surface);
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1 text-gray-800 fw-bold" style="font-family: var(--font-display); color: var(--sea-800);">
+            職位與權限管理
+        </h1>
+        <p class="text-muted mb-0 small">管理系統職務角色與底層細粒度權限字典 (Fine-Grained RBAC)</p>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert" style="background-color: var(--leaf-100); color: var(--leaf-600);">
+        <strong>成功！</strong> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert" style="background-color: var(--coral-100); color: var(--coral-600);">
+        <strong>錯誤！</strong> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- 三大頁籤：角色管理、權限字典、操作紀錄 -->
+<div class="modern-tabs-wrapper">
+    <a class="modern-tab @(activeTab == "roles" ? "active" : "")" href="?activeTab=roles">
+        <i class="fas fa-user-shield"></i> 角色管理 (Roles)
+    </a>
+    <a class="modern-tab @(activeTab == "permissions" ? "active" : "")" href="?activeTab=permissions">
+        <i class="fas fa-key"></i> 權限字典 (Permissions)
+    </a>
+    <a class="modern-tab @(activeTab == "logs" ? "active" : "")" href="?activeTab=logs">
+        <i class="fas fa-history"></i> 操作紀錄
+    </a>
+</div>
+
+<!-- ==========================================
+     頁籤一：角色管理 (Roles)
+     ========================================== -->
+@if (activeTab == "roles")
+{
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+            + 建立新職務角色
+        </button>
+    </div>
+
+    <div class="row g-4">
+        @if (rolesList != null)
+        {
+            foreach (var role in rolesList)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0" style="border-radius: var(--radius-lg);">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="fw-bold mb-1" style="color: var(--sea-800);">@role.RoleName</h5>
+                                <span class="badge bg-light text-secondary border font-monospace">@role.RoleCode</span>
+                            </div>
+
+                            <div>
+                                @if (role.RoleID != 1)
+                                {
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1 shadow-sm" title="編輯權限" onclick="openEditRoleModal(@role.RoleID, '@role.RoleName', '@string.Join(",", role.PermissionIds)')">
+                                        <i class="fas fa-edit"></i> 編輯
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm" title="刪除此角色" onclick="confirmDeleteRole(@role.RoleID, '@role.RoleName')">
+                                        <i class="fas fa-trash-alt"></i> 刪除
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-danger small fw-bold"><i class="fas fa-lock"></i> 系統內建</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3 mt-3">@role.Description</p>
+                            <hr class="mt-0 mb-3" style="opacity: 0.1;" />
+                            <div class="fw-bold small mb-2 text-secondary">包含底層權限 (@role.Permissions.Count)：</div>
+                            <div class="d-flex flex-wrap" style="max-height: 120px; overflow-y: auto;">
+                                @if (role.RoleID == 1)
+                                {
+                                    <span class="perm-badge w-100 text-center bg-sea-soft text-sea-700 border-0">擁有系統全模組控制權</span>
+                                }
+                                else
+                                {
+                                    foreach (var perm in role.Permissions)
+                                    {
+                                        <span class="perm-badge text-truncate" style="max-width: 100%;" title="@perm">@perm</span>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+}
+
+<!-- ==========================================
+     🌟 頁籤二：權限字典 (Permissions)
+     ========================================== -->
+@if (activeTab == "permissions")
+{
+    <!-- 🌟 重構：滿版雙欄式搜尋列 -->
+    <div class="premium-card mb-4">
+        <div class="card-body p-4">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="activeTab" value="permissions" />
+
+                <div class="col-md-5">
+                    <label class="form-label text-muted small fw-bold">權限條件搜尋</label>
+                    <input type="text" name="keyword" class="form-control rounded-3" value="@ViewBag.Keyword" placeholder="搜尋 權限代碼、模組 或 說明...">
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3 shadow-sm">
+                        <i class="fas fa-search me-1"></i> 搜尋權限
+                    </button>
+                </div>
+
+                <div class="col-md-2">
+                    <a href="?activeTab=permissions" class="btn btn-light border w-100 rounded-3 text-muted">清除條件</a>
+                </div>
+
+                <div class="col-md-3 text-end ms-auto">
+                    <button type="button" class="btn btn-coral w-100 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#createPermissionModal">
+                        + 新增權限字典項目
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-table-card shadow-sm mb-4">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th class="px-4">權限代碼 (PermissionCode)</th>
+                        <th class="px-4">歸屬模組 (ModuleName)</th>
+                        <th class="px-4">權限操作說明 (Description)</th>
+                        <th class="px-4 text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (permissionsList == null || !permissionsList.Any())
+                    {
+                        <tr><td colspan="4" class="text-center py-4 text-muted">目前沒有任何權限資料。</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var perm in permissionsList)
+                        {
+                            <tr>
+                                <td class="px-4 font-monospace fw-bold text-primary">@perm.PermissionCode</td>
+                                <td class="px-4"><span class="badge bg-light text-dark border">@perm.ModuleName</span></td>
+                                <td class="px-4 fw-bold" style="color: var(--ink);">@perm.Description</td>
+                                <td class="px-4 text-center">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1 shadow-sm" onclick="openEditPermissionModal(@perm.PermissionID, '@perm.PermissionCode', '@perm.ModuleName', '@perm.Description')">
+                                        <i class="fas fa-edit"></i> 編輯
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm" onclick="confirmDeletePermission(@perm.PermissionID, '@perm.PermissionCode')">
+                                        <i class="fas fa-trash-alt"></i> 刪除
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- ==========================================
+     頁籤三：操作紀錄 (Logs)
+     ========================================== -->
+@if (activeTab == "logs")
+{
+    var roleLogs = ViewBag.RoleLogs as IEnumerable<LazyTravel.Models.DTOs.AdminLogDto>;
+
+    <!-- 🌟 重構：滿版搜尋列 -->
+    <div class="premium-card mb-4">
+        <div class="card-body p-4">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="activeTab" value="logs" />
+
+                <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">日誌關鍵字搜尋</label>
+                    <input type="text" name="keyword" class="form-control rounded-3" value="@ViewBag.Keyword" placeholder="搜尋 操作人員 或 角色/權限代碼...">
+                </div>
+
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3 shadow-sm">
+                        <i class="fas fa-filter me-1"></i> 篩選日誌
+                    </button>
+                </div>
+
+                <div class="col-md-3">
+                    <a href="?activeTab=logs" class="btn btn-light border w-100 rounded-3 text-muted">清除條件</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-table-card shadow-sm mb-4">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle text-center">
+                <thead>
+                    <tr>
+                        <th class="px-4 text-start">操作時間</th>
+                        <th class="px-4">執行人員</th>
+                        <th class="px-4">動作類型</th>
+                        <th class="px-4">目標代碼/資源</th>
+                        <th class="px-4">來源 IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (roleLogs == null || !roleLogs.Any())
+                    {
+                        <tr><td colspan="5" class="text-muted py-4">目前沒有任何架構異動紀錄。</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var log in roleLogs)
+                        {
+                            <tr>
+                                <td class="px-4 text-start text-muted small">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                                <td class="px-4 fw-bold" style="color: var(--sea-800);">@log.AdminName</td>
+                                <td class="px-4">
+                                    @if (log.Action.Contains("create"))
+                                    {
+                                        <span class="badge bg-success">新增</span>
+                                    }
+                                    else if (log.Action.Contains("update"))
+                                    {
+
+                                        <span class="badge bg-warning text-dark">修改</span>
+                                    }
+                                    else if (log.Action.Contains("delete"))
+                                    {
+
+                                        <span class="badge bg-danger">刪除</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="badge bg-secondary">@log.Action</span>
+                                    }
+                                </td>
+                                <td class="px-4 font-monospace text-muted">@log.TargetID</td>
+                                <td class="px-4 small text-muted">@log.IPAddress</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+        {
+            <div class="card-footer bg-white border-top py-3">
+                <div class="d-flex justify-content-between align-items-center small text-muted">
+                    <span>共 @ViewBag.TotalCount 筆紀錄</span>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="?activeTab=logs&page=@i&keyword=@ViewBag.Keyword">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- ==========================================
+     所有 Modal (彈窗) 區塊
+     ========================================== -->
+<!-- 1. 建立角色 Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" style="color: var(--sea-800);">建立新職務角色</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="CreateRole" method="post">
+                <div class="modal-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">角色名稱 (中文) <span class="text-danger">*</span></label>
+                            <input type="text" name="RoleName" class="form-control" placeholder="例：高階客服主管" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">系統代碼 (英文大寫) <span class="text-danger">*</span></label>
+                            <input type="text" name="RoleCode" class="form-control font-monospace" placeholder="例：ROLE_CS_MANAGER" required />
+                        </div>
+                        <div class="col-12 mt-3">
+                            <label class="form-label fw-bold">職責說明</label>
+                            <input type="text" name="Description" class="form-control" placeholder="例：管理所有檢舉表單並擁有停權會員資格" />
+                        </div>
+                    </div>
+
+                    <label class="form-label fw-bold mb-3" style="color: var(--sea-700);">賦予底層權限 (Permissions) <span class="text-danger">*</span></label>
+                    <div class="accordion" id="permAccordion">
+                        @if (groupedPermissions != null)
+                        {
+                            int i = 0;
+                            foreach (var group in groupedPermissions)
+                            {
+                                <div class="accordion-item border mb-2" style="border-radius: var(--radius-md); overflow: hidden;">
+                                    <h2 class="accordion-header" id="heading_@i">
+                                        <button class="accordion-button collapsed bg-surface-alt fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_@i">
+                                            @group.Key
+                                        </button>
+                                    </h2>
+                                    <div id="collapse_@i" class="accordion-collapse collapse" data-bs-parent="#permAccordion">
+                                        <div class="accordion-body bg-white">
+                                            <div class="row g-2">
+                                                @foreach (var p in group)
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="form-check p-2 rounded hover-bg-light">
+                                                            <input class="form-check-input ms-0 me-2" type="checkbox" name="permissionIds" value="@p.PermissionID" id="new_perm_@p.PermissionID">
+                                                            <label class="form-check-label w-100" style="cursor: pointer;" for="new_perm_@p.PermissionID">
+                                                                <div class="fw-bold" style="color: var(--ink);">@p.Description</div>
+                                                                <div class="text-muted small font-monospace">@p.PermissionCode</div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                i++;
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary fw-bold">建立角色</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 2. 編輯角色 Modal -->
+<div class="modal fade" id="editRolePermsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" style="color: var(--sea-800);">編輯角色權限：<span id="editRoleNameTitle"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="EditRole" method="post">
+                <input type="hidden" name="roleId" id="editRoleId" />
+                <div class="modal-body p-4">
+                    <div class="accordion" id="editPermAccordion">
+                        @if (groupedPermissions != null)
+                        {
+                            int j = 0;
+                            foreach (var group in groupedPermissions)
+                            {
+                                <div class="accordion-item border mb-2" style="border-radius: var(--radius-md); overflow: hidden;">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button bg-surface-alt fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#edit_collapse_@j">
+                                            @group.Key
+                                        </button>
+                                    </h2>
+                                    <div id="edit_collapse_@j" class="accordion-collapse collapse show" data-bs-parent="#editPermAccordion">
+                                        <div class="accordion-body bg-white">
+                                            <div class="row g-2">
+                                                @foreach (var p in group)
+                                                {
+                                                    <div class="col-md-6">
+                                                        <div class="form-check p-2 rounded hover-bg-light">
+                                                            <input class="form-check-input edit-perm-chk ms-0 me-2" type="checkbox" name="permissionIds" value="@p.PermissionID" id="edit_perm_@p.PermissionID">
+                                                            <label class="form-check-label w-100" style="cursor: pointer;" for="edit_perm_@p.PermissionID">
+                                                                <div class="fw-bold" style="color: var(--ink);">@p.Description</div>
+                                                                <div class="text-muted small font-monospace">@p.PermissionCode</div>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                j++;
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary fw-bold">儲存權限變更</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 3. 新增權限字典項目 Modal -->
+<div class="modal fade" id="createPermissionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" style="color: var(--sea-800);">新增權限字典項目</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="CreatePermission" method="post">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">權限代碼 (PermissionCode) <span class="text-danger">*</span></label>
+                        <input type="text" name="PermissionCode" class="form-control font-monospace" placeholder="例：content:vlog:export" required />
+                        <div class="form-text">格式建議：[模組]:[資源]:[動作]</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">歸屬模組 (ModuleName) <span class="text-danger">*</span></label>
+                        <input type="text" name="ModuleName" class="form-control" placeholder="例：內容管理" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">權限操作說明 (Description) <span class="text-danger">*</span></label>
+                        <input type="text" name="Description" class="form-control" placeholder="例：匯出全站 Vlog 清單為 CSV" required />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary fw-bold">建立權限</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 4. 編輯權限字典項目 Modal -->
+<div class="modal fade" id="editPermissionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" style="color: var(--sea-800);">編輯權限字典項目</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="EditPermission" method="post">
+                <input type="hidden" name="PermissionID" id="editPermId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">權限代碼 (不可修改)</label>
+                        <input type="text" id="editPermCode" class="form-control font-monospace bg-light" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">歸屬模組 <span class="text-danger">*</span></label>
+                        <input type="text" name="ModuleName" id="editPermModule" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">權限操作說明 <span class="text-danger">*</span></label>
+                        <input type="text" name="Description" id="editPermDesc" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary fw-bold">儲存變更</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="deleteRoleForm" asp-action="DeleteRole" method="post" class="d-none">
+    <input type="hidden" name="roleId" id="deleteRoleId" />
+</form>
+<form id="deletePermissionForm" asp-action="DeletePermission" method="post" class="d-none">
+    <input type="hidden" name="permissionId" id="deletePermissionId" />
+</form>
+
+@section Scripts {
+    <script>
+        function openEditRoleModal(id, name, permIdsStr) {
+            document.getElementById('editRoleId').value = id;
+            document.getElementById('editRoleNameTitle').textContent = name;
+            document.querySelectorAll('.edit-perm-chk').forEach(cb => cb.checked = false);
+            if(permIdsStr) {
+                permIdsStr.split(',').forEach(pid => {
+                    const cb = document.getElementById('edit_perm_' + pid);
+                    if(cb) cb.checked = true;
+                });
+            }
+            new bootstrap.Modal(document.getElementById('editRolePermsModal')).show();
+        }
+
+        function confirmDeleteRole(id, name) {
+            if (confirm(`您確定要刪除「${name}」角色嗎？\n注意：若尚有員工綁定此角色，將無法刪除。`)) {
+                document.getElementById('deleteRoleId').value = id;
+                document.getElementById('deleteRoleForm').submit();
+            }
+        }
+
+        function openEditPermissionModal(id, code, module, desc) {
+            document.getElementById('editPermId').value = id;
+            document.getElementById('editPermCode').value = code;
+            document.getElementById('editPermModule').value = module;
+            document.getElementById('editPermDesc').value = desc;
+            new bootstrap.Modal(document.getElementById('editPermissionModal')).show();
+        }
+
+        function confirmDeletePermission(id, code) {
+            if (confirm(`您確定要刪除權限代碼 [${code}] 嗎？\n注意：若已有角色綁定此權限，將無法刪除。`)) {
+                document.getElementById('deletePermissionId').value = id;
+                document.getElementById('deletePermissionForm').submit();
+            }
+        }
+    </script>
+}
