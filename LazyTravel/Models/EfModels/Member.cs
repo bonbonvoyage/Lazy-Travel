@@ -56,8 +56,6 @@ public partial class Member
 
     public byte Status { get; set; }
 
-    public byte Role { get; set; }
-
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 

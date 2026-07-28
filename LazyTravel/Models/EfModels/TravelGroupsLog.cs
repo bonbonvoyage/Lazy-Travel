@@ -41,7 +41,7 @@ public partial class TravelGroupsLog
     [StringLength(300)]
     public string Remark { get; set; }
 
-    [Column("CreateAt", TypeName = "datetime")]
+    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
     [ForeignKey("GroupId")]

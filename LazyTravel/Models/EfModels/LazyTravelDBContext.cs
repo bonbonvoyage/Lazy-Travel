@@ -455,6 +455,9 @@ public partial class LazyTravelDBContext : DbContext
         {
             entity.HasKey(e => e.LogId).HasName("PK_TravelGroupsLog");
 
+            // 資料表名稱是單數 TravelGroupsLog,跟 DbSet 屬性名稱(複數)不一致,要明確指定
+            entity.ToTable("TravelGroupsLog");
+
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupsLogs)
