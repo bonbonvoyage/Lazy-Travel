@@ -165,7 +165,7 @@ public partial class Member
     [InverseProperty("OwnerMember")]
     public virtual ICollection<TravelGroup> TravelGroups { get; set; } = new List<TravelGroup>();
 
-    [InverseProperty("ChangeByMember")]
+    [InverseProperty("ChangedByMember")]
     public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
 
     [InverseProperty("Member")]
