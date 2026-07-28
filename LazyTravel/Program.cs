@@ -1,3 +1,4 @@
+using Amazon.S3;
 using LazyTravel.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,20 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 // 檢舉中心商業邏輯(藍培碩負責),Controller 只呼叫這層
 builder.Services.AddScoped<LazyTravel.Services.IReportService, LazyTravel.Services.ReportService>();
+
+// VlogPosts 圖床(Cloudflare R2, S3 相容 API)：新增圖片才上傳到這裡，舊圖維持存在本機。
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var r2Config = new AmazonS3Config
+    {
+        ServiceURL = config["CloudflareR2:ServiceUrl"],
+        ForcePathStyle = true,
+        AuthenticationRegion = "auto",
+    };
+    return new AmazonS3Client(config["CloudflareR2:AccessKey"], config["CloudflareR2:SecretKey"], r2Config);
+});
+builder.Services.AddScoped<LazyTravel.Services.VlogPostImageUploadService>();
 
 // ========================================================
 // 🌟 1. 註冊後台專屬的 Cookie 身分驗證機制 (AdminAuth)
@@ -76,7 +91,18 @@ builder.Services.AddAuthorization(options =>
 	options.AddPolicy("RequireSystemManage", policy => policy.RequireClaim("Permission", "system:employee:manage"));
 });
 
-var app = builder.Build(); if (!app.Environment.IsDevelopment())
+var app = builder.Build();
+
+// 開發環境專用：VlogPosts 資料表是空的時候，把示範資料塞進去（只塞 VlogPosts/ItineraryNodes/
+// PostInteractions 這三張表，不動 Members 等其他組員負責的表）。已經有資料就不會重複塞。
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<LazyTravel.Models.EfModels.LazyTravelDBContext>();
+    await VlogPostDbSeeder.SeedAsync(context);
+}
+
+if (!app.Environment.IsDevelopment())
 {
 	app.UseExceptionHandler("/Home/Error");
 	app.UseHsts();

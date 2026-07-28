@@ -278,6 +278,40 @@ namespace LazyTravel.Services
             return new JudgeOutcome { Found = true, Message = message };
         }
 
+        // 新增一筆檢舉（例如小編對會員文章提出檢舉）。跟 JudgeAsync 共用同一個 _reports 記憶體清單，
+        // 不動既有的判定/查詢邏輯，純粹多一筆 Pending 狀態的紀錄進去。
+        public async Task<Report> SubmitAsync(ReportTargetType targetType, int targetId, string targetTitle,
+            string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason)
+        {
+            Report newReport;
+            lock (_reportsLock)
+            {
+                newReport = new Report
+                {
+                    Id = _reports.Count == 0 ? 1 : _reports.Max(r => r.Id) + 1,
+                    TargetType = targetType,
+                    TargetId = targetId,
+                    TargetTitle = targetTitle,
+                    ReportedMemberAccount = reportedMemberAccount,
+                    ReporterAccount = reporterAccount,
+                    ReasonCategory = reasonCategory,
+                    Reason = reason,
+                    Status = ReportStatus.Pending,
+                    CreatedAt = DateTime.Now,
+                };
+                _reports.Add(newReport);
+            }
+
+            await _adminLogService.WriteAsync(
+                reporterAccount,
+                "提出檢舉",
+                $"檢舉 {targetType.ToDisplayName()}「{targetTitle}」：{reason}",
+                targetTable: "Reports",
+                targetId: newReport.Id);
+
+            return newReport;
+        }
+
         public async Task<List<AdminLog>> GetRecentReportLogsAsync(int take)
         {
             var recentLogs = await _adminLogService.GetRecentAsync(50);

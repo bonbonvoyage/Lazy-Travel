@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 
 namespace LazyTravel.Areas.Admin.Models;
 
@@ -11,4 +12,10 @@ public class ItineraryViewModel
     public ItineraryNode? EditingNode { get; set; }
     public int EditingStayHours { get; set; }
     public int EditingStayMinutes { get; set; }
+
+    public VlogPostPermissions Permissions { get; set; } = new();
+
+    // 主管上次「退回草稿」留的原因，讓小編知道要改哪裡
+    public string? LastReturnNote { get; set; }
+    public DateTime? LastReturnedAt { get; set; }
 }

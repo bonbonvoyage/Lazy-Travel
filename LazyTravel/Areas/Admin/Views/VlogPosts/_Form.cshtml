@@ -74,10 +74,14 @@
     }
 </script>
 
-<div class="row g-4">
+<div class="row g-4 align-items-start">
     <div class="col-lg-8">
+        @* 隱形佔位：跟右欄「封面大圖」上方按鈕列同高，讓兩欄的卡片頂端對齊。
+           margin-top 是為了把整排往上拉近麵包屑一點，抵消 Bootstrap g-4 gutter 自動加的欄位上邊距。 *@
+        <div class="invisible mb-3" style="height:38px; margin-top:-12px;"></div>
+
         <div class="admin-table-card p-3 p-lg-4 mb-3">
-            <h2 class="h6 form-section-title mb-3">📌 文章基本資料</h2>
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-file-earmark-text"></i> 文章基本資料</h2>
 
             <div class="mb-0">
                 <label asp-for="Title" class="form-label"></label>
@@ -86,8 +90,42 @@
             </div>
         </div>
 
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-compass"></i> 行程資訊</h2>
+
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label asp-for="Destination" class="form-label"></label>
+                    <input asp-for="Destination" class="form-control" placeholder="例如：花蓮" />
+                    <span asp-validation-for="Destination" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="TravelDays" class="form-label"></label>
+                    <input asp-for="TravelDays" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="TravelDays" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="TravelPeople" class="form-label"></label>
+                    <select asp-for="TravelPeople" class="form-select">
+                        <option value="@TravelGroupSize.Solo" selected="@(Model.TravelPeople == TravelGroupSize.Solo)">1人 獨旅</option>
+                        <option value="@TravelGroupSize.Small" selected="@(Model.TravelPeople == TravelGroupSize.Small)">2-4人 精緻團</option>
+                        <option value="@TravelGroupSize.Large" selected="@(Model.TravelPeople == TravelGroupSize.Large)">5人以上 團體</option>
+                    </select>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="TravelDate" class="form-label"></label>
+                    <input type="date" name="TravelDate" class="form-control"
+                           value="@(Model.TravelDate?.ToString("yyyy-MM-dd"))" />
+                    <span asp-validation-for="TravelDate" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+
         <div class="admin-table-card p-3 p-lg-4">
-            <h2 class="h6 form-section-title mb-3">📝 內文</h2>
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-journal-text"></i> 內文</h2>
             <div class="form-text mb-2">行程總體心得，每天的詳細景點請往下捲動至「每日行程列表」管理。</div>
             @* 實際送出表單的欄位：畫面上隱藏，送出前由下方 JS 把編輯器內容同步進來 *@
             <textarea asp-for="Content" style="display:none;"></textarea>
@@ -97,12 +135,26 @@
     </div>
 
     <div class="col-lg-4">
+        <div class="d-flex justify-content-end gap-2 mb-3" style="margin-top:-12px;">
+            @if (Model.PostId > 0)
+            {
+                <a asp-action="Index" class="btn btn-outline-primary">取消</a>
+                <button type="submit" name="action" value="draft" class="btn btn-outline-primary">儲存草稿</button>
+                <button type="submit" name="action" value="submit" class="btn btn-primary">送出審核</button>
+            }
+            else
+            {
+                <a asp-action="Index" class="btn btn-outline-primary">取消</a>
+                <button type="submit" class="btn btn-primary">儲存文章</button>
+            }
+        </div>
+
         <div class="admin-table-card p-3 p-lg-4 mb-3">
-            <h2 class="h6 form-section-title mb-3">🖼️ 封面大圖</h2>
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-image"></i> 封面大圖</h2>
 
             <label for="coverFileInput" id="coverDropzone" class="cover-dropzone @(string.IsNullOrWhiteSpace(Model.MediaUrl) ? "" : "has-image")"
                    style="@(string.IsNullOrWhiteSpace(Model.MediaUrl) ? "" : $"background-image:url('{Model.MediaUrl}')")">
-                <span class="cover-dropzone-plus">＋</span>
+                <i class="bi bi-cloud-arrow-up cover-dropzone-plus"></i>
                 <span class="cover-dropzone-text">點擊上傳封面大圖</span>
             </label>
             <input type="file" id="coverFileInput" name="CoverFile" accept="image/*" class="visually-hidden" onchange="lazyTravelPreviewCover(this)" />
@@ -114,48 +166,42 @@
             <input type="hidden" asp-for="MediaType" value="@VlogMediaType.Photo" />
         </div>
 
-        <div class="admin-table-card p-3 p-lg-4 mb-3">
-            <h2 class="h6 form-section-title mb-3">🚦 發布設定</h2>
+        <div class="admin-table-card p-3 p-lg-4">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-broadcast"></i> 發布設定</h2>
 
             <div class="mb-3">
-                <label asp-for="Status" class="form-label"></label>
-                <select asp-for="Status" class="form-select">
-                    <option value="@VlogPostStatus.Draft" selected="@(Model.Status == VlogPostStatus.Draft)">草稿</option>
-                    <option value="@VlogPostStatus.Published" selected="@(Model.Status == VlogPostStatus.Published)">已發布</option>
-                </select>
+                <label class="form-label">文章狀態</label>
+                <div class="form-control-plaintext">
+                    <span class="status-pill @Model.Status.ToPillClass()">@Model.Status.ToLabel()</span>
+                </div>
+                <div class="form-text">
+                    @(Model.PostId > 0
+                        ? "用右上角「儲存草稿」／「送出審核」切換，這裡不能直接改。"
+                        : "新文章一律先存成草稿，之後在編輯頁再送出審核。")
+                </div>
             </div>
 
-            <div class="mb-0">
-                <label asp-for="MemberID" class="form-label"></label>
+            <div class="@(Model.PostId > 0 ? "mb-3" : "mb-0")">
+                <label asp-for="MemberId" class="form-label"></label>
                 <div class="form-control-plaintext fw-medium">
-                    @MemberLookup.GetName(Model.MemberID)@(MemberLookup.IsOfficial(Model.MemberID) ? "（官方帳號）" : "")
+                    @(Model.Member?.Name ?? $"會員 #{Model.MemberId}")@(MemberLookup.IsOfficial(Model.Member) ? "（官方帳號）" : "")
                 </div>
-                <input type="hidden" asp-for="MemberID" />
+                <input type="hidden" asp-for="MemberId" />
                 <div class="form-text">Members 後台與 Cookie 認證尚未接上，先固定顯示此帳號。</div>
             </div>
-        </div>
 
-        <div class="admin-table-card p-3 p-lg-4">
-            <h2 class="h6 form-section-title mb-3">🌍 行程資訊</h2>
+            @if (Model.PostId > 0)
+            {
+                <div class="mb-3">
+                    <label class="form-label">建立時間</label>
+                    <div class="form-control-plaintext">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</div>
+                </div>
 
-            <div class="mb-3">
-                <label asp-for="Destination" class="form-label"></label>
-                <input asp-for="Destination" class="form-control" placeholder="例如：花蓮" />
-                <span asp-validation-for="Destination" class="text-danger small"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="TravelDays" class="form-label"></label>
-                <input asp-for="TravelDays" class="form-control" type="number" min="1" />
-                <span asp-validation-for="TravelDays" class="text-danger small"></span>
-            </div>
-
-            <div class="mb-0">
-                <label class="form-label">出遊日期</label>
-                <input type="date" name="TravelDate" class="form-control"
-                       value="@(Model.TravelDate?.ToString("yyyy-MM-dd"))" />
-                <div class="form-text">選填，讓讀者知道這趟行程大概是什麼時候去的。</div>
-            </div>
+                <div class="mb-0">
+                    <label class="form-label">最後更新</label>
+                    <div class="form-control-plaintext">@(Model.UpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</div>
+                </div>
+            }
         </div>
     </div>
 </div>

@@ -31,6 +31,10 @@ namespace LazyTravel.Services
 
         Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, string reviewerName);
 
+        // 建立一筆新的檢舉（例如小編在 Vlog 行程文章後台對會員文章提出檢舉）。純新增，不動既有判定/查詢邏輯。
+        Task<Report> SubmitAsync(ReportTargetType targetType, int targetId, string targetTitle,
+            string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason);
+
         // 這個模組相關的操作紀錄(給檢舉審核台頁面用)
         Task<List<AdminLog>> GetRecentReportLogsAsync(int take);
 

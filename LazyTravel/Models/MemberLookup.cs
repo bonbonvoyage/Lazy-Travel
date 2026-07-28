@@ -1,28 +1,26 @@
 namespace LazyTravel.Models;
 
-// Members 資料表／會員後台目前還沒建立，這裡先放一份暫時對照表，
-// 讓 Vlog 後台可以顯示「發文會員」姓名、新增/編輯文章時選擇作者。
-// 等 Members 模組接上 EF Core 之後，把這裡換成查詢真正的 Members 資料表即可，
-// 方法名稱（GetName / IsOfficial）盡量保留一致，改動範圍會比較小。
+// Members 資料表已經有真的資料了，這裡不再是查會員資料用的假名單。
+// Members 清單只留給 VlogPostDbSeeder 在全新資料庫（Members 是空的）時塞示範會員用；
+// 真的畫面顯示／權限判斷請直接讀 post.Member（EF 導覽屬性）。
 //
-// IsOfficial：官方帳號本質上還是一般會員資料列，只是名稱/顯示上要特別標示（類似認證徽章），
-// 跟 Members.Role（一般會員/管理員/超級管理員，權限用）是兩件事，先分開處理。
+// IsOfficial 用 Email 比對，不是用 MemberID——不同資料庫的 IDENTITY 編號可能不一樣（例如全新建置
+// vs 現有開發資料庫），Email 是唯一鍵，比較穩定，換資料庫也不會判斷錯。
 public static class MemberLookup
 {
-    public static readonly List<(int MemberID, string Name, bool IsOfficial)> Members = new()
+    // 「LazyTravel 官方」這筆會員資料的 Email，不是真人登入用的帳密（後台登入之後會走 Employees
+    // 表，跟這裡無關），純粹用來識別哪一筆 Member 是官方身份。
+    public const string OfficialAccountEmail = "official@lazytravel.local";
+
+    // (Email, Name, IsOfficial) — 只給 VlogPostDbSeeder 全新資料庫塞示範會員用
+    public static readonly List<(string Email, string Name, bool IsOfficial)> Members = new()
     {
-        (1, "阿慢", false),
-        (2, "小海", false),
-        (3, "阿凱", false),
-        (4, "LazyTravel 官方", true),
+        ("demo-member-1@lazytravel.local", "阿慢", false),
+        ("demo-member-2@lazytravel.local", "小海", false),
+        ("demo-member-3@lazytravel.local", "阿凱", false),
+        (OfficialAccountEmail, "LazyTravel 官方", true),
     };
 
-    public static string GetName(int memberId)
-    {
-        var match = Members.FirstOrDefault(m => m.MemberID == memberId);
-        return match.Name ?? $"會員 #{memberId}";
-    }
-
-    public static bool IsOfficial(int memberId) =>
-        Members.Any(m => m.MemberID == memberId && m.IsOfficial);
+    public static bool IsOfficial(LazyTravel.Models.EfModels.Member? member) =>
+        member?.Email == OfficialAccountEmail;
 }
