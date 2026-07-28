@@ -27,38 +27,7 @@
 
 <!-- 自訂現代化 UI 樣式 -->
 <style>
-    /* 現代化膠囊頁籤設計 */
-    .modern-tabs-wrapper {
-        display: inline-flex;
-        background-color: #e2e8f0; /* 柔和灰底 */
-        padding: 0.35rem;
-        border-radius: 1rem;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
-        margin-bottom: 1.5rem;
-    }
-
-    .modern-tab {
-        color: #64748b;
-        font-weight: 600;
-        padding: 0.6rem 1.5rem;
-        border-radius: 0.75rem;
-        text-decoration: none;
-        transition: all 0.25s ease-in-out;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-        .modern-tab:hover {
-            color: #334155;
-            background-color: #cbd5e1;
-        }
-
-        .modern-tab.active {
-            background-color: #ffffff;
-            color: #0284c7; /* 品牌主色調 */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-        }
+    /* .modern-tabs-wrapper / .modern-tab 統一由 admin.css 提供資料夾頁籤樣式。 */
 
     /* 頂級卡片質感 */
     .premium-card {
@@ -98,7 +67,7 @@
 @if (activeTab == "members")
 {
     <!-- 篩選面板 -->
-    <div class="premium-card mb-4">
+    <div class="premium-card folder-tab-panel mb-4">
         <div class="card-body p-4">
             <form asp-action="Index" method="get" class="row g-3 align-items-end">
                 <input type="hidden" name="activeTab" value="members" />
@@ -285,7 +254,7 @@
 @if (activeTab == "logs")
 {
     <!-- 專用獨立搜尋面板 -->
-    <div class="premium-card mb-4">
+    <div class="premium-card folder-tab-panel mb-4">
         <div class="card-body p-4">
             <form asp-action="Index" method="get" class="row g-3 align-items-end">
                 <input type="hidden" name="activeTab" value="logs" />

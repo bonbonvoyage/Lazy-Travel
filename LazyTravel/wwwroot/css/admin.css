@@ -155,6 +155,70 @@ body.admin-body {
   color: #fff;
 }
 
+/* ---------- 4-2. 內部管理資料夾頁籤 ----------
+   員工、角色權限、會員管理皆沿用揪團管理的資料夾式頁籤。
+   僅處理外觀；各頁原有 subTab / activeTab 路由與條件渲染維持不變。 */
+.modern-tabs-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .25rem;
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--border-soft);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.modern-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.75rem;
+  margin-bottom: -1px;
+  padding: .6rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  color: var(--text-secondary);
+  background: transparent;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.modern-tab:hover {
+  color: var(--sea-700);
+  background: var(--sand-100);
+  border-color: var(--border-soft) var(--border-soft) transparent;
+}
+
+.modern-tab.active {
+  z-index: 1;
+  color: var(--sea-700);
+  background: var(--surface);
+  border-color: var(--border-soft) var(--border-soft) var(--surface);
+  box-shadow: none;
+}
+
+/* 只包頁籤下的第一個工作面板；避免把表格、Modal 或分頁邏輯一起重構。 */
+.folder-tab-panel {
+  border: 1px solid var(--border-soft);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 4px 20px rgba(31, 61, 78, .06);
+}
+
+.premium-card.folder-tab-panel {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+@media (max-width: 575.98px) {
+  .modern-tabs-wrapper { gap: 0; }
+  .modern-tab { min-height: 2.5rem; padding: .55rem .75rem; font-size: .85rem; }
+}
+
 /* ---------- 4-1. Vlog 文章篩選命令列 ----------
    專用 class，避免改動揪團與檢舉的篩選元件。所有篩選仍是原本的 <a>
    路由，這裡只統一來源／狀態兩組的視覺層級。 */
