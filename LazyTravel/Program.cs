@@ -7,6 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
+// 讓 Service 層能拿到目前這次請求的 HttpContext,藉此取得真實來源 IP
+builder.Services.AddHttpContextAccessor();
+
 // EF Core Power Tools 反向工程的完整版 Context(涵蓋全部資料表)。
 // 舊版的 LazyTravelContext(只涵蓋 4 張表,範圍是這個的子集)已淘汰移除。
 builder.Services.AddDbContext<LazyTravel.Models.EfModels.LazyTravelDBContext>(options =>
@@ -28,7 +31,10 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 // 檢舉中心商業邏輯(藍培碩負責),Controller 只呼叫這層
 builder.Services.AddScoped<LazyTravel.Services.IReportService, LazyTravel.Services.ReportService>();
 
-// VlogPosts 圖床(Cloudflare R2, S3 相容 API)：新增圖片才上傳到這裡，舊圖維持存在本機。
+// 檢舉「類型/類別/狀態」中文對照,查資料庫的 ReportTargetTypes/ReportReasonCategories/ReportStatuses
+builder.Services.AddScoped<LazyTravel.Services.IReportLookupService, LazyTravel.Services.ReportLookupService>();
+
+// 圖床(Cloudflare R2, S3 相容 API):Vlog 新增圖片與檢舉證據都走這裡,舊圖維持存在本機。
 builder.Services.AddSingleton<IAmazonS3>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -41,6 +47,7 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
     return new AmazonS3Client(config["CloudflareR2:AccessKey"], config["CloudflareR2:SecretKey"], r2Config);
 });
 builder.Services.AddScoped<LazyTravel.Services.VlogPostImageUploadService>();
+builder.Services.AddScoped<LazyTravel.Services.IImageStorageService, LazyTravel.Services.R2ImageStorageService>();
 
 // ========================================================
 // 🌟 1. 註冊後台專屬的 Cookie 身分驗證機制 (AdminAuth)

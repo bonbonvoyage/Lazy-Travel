@@ -80,10 +80,10 @@ public partial class Member
     public DateTime? LockoutEndDate { get; set; }
 
     [InverseProperty("Admin")]
-    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
+    public virtual ICollection<AdminPermission> AdminPermissions { get; set; } = new List<AdminPermission>();
 
     [InverseProperty("Admin")]
-    public virtual ICollection<AdminPermission> AdminPermissions { get; set; } = new List<AdminPermission>();
+    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
 
     [InverseProperty("Blocked")]
     public virtual ICollection<Block> BlockBlockeds { get; set; } = new List<Block>();
