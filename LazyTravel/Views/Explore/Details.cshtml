@@ -47,55 +47,46 @@
         flex-wrap: wrap;
     }
 
-    /* 每日行程時間軸：時間文字疊在連接線中間，內容區塊在右邊 */
-    .timeline-row { position: relative; padding-left: 4.5rem; padding-bottom: 1.75rem; }
-    .timeline-row:last-child { padding-bottom: 0; }
-    .timeline-dot {
+    /* 每日行程列表：日期用大圓圈編號，中間用連接線串起每一天，底下是單純堆疊的景點卡片（不再用每站小圓點）。 */
+    .day-group { position: relative; padding-left: 3.25rem; padding-bottom: 1.75rem; }
+    .day-group:last-child { padding-bottom: 0; }
+    .day-badge {
         position: absolute;
         left: 0;
         top: 0;
-        width: 2.25rem;
-        height: 2.25rem;
-        border-radius: 50%;
-        background-color: var(--coral-600);
-        color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background-color: var(--sea-600);
+        color: #fff;
         font-family: var(--font-display);
         font-weight: 600;
+        font-size: 1.1rem;
         z-index: 2;
     }
-    .timeline-row:not(:last-child)::before {
+    .day-group.has-next-day::before {
         content: '';
         position: absolute;
-        left: 1.125rem;
-        top: 2.25rem;
+        left: 1.19rem;
+        top: 2.5rem;
         bottom: 0;
         width: 2px;
         background-color: var(--border-soft);
     }
-    .timeline-time {
-        position: absolute;
-        left: -.15rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4.5rem;
-        background-color: var(--surface);
-        text-align: center;
-        font-size: .8rem;
-        color: var(--ink);
-        line-height: 1.4;
-        padding: .2rem 0;
-        z-index: 1;
-    }
-    .timeline-card {
+    .itinerary-stop-card {
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-md);
         background-color: var(--surface);
         padding: 1rem;
+        margin-bottom: 1rem;
     }
-    .timeline-image { width: 100%; max-height: 220px; object-fit: cover; border-radius: var(--radius-md); margin: .5rem 0; }
+    .itinerary-stop-card:last-child { margin-bottom: 0; }
+    .itinerary-stop-title { font-family: var(--font-display); color: var(--sea-700); font-size: 1.05rem; font-weight: 600; }
+    .itinerary-stop-time { color: var(--text-muted); font-size: .85rem; }
+    .itinerary-stop-image { width: 100%; max-height: 260px; object-fit: cover; border-radius: var(--radius-sm); margin: .75rem 0; }
 
     /* 底部社交互動列 */
     .social-bar {
@@ -119,8 +110,12 @@
         font-size: .92rem;
         background: none;
         border: none;
-        padding: 0;
+        padding: .25rem .5rem;
+        border-radius: var(--radius-pill);
+        transition: background-color .15s ease, color .15s ease;
     }
+    .social-bar .social-stat:hover { background-color: var(--sea-50); }
+    .social-bar .social-stat.active { color: var(--coral-600); font-weight: 600; }
 </style>
 
 <div class="container py-4">
@@ -137,8 +132,8 @@
                 }
                 <span>@Model.TravelDays 天</span>
                 <span>·</span>
-                <span>@MemberLookup.GetName(Model.MemberID)</span>
-                @if (MemberLookup.IsOfficial(Model.MemberID))
+                <span>@(Model.Member?.Name ?? $"會員 #{Model.MemberId}")</span>
+                @if (MemberLookup.IsOfficial(Model.Member))
                 {
                     <span class="explore-official-badge">✓ 官方合作</span>
                 }
@@ -156,38 +151,37 @@
             @if (nodes.Any())
             {
                 <h2 class="h5 mt-4 mb-3">🗓️ 每日行程</h2>
-                foreach (var dayGroup in nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key))
+                var dayGroupsList = nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key).ToList();
+                for (var d = 0; d < dayGroupsList.Count; d++)
                 {
-                    <div class="mb-4">
+                    var dayGroup = dayGroupsList[d];
+                    var isLastDay = d == dayGroupsList.Count - 1;
+                    <div class="day-group @(isLastDay ? "" : "has-next-day")">
+                        <div class="day-badge">@dayGroup.Key</div>
                         <div class="fw-medium mb-3">第 @dayGroup.Key 天</div>
-                        @{ var dayNodes = dayGroup.ToList(); }
-                        @for (var i = 0; i < dayNodes.Count; i++)
+                        @foreach (var node in dayGroup)
                         {
-                            var node = dayNodes[i];
-                            <div class="timeline-row">
-                                <div class="timeline-dot">@(i + 1)</div>
-                                <div class="timeline-time">
+                            <div class="itinerary-stop-card">
+                                <div class="itinerary-stop-title">@node.LocationName</div>
+                                <div class="itinerary-stop-time">
                                     @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
                                     @if (!string.IsNullOrWhiteSpace(node.StayTime))
                                     {
-                                        <div>（停留 @node.StayTime）</div>
+                                        <text>（停留 @node.StayTime）</text>
                                     }
                                 </div>
-                                <div class="timeline-card">
-                                    <div class="fw-medium mb-1">@node.LocationName</div>
-                                    @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
-                                    {
-                                        <img src="@node.MediaUrl" alt="" class="timeline-image" />
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(node.Description))
-                                    {
-                                        <p class="text-secondary mb-1">@node.Description</p>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(node.Remarks))
-                                    {
-                                        <p class="text-muted small mb-0">備註：@node.Remarks</p>
-                                    }
-                                </div>
+                                @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
+                                {
+                                    <img src="@node.MediaUrl" alt="" class="itinerary-stop-image" />
+                                }
+                                @if (!string.IsNullOrWhiteSpace(node.Description))
+                                {
+                                    <p class="text-secondary mb-1">@node.Description</p>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(node.Remarks))
+                                {
+                                    <p class="text-muted small mb-0">備註：@node.Remarks</p>
+                                }
                             </div>
                         }
                     </div>
@@ -206,9 +200,17 @@
         </div>
     </div>
 
-    @* ---------- 底部互動列：只留讚/收藏(真實資料)，不放分享跟留言 ---------- *@
+    @* ---------- 底部互動列：只留讚/收藏(真實資料，點下去會真的加減)，不放分享跟留言 ---------- *@
     <div class="social-bar">
-        <span class="social-stat">❤️ @likeCount</span>
-        <span class="social-stat">🔖 @favoriteCount 收藏</span>
+        <form asp-controller="Explore" asp-action="ToggleLike" asp-route-id="@Model.PostId" method="post" class="d-inline">
+            <button type="submit" class="social-stat @(ViewBag.IsLiked ? "active" : "")">
+                @(ViewBag.IsLiked ? "❤️" : "🤍") @likeCount
+            </button>
+        </form>
+        <form asp-controller="Explore" asp-action="ToggleFavorite" asp-route-id="@Model.PostId" method="post" class="d-inline">
+            <button type="submit" class="social-stat @(ViewBag.IsFavorited ? "active" : "")">
+                🔖 @favoriteCount 收藏
+            </button>
+        </form>
     </div>
 </div>

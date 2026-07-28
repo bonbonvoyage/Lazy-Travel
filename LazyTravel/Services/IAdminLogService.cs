@@ -2,8 +2,7 @@ using LazyTravel.Models;
 
 namespace LazyTravel.Services
 {
-    // 這個介面由「檢舉審核台」呼叫,實作歸屬 14 洪欣茹(AdminLogs 共用 Service)
-    // 目前先放暫時實作(AdminLogService)讓畫面可運作,共用 Service 完成後直接抽換即可
+    // 這個介面由「檢舉審核台」「Vlog 行程文章」等後台功能共用呼叫,寫進 dbo.AdminLogs 資料表
     public interface IAdminLogService
     {
         Task WriteAsync(string operatorName, string action, string detail, string? targetTable = null, int? targetId = null);

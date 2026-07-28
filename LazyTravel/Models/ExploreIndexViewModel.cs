@@ -1,3 +1,5 @@
+using LazyTravel.Models.EfModels;
+
 namespace LazyTravel.Models;
 
 // 前台「找行程」頁面用的 ViewModel，聚合搜尋條件、精選文章、排行榜。
