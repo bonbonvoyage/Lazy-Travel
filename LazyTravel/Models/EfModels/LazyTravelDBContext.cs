@@ -71,6 +71,14 @@ public partial class LazyTravelDBContext : DbContext
 
     public virtual DbSet<PostInteraction> PostInteractions { get; set; }
 
+    public virtual DbSet<Report> Reports { get; set; }
+
+    public virtual DbSet<ReportTargetTypeLookup> ReportTargetTypeLookups { get; set; }
+
+    public virtual DbSet<ReportReasonCategoryLookup> ReportReasonCategoryLookups { get; set; }
+
+    public virtual DbSet<ReportStatusLookup> ReportStatusLookups { get; set; }
+
     public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
 
     public virtual DbSet<TravelGroup> TravelGroups { get; set; }
@@ -391,6 +399,41 @@ public partial class LazyTravelDBContext : DbContext
             entity.HasOne(d => d.Post).WithMany(p => p.PostInteractions)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__PostInter__PostI__55009F39");
+        });
+
+        modelBuilder.Entity<Report>(entity =>
+        {
+            entity.HasKey(e => e.ReportId);
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+
+            // Reports 對 Members 有兩條各自獨立的外鍵(誰檢舉的、被檢舉的是誰),
+            // 兩條都指向同一張表,EF Core 沒辦法自己猜,必須各自明講要用哪個外鍵、不要牽連對方
+            entity.HasOne(d => d.Reporter).WithMany(p => p.ReportReporters)
+                .HasForeignKey(d => d.ReporterId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.ReportedMember).WithMany(p => p.ReportReportedMembers)
+                .HasForeignKey(d => d.ReportedMemberId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<ReportTargetTypeLookup>(entity =>
+        {
+            entity.HasKey(e => e.TypeId);
+            entity.ToTable("ReportTargetTypes");
+        });
+
+        modelBuilder.Entity<ReportReasonCategoryLookup>(entity =>
+        {
+            entity.HasKey(e => e.CategoryId);
+            entity.ToTable("ReportReasonCategories");
+        });
+
+        modelBuilder.Entity<ReportStatusLookup>(entity =>
+        {
+            entity.HasKey(e => e.StatusId);
+            entity.ToTable("ReportStatuses");
         });
 
         modelBuilder.Entity<Role>(entity =>

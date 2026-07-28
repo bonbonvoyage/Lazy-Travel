@@ -112,11 +112,13 @@ namespace LazyTravel.Models
         [Display(Name = "惡意檢舉標記")]
         public bool IsMalicious { get; set; }
 
+        // 型別指到 EfModels.Member(不是這個檔案同一個命名空間下手寫的 Member),因為這兩個屬性
+        // 是 ReportService 從 LazyTravelDBContext 查出來的 EfModels.Report 轉過來的,資料來源本來就是那邊
         [ForeignKey("ReporterId")]
-        public virtual Member? Reporter { get; set; }
+        public virtual EfModels.Member? Reporter { get; set; }
 
         [ForeignKey("ReportedMemberId")]
-        public virtual Member? ReportedMember { get; set; }
+        public virtual EfModels.Member? ReportedMember { get; set; }
 
         // 畫面/篩選邏輯原本是直接用帳號字串比對,改接資料庫後這兩個計算屬性從關聯的 Member 帶出對應帳號(Email),
         // 讓 ReportService.cs、Views 裡原本寫好的 .ReporterAccount/.ReportedMemberAccount 幾乎不用改

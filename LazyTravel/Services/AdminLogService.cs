@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore;
 namespace LazyTravel.Services
 {
     // 已接上 10 黃浚翔整合進來的真實 AdminLogs 資料表(2026-07-22),不再是只存在記憶體的暫時實作。
-    // 前台還沒有登入系統,目前沒有真的「當前登入管理員」可以拿,AdminID 先透過姓名反查 Employees 表對應的員工,
-    // 等 Cookie 登入做好後,這裡要改成從當前登入者的 Claims 直接抓真正的 EmployeeID。
+    // 前台還沒有登入系統,目前沒有真的「當前登入管理員」可以拿,AdminID 先透過姓名反查 Members 表對應的會員,
+    // 等 Cookie 登入做好後,這裡要改成從當前登入者的 Claims 直接抓真正的 MemberID。
+    // AdminLogs.AdminID 對應 Members(不是 Employees)是跟組長對過的團隊共識,見 dev 分支架構。
     // 這個 Service 同時被檢舉審核台(ReportService)跟 Vlog 行程文章(VlogPostsController)共用。
     public class AdminLogService : IAdminLogService
     {
@@ -22,16 +23,16 @@ namespace LazyTravel.Services
         {
             var ipAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
-            // operatorName 理想上是真的員工姓名(例如 ReportService 隨機挑的員工),用姓名反查 Employees 表拿到真正的 EmployeeID;
-            // 查不到時(例如尚未接 Cookie 登入的呼叫端傳的是 "管理員" 這種預設字串)退回第一位員工,避免寫入失敗
-            var adminId = await _context.Employees
-                .Where(e => e.Name == operatorName)
-                .Select(e => e.EmployeeId)
+            // operatorName 理想上是真的會員/員工姓名,用姓名反查 Members 表拿到真正的 MemberID;
+            // 查不到時(例如尚未接 Cookie 登入的呼叫端傳的是 "管理員" 這種預設字串)退回第一位會員,避免寫入失敗
+            var adminId = await _context.Members
+                .Where(m => m.Name == operatorName)
+                .Select(m => m.MemberId)
                 .FirstOrDefaultAsync();
 
             if (adminId == 0)
             {
-                adminId = await _context.Employees.OrderBy(e => e.EmployeeId).Select(e => e.EmployeeId).FirstOrDefaultAsync();
+                adminId = await _context.Members.OrderBy(m => m.MemberId).Select(m => m.MemberId).FirstOrDefaultAsync();
             }
 
             _context.AdminLogs.Add(new AdminLog

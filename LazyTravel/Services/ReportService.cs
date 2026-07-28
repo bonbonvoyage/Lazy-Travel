@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using EfReport = LazyTravel.Models.EfModels.Report;
 using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Services
@@ -13,14 +14,14 @@ namespace LazyTravel.Services
 
         // 尚未接 Cookie 認證,還沒有真的「當前登入管理員」可以拿,判定人先從 Employees 表隨機挑一位真實員工代稱
 
-        private readonly LazyTravelContext _context;
+        private readonly LazyTravel.Models.EfModels.LazyTravelDBContext _context;
         private readonly INotificationService _notificationService;
         private readonly IAdminLogService _adminLogService;
         private readonly IMemberModerationService _memberModerationService;
         private readonly IReportLookupService _lookupService;
 
         public ReportService(
-            LazyTravelContext context,
+            LazyTravel.Models.EfModels.LazyTravelDBContext context,
             INotificationService notificationService,
             IAdminLogService adminLogService,
             IMemberModerationService memberModerationService,
@@ -33,6 +34,30 @@ namespace LazyTravel.Services
             _lookupService = lookupService;
         }
 
+        // Reports 的資料庫存取層(EfModels.Report,欄位跟資料表一模一樣,byte/raw 型別)
+        // 跟畫面/邏輯層(這個檔案其他地方用的 Models.Report,enum 型別、有計算屬性)故意分成兩個類別。
+        // 這裡負責兩者之間的轉換,好處是資料庫層永遠跟著官方 schema 走、不會漂移,
+        // 但畫面/Controller/Service 的程式碼可以繼續享有 enum 的型別安全,不用整批改成 byte。
+        private static Report ToDomain(EfReport r) => new()
+        {
+            Id = r.ReportId,
+            ReporterId = r.ReporterId,
+            ReportedMemberId = r.ReportedMemberId,
+            TargetType = (ReportTargetType)r.ReportType,
+            TargetId = r.TargetId,
+            TargetTitle = r.TargetTitle,
+            ReasonCategory = (ReportReasonCategory)r.ReasonCategory,
+            Reason = r.Reason,
+            Description = r.Description,
+            EvidenceUrl = r.EvidenceUrl,
+            Status = (ReportStatus)r.ReportStatus,
+            CreatedAt = r.CreatedAt,
+            AdminNotes = r.AdminNotes,
+            IsMalicious = r.IsMalicious,
+            Reporter = r.Reporter,
+            ReportedMember = r.ReportedMember
+        };
+
         // 抓全部案件(含 Reporter/ReportedMember 關聯資料),讓 .ReporterAccount/.ReportedMemberAccount
         // 這兩個計算屬性有東西可以帶。資料量目前不大,每次直接整批撈進記憶體再用 LINQ 篩選/排序,
         // 跟原本操作記憶體假資料 List 的寫法一致,之後資料量真的變大了再改成資料庫端分頁查詢
@@ -42,19 +67,26 @@ namespace LazyTravel.Services
                 .Include(r => r.Reporter)
                 .Include(r => r.ReportedMember)
                 .AsNoTracking()
+                .ToList()
+                .Select(ToDomain)
                 .ToList();
         }
 
         public string GetRandomReviewerAlias()
         {
-            var employeeNames = _context.Employees.Select(e => e.Name).ToList();
-            if (employeeNames.Count == 0)
+            // AdminLogs.AdminID 對應 Members(不是 Employees),所以審核人員也要從 Members 裡挑,
+            // 而且限定「有 AdminPermission 紀錄」的會員,才是真的有管理權限的人,不是隨便挑一般會員
+            var reviewerNames = _context.Members
+                .Where(m => m.AdminPermissions.Any())
+                .Select(m => m.Name)
+                .ToList();
+            if (reviewerNames.Count == 0)
             {
                 return "審核員";
             }
             // Random.Shared 是執行緒安全的(.NET 6+);ASP.NET Core 每個請求可能跑在不同執行緒,
-            // 之前用手動建立的 static Random 共用會有併發問題,內部狀態壞掉後 Next() 會一直回傳同一個值
-            return employeeNames[Random.Shared.Next(employeeNames.Count)];
+            // 用手動建立的 static Random 共用會有併發問題,內部狀態壞掉後 Next() 會一直回傳同一個值
+            return reviewerNames[Random.Shared.Next(reviewerNames.Count)];
         }
 
         public ReportQueryResult Query(ReportQueryOptions options)
@@ -136,11 +168,12 @@ namespace LazyTravel.Services
 
         public Report? GetById(int id)
         {
-            return _context.Reports
+            var efReport = _context.Reports
                 .Include(r => r.Reporter)
                 .Include(r => r.ReportedMember)
                 .AsNoTracking()
-                .FirstOrDefault(r => r.Id == id);
+                .FirstOrDefault(r => r.ReportId == id);
+            return efReport == null ? null : ToDomain(efReport);
         }
 
         public List<Report> GetRelatedReports(Report report)
@@ -218,28 +251,30 @@ namespace LazyTravel.Services
 
         public async Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, string reviewerName)
         {
-            var report = await _context.Reports
+            var efReport = await _context.Reports
                 .Include(r => r.Reporter)
                 .Include(r => r.ReportedMember)
-                .FirstOrDefaultAsync(r => r.Id == id);
+                .FirstOrDefaultAsync(r => r.ReportId == id);
 
-            if (report == null)
+            if (efReport == null)
             {
                 return new JudgeOutcome { Found = false };
             }
 
-            if (report.Status != ReportStatus.Pending)
+            if ((ReportStatus)efReport.ReportStatus != ReportStatus.Pending)
             {
                 // 已經被處理過,避免重複判定(例如兩個管理員同時點開同一筆)
-                return new JudgeOutcome { Found = true, Message = $"檢舉單 #{report.Id} 已經被判定過,無法重複處理" };
+                return new JudgeOutcome { Found = true, Message = $"檢舉單 #{efReport.ReportId} 已經被判定過,無法重複處理" };
             }
 
-            report.Status = decision;
-            report.AdminNotes = note;
+            efReport.ReportStatus = (byte)decision;
+            efReport.AdminNotes = note;
             // 惡意檢舉標記只有在「不成立」時才有意義,判定成立時直接忽略這個勾選
-            report.IsMalicious = decision == ReportStatus.Dismissed && isMalicious;
+            efReport.IsMalicious = decision == ReportStatus.Dismissed && isMalicious;
 
             await _context.SaveChangesAsync();
+
+            var report = ToDomain(efReport);
 
             // 存檔後重新整批撈一次,確保下面算累犯次數時抓到的是剛剛存進去的最新狀態
             var allReports = LoadReports();

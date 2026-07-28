@@ -1,11 +1,12 @@
 using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Services
 {
     public class ReportLookupService : IReportLookupService
     {
-        private readonly LazyTravelContext _context;
+        private readonly LazyTravelDBContext _context;
 
         // 三張對照表資料量小、幾乎不會變動,整個應用程式生命週期只查一次,用靜態欄位快取,
         // 避免每次顯示一筆檢舉單就打一次資料庫。加鎖是為了避免第一次同時有多個請求進來重複查詢。
@@ -14,7 +15,7 @@ namespace LazyTravel.Services
         private static Dictionary<byte, string>? _statusCache;
         private static readonly object _lock = new();
 
-        public ReportLookupService(LazyTravelContext context)
+        public ReportLookupService(LazyTravelDBContext context)
         {
             _context = context;
         }

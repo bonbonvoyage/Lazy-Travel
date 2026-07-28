@@ -1,4 +1,5 @@
 using LazyTravel.Models;
+using LazyTravel.Models.EfModels;
 using LazyTravel.Services;
 using LazyTravel.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +12,10 @@ namespace LazyTravel.Controllers
     // 從內容頁直接帶 TargetId 過來。
     public class ReportController : Controller
     {
-        private readonly LazyTravelContext _context;
+        private readonly LazyTravelDBContext _context;
         private readonly IImageStorageService _imageStorage;
 
-        public ReportController(LazyTravelContext context, IImageStorageService imageStorage)
+        public ReportController(LazyTravelDBContext context, IImageStorageService imageStorage)
         {
             _context = context;
             _imageStorage = imageStorage;
@@ -54,19 +55,20 @@ namespace LazyTravel.Controllers
 
             var evidenceUrl = await _imageStorage.UploadAsync(form.Evidence!, "檢舉");
 
-            var report = new Report
+            // EfModels.Report 欄位是 byte/raw 型別(對齊資料表),enum 要轉型別再存
+            var report = new LazyTravel.Models.EfModels.Report
             {
                 ReporterId = reporter!.MemberId,
                 ReportedMemberId = reportedMember!.MemberId,
-                TargetType = form.TargetType,
+                ReportType = (byte)form.TargetType,
                 // 檢舉「會員」類型時,被檢舉內容就是這個會員本人,對象編號直接沿用會員編號
                 TargetId = form.TargetType == ReportTargetType.Member ? reportedMember.MemberId : form.TargetId,
                 TargetTitle = form.TargetType == ReportTargetType.Member ? reportedMember.Name : form.TargetTitle,
-                ReasonCategory = form.ReasonCategory,
+                ReasonCategory = (byte)form.ReasonCategory,
                 Reason = form.Reason,
                 Description = form.Description,
                 EvidenceUrl = evidenceUrl,
-                Status = ReportStatus.Pending,
+                ReportStatus = (byte)ReportStatus.Pending,
                 CreatedAt = DateTime.Now
             };
 

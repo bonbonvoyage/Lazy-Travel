@@ -84,6 +84,9 @@ public partial class Member
     [InverseProperty("Admin")]
     public virtual ICollection<AdminPermission> AdminPermissions { get; set; } = new List<AdminPermission>();
 
+    [InverseProperty("Admin")]
+    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
+
     [InverseProperty("Blocked")]
     public virtual ICollection<Block> BlockBlockeds { get; set; } = new List<Block>();
 
@@ -152,6 +155,12 @@ public partial class Member
 
     [InverseProperty("Member")]
     public virtual ICollection<PostInteraction> PostInteractions { get; set; } = new List<PostInteraction>();
+
+    [InverseProperty("ReportedMember")]
+    public virtual ICollection<Report> ReportReportedMembers { get; set; } = new List<Report>();
+
+    [InverseProperty("Reporter")]
+    public virtual ICollection<Report> ReportReporters { get; set; } = new List<Report>();
 
     [InverseProperty("OwnerMember")]
     public virtual ICollection<TravelGroup> TravelGroups { get; set; } = new List<TravelGroup>();
