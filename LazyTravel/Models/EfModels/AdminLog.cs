@@ -41,5 +41,5 @@ public partial class AdminLog
 
     [ForeignKey("AdminId")]
     [InverseProperty("AdminLogs")]
-    public virtual Member Admin { get; set; }
+    public virtual Employee Admin { get; set; }
 }

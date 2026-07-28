@@ -82,9 +82,6 @@ public partial class Member
     public DateTime? LockoutEndDate { get; set; }
 
     [InverseProperty("Admin")]
-    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
-
-    [InverseProperty("Admin")]
     public virtual ICollection<AdminPermission> AdminPermissions { get; set; } = new List<AdminPermission>();
 
     [InverseProperty("Blocked")]
@@ -155,12 +152,6 @@ public partial class Member
 
     [InverseProperty("Member")]
     public virtual ICollection<PostInteraction> PostInteractions { get; set; } = new List<PostInteraction>();
-
-    [InverseProperty("ReportedMember")]
-    public virtual ICollection<Report> ReportReportedMembers { get; set; } = new List<Report>();
-
-    [InverseProperty("Reporter")]
-    public virtual ICollection<Report> ReportReporters { get; set; } = new List<Report>();
 
     [InverseProperty("OwnerMember")]
     public virtual ICollection<TravelGroup> TravelGroups { get; set; } = new List<TravelGroup>();

@@ -52,7 +52,7 @@ namespace LazyTravel.Controllers
                 return View(form);
             }
 
-            var evidenceUrl = await _imageStorage.UploadAsync(form.Evidence!, "reports");
+            var evidenceUrl = await _imageStorage.UploadAsync(form.Evidence!, "檢舉");
 
             var report = new Report
             {

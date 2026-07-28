@@ -47,9 +47,6 @@ public partial class TravelGroup
     [InverseProperty("Group")]
     public virtual ICollection<GroupMember> GroupMembers { get; set; } = new List<GroupMember>();
 
-    [InverseProperty("Group")]
-    public virtual ICollection<JoinRequest> JoinRequests { get; set; } = new List<JoinRequest>();
-
     [ForeignKey("OwnerMemberId")]
     [InverseProperty("TravelGroups")]
     public virtual Member OwnerMember { get; set; }

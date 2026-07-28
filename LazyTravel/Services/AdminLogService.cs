@@ -4,14 +4,13 @@ using Microsoft.EntityFrameworkCore;
 namespace LazyTravel.Services
 {
     // 已接上 10 黃浚翔整合進來的真實 AdminLogs 資料表(2026-07-22),不再是只存在記憶體的暫時實作。
-    // 前台還沒有登入系統,目前沒有真的「當前登入管理員」可以拿,AdminID 先固定寫成本機測試用的超級管理員(MemberID=1),
-    // 等 Cookie 登入做好後,這裡要改成從當前登入者的 Claims 抓真正的 AdminID。
+    // 前台還沒有登入系統,目前沒有真的「當前登入管理員」可以拿,AdminID 先透過姓名反查 Employees 表對應的員工,
+    // 等 Cookie 登入做好後,這裡要改成從當前登入者的 Claims 直接抓真正的 EmployeeID。
     // 這個 Service 同時被檢舉審核台(ReportService)跟 Vlog 行程文章(VlogPostsController)共用。
     public class AdminLogService : IAdminLogService
     {
         private readonly LazyTravelDBContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private const int PlaceholderAdminId = 1;
 
         public AdminLogService(LazyTravelDBContext context, IHttpContextAccessor httpContextAccessor)
         {
@@ -23,13 +22,25 @@ namespace LazyTravel.Services
         {
             var ipAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
+            // operatorName 理想上是真的員工姓名(例如 ReportService 隨機挑的員工),用姓名反查 Employees 表拿到真正的 EmployeeID;
+            // 查不到時(例如尚未接 Cookie 登入的呼叫端傳的是 "管理員" 這種預設字串)退回第一位員工,避免寫入失敗
+            var adminId = await _context.Employees
+                .Where(e => e.Name == operatorName)
+                .Select(e => e.EmployeeId)
+                .FirstOrDefaultAsync();
+
+            if (adminId == 0)
+            {
+                adminId = await _context.Employees.OrderBy(e => e.EmployeeId).Select(e => e.EmployeeId).FirstOrDefaultAsync();
+            }
+
             _context.AdminLogs.Add(new AdminLog
             {
-                AdminId = PlaceholderAdminId,
+                AdminId = adminId,
                 Action = action,
                 TargetTable = targetTable ?? string.Empty,
                 TargetId = targetId,
-                // 目前操作人還是用字串代稱(reviewerName),真正的登入者身分做好前先併入描述文字,避免資訊憑空消失
+                // 操作人姓名同時併入描述文字,方便直接閱讀,不用額外 join
                 Description = $"[{operatorName}] {detail}",
                 Ipaddress = ipAddress,
                 CreatedAt = DateTime.Now

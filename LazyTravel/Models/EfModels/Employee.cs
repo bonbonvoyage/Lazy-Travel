@@ -49,4 +49,7 @@ public partial class Employee
 
     [InverseProperty("Employee")]
     public virtual ICollection<AdminAuditLog> AdminAuditLogs { get; set; } = new List<AdminAuditLog>();
+
+    [InverseProperty("Admin")]
+    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
 }

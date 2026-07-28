@@ -19,11 +19,11 @@ namespace LazyTravel.Services
             _context = context;
         }
 
-        private Dictionary<byte, string> TypeCache => EnsureCache(ref _typeCache, () => _context.ReportTargetTypeLookups.AsNoTracking().ToDictionary(x => x.TypeID, x => x.TypeName));
+        private Dictionary<byte, string> TypeCache => EnsureCache(ref _typeCache, () => _context.ReportTargetTypeLookups.AsNoTracking().ToDictionary(x => x.TypeId, x => x.TypeName));
 
-        private Dictionary<byte, string> CategoryCache => EnsureCache(ref _categoryCache, () => _context.ReportReasonCategoryLookups.AsNoTracking().ToDictionary(x => x.CategoryID, x => x.CategoryName));
+        private Dictionary<byte, string> CategoryCache => EnsureCache(ref _categoryCache, () => _context.ReportReasonCategoryLookups.AsNoTracking().ToDictionary(x => x.CategoryId, x => x.CategoryName));
 
-        private Dictionary<byte, string> StatusCache => EnsureCache(ref _statusCache, () => _context.ReportStatusLookups.AsNoTracking().ToDictionary(x => x.StatusID, x => x.StatusName));
+        private Dictionary<byte, string> StatusCache => EnsureCache(ref _statusCache, () => _context.ReportStatusLookups.AsNoTracking().ToDictionary(x => x.StatusId, x => x.StatusName));
 
         private static Dictionary<byte, string> EnsureCache(ref Dictionary<byte, string>? field, Func<Dictionary<byte, string>> load)
         {

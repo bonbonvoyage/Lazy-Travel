@@ -11,9 +11,7 @@ namespace LazyTravel.Services
         // (第 4 次:3 天,第 5 次以上:5 天)。只算「查證屬實」的次數,單純被檢舉但不成立的不算
         public int SuspendThreshold => 3;
 
-        // 尚未接 Cookie 認證,判定人先用隨機代稱,不使用真實隊員姓名
-        private static readonly string[] _reviewerAliases = { "審核員A", "審核員B", "審核員C", "審核員D", "審核員E" };
-        private static readonly Random _random = new();
+        // 尚未接 Cookie 認證,還沒有真的「當前登入管理員」可以拿,判定人先從 Employees 表隨機挑一位真實員工代稱
 
         private readonly LazyTravelContext _context;
         private readonly INotificationService _notificationService;
@@ -47,7 +45,17 @@ namespace LazyTravel.Services
                 .ToList();
         }
 
-        public string GetRandomReviewerAlias() => _reviewerAliases[_random.Next(_reviewerAliases.Length)];
+        public string GetRandomReviewerAlias()
+        {
+            var employeeNames = _context.Employees.Select(e => e.Name).ToList();
+            if (employeeNames.Count == 0)
+            {
+                return "審核員";
+            }
+            // Random.Shared 是執行緒安全的(.NET 6+);ASP.NET Core 每個請求可能跑在不同執行緒,
+            // 之前用手動建立的 static Random 共用會有併發問題,內部狀態壞掉後 Next() 會一直回傳同一個值
+            return employeeNames[Random.Shared.Next(employeeNames.Count)];
+        }
 
         public ReportQueryResult Query(ReportQueryOptions options)
         {

@@ -71,8 +71,6 @@ public partial class LazyTravelDBContext : DbContext
 
     public virtual DbSet<PostInteraction> PostInteractions { get; set; }
 
-    public virtual DbSet<Report> Reports { get; set; }
-
     public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
 
     public virtual DbSet<TravelGroup> TravelGroups { get; set; }
@@ -393,19 +391,6 @@ public partial class LazyTravelDBContext : DbContext
             entity.HasOne(d => d.Post).WithMany(p => p.PostInteractions)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__PostInter__PostI__55009F39");
-        });
-
-        modelBuilder.Entity<Report>(entity =>
-        {
-            entity.HasKey(e => e.ReportId).HasName("PK__Reports__D5BD48E5736AF2CA");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.ReportedMember).WithMany(p => p.ReportReportedMembers).HasConstraintName("FK__Reports__Reporte__56E8E7AB");
-
-            entity.HasOne(d => d.Reporter).WithMany(p => p.ReportReporters)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Reports__Reporte__55F4C372");
         });
 
         modelBuilder.Entity<Role>(entity =>

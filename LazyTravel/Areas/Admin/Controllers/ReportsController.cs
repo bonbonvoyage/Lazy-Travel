@@ -176,6 +176,8 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Details), new { id = request.Id, returnUrl = safeReturnUrl });
             }
 
+            // 尚未接上真的登入系統時 User.Identity?.Name 是 null,先從 Employees 表隨機挑一位;
+            // 之後會員登入功能做好後,這裡會自動改成取真正登入的管理員姓名
             var reviewerName = User.Identity?.Name ?? _reportService.GetRandomReviewerAlias();
             var outcome = await _reportService.JudgeAsync(request.Id, request.Decision, request.Note, request.IsMalicious, reviewerName);
 

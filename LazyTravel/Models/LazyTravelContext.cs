@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using LazyTravel.Models.EfModels;
 
 namespace LazyTravel.Models;
 
@@ -13,9 +14,9 @@ public partial class LazyTravelContext : DbContext
     {
     }
 
-    public virtual DbSet<GroupMember> GroupMembers { get; set; }
+    public virtual DbSet<Employee> Employees { get; set; }
 
-    public virtual DbSet<JoinRequest> JoinRequests { get; set; }
+    public virtual DbSet<GroupMember> GroupMembers { get; set; }
 
     public virtual DbSet<Member> Members { get; set; }
 
@@ -31,6 +32,21 @@ public partial class LazyTravelContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.HasKey(e => e.EmployeeId);
+        });
+
+        // 這個 Context 只需要 Employee.Name(隨機挑審核人員用),不需要 Employee 導覽屬性牽出來的
+        // EmployeeRole/AdminAuditLog/AdminLog,那些是 LazyTravelDBContext(員工/RBAC)的範圍,
+        // 這裡沒設定它們的主鍵,不排除的話 EF 建模時會炸掉
+        modelBuilder.Ignore<EmployeeRole>();
+        modelBuilder.Ignore<AdminAuditLog>();
+        modelBuilder.Ignore<AdminLog>();
+        modelBuilder.Ignore<Role>();
+        modelBuilder.Ignore<RolePermission>();
+        modelBuilder.Ignore<Permission>();
+
         modelBuilder.Entity<GroupMember>(entity =>
         {
             entity.HasKey(e => e.GroupMemberId).HasName("PK__GroupMem__344812B27A4F4AA7");
@@ -42,18 +58,6 @@ public partial class LazyTravelContext : DbContext
             entity.HasOne(d => d.Group).WithMany(p => p.GroupMembers).OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasOne(d => d.Member).WithMany(p => p.GroupMemberMembers).OnDelete(DeleteBehavior.ClientSetNull);
-        });
-
-        modelBuilder.Entity<JoinRequest>(entity =>
-        {
-            entity.HasKey(e => e.RequestId).HasName("PK__JoinRequ__33A8519AE6BDCA5C");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.RequestStatus).HasDefaultValue((byte)0);
-
-            entity.HasOne(d => d.Group).WithMany(p => p.JoinRequests).OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(d => d.Member).WithMany(p => p.JoinRequestMembers).OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<Member>(entity =>
@@ -100,6 +104,24 @@ public partial class LazyTravelContext : DbContext
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.OwnerMember).WithMany(p => p.TravelGroups).OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<ReportTargetTypeLookup>(entity =>
+        {
+            entity.HasKey(e => e.TypeId);
+            entity.ToTable("ReportTargetTypes");
+        });
+
+        modelBuilder.Entity<ReportReasonCategoryLookup>(entity =>
+        {
+            entity.HasKey(e => e.CategoryId);
+            entity.ToTable("ReportReasonCategories");
+        });
+
+        modelBuilder.Entity<ReportStatusLookup>(entity =>
+        {
+            entity.HasKey(e => e.StatusId);
+            entity.ToTable("ReportStatuses");
         });
 
         OnModelCreatingPartial(modelBuilder);

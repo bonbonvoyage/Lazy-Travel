@@ -6,16 +6,6 @@
     ViewData["Title"] = $"檢舉案件 #{Model.Report.Id}";
     var suspendLevelClass = Model.PendingSuspensionDays >= 5 ? "level-severe" : "level-mild";
     var suspendLevelLabel = Model.PendingSuspensionDays >= 5 ? "重度累犯" : "輕度累犯";
-
-    // 被檢舉對象卡:依 TargetType 決定圖示/標籤,以及要不要給連結
-    // 會員/Vlog 文章對應的後台頁面(MembersController/VlogPostsController)還沒做出來,先不給連結,避免點了 404
-    var (targetIcon, targetLabel, targetLinkController, targetLinkAction) = Model.Report.TargetType switch
-    {
-        ReportTargetType.Member => ("👤", "被檢舉會員", (string?)null, (string?)null),
-        ReportTargetType.VlogPost => ("📝", "被檢舉文章", (string?)null, (string?)null),
-        ReportTargetType.TravelGroup => ("🧳", "被檢舉揪團", "TravelGroups", "Details"),
-        _ => ("❓", "被檢舉對象", (string?)null, (string?)null)
-    };
 }
 
 @section Breadcrumb {
@@ -25,7 +15,6 @@
 
 @section Styles {
     <style>
-        /* 跟檢舉審核台列表一致:類別標籤 + 原因文字 + 狀態章放大 */
         .report-reason-tag {
             display: inline-block;
             background-color: var(--sand-200);
@@ -34,10 +23,6 @@
             font-size: .85rem;
             font-weight: 500;
             padding: .2rem .7rem;
-        }
-        .report-reason-text {
-            font-size: 1rem;
-            color: var(--text-secondary);
         }
         .status-pill {
             font-size: .95rem;
@@ -53,80 +38,93 @@
             padding: .9rem 1.15rem;
             margin-bottom: 1rem;
         }
-        .suspend-warning-card .icon {
-            font-size: 1.6rem;
-            line-height: 1;
-        }
-        .suspend-warning-card .title {
-            font-weight: 600;
-            margin-bottom: .15rem;
-        }
-        .suspend-warning-card .days {
-            font-weight: 700;
-        }
-        .suspend-warning-card.level-mild {
-            background-color: var(--sand-100);
-            border: 1px solid var(--sand-400);
-        }
+        .suspend-warning-card .icon { font-size: 1.6rem; line-height: 1; }
+        .suspend-warning-card .title { font-weight: 600; margin-bottom: .15rem; }
+        .suspend-warning-card .days { font-weight: 700; }
+        .suspend-warning-card.level-mild { background-color: var(--sand-100); border: 1px solid var(--sand-400); }
         .suspend-warning-card.level-mild .days { color: var(--sand-500); }
-        .suspend-warning-card.level-severe {
-            background-color: var(--coral-100);
-            border: 1px solid var(--coral-600);
-        }
+        .suspend-warning-card.level-severe { background-color: var(--coral-100); border: 1px solid var(--coral-600); }
         .suspend-warning-card.level-severe .days { color: var(--coral-600); }
 
-        /* 整體字體放大,案件內容跟審核區的欄位比較好讀 */
-        /* 內容本身沒那麼寬,卡片限制最大寬度並置中,避免寬螢幕時右側留一大片空白 */
         .report-detail-card {
-            font-size: 1.05rem;
-            max-width: 900px;
+            max-width: 760px;
             margin-left: auto;
             margin-right: auto;
         }
-        .report-detail-card th,
-        .report-detail-card td { font-size: 1rem; }
-        .report-detail-card h2.h5 { font-size: 1.3rem; }
-        .report-detail-card h3.h6 { font-size: 1.05rem; }
 
-        /* 處置備註欄放大,打字的人才看得清楚自己打了什麼,提示文字(括號那段)跟著一起放大 */
-        #judgeForm textarea.form-control {
-            font-size: 1.05rem;
-            padding: .65rem .8rem;
-        }
-        #judgeForm textarea.form-control::placeholder {
-            font-size: 1.05rem;
-        }
-        #judgeForm .form-check-label {
-            font-size: .95rem;
-        }
-
-        /* 被檢舉對象預覽,跟案件內容表格並排放在同一張卡片裡,不另外分欄 */
-        .report-info-row {
+        /* 頂部風險/類別小標籤一整排 */
+        .report-badge-row {
             display: flex;
-            align-items: flex-start;
-            gap: 1.5rem;
             flex-wrap: wrap;
+            gap: .5rem;
+            margin-bottom: 1.25rem;
         }
-        .target-preview-inline {
-            flex: 0 0 220px;
-            text-align: center;
+        .report-badge-row .status-pill {
+            font-size: .78rem;
+            padding: .2rem .65rem;
+        }
+
+        /* 內容左欄(文字資訊) + 右欄(證據截圖) */
+        .report-body-grid {
+            display: grid;
+            grid-template-columns: 1fr 220px;
+            gap: 1.75rem;
+            align-items: start;
+        }
+        @@media (max-width: 640px) {
+            .report-body-grid { grid-template-columns: 1fr; }
+        }
+
+        .report-field { margin-bottom: 1rem; }
+        .report-field .f-label { font-size: .8rem; color: var(--text-muted); margin-bottom: .2rem; }
+        .report-field .f-value { font-weight: 600; color: var(--sea-800); }
+        .report-field .f-value.muted-value { font-weight: 400; color: var(--text-secondary); }
+        .report-field .f-sub { font-size: .82rem; color: var(--text-muted); }
+
+        .report-dual-field { display: flex; gap: 2.5rem; flex-wrap: wrap; }
+
+        .evidence-label { font-size: .8rem; color: var(--text-muted); margin-bottom: .4rem; }
+        .evidence-card {
             background-color: var(--sand-100);
             border-radius: var(--radius-md);
-            padding: 1rem;
+            aspect-ratio: 1 / 0.85;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
-        .target-preview-inline .icon {
-            font-size: 2.2rem;
-            line-height: 1;
+        .evidence-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: zoom-in;
+            display: block;
         }
-        .target-preview-inline .label {
-            color: var(--text-secondary);
-            font-size: .85rem;
-            margin-top: .4rem;
+        .evidence-empty { color: var(--text-muted); font-size: .82rem; text-align: center; padding: 1rem; }
+        .evidence-zoom-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-size: .8rem;
+            color: var(--sea-600);
+            margin-top: .5rem;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
         }
-        .target-preview-inline .title {
-            font-weight: 600;
-            margin: .25rem 0 .75rem;
-            word-break: break-word;
+        .evidence-zoom-btn:hover { color: var(--sea-700); text-decoration: underline; }
+
+        #judgeForm textarea.form-control { font-size: 1rem; padding: .65rem .8rem; }
+        .char-counter { text-align: right; font-size: .78rem; color: var(--text-muted); margin-top: .2rem; }
+        .judge-note-hint { font-size: .78rem; color: var(--text-muted); margin-top: .15rem; margin-bottom: .75rem; }
+        .judge-info-note {
+            font-size: .82rem;
+            color: var(--text-muted);
+            margin: .9rem 0;
+            display: flex;
+            align-items: center;
+            gap: .35rem;
         }
     </style>
 }
@@ -137,12 +135,13 @@
 }
 
 <div class="admin-table-card report-detail-card p-4">
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <h2 class="h5" style="font-family:var(--font-display); color:var(--sea-800); margin-bottom:.4rem;">
-                案件 #@Model.Report.Id・@LookupService.GetTypeName(Model.Report.TargetType)
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <h2 class="h5 mb-0" style="font-family:var(--font-display); color:var(--sea-800);">
+                案件 #@Model.Report.Id
             </h2>
             <span class="status-pill @Model.Report.Status.ToPillClass()">@LookupService.GetStatusName(Model.Report.Status)</span>
+            <span class="text-muted">@LookupService.GetTypeName(Model.Report.TargetType)</span>
         </div>
         <div class="d-flex gap-2">
             @if (Model.PreviousId.HasValue)
@@ -169,91 +168,74 @@
         </div>
     </div>
 
-    <div class="report-info-row">
-        <table class="table table-borderless" style="max-width:560px; flex:1 1 400px;">
-            <tbody>
-                <tr>
-                    <th class="text-muted" style="width:140px;">被檢舉對象</th>
-                    <td>
-                        @Model.Report.TargetTitle <span class="text-muted small">(Id: @Model.Report.TargetId)</span>
-                        @if (Model.RelatedReports.Any())
-                        {
-                            <span class="status-pill status-risk ms-2">
-                                此對象累計被檢舉 @(Model.RelatedReports.Count + 1) 次
-                            </span>
-                        }
-                    </td>
-                </tr>
-                <tr>
-                    <th class="text-muted">被檢舉會員帳號</th>
-                    <td>
-                        @Model.Report.ReportedMemberAccount
-                        <span class="status-pill @(Model.UpheldCountForAccount > Model.SuspendThreshold ? "status-risk" : "status-pending") ms-2">
-                            已查證違規 @Model.UpheldCountForAccount 次(門檻 @Model.SuspendThreshold 次)
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <th class="text-muted">檢舉人帳號</th>
-                    <td>
-                        @Model.Report.ReporterAccount
-                        @if (Model.MaliciousCountForReporter > 0)
-                        {
-                            <span class="status-pill @(Model.MaliciousCountForReporter > Model.SuspendThreshold ? "status-risk" : "status-pending") ms-2">
-                                已標記惡意檢舉 @Model.MaliciousCountForReporter 次(門檻 @Model.SuspendThreshold 次)
-                            </span>
-                        }
-                    </td>
-                </tr>
-                <tr>
-                    <th class="text-muted">檢舉類別</th>
-                    <td><span class="report-reason-tag">@LookupService.GetCategoryName(Model.Report.ReasonCategory)</span></td>
-                </tr>
-                <tr>
-                    <th class="text-muted">檢舉原因</th>
-                    <td class="report-reason-text">@Model.Report.Reason</td>
-                </tr>
-                <tr>
-                    <th class="text-muted">補充說明</th>
-                    <td>@(string.IsNullOrEmpty(Model.Report.Description) ? "—" : Model.Report.Description)</td>
-                </tr>
-                <tr>
-                    <th class="text-muted">檢舉時間</th>
-                    <td>@Model.Report.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="report-badge-row">
+        @if (Model.RelatedReports.Any())
+        {
+            <span class="status-pill status-risk">🚩 對象累計 @(Model.RelatedReports.Count + 1) 次</span>
+        }
+        <span class="status-pill @(Model.UpheldCountForAccount > Model.SuspendThreshold ? "status-risk" : "status-pending")">
+            屬實 @Model.UpheldCountForAccount /門檻 @Model.SuspendThreshold
+        </span>
+        @if (Model.MaliciousCountForReporter > 0)
+        {
+            <span class="status-pill @(Model.MaliciousCountForReporter > Model.SuspendThreshold ? "status-risk" : "status-pending")">
+                惡意 @Model.MaliciousCountForReporter /門檻 @Model.SuspendThreshold
+            </span>
+        }
+        <span class="report-reason-tag">@LookupService.GetCategoryName(Model.Report.ReasonCategory)</span>
+    </div>
 
-        <div class="target-preview-inline">
-            <div class="icon">@targetIcon</div>
-            <div class="label">@targetLabel</div>
-            <div class="title">@Model.Report.TargetTitle</div>
-            @if (targetLinkController != null)
-            {
-                <a class="btn btn-sm btn-outline-primary" asp-area="Admin" asp-controller="@targetLinkController" asp-action="@targetLinkAction" asp-route-id="@Model.Report.TargetId">
-                    查看原始內容
-                </a>
-            }
-            else
-            {
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="對應後台頁面尚未開發">
-                    查看原始內容
-                </button>
-            }
+    <div class="report-body-grid">
+        <div>
+            <div class="report-field">
+                <div class="f-label">被檢舉對象</div>
+                <div class="f-value">@Model.Report.TargetTitle</div>
+                <div class="f-sub">Id @Model.Report.TargetId</div>
+            </div>
 
-            <div class="mt-3 pt-3" style="border-top:1px solid var(--border-color, #e5e7eb);">
-                <div class="label mb-1">檢舉截圖</div>
+            <div class="report-field">
+                <div class="f-label">檢舉原因</div>
+                <div class="f-value">@Model.Report.Reason</div>
+            </div>
+
+            <div class="report-field">
+                <div class="f-label">補充說明</div>
+                <div class="f-value muted-value">@(string.IsNullOrEmpty(Model.Report.Description) ? "未填寫" : Model.Report.Description)</div>
+            </div>
+
+            <div class="report-dual-field">
+                <div class="report-field">
+                    <div class="f-label">被檢舉會員</div>
+                    <div class="f-value muted-value" style="color:var(--sea-600);">@Model.Report.ReportedMemberAccount</div>
+                </div>
+                <div class="report-field">
+                    <div class="f-label">檢舉人</div>
+                    <div class="f-value muted-value" style="color:var(--sea-600);">@Model.Report.ReporterAccount</div>
+                </div>
+            </div>
+
+            <div class="report-field mb-0">
+                <span class="f-label">檢舉時間</span>
+                <span class="f-value muted-value">@Model.Report.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+            </div>
+        </div>
+
+        <div>
+            <div class="evidence-label">證據截圖</div>
+            <div class="evidence-card">
                 @if (!string.IsNullOrEmpty(Model.Report.EvidenceUrl))
                 {
-                    <a href="@Model.Report.EvidenceUrl" target="_blank" rel="noopener">
-                        <img src="@Model.Report.EvidenceUrl" alt="檢舉截圖" class="img-fluid rounded border" style="max-height:180px;" />
-                    </a>
+                    <img src="@Model.Report.EvidenceUrl" alt="檢舉截圖" id="evidenceImg" />
                 }
                 else
                 {
-                    <span class="text-muted small">檢舉人未附上截圖</span>
+                    <span class="evidence-empty">檢舉人未附上截圖</span>
                 }
             </div>
+            @if (!string.IsNullOrEmpty(Model.Report.EvidenceUrl))
+            {
+                <button type="button" class="evidence-zoom-btn" data-bs-toggle="modal" data-bs-target="#evidenceZoomModal">點擊放大</button>
+            }
         </div>
     </div>
 
@@ -279,16 +261,21 @@
             <input type="hidden" name="id" value="@Model.Report.Id" />
             <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
             <input type="hidden" name="decision" id="decisionInput" />
-            <textarea name="note" class="form-control mb-2" rows="4" maxlength="200"
+            <textarea name="note" id="noteTextarea" class="form-control mb-1" rows="4" maxlength="200"
                       placeholder="處置備註(選填,最多 200 字)"></textarea>
-            <div class="form-check mb-2">
+            <div class="char-counter mb-2"><span id="noteCharCount">0</span>/200</div>
+            <div class="form-check mb-1">
                 <input class="form-check-input" type="checkbox" name="isMalicious" value="true" id="isMaliciousCheckbox" />
-                <label class="form-check-label small" for="isMaliciousCheckbox">
-                    標記為惡意檢舉(非單純誤判或證據不足)——只有判定「不成立」時生效
+                <label class="form-check-label" for="isMaliciousCheckbox">
+                    標記為惡意檢舉(非單純誤判或證據不足)
                 </label>
             </div>
+            <div class="judge-note-hint">只有判定「不成立」時才會生效</div>
+
+            <div class="judge-info-note">ⓘ 判定後將通知雙方,且無法再修改</div>
+
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-outline-danger judge-confirm-btn"
+                <button type="button" class="btn btn-sm btn-coral judge-confirm-btn"
                         data-decision="Upheld"
                         data-confirm="確定要判定「檢舉成立」嗎?此動作無法復原,系統會通知被檢舉會員。@(Model.PendingSuspensionDays.HasValue ? $"⚠ 此帳號將觸發自動停權,共 {Model.PendingSuspensionDays} 天。" : "")">
                     檢舉成立
@@ -338,9 +325,26 @@
                 </tr>
             </tbody>
         </table>
-        <p class="small text-muted mt-2">審核人員/時間取自 AdminLogs 操作紀錄(符合官方 Reports 表不存審核人資訊的設計)。</p>
     }
 </div>
+
+@* 證據截圖放大彈窗 *@
+@if (!string.IsNullOrEmpty(Model.Report.EvidenceUrl))
+{
+    <div class="modal fade" id="evidenceZoomModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" style="font-family:var(--font-display); color:var(--sea-800);">檢舉截圖</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="@Model.Report.EvidenceUrl" alt="檢舉截圖放大" class="img-fluid rounded" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @if (Model.RelatedReports.Any())
 {
@@ -421,6 +425,15 @@
         if (judgeConfirmSubmitBtn) {
             judgeConfirmSubmitBtn.addEventListener('click', function () {
                 judgeForm.submit();
+            });
+        }
+
+        // 處置備註即時字數計數
+        var noteTextarea = document.getElementById('noteTextarea');
+        var noteCharCount = document.getElementById('noteCharCount');
+        if (noteTextarea && noteCharCount) {
+            noteTextarea.addEventListener('input', function () {
+                noteCharCount.textContent = noteTextarea.value.length;
             });
         }
     </script>
