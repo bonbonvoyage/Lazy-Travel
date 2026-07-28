@@ -1,13 +1,11 @@
-﻿using LazyTravel.Models.EfModels;
+﻿using LazyTravel.Models;
 
 namespace LazyTravel.Models.ViewModels
 {
     public class TravelGroupAdminIndexViewModel
     {
-        // 用完整命名空間指定,因為 LazyTravel.Models.ViewModels 是 LazyTravel.Models 的子命名空間,
-        // 光靠 using LazyTravel.Models.EfModels 沒辦法蓋掉「同名但在外層命名空間」的 LazyTravel.Models.TravelGroup
-        public List<LazyTravel.Models.EfModels.TravelGroup> ActiveGroups { get; set; } = new();
-        public List<LazyTravel.Models.EfModels.TravelGroup> DeletedGroups { get; set; } = new();
+        public List<TravelGroup> ActiveGroups { get; set; } = new();
+        public List<TravelGroup> DeletedGroups { get; set; } = new();
 
         // 篩選條件
         public string? Keyword { get; set; }
