@@ -1,4 +1,4 @@
-﻿using LazyTravel.Models;
+﻿using LazyTravel.Models.EfModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LazyTravel.Models.ViewModels;
@@ -8,9 +8,10 @@ namespace LazyTravel.Areas.Admin.Controllers
     [Area("Admin")]
     public class TravelGroupsController : Controller
     {
-        private readonly LazyTravelContext _context;
+        // 改用完整版的 LazyTravelDBContext,不用範圍只有 4 張表、即將淘汰的 LazyTravelContext
+        private readonly LazyTravelDBContext _context;
 
-        public TravelGroupsController(LazyTravelContext context)
+        public TravelGroupsController(LazyTravelDBContext context)
         {
             _context = context;
         }
@@ -88,15 +89,17 @@ namespace LazyTravel.Areas.Admin.Controllers
                 query = query.Where(g => g.IsPublic == isPublic.Value);
             }
 
-            // 行程開始時間區間
+            // 行程開始時間區間(EfModels.TravelGroup.StartDate 是 DateOnly?,篩選參數是 DateTime?,要先轉型別)
             if (startDateFrom.HasValue)
             {
-                query = query.Where(g => g.StartDate >= startDateFrom.Value);
+                var from = DateOnly.FromDateTime(startDateFrom.Value);
+                query = query.Where(g => g.StartDate >= from);
             }
 
             if (startDateTo.HasValue)
             {
-                query = query.Where(g => g.StartDate <= startDateTo.Value);
+                var to = DateOnly.FromDateTime(startDateTo.Value);
+                query = query.Where(g => g.StartDate <= to);
             }
 
             // 建立時間區間

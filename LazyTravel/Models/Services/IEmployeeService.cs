@@ -37,7 +37,7 @@ namespace LazyTravel.Models.Services
 	{
 		// --- 員工管理 ---
 		IEnumerable<EmployeeDto> GetAllEmployees(string keyword = null);
-		(bool Success, string Message) PromoteToEmployee(string email, List<int> roleIds, int currentAdminId);
+		(bool Success, string Message) CreateEmployee(string name, string email, string password, List<int> roleIds, int currentAdminId);
 		(bool Success, string Message) EditEmployeeRoles(int employeeId, List<int> roleIds, int currentAdminId);
 		(bool Success, string Message) DemoteEmployee(int employeeId, int currentAdminId);
 		(IEnumerable<AdminLogDto> Data, int TotalCount) GetEmployeeAdminLogs(string keyword = null, int page = 1);

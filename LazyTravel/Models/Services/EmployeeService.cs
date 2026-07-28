@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace LazyTravel.Models.Services
 {
@@ -51,19 +53,16 @@ namespace LazyTravel.Models.Services
 			}).ToList();
 		}
 
-		public (bool Success, string Message) PromoteToEmployee(string email, List<int> roleIds, int currentAdminId)
+		public (bool Success, string Message) CreateEmployee(string name, string email, string password, List<int> roleIds, int currentAdminId)
 		{
-			var member = _context.Members.FirstOrDefault(m => m.Email == email);
-			if (member == null) return (false, "指派失敗：系統中找不到此 Email 的會員！");
-
-			if (_context.Employees.Any(e => e.Email == email)) return (false, "指派失敗：此人已經是內部員工！");
+			if (_context.Employees.Any(e => e.Email == email)) return (false, "建立失敗：此 Email 已經是內部員工！");
 
 			var newEmp = new Employee
 			{
 				EmployeeNo = "EMP-" + DateTime.Now.ToString("yyMMdd") + new Random().Next(100, 999),
-				Email = member.Email,
-				PasswordHash = member.PasswordHash,
-				Name = member.Name,
+				Email = email,
+				PasswordHash = HashPassword(password),
+				Name = name,
 				Department = "新進人員",
 				Status = 1,
 				CreatedAt = DateTime.Now
@@ -88,7 +87,13 @@ namespace LazyTravel.Models.Services
 			});
 
 			_context.SaveChanges();
-			return (true, $"成功將 {newEmp.Name} 轉移至員工資料庫，並指派對應職務！");
+			return (true, $"成功建立員工 {newEmp.Name}，並指派對應職務！");
+		}
+
+		private static string HashPassword(string password)
+		{
+			// ponytail: SHA256,夠用就好,等站上真的接了登入驗證再換成正式的雜湊演算法
+			return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(password)));
 		}
 
 		public (bool Success, string Message) EditEmployeeRoles(int employeeId, List<int> roleIds, int currentAdminId)

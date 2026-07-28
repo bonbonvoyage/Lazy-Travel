@@ -1,4 +1,3 @@
-using LazyTravel.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,10 +5,8 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<LazyTravelContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// 會員管理(10 黃浚翔)使用的 EF Core Power Tools 反向工程 Context,獨立於上面的 LazyTravelContext
+// EF Core Power Tools 反向工程的完整版 Context(涵蓋全部資料表)。
+// 舊版的 LazyTravelContext(只涵蓋 4 張表,範圍是這個的子集)已淘汰移除。
 builder.Services.AddDbContext<LazyTravel.Models.EfModels.LazyTravelDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

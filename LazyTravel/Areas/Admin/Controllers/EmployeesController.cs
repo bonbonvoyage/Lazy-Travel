@@ -46,16 +46,16 @@ namespace LazyTravel.Areas.Admin.Controllers
 		// ==========================================
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public IActionResult Promote(string email, List<int> roleIds)
+		public IActionResult Promote(string name, string email, string password, List<int> roleIds)
 		{
-			if (string.IsNullOrWhiteSpace(email) || roleIds == null || roleIds.Count == 0)
+			if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || roleIds == null || roleIds.Count == 0)
 			{
-				TempData["ErrorMessage"] = "指派失敗：請輸入會員 Email 並至少勾選一項職務角色！";
+				TempData["ErrorMessage"] = "建立失敗：請填寫姓名、Email、密碼並至少勾選一項職務角色！";
 				return RedirectToAction(nameof(Index), new { subTab = "list" });
 			}
 
 			int currentAdminId = 1;
-			var result = _employeeService.PromoteToEmployee(email, roleIds, currentAdminId);
+			var result = _employeeService.CreateEmployee(name, email, password, roleIds, currentAdminId);
 
 			SetTempDataMessage(result.Success, result.Message);
 			return RedirectToAction(nameof(Index), new { subTab = "list" });
