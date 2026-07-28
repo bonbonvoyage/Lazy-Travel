@@ -1,11 +1,12 @@
-﻿@{
+﻿@using LazyTravel.Services
+@{
     ViewData["Title"] = "權限與角色管理";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 
     string activeTab = ViewBag.ActiveTab as string ?? "roles";
-    var rolesList = ViewBag.RolesList as IEnumerable<LazyTravel.Models.Services.RoleDto>;
-    var allPermissions = ViewBag.AllPermissions as IEnumerable<LazyTravel.Models.Services.PermissionDto>;
-    var permissionsList = ViewBag.PermissionsList as IEnumerable<LazyTravel.Models.Services.PermissionDto>;
+    var rolesList = ViewBag.RolesList as IEnumerable<RoleDto>;
+    var allPermissions = ViewBag.AllPermissions as IEnumerable<PermissionDto>;
+    var permissionsList = ViewBag.PermissionsList as IEnumerable<PermissionDto>;
     var groupedPermissions = allPermissions?.GroupBy(p => p.ModuleName);
 }
 
