@@ -20,15 +20,29 @@ namespace LazyTravel.Areas.Admin.Controllers
 			_employeeService = employeeService;
 		}
 
-		// 顯示登入畫面 (如果已經登入，直接導向後台首頁)
+		//// 顯示登入畫面 (如果已經登入，直接導向後台首頁)
+		//[AllowAnonymous] // 允許任何人訪問此頁面
+		//public IActionResult Login()
+		//{
+		//	if (User.Identity != null && User.Identity.IsAuthenticated)
+		//	{
+		//		// 🌟 修正一：導向到 Dashboard 的 Index
+		//		return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+		//	}
+		//	return View();
+		//}
 		[AllowAnonymous] // 允許任何人訪問此頁面
 		public IActionResult Login()
 		{
 			if (User.Identity != null && User.Identity.IsAuthenticated)
 			{
-				// 🌟 修正一：導向到 Dashboard 的 Index
-				return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+				return RedirectToAction("Index", "Home", new { area = "Admin" });
 			}
+
+			// 🌟 專題 Demo 專用：撈取所有狀態為正常(1)的員工，傳給前端做成下拉選單
+			var employees = _employeeService.GetAllEmployees().Where(e => e.Status == 1).ToList();
+			ViewBag.Employees = employees;
+
 			return View();
 		}
 

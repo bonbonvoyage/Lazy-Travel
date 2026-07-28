@@ -20,6 +20,7 @@
             justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
         .login-card {
             background: #fff;
             border-radius: 1rem;
@@ -29,6 +30,7 @@
             max-width: 900px;
             display: flex;
         }
+
         .login-image {
             background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
             flex: 1;
@@ -40,24 +42,31 @@
             padding: 3rem;
             text-align: center;
         }
+
         @@media (min-width: 768px) {
-            .login-image { display: flex; }
+            .login-image {
+                display: flex;
+            }
         }
+
         .login-form-container {
             flex: 1;
             padding: 4rem 3rem;
         }
+
         .form-control {
             padding: 0.8rem 1rem;
             border-radius: 0.5rem;
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
         }
-        .form-control:focus {
-            background-color: #fff;
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
-        }
+
+            .form-control:focus {
+                background-color: #fff;
+                border-color: #38bdf8;
+                box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+            }
+
         .btn-login {
             background-color: #0284c7;
             color: white;
@@ -67,10 +76,11 @@
             width: 100%;
             margin-top: 1.5rem;
         }
-        .btn-login:hover {
-            background-color: #0369a1;
-            color: white;
-        }
+
+            .btn-login:hover {
+                background-color: #0369a1;
+                color: white;
+            }
     </style>
 </head>
 <body>
@@ -91,11 +101,27 @@
             <form asp-action="Login" method="post" id="loginForm">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small fw-bold"></div>
 
-                <div class="mb-3">
+                @*                 <div class="mb-3">
                     <label class="form-label text-secondary small fw-bold">企業信箱</label>
                     <input asp-for="Email" class="form-control" id="emailInput" placeholder="name@lazy.com" />
                     <!-- 🌟 加入即時驗證的提示訊息區塊 -->
                     <div id="emailFeedback" class="small mt-1" style="display:none;"></div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div> *@
+
+                <!-- 🌟 將手動輸入改為下拉選單 (Demo 專用) -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">選擇展示帳號 (期中報告 Demo 專用)</label>
+                    <select asp-for="Email" class="form-select border-primary" id="emailSelect">
+                        <option value="">-- 請選擇登入身分 --</option>
+                        @if (ViewBag.Employees != null)
+                        {
+                            foreach (var emp in ViewBag.Employees)
+                            {
+                                <option value="@emp.Email">@emp.Name (@emp.Department) - @emp.Email</option>
+                            }
+                        }
+                    </select>
                     <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
 
@@ -154,29 +180,46 @@
                 }
             });
 
-            /* --- 2. 信箱輸入即時驗證 (檢查是否包含小老鼠符號) --- */
-            $("#emailInput").on("input", function() {
-                const email = $(this).val();
-                const feedback = $("#emailFeedback");
+            // /* --- 2. 信箱輸入即時驗證 (檢查是否包含小老鼠符號) --- */
+            // $("#emailInput").on("input", function() {
+            //     const email = $(this).val();
+            //     const feedback = $("#emailFeedback");
+            //     const submitBtn = $("#submitBtn");
+
+            //     // 如果有輸入字，但沒有包含小老鼠符號
+            //     if (email.length > 0 && !email.includes("@@")) {
+            //         $(this).addClass("is-invalid").removeClass("is-valid");
+            //         feedback.text("請輸入包含完整網域的企業信箱格式").css("color", "#dc3545").show();
+            //         submitBtn.prop("disabled", true); // 格式不對禁用登入按鈕
+            //     }
+            //     // 如果格式正確
+            //     else if (email.length > 0 && email.includes("@@")) {
+            //         $(this).removeClass("is-invalid").addClass("is-valid");
+            //         feedback.text("信箱格式正確").css("color", "#198754").show();
+            //         submitBtn.prop("disabled", false); // 啟用登入按鈕
+            //     }
+            //     // 清空時恢復原狀
+            //     else {
+            //         $(this).removeClass("is-invalid is-valid");
+            //         feedback.hide();
+            //         submitBtn.prop("disabled", false);
+            //     }
+
+            /* --- 2. 🌟 Demo 專用：選擇帳號時自動填入密碼 --- */
+            $("#emailSelect").on("change", function() {
+                const selectedEmail = $(this).val();
+                const passwordInput = $("#passwordInput");
                 const submitBtn = $("#submitBtn");
 
-                // 如果有輸入字，但沒有包含小老鼠符號
-                if (email.length > 0 && !email.includes("@@")) {
-                    $(this).addClass("is-invalid").removeClass("is-valid");
-                    feedback.text("請輸入包含完整網域的企業信箱格式").css("color", "#dc3545").show();
-                    submitBtn.prop("disabled", true); // 格式不對禁用登入按鈕
-                }
-                // 如果格式正確
-                else if (email.length > 0 && email.includes("@@")) {
+                if (selectedEmail !== "") {
+                    // 如果有選取帳號，自動填入測試密碼
+                    passwordInput.val("123456");
                     $(this).removeClass("is-invalid").addClass("is-valid");
-                    feedback.text("信箱格式正確").css("color", "#198754").show();
-                    submitBtn.prop("disabled", false); // 啟用登入按鈕
-                }
-                // 清空時恢復原狀
-                else {
-                    $(this).removeClass("is-invalid is-valid");
-                    feedback.hide();
                     submitBtn.prop("disabled", false);
+                } else {
+                    // 如果選回預設值，清空密碼
+                    passwordInput.val("");
+                    $(this).removeClass("is-valid");
                 }
             });
         });
