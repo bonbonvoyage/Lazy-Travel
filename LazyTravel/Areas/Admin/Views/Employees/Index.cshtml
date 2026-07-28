@@ -167,7 +167,7 @@
 
                 <div class="col-md-3 text-end ms-auto">
                     <button type="button" class="btn btn-coral w-100 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#promoteModal">
-                        + 指派新員工
+                        + 新增員工
                     </button>
                 </div>
             </form>
@@ -377,19 +377,27 @@ else if (subTab == "logs")
     </div>
 }
 
-<!-- 1. 指派新員工 Modal -->
+<!-- 1. 新增員工 Modal -->
 <div class="modal fade" id="promoteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-lg);">
             <div class="modal-header border-0 pb-0 pt-4 px-4">
-                <h5 class="modal-title fw-bold" style="font-family: var(--font-display); color: var(--sea-800);">指派新員工</h5>
+                <h5 class="modal-title fw-bold" style="font-family: var(--font-display); color: var(--sea-800);">新增員工</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form asp-action="Promote" method="post">
                 <div class="modal-body p-4">
                     <div class="mb-4">
-                        <label class="form-label fw-bold" style="color: var(--sea-700);">綁定目標會員 (Email) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold" style="color: var(--sea-700);">員工姓名 <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold" style="color: var(--sea-700);">Email <span class="text-danger">*</span></label>
                         <input type="email" name="email" class="form-control" required />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold" style="color: var(--sea-700);">初始密碼 <span class="text-danger">*</span></label>
+                        <input type="password" name="password" class="form-control" required />
                     </div>
                     <div>
                         <label class="form-label fw-bold mb-3" style="color: var(--sea-700);">配置職務角色 (Role) <span class="text-danger">*</span></label>
