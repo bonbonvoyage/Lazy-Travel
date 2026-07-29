@@ -1,8 +1,15 @@
 using Amazon.S3;
 using LazyTravel.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ========================================================
+// 強制每次重啟專案就清除所有登入狀態
+// ========================================================
+builder.Services.AddDataProtection()
+	   .UseEphemeralDataProtectionProvider();
 
 // MVC
 builder.Services.AddControllersWithViews();
@@ -13,7 +20,7 @@ builder.Services.AddHttpContextAccessor();
 // EF Core Power Tools 反向工程的完整版 Context(涵蓋全部資料表)。
 // 舊版的 LazyTravelContext(只涵蓋 4 張表,範圍是這個的子集)已淘汰移除。
 builder.Services.AddDbContext<LazyTravel.Models.EfModels.LazyTravelDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 通知 / 操作紀錄共用 Service(暫時實作,待 14 洪欣茹 完成 /Admin/Notifications、AdminLogs 後抽換)
 builder.Services.AddScoped<LazyTravel.Services.INotificationService, LazyTravel.Services.NotificationService>();
@@ -37,14 +44,14 @@ builder.Services.AddScoped<LazyTravel.Services.IReportLookupService, LazyTravel.
 // 圖床(Cloudflare R2, S3 相容 API):Vlog 新增圖片與檢舉證據都走這裡,舊圖維持存在本機。
 builder.Services.AddSingleton<IAmazonS3>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var r2Config = new AmazonS3Config
-    {
-        ServiceURL = config["CloudflareR2:ServiceUrl"],
-        ForcePathStyle = true,
-        AuthenticationRegion = "auto",
-    };
-    return new AmazonS3Client(config["CloudflareR2:AccessKey"], config["CloudflareR2:SecretKey"], r2Config);
+	var config = sp.GetRequiredService<IConfiguration>();
+	var r2Config = new AmazonS3Config
+	{
+		ServiceURL = config["CloudflareR2:ServiceUrl"],
+		ForcePathStyle = true,
+		AuthenticationRegion = "auto",
+	};
+	return new AmazonS3Client(config["CloudflareR2:AccessKey"], config["CloudflareR2:SecretKey"], r2Config);
 });
 builder.Services.AddScoped<LazyTravel.Services.VlogPostImageUploadService>();
 builder.Services.AddScoped<LazyTravel.Services.IImageStorageService, LazyTravel.Services.R2ImageStorageService>();
@@ -53,12 +60,32 @@ builder.Services.AddScoped<LazyTravel.Services.IImageStorageService, LazyTravel.
 // 🌟 1. 註冊後台專屬的 Cookie 身分驗證機制 (AdminAuth)
 // 確保與未來的「前台會員登入」完全隔離
 // ========================================================
-builder.Services.AddAuthentication("AdminAuth")
+builder.Services.AddAuthentication("AdminAuth") // 給這個通道一個名字叫 AdminAuth
 	.AddCookie("AdminAuth", options =>
 	{
-		options.LoginPath = "/Admin/Auth/Login"; // 沒登入的人會被踢到這裡
-		options.AccessDeniedPath = "/Admin/Auth/AccessDenied"; // 登入但權限不夠會被踢到這裡
-		options.Cookie.Name = "LazyTravel.Admin.Session"; // 專屬的 Cookie 名稱
+		// 1. 指定登入頁面的路徑 (當未登入卻硬闖 [Authorize] 的頁面時，會被踢到這裡)
+		options.LoginPath = "/Admin/Auth/Login";
+
+		// 2. 指定權限不足的導向頁面 (有登入，但缺少特定 Policy 權限時會被踢到這裡)
+		options.AccessDeniedPath = "/Admin/Auth/AccessDenied";
+
+		// 3. 儲存在瀏覽器裡的 Cookie 名稱
+		options.Cookie.Name = "LazyTravel.Admin.Session";
+
+		// (選擇性，但強烈建議) 針對 AJAX 請求的特殊處理
+		// 如果前端是用 AJAX (例如你的解碼按鈕) 呼叫 API 且憑證過期，
+		// 不要回傳整個登入畫面的 HTML，而是回傳 401 狀態碼讓前端 JavaScript 處理。
+		options.Events.OnRedirectToLogin = context =>
+		{
+			if (context.Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+				context.Request.Path.StartsWithSegments("/api"))
+			{
+				context.Response.StatusCode = 401; // 回傳 401 Unauthorized
+				return Task.CompletedTask;
+			}
+			context.Response.Redirect(context.RedirectUri); // 一般網頁請求則照常跳轉
+			return Task.CompletedTask;
+		};
 	});
 
 // ========================================================
@@ -104,29 +131,29 @@ var app = builder.Build();
 // PostInteractions 這三張表，不動 Members 等其他組員負責的表）。已經有資料就不會重複塞。
 if (app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<LazyTravel.Models.EfModels.LazyTravelDBContext>();
+	using var scope = app.Services.CreateScope();
+	var context = scope.ServiceProvider.GetRequiredService<LazyTravel.Models.EfModels.LazyTravelDBContext>();
 
-    // 換一台電腦(教室/別人的機器)時常常還沒建好 appsettings.Development.json，
-    // 這段以前會直接拋 SqlException 讓整個服務起不來，連純靜態的前台首頁都看不到。
-    // 改成連不上就跳過灌資料，讓 app 照常啟動，並在主控台留下明確訊息。
-    try
-    {
-        if (await context.Database.CanConnectAsync())
-        {
-            await VlogPostDbSeeder.SeedAsync(context);
-        }
-        else
-        {
-            app.Logger.LogWarning(
-                "資料庫連不上，已略過示範資料。請確認 LazyTravel/appsettings.Development.json 的 Server= " +
-                "是否為這台電腦實際的 SQL Server 執行個體名稱。前台靜態頁仍可瀏覽，需要撈資料的頁面會失敗。");
-        }
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogWarning(ex, "灌示範資料時發生錯誤，已略過，不影響服務啟動。");
-    }
+	// 換一台電腦(教室/別人的機器)時常常還沒建好 appsettings.Development.json，
+	// 這段以前會直接拋 SqlException 讓整個服務起不來，連純靜態的前台首頁都看不到。
+	// 改成連不上就跳過灌資料，讓 app 照常啟動，並在主控台留下明確訊息。
+	try
+	{
+		if (await context.Database.CanConnectAsync())
+		{
+			await VlogPostDbSeeder.SeedAsync(context);
+		}
+		else
+		{
+			app.Logger.LogWarning(
+				"資料庫連不上，已略過示範資料。請確認 LazyTravel/appsettings.Development.json 的 Server= " +
+				"是否為這台電腦實際的 SQL Server 執行個體名稱。前台靜態頁仍可瀏覽，需要撈資料的頁面會失敗。");
+		}
+	}
+	catch (Exception ex)
+	{
+		app.Logger.LogWarning(ex, "灌示範資料時發生錯誤，已略過，不影響服務啟動。");
+	}
 }
 
 if (!app.Environment.IsDevelopment())

@@ -1,15 +1,16 @@
 using LazyTravel.Models;
 using LazyTravel.Services;
 using LazyTravel.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
-    // 之後 Cookie 認證與 Role 授權建好後,改成:
-    // [Authorize(Roles = "Admin,SuperAdmin")]
-    // Controller 只負責接請求、組 ViewModel、回傳 View,商業邏輯都在 IReportService 裡
-    [Area("Admin")]
+	// 之後 Cookie 認證與 Role 授權建好後,改成:
+	[Authorize(Policy = "RequireReportRead")]
+	// Controller 只負責接請求、組 ViewModel、回傳 View,商業邏輯都在 IReportService 裡
+	[Area("Admin")]
     public class ReportsController : Controller
     {
         private readonly IReportService _reportService;
