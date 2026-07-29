@@ -73,6 +73,12 @@ public partial class LazyTravelDBContext : DbContext
 
     public virtual DbSet<Report> Reports { get; set; }
 
+    public virtual DbSet<ReportTargetTypeLookup> ReportTargetTypeLookups { get; set; }
+
+    public virtual DbSet<ReportReasonCategoryLookup> ReportReasonCategoryLookups { get; set; }
+
+    public virtual DbSet<ReportStatusLookup> ReportStatusLookups { get; set; }
+
     public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
 
     public virtual DbSet<TravelGroup> TravelGroups { get; set; }
@@ -400,20 +406,50 @@ public partial class LazyTravelDBContext : DbContext
 
         modelBuilder.Entity<Report>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__Reports__D5BD48E5736AF2CA");
+            entity.HasKey(e => e.ReportId);
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.ReportedMember).WithMany(p => p.ReportReportedMembers).HasConstraintName("FK__Reports__Reporte__56E8E7AB");
-
+            // Reports 對 Members 有兩條各自獨立的外鍵(誰檢舉的、被檢舉的是誰),
+            // 兩條都指向同一張表,EF Core 沒辦法自己猜,必須各自明講要用哪個外鍵、不要牽連對方
             entity.HasOne(d => d.Reporter).WithMany(p => p.ReportReporters)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Reports__Reporte__55F4C372");
+                .HasForeignKey(d => d.ReporterId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.ReportedMember).WithMany(p => p.ReportReportedMembers)
+                .HasForeignKey(d => d.ReportedMemberId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<ReportTargetTypeLookup>(entity =>
+        {
+            entity.HasKey(e => e.TypeId);
+            entity.ToTable("ReportTargetTypes");
+        });
+
+        modelBuilder.Entity<ReportReasonCategoryLookup>(entity =>
+        {
+            entity.HasKey(e => e.CategoryId);
+            entity.ToTable("ReportReasonCategories");
+        });
+
+        modelBuilder.Entity<ReportStatusLookup>(entity =>
+        {
+            entity.HasKey(e => e.StatusId);
+            entity.ToTable("ReportStatuses");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.RoleId).HasName("PK_Roles");
+
+            // Role.Permissions / Permission.Roles 多對多,共用既有的 RolePermissions 中介表
+            // (RolePermission 實體本身保留,兩種存取方式並存)
+            entity.HasMany(r => r.Permissions)
+                .WithMany(p => p.Roles)
+                .UsingEntity<RolePermission>(
+                    right => right.HasOne(rp => rp.Permission).WithMany(p => p.RolePermissions),
+                    left => left.HasOne(rp => rp.Role).WithMany(r => r.RolePermissions));
         });
 
         modelBuilder.Entity<RolePermission>(entity =>
@@ -458,13 +494,16 @@ public partial class LazyTravelDBContext : DbContext
         {
             entity.HasKey(e => e.LogId).HasName("PK_TravelGroupsLog");
 
+            // 資料表名稱是單數 TravelGroupsLog,跟 DbSet 屬性名稱(複數)不一致,要明確指定
+            entity.ToTable("TravelGroupsLog");
+
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupsLogs)
                 .HasConstraintName("FK_TravelGroupsLog_Group");
 
-            entity.HasOne(d => d.ChangeByMember).WithMany(p => p.TravelGroupsLogs)
-                .HasConstraintName("FK_TravelGroupsLog_ChangeByMember");
+            entity.HasOne(d => d.ChangedByEmployee).WithMany(p => p.TravelGroupsLogs)
+                .HasConstraintName("FK_TravelGroupsLog_ChangeByEmployee");
         });
 
         modelBuilder.Entity<VlogPost>(entity =>

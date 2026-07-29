@@ -1,322 +1,638 @@
-﻿@model LazyTravel.Models.ViewModels.TravelGroupAdminIndexViewModel
+@model LazyTravel.Models.ViewModels.TravelGroupAdminIndexViewModel
 
 @{
     ViewData["Title"] = "揪團管理";
-    // 這裡原本寫 ViewBag.DeletedGroups，但 Controller 從來沒有設定過這個 ViewBag，
-    // 已刪除清單一直是空的；正確資料其實在 Model.DeletedGroups（強型別 ViewModel）裡。
-    var deletedGroups = Model.DeletedGroups;
+}
 
-    // 分頁連結要帶著目前的篩選條件一起換頁，不然換頁後篩選就被清空了。
-    // pageKey 是要換的那個頁碼參數（"activePage" 或 "deletedPage"），兩個清單各自分頁、互不影響對方頁碼。
-    Dictionary<string, string> PageRoute(string pageKey, int pageValue)
+<h1>揪團管理</h1>
+
+<div id="groupAlertRegion">
+    @if (TempData["SuccessMessage"] != null)
     {
-        var route = new Dictionary<string, string?>
-        {
-            ["tab"] = Model.Tab,
-            ["keyword"] = Model.Keyword,
-            ["country"] = Model.Country,
-            ["region"] = Model.Region,
-            ["ownerName"] = Model.OwnerName,
-            ["joinRule"] = Model.JoinRule?.ToString(),
-            ["groupStatus"] = Model.GroupStatus?.ToString(),
-            ["reviewStatus"] = Model.ReviewStatus,
-            ["isPublic"] = Model.IsPublic?.ToString(),
-            ["startDateFrom"] = Model.StartDateFrom?.ToString("yyyy-MM-dd"),
-            ["startDateTo"] = Model.StartDateTo?.ToString("yyyy-MM-dd"),
-            ["createdAtFrom"] = Model.CreatedAtFrom?.ToString("yyyy-MM-dd"),
-            ["createdAtTo"] = Model.CreatedAtTo?.ToString("yyyy-MM-dd"),
-            ["activePage"] = Model.ActivePage.ToString(),
-            ["deletedPage"] = Model.DeletedPage.ToString(),
-        };
-        route[pageKey] = pageValue.ToString();
-        return route.Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
     }
 
-    var activePrevRoute = PageRoute("activePage", Model.ActivePage - 1);
-    var activeNextRoute = PageRoute("activePage", Model.ActivePage + 1);
-    var deletedPrevRoute = PageRoute("deletedPage", Model.DeletedPage - 1);
-    var deletedNextRoute = PageRoute("deletedPage", Model.DeletedPage + 1);
-}
-
-@section Breadcrumb {
-    <li class="breadcrumb-item active" aria-current="page">揪團管理</li>
-}
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-}
-
-<div class="admin-table-card mb-3">
-    <form asp-area="Admin" asp-controller="TravelGroups" asp-action="Index" method="get" class="row g-2 align-items-end p-3">
-        <input type="hidden" name="tab" value="@Model.Tab" />
-
-        <div class="col-md-2">
-            <label class="form-label small">關鍵字</label>
-            <input type="text" name="keyword" class="form-control form-control-sm" value="@Model.Keyword" placeholder="房間名稱 / 說明">
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
         </div>
-        <div class="col-md-2">
-            <label class="form-label small">國家</label>
-            <input type="text" name="country" class="form-control form-control-sm" value="@Model.Country">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">地區</label>
-            <input type="text" name="region" class="form-control form-control-sm" value="@Model.Region">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">團主</label>
-            <input type="text" name="ownerName" class="form-control form-control-sm" value="@Model.OwnerName">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">加入規則</label>
-            <select name="joinRule" class="form-select form-select-sm">
-                <option value="">全部</option>
-                <option value="0" selected="@(Model.JoinRule == 0 ? "selected" : null)">直接加入</option>
-                <option value="1" selected="@(Model.JoinRule == 1 ? "selected" : null)">需審核</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">揪團狀態</label>
-            <select name="groupStatus" class="form-select form-select-sm">
-                <option value="">全部</option>
-                <option value="0" selected="@(Model.GroupStatus == 0 ? "selected" : null)">等待中</option>
-                <option value="1" selected="@(Model.GroupStatus == 1 ? "selected" : null)">成行/進行中</option>
-                <option value="2" selected="@(Model.GroupStatus == 2 ? "selected" : null)">結束</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">審核狀態</label>
-            <select name="reviewStatus" class="form-select form-select-sm">
-                <option value="">全部</option>
-                <option value="正常" selected="@(Model.ReviewStatus == "正常" ? "selected" : null)">正常</option>
-                <option value="檢舉審核中" selected="@(Model.ReviewStatus == "檢舉審核中" ? "selected" : null)">檢舉審核中</option>
-                <option value="已下架" selected="@(Model.ReviewStatus == "已下架" ? "selected" : null)">已下架</option>
-                <option value="違規" selected="@(Model.ReviewStatus == "違規" ? "selected" : null)">違規</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">是否公開</label>
-            <select name="isPublic" class="form-select form-select-sm">
-                <option value="">全部</option>
-                <option value="true" selected="@(Model.IsPublic == true ? "selected" : null)">公開</option>
-                <option value="false" selected="@(Model.IsPublic == false ? "selected" : null)">不公開</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">開始日期（起）</label>
-            <input type="date" name="startDateFrom" class="form-control form-control-sm" value="@(Model.StartDateFrom?.ToString("yyyy-MM-dd"))">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">開始日期（迄）</label>
-            <input type="date" name="startDateTo" class="form-control form-control-sm" value="@(Model.StartDateTo?.ToString("yyyy-MM-dd"))">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">建立時間（起）</label>
-            <input type="date" name="createdAtFrom" class="form-control form-control-sm" value="@(Model.CreatedAtFrom?.ToString("yyyy-MM-dd"))">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">建立時間（迄）</label>
-            <input type="date" name="createdAtTo" class="form-control form-control-sm" value="@(Model.CreatedAtTo?.ToString("yyyy-MM-dd"))">
-        </div>
-
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-sm btn-primary w-100">搜尋</button>
-        </div>
-        <div class="col-md-2">
-            <a asp-area="Admin" asp-controller="TravelGroups" asp-action="Index" class="btn btn-sm btn-outline-secondary w-100">清除條件</a>
-        </div>
-    </form>
+    }
 </div>
 
-<h3>揪團清單</h3>
+<!-- 篩選列（滿版單排） -->
+<form asp-area="Admin"
+      asp-controller="TravelGroups"
+      asp-action="Index"
+      method="get"
+      id="groupFilterForm"
+      class="filter-row">
 
-<div class="admin-table-card">
-<table class="table table-hover">
-    <thead>
-        <tr>
-            <th>操作</th>
-            <th>編號</th>
-            <th>房間名稱</th>
-            <th>國家</th>
-            <th>地區</th>
-            <th>團主</th>
-            <th>目前人數</th>
-            <th>人數上限</th>
-            <th>加入規則</th>
-            <th>揪團狀態</th>
-            <th>審核狀態</th>
-            <th>公開</th>
-            <th>建立時間</th>
-            <th>房間內容</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.ActiveGroups)
-        {
-            <tr ondblclick="location.href='@Url.Action("Details", "TravelGroups", new { area = "Admin", id = item.GroupId })'"
-                style="cursor:pointer;">
-                <td>
-                    @if (item.ReviewStatus == "檢舉審核中" ||
-                                    item.ReviewStatus == "已下架" ||
-                                    item.ReviewStatus == "違規")
-                    {
-                        <form asp-area="Admin"
-                              asp-controller="TravelGroups"
-                              asp-action="Delete"
-                              asp-route-id="@item.GroupId"
-                              method="post"
-                              onsubmit="return confirm('確定要將這筆揪團移至已刪除清單嗎？');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
-                        </form>
-                    }
-                </td>
-                <td>@item.GroupId</td>
-                <td>@item.GroupTitle</td>
-                <td>@item.Country</td>
-                <td>@item.Region</td>
-                <td>@item.OwnerMember?.Name</td>
-                <td>@item.CurrentPeople</td>
-                <td>@item.MaxPeople</td>
-                <td>@(item.JoinRule == 0 ? "直接加入" : "需審核")</td>
-                <td>@(item.GroupStatus switch { 0 => "等待中", 1 => "成行/進行中", 2 => "結束", _ => "未知" })</td>
-                <td>
-                    @if (item.ReviewStatus == "檢舉審核中" || item.ReviewStatus == "已下架" || item.ReviewStatus == "違規")
-                    {
-                        <span class="status-pill status-risk">@item.ReviewStatus</span>
-                    }
-                    else
-                    {
-                        <span class="status-pill status-ok">@item.ReviewStatus</span>
-                    }
-                </td>
-                <td>@(item.IsPublic ? "公開" : "不公開")</td>
-                <td>@item.CreatedAt</td>
-                <td>
-                    <a asp-area="Admin"
-                       asp-controller="TravelGroups"
-                       asp-action="Details"
-                       asp-route-id="@item.GroupId"
-                       class="btn btn-sm btn-outline-primary">
-                        詳細
-                    </a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-</div>
+    <input type="hidden" name="tab" id="filterTabInput" value="@Model.Tab" />
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <span class="text-secondary small">第 @Model.ActivePage / @(Model.ActiveTotalPages == 0 ? 1 : Model.ActiveTotalPages) 頁</span>
-    <div>
-        <a asp-area="Admin" asp-controller="TravelGroups" asp-action="Index"
-           asp-all-route-data="activePrevRoute"
-           class="btn btn-sm btn-outline-secondary @(Model.ActivePage <= 1 ? "disabled" : "")">上一頁</a>
-        <a asp-area="Admin" asp-controller="TravelGroups" asp-action="Index"
-           asp-all-route-data="activeNextRoute"
-           class="btn btn-sm btn-outline-secondary @(Model.ActivePage >= Model.ActiveTotalPages ? "disabled" : "")">下一頁</a>
+    <div class="flex-fill" style="min-width: 220px;">
+        <label class="form-label mb-1">關鍵字搜尋</label>
+        <input type="text"
+               name="keyword"
+               value="@Model.Keyword"
+               class="form-control admin-field"
+               placeholder="搜尋編號、房間名稱、說明、國家、地區、團主" />
     </div>
+
+    <div class="flex-fill" style="min-width: 200px;">
+        <label class="form-label mb-1">審核狀態</label>
+        <select name="selectedReviewStatus" class="form-select admin-field">
+            <option value="" selected="@(string.IsNullOrEmpty(Model.SelectedReviewStatus))">全部狀態</option>
+            <option value="正常" selected="@(Model.SelectedReviewStatus == "正常")">正常</option>
+            <option value="檢舉審核中" selected="@(Model.SelectedReviewStatus == "檢舉審核中")">審核檢舉中</option>
+            <option value="違規" selected="@(Model.SelectedReviewStatus == "違規")">違規</option>
+        </select>
+    </div>
+
+    <div class="flex-fill" style="min-width: 160px;">
+        <label class="form-label mb-1">排序</label>
+        <select name="sortOrder" class="form-select admin-field">
+            <option value="asc" selected="@(Model.SortOrder == "asc")">編號小到大 ↑</option>
+            <option value="desc" selected="@(Model.SortOrder == "desc")">編號大到小 ↓</option>
+        </select>
+    </div>
+
+    <div class="flex-fill" style="min-width: 160px;">
+        <label class="form-label mb-1">建立時間(起)</label>
+        <input type="date"
+               name="createdAtFrom"
+               value="@Model.CreatedAtFrom?.ToString("yyyy-MM-dd")"
+               class="form-control admin-field" />
+    </div>
+
+    <div class="flex-fill" style="min-width: 160px;">
+        <label class="form-label mb-1">建立時間(迄)</label>
+        <input type="date"
+               name="createdAtTo"
+               value="@Model.CreatedAtTo?.ToString("yyyy-MM-dd")"
+               class="form-control admin-field" />
+    </div>
+
+    <div class="d-flex gap-2" style="align-self: flex-end;">
+        <a asp-area="Admin"
+           asp-controller="TravelGroups"
+           asp-action="Index"
+           class="btn admin-field btn-clear-pantone">
+            重設
+        </a>
+    </div>
+</form>
+
+<div class="groups-workspace">
+    <div id="groupsRegion" class="groups-list-region">
+        <partial name="_TravelGroupsTabContent" model="Model" />
+    </div>
+
+    <div id="groupDetailsBackdrop" class="group-details-backdrop" hidden></div>
+
+    <aside id="groupDetailsPanel" class="group-details-panel" aria-live="polite" aria-hidden="true">
+        <div class="details-panel-header">
+            <h2 class="details-panel-title">揪團詳細內容</h2>
+            <button type="button" class="btn-close" id="closeGroupDetailsPanel" aria-label="關閉詳細內容"></button>
+        </div>
+        <div id="groupDetailsContent" class="details-panel-content"></div>
+    </aside>
 </div>
 
-<hr />
+<style>
+    /* 依「編號」欄位單數跳色，方便管理員閱讀（揪團清單、已刪除清單、異動紀錄三個清單一致） */
+    .zebra-row {
+        background-color: #D8EBF2;
+    }
 
-<h3>已刪除清單</h3>
+    /* 篩選區塊內的欄位統一高度與樣式，視覺一致 */
+    .admin-field {
+        height: 42px;
+    }
 
-<div class="admin-table-card">
-<table class="table table-hover table-secondary">
-    <thead>
-        <tr>
-            <th>操作</th>
-            <th>編號</th>
-            <th>房間名稱</th>
-            <th>國家</th>
-            <th>地區</th>
-            <th>團主</th>
-            <th>目前人數</th>
-            <th>人數上限</th>
-            <th>加入規則</th>
-            <th>揪團狀態</th>
-            <th>審核狀態</th>
-            <th>公開</th>
-            <th>建立時間</th>
-            <th>房間內容</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (deletedGroups != null && deletedGroups.Any())
-        {
-            foreach (var item in deletedGroups)
-            {
-                <tr ondblclick="location.href='@Url.Action("Details", "TravelGroups", new { area = "Admin", id = item.GroupId })'"
-                    style="cursor:pointer;">
-                    <td>
-                        <form asp-area="Admin"
-                              asp-controller="TravelGroups"
-                              asp-action="Restore"
-                              asp-route-id="@item.GroupId"
-                              method="post"
-                              onsubmit="return confirm('確定要還原這筆揪團嗎？');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-primary">還原</button>
-                        </form>
-                    </td>
-                    <td>@item.GroupId</td>
-                    <td>@item.GroupTitle</td>
-                    <td>@item.Country</td>
-                    <td>@item.Region</td>
-                    <td>@item.OwnerMember?.Name</td>
-                    <td>@item.CurrentPeople</td>
-                    <td>@item.MaxPeople</td>
-                    <td>@(item.JoinRule == 0 ? "直接加入" : "需審核")</td>
-                    <td>@(item.GroupStatus switch { 0 => "等待中", 1 => "成行/進行中", 2 => "結束", _ => "未知" })</td>
-                    <td>
-                        @if (item.ReviewStatus == "檢舉審核中" || item.ReviewStatus == "已下架" || item.ReviewStatus == "違規")
-                        {
-                            <span class="status-pill status-risk">@item.ReviewStatus</span>
-                        }
-                        else
-                        {
-                            <span class="status-pill status-ok">@item.ReviewStatus</span>
-                        }
-                    </td>
-                    <td>@(item.IsPublic ? "公開" : "不公開")</td>
-                    <td>@item.CreatedAt</td>
-                    <td>
-                        <a asp-area="Admin"
-                           asp-controller="TravelGroups"
-                           asp-action="Details"
-                           asp-route-id="@item.GroupId"
-                           class="btn btn-sm btn-outline-primary">
-                            詳細
-                        </a>
-                    </td>
-                </tr>
+    select.admin-field {
+        height: 42px;
+    }
+
+    /* 篩選列滿版：欄位平均撐開，右側不留白 */
+    .filter-row {
+        align-items: flex-start;
+    }
+
+    /* 重設鈕：使用品牌規格的海洋藍 */
+    .btn-clear-pantone {
+        background-color: var(--sea-600);
+        border-color: var(--sea-600);
+        color: #fff;
+    }
+    .btn-clear-pantone:hover,
+    .btn-clear-pantone:focus {
+        background-color: var(--sea-700);
+        border-color: var(--sea-700);
+        color: #fff;
+    }
+
+    .member-link {
+        color: var(--sea-600);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .member-link:hover,
+    .member-link:focus {
+        color: var(--sea-700);
+        text-decoration: underline;
+    }
+
+    .groups-workspace {
+        position: relative;
+        transition: padding-right .25s ease;
+    }
+
+    .groups-workspace.details-open {
+        padding-right: min(520px, 42vw);
+    }
+
+    .groups-list-region {
+        overflow-x: auto;
+    }
+
+    #activeGroups .admin-table-card,
+    #abnormalGroups .admin-table-card,
+    #deletedGroups .admin-table-card {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    #activeGroups .admin-table-card th,
+    #activeGroups .admin-table-card td,
+    #abnormalGroups .admin-table-card th,
+    #abnormalGroups .admin-table-card td,
+    #deletedGroups .admin-table-card th,
+    #deletedGroups .admin-table-card td {
+        overflow-wrap: anywhere;
+        vertical-align: middle;
+    }
+
+    .groups-list-region .admin-table-card td:first-child {
+        width: 56px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .groups-list-region .admin-table-card td:first-child form {
+        margin: 0;
+    }
+
+    .groups-list-region .admin-table-card td:first-child .btn-sm {
+        min-width: 44px;
+        padding: .16rem .45rem;
+        font-size: .78rem;
+        line-height: 1.25;
+    }
+
+    .group-details-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1040;
+        background-color: transparent;
+        pointer-events: none;
+    }
+
+    .group-details-backdrop.is-open {
+        pointer-events: none;
+    }
+
+    .group-details-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+        width: min(520px, 42vw);
+        overflow: auto;
+        background-color: var(--surface, #fff);
+        border-left: 1px solid var(--border-soft, #dee2e6);
+        box-shadow: -12px 0 28px rgba(31, 61, 78, .16);
+        padding: 1rem;
+        transform: translateX(100%);
+        transition: transform .25s ease;
+    }
+
+    .group-details-panel.is-open {
+        transform: translateX(0);
+    }
+
+    .details-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: .75rem;
+    }
+
+    .details-panel-title {
+        font-size: 1.05rem;
+        margin-bottom: 0;
+        color: var(--sea-800);
+    }
+
+    .group-details-panel .table {
+        margin-bottom: 0;
+    }
+
+    .group-details-panel th {
+        width: 110px;
+        white-space: nowrap;
+        color: var(--text-secondary);
+    }
+
+    /* 詳細鈕：色號 PANTONE 16-4032，文字白色 */
+    .btn-detail-pantone {
+        background-color: #658DC6;
+        border-color: #658DC6;
+        color: #fff;
+    }
+    .btn-detail-pantone:hover,
+    .btn-detail-pantone:focus {
+        background-color: #517aB4;
+        border-color: #517aB4;
+        color: #fff;
+    }
+
+    /* 頁籤與下方清單視窗連在一起，中間不留空白 */
+    .admin-tabs {
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--border-soft, #dee2e6);
+    }
+
+    .admin-tab-panel {
+        background-color: var(--surface, #fff);
+        border: 1px solid var(--border-soft, #dee2e6);
+        border-top: none;
+        border-radius: 0 0 var(--radius-md, .5rem) var(--radius-md, .5rem);
+        padding: 1rem;
+    }
+
+    .admin-tabs .nav-link {
+        border-radius: var(--radius-md, .5rem) var(--radius-md, .5rem) 0 0;
+    }
+
+    .admin-tabs .nav-link.active {
+        border-bottom-color: var(--surface, #fff);
+    }
+
+    .tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.5rem;
+        margin-left: .35rem;
+        padding: .05rem .45rem;
+        border-radius: var(--radius-pill, 999px);
+        background-color: var(--sea-100);
+        color: var(--sea-800);
+        font-size: .78rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .groups-workspace,
+        .group-details-panel {
+            transition: none;
+        }
+    }
+
+    @@media (max-width: 1199.98px) {
+        .groups-workspace.details-open {
+            padding-right: 0;
+        }
+
+        .group-details-panel {
+            width: min(520px, 92vw);
+        }
+
+        .group-details-backdrop {
+            background-color: rgba(31, 61, 78, .18);
+        }
+
+        .group-details-backdrop.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+</style>
+
+<script>
+    function goToPage(inputId, tabName, totalPages) {
+        var input = document.getElementById(inputId);
+        var page = parseInt(input.value, 10);
+
+        if (!page || page < 1) {
+            page = 1;
+        }
+
+        if (totalPages && page > totalPages) {
+            page = totalPages;
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        params.set('tab', tabName);
+
+        if (tabName === 'active') {
+            params.set('activePage', page);
+        } else if (tabName === 'abnormal') {
+            params.set('abnormalPage', page);
+        } else if (tabName === 'deleted') {
+            params.set('deletedPage', page);
+        } else if (tabName === 'log') {
+            params.set('logPage', page);
+        }
+
+        loadGroupsRegion('@Url.Action("Index", "TravelGroups", new { area = "Admin" })' + '?' + params.toString());
+    }
+
+    function loadGroupsRegion(url) {
+        var region = document.getElementById('groupsRegion');
+        region.style.opacity = '0.5';
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('載入失敗');
+                }
+                return response.text();
+            })
+            .then(function (html) {
+                region.innerHTML = html;
+                region.style.opacity = '1';
+
+                // 同步網址列，避免重新整理後跳回第一頁／預設頁籤
+                try {
+                    window.history.replaceState(null, '', url);
+                } catch (e) {
+                    // 部分環境（例如檔案協定）不支援 history API，忽略即可
+                }
+
+                // 同步篩選表單中的目前頁籤，讓「搜尋」按鈕送出時能保留頁籤
+                var urlParams = new URLSearchParams(url.split('?')[1] || '');
+                var tabInput = document.getElementById('filterTabInput');
+                if (tabInput && urlParams.get('tab')) {
+                    tabInput.value = urlParams.get('tab');
+                }
+            })
+            .catch(function () {
+                region.style.opacity = '1';
+                window.location.href = url;
+            });
+    }
+
+    function openGroupDetailsPanel() {
+        var panel = document.getElementById('groupDetailsPanel');
+        var backdrop = document.getElementById('groupDetailsBackdrop');
+        var workspace = document.querySelector('.groups-workspace');
+
+        if (!panel) {
+            return;
+        }
+
+        panel.classList.add('is-open');
+        panel.setAttribute('aria-hidden', 'false');
+
+        if (workspace) {
+            workspace.classList.add('details-open');
+        }
+
+        if (backdrop) {
+            backdrop.hidden = false;
+            window.requestAnimationFrame(function () {
+                backdrop.classList.add('is-open');
+            });
+        }
+    }
+
+    function closeGroupDetailsPanel() {
+        var panel = document.getElementById('groupDetailsPanel');
+        var backdrop = document.getElementById('groupDetailsBackdrop');
+        var workspace = document.querySelector('.groups-workspace');
+
+        if (panel) {
+            panel.classList.remove('is-open');
+            panel.setAttribute('aria-hidden', 'true');
+        }
+
+        if (workspace) {
+            workspace.classList.remove('details-open');
+        }
+
+        if (backdrop) {
+            backdrop.classList.remove('is-open');
+            window.setTimeout(function () {
+                backdrop.hidden = true;
+            }, 200);
+        }
+    }
+
+    function loadGroupDetails(url, fallbackUrl) {
+        var panel = document.getElementById('groupDetailsPanel');
+        var content = document.getElementById('groupDetailsContent');
+        if (!panel || !content) {
+            window.location.href = fallbackUrl || url;
+            return;
+        }
+
+        openGroupDetailsPanel();
+        content.style.opacity = '0.5';
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('載入失敗');
+                }
+                return response.text();
+            })
+            .then(function (html) {
+                content.innerHTML = html;
+                content.style.opacity = '1';
+            })
+            .catch(function () {
+                content.style.opacity = '1';
+                window.location.href = fallbackUrl || url;
+            });
+    }
+
+    // 事件代理：攔截頁籤與分頁連結的點擊，改用 AJAX 載入，不重新整理頁面
+    document.addEventListener('click', function (e) {
+        var detailLink = e.target.closest('.ajax-detail-link');
+        if (detailLink) {
+            e.preventDefault();
+            loadGroupDetails(detailLink.dataset.detailUrl || detailLink.getAttribute('href'), detailLink.getAttribute('href'));
+            return;
+        }
+
+        var link = e.target.closest('.ajax-nav-link');
+        if (!link) {
+            return;
+        }
+
+        e.preventDefault();
+        loadGroupsRegion(link.getAttribute('href'));
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.ajax-detail-link')) {
+            return;
+        }
+
+        if (e.target.closest('#closeGroupDetailsPanel') || e.target.closest('#groupDetailsBackdrop')) {
+            closeGroupDetailsPanel();
+            return;
+        }
+
+        var panel = document.getElementById('groupDetailsPanel');
+        if (panel && panel.classList.contains('is-open') &&
+            !e.target.closest('#groupDetailsPanel') &&
+            !e.target.closest('.ajax-detail-link')) {
+            closeGroupDetailsPanel();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeGroupDetailsPanel();
+            return;
+        }
+
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        var pageInput = e.target.closest('.page-jump-input');
+        if (!pageInput) {
+            return;
+        }
+
+        e.preventDefault();
+        goToPage(pageInput.id, pageInput.dataset.tabName, parseInt(pageInput.dataset.totalPages, 10));
+    });
+
+    document.addEventListener('dblclick', function (e) {
+        if (e.target.closest('a, button, input, select, textarea, form')) {
+            return;
+        }
+
+        var row = e.target.closest('.group-detail-row');
+        if (!row || !row.dataset.detailUrl) {
+            return;
+        }
+
+        loadGroupDetails(row.dataset.detailUrl);
+    });
+
+    document.addEventListener('submit', function (e) {
+        var restoreForm = e.target.closest('.restore-form');
+        if (restoreForm) {
+            var input = restoreForm.querySelector('input[name="operationRemark"]');
+            var remark = window.prompt('請輸入還原此揪團的操作異動說明：');
+
+            if (remark === null) {
+                e.preventDefault();
+                return;
             }
-        }
-        else
-        {
-            <tr>
-                <td colspan="14" class="text-center">目前沒有已刪除資料</td>
-            </tr>
-        }
-    </tbody>
-</table>
-</div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <span class="text-secondary small">第 @Model.DeletedPage / @(Model.DeletedTotalPages == 0 ? 1 : Model.DeletedTotalPages) 頁</span>
-    <div>
-        <a asp-area="Admin" asp-controller="TravelGroups" asp-action="Index"
-           asp-all-route-data="deletedPrevRoute"
-           class="btn btn-sm btn-outline-secondary @(Model.DeletedPage <= 1 ? "disabled" : "")">上一頁</a>
-        <a asp-area="Admin" asp-controller="TravelGroups" asp-action="Index"
-           asp-all-route-data="deletedNextRoute"
-           class="btn btn-sm btn-outline-secondary @(Model.DeletedPage >= Model.DeletedTotalPages ? "disabled" : "")">下一頁</a>
-    </div>
-</div>
+            remark = remark.trim();
+            if (!remark) {
+                e.preventDefault();
+                window.alert('請填寫操作異動說明。');
+                return;
+            }
+
+            if (remark.length > 200) {
+                remark = remark.substring(0, 200);
+            }
+
+            if (input) {
+                input.value = remark;
+            }
+
+            return;
+        }
+
+        var remarkForm = e.target.closest('.operation-remark-form');
+        if (!remarkForm) {
+            return;
+        }
+
+        var textarea = remarkForm.querySelector('textarea[name="operationRemark"]');
+        if (!textarea || !textarea.value.trim()) {
+            e.preventDefault();
+            window.alert('請填寫操作異動說明。');
+            return;
+        }
+
+        e.preventDefault();
+
+        fetch(remarkForm.getAttribute('action'), {
+            method: 'POST',
+            body: new FormData(remarkForm),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('儲存失敗');
+                }
+
+                return response.text();
+            })
+            .then(function (html) {
+                var content = document.getElementById('groupDetailsContent');
+                if (content) {
+                    content.innerHTML = html;
+                }
+            })
+            .catch(function () {
+                HTMLFormElement.prototype.submit.call(remarkForm);
+            });
+    });
+
+    (function () {
+        var form = document.getElementById('groupFilterForm');
+        if (!form) {
+            return;
+        }
+
+        var debounceTimer;
+        var baseUrl = form.getAttribute('action') || '@Url.Action("Index", "TravelGroups", new { area = "Admin" })';
+
+        function submitFilter(delay) {
+            window.clearTimeout(debounceTimer);
+            debounceTimer = window.setTimeout(function () {
+                var params = new URLSearchParams(new FormData(form));
+                params.set('activePage', '1');
+                params.set('abnormalPage', '1');
+                params.set('deletedPage', '1');
+                params.set('logPage', '1');
+
+                loadGroupsRegion(baseUrl + '?' + params.toString());
+            }, delay || 0);
+        }
+
+        form.addEventListener('change', function (e) {
+            if (e.target.matches('select, input[type="date"]')) {
+                submitFilter(0);
+            }
+        });
+
+        form.addEventListener('input', function (e) {
+            if (e.target.matches('input[name="keyword"]')) {
+                submitFilter(500);
+            }
+        });
+    })();
+</script>

@@ -1,7 +1,7 @@
 ﻿using LazyTravel.Models.DTOs;
 using System.Collections.Generic;
 
-namespace LazyTravel.Models.Services
+namespace LazyTravel.Services
 {
 	public interface IMemberService
 	{
@@ -23,6 +23,9 @@ namespace LazyTravel.Models.Services
 		// 1.3 編輯會員資料與狀態
 		// ==========================================
 		bool EditMember(MemberEditDto dto);
+
+		// 🌟 新增：記錄調閱會員個資的日誌
+		void LogPiiUnmask(int memberId, int currentAdminId, string adminIp);
 
 		// ==========================================
 		// 🌟 新增：取得會員專屬的操作日誌 (支援獨立搜尋與分頁)

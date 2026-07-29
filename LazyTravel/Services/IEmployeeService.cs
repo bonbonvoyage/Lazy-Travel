@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using LazyTravel.Models.DTOs;
 
-namespace LazyTravel.Models.Services
+namespace LazyTravel.Services
 {
 	public class EmployeeDto
 	{
@@ -10,7 +10,12 @@ namespace LazyTravel.Models.Services
 		public string Name { get; set; }
 		public string Email { get; set; }
 		public string Department { get; set; }
+
+		// 🌟 新增：狀態欄位、最後登入時間與建立時間
 		public byte Status { get; set; }
+		public DateTime? LastLoginAt { get; set; }
+		public DateTime CreatedAt { get; set; }
+
 		public List<string> Roles { get; set; } = new List<string>();
 		public List<string> Permissions { get; set; } = new List<string>();
 	}
@@ -35,6 +40,9 @@ namespace LazyTravel.Models.Services
 
 	public interface IEmployeeService
 	{
+		// 🌟 新增：員工登入驗證方法
+		(bool Success, string Message, EmployeeDto EmployeeData) Login(string email, string password, string ipAddress);
+
 		// --- 員工管理 ---
 		IEnumerable<EmployeeDto> GetAllEmployees(string keyword = null);
 		(bool Success, string Message) PromoteToEmployee(string email, List<int> roleIds, int currentAdminId);
@@ -48,7 +56,7 @@ namespace LazyTravel.Models.Services
 		(bool Success, string Message) EditRole(int roleId, List<int> permissionIds, int currentAdminId);
 		(bool Success, string Message) DeleteRole(int roleId, int currentAdminId);
 
-		// --- 🌟 權限字典 (Permissions) CRUD 新增 ---
+		// --- 權限字典 (Permissions) CRUD ---
 		IEnumerable<PermissionDto> GetAllPermissions(string keyword = null);
 		(bool Success, string Message) CreatePermission(PermissionDto dto, int currentAdminId);
 		(bool Success, string Message) EditPermission(PermissionDto dto, int currentAdminId);
