@@ -100,6 +100,15 @@
             _ => fieldName
         };
     }
+
+    string GroupStatusLabel(byte groupStatus) => groupStatus switch
+    {
+        0 => "等待中",
+        1 => "成行中",
+        2 => "分帳中",
+        3 => "行程結束",
+        _ => $"未知({groupStatus})"
+    };
 }
 
 <ul class="nav nav-tabs admin-tabs" id="groupTabs" role="tablist">
@@ -189,14 +198,19 @@
                                     </form>
                                 }
                             </td>
-                            <td>@item.GroupId</td>
+                            <td>#@item.GroupId</td>
                             <td>@item.GroupTitle</td>
                             <td>@item.Country</td>
                             <td>@item.Region</td>
                             <td>
                                 @if (item.OwnerMember != null)
                                 {
-                                    <span>@item.OwnerMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a><span>)</span>
+                                    <span>@item.OwnerMember.Name</span>
+                                    <span>(Id=</span>
+
+                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
+                        
+                                    <span>)</span>
                                 }
                                 else
                                 {
@@ -205,7 +219,7 @@
                             </td>
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
-                            <td>@item.GroupStatus</td>
+                            <td>@GroupStatusLabel(item.GroupStatus)</td>
                             <td>@item.ReviewStatus</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
@@ -346,14 +360,19 @@
                                     </form>
                                 }
                             </td>
-                            <td>@item.GroupId</td>
+                            <td>#@item.GroupId</td>
                             <td>@item.GroupTitle</td>
                             <td>@item.Country</td>
                             <td>@item.Region</td>
                             <td>
                                 @if (item.OwnerMember != null)
                                 {
-                                    <span>@item.OwnerMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a><span>)</span>
+                                    <span>@item.OwnerMember.Name</span>
+                                    <span>(Id=</span>
+
+                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
+                        
+                                    <span>)</span>
                                 }
                                 else
                                 {
@@ -362,7 +381,7 @@
                             </td>
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
-                            <td>@item.GroupStatus</td>
+                            <td>@GroupStatusLabel(item.GroupStatus)</td>
                             <td>@item.ReviewStatus</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
@@ -501,14 +520,19 @@
                                     <button type="submit" class="btn btn-sm btn-success">還原</button>
                                 </form>
                             </td>
-                            <td>@item.GroupId</td>
+                            <td>#@item.GroupId</td>
                             <td>@item.GroupTitle</td>
                             <td>@item.Country</td>
                             <td>@item.Region</td>
                             <td>
                                 @if (item.OwnerMember != null)
                                 {
-                                    <span>@item.OwnerMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a><span>)</span>
+                                    <span>@item.OwnerMember.Name</span>
+                                    <span>(Id=</span>
+
+                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
+                        
+                                    <span>)</span>
                                 }
                                 else
                                 {
@@ -517,7 +541,7 @@
                             </td>
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
-                            <td>@item.GroupStatus</td>
+                            <td>@GroupStatusLabel(item.GroupStatus)</td>
                             <td>@item.ReviewStatus</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
@@ -626,17 +650,19 @@
                         <tr class="group-detail-row @(item.LogId % 2 != 0 ? "zebra-row" : "")"
                             data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })"
                             style="cursor:pointer;">
-                            <td>@item.LogId</td>
-                            <td>@item.GroupId</td>
+                            <td>#@item.LogId</td>
+                            <td>#@item.GroupId</td>
                             <td>@item.ChangeType</td>
                             <td>@GetFieldDisplayName(item.FieldName)</td>
                             <td>@(string.IsNullOrWhiteSpace(item.OldValue) ? "—" : item.OldValue)</td>
                             <td>@(string.IsNullOrWhiteSpace(item.NewValue) ? "—" : item.NewValue)</td>
                             <td class="text-start">@(string.IsNullOrWhiteSpace(item.Remark) ? "—" : item.Remark)</td>
                             <td>
-                                @if (item.ChangedByEmployee != null)
+                                @if (item.ChangedByEmployeeId.HasValue && Model.LogEmployeeNames.TryGetValue(item.ChangedByEmployeeId.Value, out var employeeName))
                                 {
-                                    <span>@item.ChangedByEmployee.Name</span><span>(Id=@item.ChangedByEmployee.EmployeeId)</span>
+                                    <span>@employeeName</span>
+                        
+                                    <span>(Id=@item.ChangedByEmployeeId.Value)</span>
                                 }
                                 else
                                 {

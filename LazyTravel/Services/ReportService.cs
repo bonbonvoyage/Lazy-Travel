@@ -78,11 +78,10 @@ namespace LazyTravel.Services
 
         public string GetRandomReviewerAlias()
         {
-            // AdminLogs.AdminID 對應 Members(不是 Employees),所以審核人員也要從 Members 裡挑,
-            // 而且限定「有 AdminPermission 紀錄」的會員,才是真的有管理權限的人,不是隨便挑一般會員
-            var reviewerNames = _context.Members
-                .Where(m => m.AdminPermissions.Any())
-                .Select(m => m.Name)
+            // 「審核人員」對外顯示的是 Employees 的員工姓名(見 AdminLogService.ToDto),沒登入時的
+            // 代稱也要從 Employees 挑,挑 Members 的話寫進 AdminLogs 後反查不到員工,畫面只會顯示「系統管理員」
+            var reviewerNames = _context.Employees
+                .Select(e => e.Name)
                 .ToList();
             if (reviewerNames.Count == 0)
             {

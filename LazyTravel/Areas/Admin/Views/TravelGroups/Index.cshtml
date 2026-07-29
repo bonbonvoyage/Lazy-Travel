@@ -59,20 +59,31 @@
         </select>
     </div>
 
-    <div class="flex-fill" style="min-width: 160px;">
-        <label class="form-label mb-1">建立時間(起)</label>
-        <input type="date"
-               name="createdAtFrom"
-               value="@Model.CreatedAtFrom?.ToString("yyyy-MM-dd")"
-               class="form-control admin-field" />
-    </div>
+    <div class="flex-fill" style="min-width: 260px;">
+        <label class="form-label mb-1">建立時間</label>
 
-    <div class="flex-fill" style="min-width: 160px;">
-        <label class="form-label mb-1">建立時間(迄)</label>
-        <input type="date"
+        <input type="text"
+               id="createdAtRange"
+               class="form-control admin-field"
+               placeholder="選擇建立時間區間"
+               autocomplete="off"
+               value="@(Model.CreatedAtFrom.HasValue && Model.CreatedAtTo.HasValue
+                                                            ? $"{Model.CreatedAtFrom:yyyy-MM-dd} 至 {Model.CreatedAtTo:yyyy-MM-dd}"
+                                                            : Model.CreatedAtFrom.HasValue
+                                                                ? $"{Model.CreatedAtFrom:yyyy-MM-dd}"
+                                                                : Model.CreatedAtTo.HasValue
+                                                                    ? $"{Model.CreatedAtTo:yyyy-MM-dd}"
+                                                                    : "")" />
+
+        <input type="hidden"
+               name="createdAtFrom"
+               id="createdAtFrom"
+               value="@Model.CreatedAtFrom?.ToString("yyyy-MM-dd")" />
+
+        <input type="hidden"
                name="createdAtTo"
-               value="@Model.CreatedAtTo?.ToString("yyyy-MM-dd")"
-               class="form-control admin-field" />
+               id="createdAtTo"
+               value="@Model.CreatedAtTo?.ToString("yyyy-MM-dd")" />
     </div>
 
     <div class="d-flex gap-2" style="align-self: flex-end;">
@@ -101,12 +112,9 @@
     </aside>
 </div>
 
-<style>
-    /* 依「編號」欄位單數跳色，方便管理員閱讀（揪團清單、已刪除清單、異動紀錄三個清單一致） */
-    .zebra-row {
-        background-color: #D8EBF2;
-    }
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
+<style>
     /* 篩選區塊內的欄位統一高度與樣式，視覺一致 */
     .admin-field {
         height: 42px;
@@ -127,12 +135,13 @@
         border-color: var(--sea-600);
         color: #fff;
     }
-    .btn-clear-pantone:hover,
-    .btn-clear-pantone:focus {
-        background-color: var(--sea-700);
-        border-color: var(--sea-700);
-        color: #fff;
-    }
+
+        .btn-clear-pantone:hover,
+        .btn-clear-pantone:focus {
+            background-color: var(--sea-700);
+            border-color: var(--sea-700);
+            color: #fff;
+        }
 
     .member-link {
         color: var(--sea-600);
@@ -140,24 +149,36 @@
         font-weight: 500;
     }
 
-    .member-link:hover,
-    .member-link:focus {
-        color: var(--sea-700);
-        text-decoration: underline;
-    }
+        .member-link:hover,
+        .member-link:focus {
+            color: var(--sea-700);
+            text-decoration: underline;
+        }
 
     .groups-workspace {
         position: relative;
         transition: padding-right .25s ease;
     }
 
-    .groups-workspace.details-open {
-        padding-right: min(520px, 42vw);
-    }
+        .groups-workspace.details-open {
+            padding-right: min(520px, 42vw);
+        }
 
     .groups-list-region {
         overflow-x: auto;
     }
+
+        .groups-list-region .table.admin-table-card > tbody > tr:nth-of-type(even) > * {
+            --bs-table-bg: #F7F1E6;
+            --bs-table-accent-bg: #F7F1E6;
+            background-color: #F7F1E6;
+        }
+
+        .groups-list-region .table.admin-table-card.table-hover > tbody > tr:hover > * {
+            --bs-table-bg: var(--sea-50);
+            --bs-table-accent-bg: var(--sea-50);
+            background-color: var(--sea-50);
+        }
 
     #activeGroups .admin-table-card,
     #abnormalGroups .admin-table-card,
@@ -166,15 +187,15 @@
         width: 100%;
     }
 
-    #activeGroups .admin-table-card th,
-    #activeGroups .admin-table-card td,
-    #abnormalGroups .admin-table-card th,
-    #abnormalGroups .admin-table-card td,
-    #deletedGroups .admin-table-card th,
-    #deletedGroups .admin-table-card td {
-        overflow-wrap: anywhere;
-        vertical-align: middle;
-    }
+        #activeGroups .admin-table-card th,
+        #activeGroups .admin-table-card td,
+        #abnormalGroups .admin-table-card th,
+        #abnormalGroups .admin-table-card td,
+        #deletedGroups .admin-table-card th,
+        #deletedGroups .admin-table-card td {
+            overflow-wrap: anywhere;
+            vertical-align: middle;
+        }
 
     .groups-list-region .admin-table-card td:first-child {
         width: 56px;
@@ -182,16 +203,16 @@
         white-space: nowrap;
     }
 
-    .groups-list-region .admin-table-card td:first-child form {
-        margin: 0;
-    }
+        .groups-list-region .admin-table-card td:first-child form {
+            margin: 0;
+        }
 
-    .groups-list-region .admin-table-card td:first-child .btn-sm {
-        min-width: 44px;
-        padding: .16rem .45rem;
-        font-size: .78rem;
-        line-height: 1.25;
-    }
+        .groups-list-region .admin-table-card td:first-child .btn-sm {
+            min-width: 44px;
+            padding: .16rem .45rem;
+            font-size: .78rem;
+            line-height: 1.25;
+        }
 
     .group-details-backdrop {
         position: fixed;
@@ -201,9 +222,9 @@
         pointer-events: none;
     }
 
-    .group-details-backdrop.is-open {
-        pointer-events: none;
-    }
+        .group-details-backdrop.is-open {
+            pointer-events: none;
+        }
 
     .group-details-panel {
         position: fixed;
@@ -221,9 +242,9 @@
         transition: transform .25s ease;
     }
 
-    .group-details-panel.is-open {
-        transform: translateX(0);
-    }
+        .group-details-panel.is-open {
+            transform: translateX(0);
+        }
 
     .details-panel-header {
         display: flex;
@@ -255,17 +276,49 @@
         border-color: #658DC6;
         color: #fff;
     }
-    .btn-detail-pantone:hover,
-    .btn-detail-pantone:focus {
-        background-color: #517aB4;
-        border-color: #517aB4;
-        color: #fff;
+
+        .btn-detail-pantone:hover,
+        .btn-detail-pantone:focus {
+            background-color: #517aB4;
+            border-color: #517aB4;
+            color: #fff;
+        }
+
+    /* 頁籤與下方清單視窗連在一起，中間不留空白 */
+    .admin-tabs {
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--border-soft, #dee2e6);
     }
 
-    /* 頁籤與下方清單視窗連在一起的「資料夾式」樣式（.admin-tabs / .admin-tab-panel /
-       .tab-count）原本寫在這裡，現在已抽到 wwwroot/css/admin.css 的
-       「5-2. 資料夾式頁內籤」，改由 Vlog 行程文章、檢舉審核台一起共用。
-       這頁的 HTML 沒有變動，外觀維持原樣，要調樣式請改 admin.css。 */
+    .admin-tab-panel {
+        background-color: var(--surface, #fff);
+        border: 1px solid var(--border-soft, #dee2e6);
+        border-top: none;
+        border-radius: 0 0 var(--radius-md, .5rem) var(--radius-md, .5rem);
+        padding: 1rem;
+    }
+
+    .admin-tabs .nav-link {
+        border-radius: var(--radius-md, .5rem) var(--radius-md, .5rem) 0 0;
+    }
+
+        .admin-tabs .nav-link.active {
+            border-bottom-color: var(--surface, #fff);
+        }
+
+    .tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.5rem;
+        margin-left: .35rem;
+        padding: .05rem .45rem;
+        border-radius: var(--radius-pill, 999px);
+        background-color: var(--sea-100);
+        color: var(--sea-800);
+        font-size: .78rem;
+        font-variant-numeric: tabular-nums;
+    }
 
     @@media (prefers-reduced-motion: reduce) {
         .groups-workspace,
@@ -287,12 +340,15 @@
             background-color: rgba(31, 61, 78, .18);
         }
 
-        .group-details-backdrop.is-open {
-            opacity: 1;
-            pointer-events: auto;
-        }
+            .group-details-backdrop.is-open {
+                opacity: 1;
+                pointer-events: auto;
+            }
     }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js"></script>
 
 <script>
     function goToPage(inputId, tabName, totalPages) {
@@ -340,14 +396,11 @@
                 region.innerHTML = html;
                 region.style.opacity = '1';
 
-                // 同步網址列，避免重新整理後跳回第一頁／預設頁籤
                 try {
                     window.history.replaceState(null, '', url);
                 } catch (e) {
-                    // 部分環境（例如檔案協定）不支援 history API，忽略即可
                 }
 
-                // 同步篩選表單中的目前頁籤，讓「搜尋」按鈕送出時能保留頁籤
                 var urlParams = new URLSearchParams(url.split('?')[1] || '');
                 var tabInput = document.getElementById('filterTabInput');
                 if (tabInput && urlParams.get('tab')) {
@@ -436,7 +489,6 @@
             });
     }
 
-    // 事件代理：攔截頁籤與分頁連結的點擊，改用 AJAX 載入，不重新整理頁面
     document.addEventListener('click', function (e) {
         var detailLink = e.target.closest('.ajax-detail-link');
         if (detailLink) {
@@ -592,8 +644,43 @@
             }, delay || 0);
         }
 
+        if (window.flatpickr && document.getElementById('createdAtRange')) {
+            flatpickr('#createdAtRange', {
+                mode: 'range',
+                dateFormat: 'Y-m-d',
+                locale: flatpickr.l10ns.zh_tw,
+                defaultDate: [
+                    document.getElementById('createdAtFrom').value,
+                    document.getElementById('createdAtTo').value
+                ].filter(Boolean),
+                onChange: function (selectedDates, dateStr, instance) {
+                    var fromInput = document.getElementById('createdAtFrom');
+                    var toInput = document.getElementById('createdAtTo');
+
+                    fromInput.value = '';
+                    toInput.value = '';
+
+                    if (selectedDates.length >= 1) {
+                        fromInput.value = instance.formatDate(selectedDates[0], 'Y-m-d');
+                    }
+
+                    if (selectedDates.length >= 2) {
+                        toInput.value = instance.formatDate(selectedDates[1], 'Y-m-d');
+                        submitFilter(0);
+                    }
+                },
+                onClose: function (selectedDates) {
+                    if (selectedDates.length === 0) {
+                        document.getElementById('createdAtFrom').value = '';
+                        document.getElementById('createdAtTo').value = '';
+                        submitFilter(0);
+                    }
+                }
+            });
+        }
+
         form.addEventListener('change', function (e) {
-            if (e.target.matches('select, input[type="date"]')) {
+            if (e.target.matches('select')) {
                 submitFilter(0);
             }
         });

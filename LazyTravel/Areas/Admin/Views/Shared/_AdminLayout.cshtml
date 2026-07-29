@@ -175,9 +175,6 @@
                             @:未登入
                         }
                     </span>
-                    <img class="rounded-circle border"
-                         src="https://ui-avatars.com/api/?name=@(User.Identity?.Name ?? "U")&background=0284c7&color=fff&size=32"
-                         alt="Avatar" style="width: 32px; height: 32px; object-fit: cover;">
 
                     <!-- 指向剛建好的 AuthController 的 Logout 動作 -->
                     <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
@@ -188,23 +185,11 @@
                 </div>
             </header>
 
-            @* 麵包屑（路徑提示，例：後台 > 揪團管理）
-           各頁面可自訂 @section Breadcrumb，沒設定就顯示頁面標題 *@
-            <div class="admin-breadcrumb">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">後台</a></li>
-                        @if (IsSectionDefined("Breadcrumb"))
-                        {
-                            @await RenderSectionAsync("Breadcrumb")
-                        }
-                        else
-                        {
-                            <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
-                        }
-                    </ol>
-                </nav>
-            </div>
+            @{
+                // 麵包屑拿掉了(跟頁面標題重複顯示同一個名稱),但各頁面裡還留著沒刪的 @section Breadcrumb 定義；
+                // Razor 規定「定義了就一定要被算繪」，不然會直接丟例外炸整頁，這裡明講「不用管它」
+                IgnoreSection("Breadcrumb");
+            }
 
             @* 各頁面的內容放這裡 *@
             <main class="admin-content">
@@ -218,6 +203,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/admin-view-tabs.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

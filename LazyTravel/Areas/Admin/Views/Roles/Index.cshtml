@@ -36,14 +36,7 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1 text-gray-800 fw-bold" style="font-family: var(--font-display); color: var(--sea-800);">
-            職位與權限管理
-        </h1>
-        <p class="text-muted mb-0 small">管理系統職務角色與底層細粒度權限字典 (Fine-Grained RBAC)</p>
-    </div>
-</div>
+
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -63,10 +56,10 @@
 <!-- 三大頁籤：角色管理、權限字典、操作紀錄 -->
 <div class="modern-tabs-wrapper">
     <a class="modern-tab @(activeTab == "roles" ? "active" : "")" href="?activeTab=roles">
-        <i class="fas fa-user-shield"></i> 角色管理 (Roles)
+        <i class="fas fa-user-shield"></i> 角色管理 
     </a>
     <a class="modern-tab @(activeTab == "permissions" ? "active" : "")" href="?activeTab=permissions">
-        <i class="fas fa-key"></i> 權限字典 (Permissions)
+        <i class="fas fa-key"></i> 權限字典 
     </a>
     <a class="modern-tab @(activeTab == "logs" ? "active" : "")" href="?activeTab=logs">
         <i class="fas fa-history"></i> 操作紀錄

@@ -2,13 +2,14 @@ using LazyTravel.Areas.Admin.Models;
 using LazyTravel.Models;
 using LazyTravel.Models.EfModels;
 using LazyTravel.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
-    // 之後 Cookie 認證與 Role 授權建好後,改成:
-    // [Authorize(Roles = "Admin,SuperAdmin")]
+    // 未登入會被 AdminAuth 這個 Cookie scheme 導去 Program.cs 設定的 LoginPath(/Admin/Auth/Login)
+    //[Authorize(Policy = "RequireDashboardRead")]
     [Area("Admin")]
     public class DashboardController : Controller
     {
