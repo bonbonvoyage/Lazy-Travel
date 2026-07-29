@@ -68,12 +68,12 @@
                placeholder="選擇建立時間區間"
                autocomplete="off"
                value="@(Model.CreatedAtFrom.HasValue && Model.CreatedAtTo.HasValue
-                                                            ? $"{Model.CreatedAtFrom:yyyy-MM-dd} 至 {Model.CreatedAtTo:yyyy-MM-dd}"
-                                                            : Model.CreatedAtFrom.HasValue
-                                                                ? $"{Model.CreatedAtFrom:yyyy-MM-dd}"
-                                                                : Model.CreatedAtTo.HasValue
-                                                                    ? $"{Model.CreatedAtTo:yyyy-MM-dd}"
-                                                                    : "")" />
+                                                                           ? $"{Model.CreatedAtFrom:yyyy-MM-dd} 至 {Model.CreatedAtTo:yyyy-MM-dd}"
+                                                                           : Model.CreatedAtFrom.HasValue
+                                                                               ? $"{Model.CreatedAtFrom:yyyy-MM-dd}"
+                                                                               : Model.CreatedAtTo.HasValue
+                                                                                   ? $"{Model.CreatedAtTo:yyyy-MM-dd}"
+                                                                                   : "")" />
 
         <input type="hidden"
                name="createdAtFrom"
@@ -205,13 +205,31 @@
 
         .groups-list-region .admin-table-card td:first-child form {
             margin: 0;
+            width: 100%;
         }
 
         .groups-list-region .admin-table-card td:first-child .btn-sm {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             min-width: 44px;
+            max-width: 100%;
             padding: .16rem .45rem;
             font-size: .78rem;
             line-height: 1.25;
+        }
+
+    .groups-workspace.details-open .admin-table-card td:first-child {
+        padding-left: .25rem;
+        padding-right: .25rem;
+    }
+
+        .groups-workspace.details-open .admin-table-card td:first-child .btn-sm {
+            width: 100%;
+            min-width: 0;
+            padding-left: .2rem;
+            padding-right: .2rem;
+            font-size: .72rem;
         }
 
     .group-details-backdrop {

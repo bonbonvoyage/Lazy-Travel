@@ -1,6 +1,6 @@
 ﻿using LazyTravel.Models.EfModels;
 using LazyTravel.Models.ViewModels;
-using Microsoft.AspNetCore.Authorization;
+using LazyTravel.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +8,6 @@ using System.Security.Claims;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
-	[Authorize(Policy = "RequireTravelGroupRead")]
 	[Area("Admin")]
 	public class TravelGroupsController : Controller
 	{
@@ -51,6 +50,8 @@ namespace LazyTravel.Areas.Admin.Controllers
 			{
 				selectedReviewStatus = null;
 			}
+
+			await TGReviewStatusService.SyncAsync(_context);
 
 			var query = _context.TravelGroups
 				.Include(g => g.OwnerMember)
@@ -238,7 +239,6 @@ namespace LazyTravel.Areas.Admin.Controllers
 			return PartialView("_TravelGroupDetailsContent", group);
 		}
 
-		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Delete(int id)
