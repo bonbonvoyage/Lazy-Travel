@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="780" viewBox="0 0 900 780" role="img" aria-labelledby="heroTitle">
+  <title id="heroTitle">插畫佔位：海岸懸崖、遠山、雲與太陽的線稿風景</title>
+
+  <defs>
+    <style>
+      .ln  { fill: none; stroke: #3D74B8; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+      .ln2 { fill: none; stroke: #3D74B8; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .75; }
+      .lnG { fill: none; stroke: #5C7F30; stroke-width: 3;   stroke-linecap: round; stroke-linejoin: round; }
+      .lnR { fill: none; stroke: #9C7A55; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <!-- ── 太陽 ── -->
+  <g>
+    <circle cx="742" cy="132" r="46" fill="#FBC53A"/>
+    <circle cx="742" cy="132" r="46" fill="none" stroke="#F0A81E" stroke-width="3"/>
+    <g stroke="#F5921E" stroke-width="4.5" stroke-linecap="round">
+      <path d="M742 58v-26M742 232v26M816 132h26M642 132h-26"/>
+      <path d="M795 79l18-18M671 203l-18 18M795 185l18 18M671 61l-18-18"/>
+    </g>
+  </g>
+
+  <!-- ── 雲（線稿，白底） ── -->
+  <g>
+    <path class="ln" d="M120 214c-13 0-24-10-24-23s11-23 24-23c3-14 15-24 30-24 13 0 24 8 29 19 4-3 9-4 14-4 14 0 25 11 25 25s-11 25-25 25z"
+          fill="#FFFFFF"/>
+    <path class="ln" d="M406 158c-11 0-20-9-20-20s9-20 20-20c3-12 13-21 26-21 11 0 21 7 25 17 3-2 7-3 11-3 12 0 22 10 22 22s-10 22-22 22z"
+          fill="#FFFFFF"/>
+    <path class="ln" d="M598 300c-10 0-18-8-18-18s8-18 18-18c2-11 12-19 23-19 10 0 19 6 22 15 3-2 6-3 10-3 11 0 20 9 20 20s-9 20-20 20z"
+          fill="#FFFFFF"/>
+    <path class="ln" d="M232 352c-9 0-16-7-16-16s7-16 16-16c2-10 11-17 21-17 9 0 17 6 20 14 2-2 6-2 9-2 10 0 18 8 18 18s-8 18-18 18z"
+          fill="#FFFFFF"/>
+    <!-- 幾筆代表風的細線 -->
+    <path class="ln2" d="M96 268h96M126 292h58M470 214h84M492 238h50M676 372h74M694 394h44"/>
+  </g>
+
+  <!-- ── 遠山 ── -->
+  <g>
+    <path d="M300 596 L392 470 L452 540 L520 442 L604 560 L666 500 L740 596 Z" fill="#A9C0DC"/>
+    <path d="M300 596 L392 470 L452 540 L520 442 L604 560 L666 500 L740 596 Z" fill="none" stroke="#5B7FAE" stroke-width="3"/>
+    <path d="M392 470 L370 500 L392 512 L414 498 Z" fill="#E8F0F8"/>
+    <path d="M520 442 L496 476 L520 490 L546 474 Z" fill="#E8F0F8"/>
+    <path d="M660 596 L744 486 L806 552 L862 500 L900 546 L900 596 Z" fill="#BACEE4"/>
+    <path d="M660 596 L744 486 L806 552 L862 500 L900 546" fill="none" stroke="#5B7FAE" stroke-width="2.6"/>
+  </g>
+
+  <!-- ── 海 ── -->
+  <g>
+    <path d="M0 600 C 120 588 250 592 372 606 L372 780 L0 780 Z" fill="#9ECDE9"/>
+    <path d="M0 600 C 120 588 250 592 372 606" class="ln"/>
+    <g class="ln2" stroke="#FFFFFF" opacity=".85">
+      <path d="M36 640c18-9 36-9 54 0s36 9 54 0"/>
+      <path d="M110 684c18-9 36-9 54 0s36 9 54 0"/>
+      <path d="M28 726c18-9 36-9 54 0s36 9 54 0"/>
+      <path d="M188 730c18-9 36-9 54 0s36 9 54 0"/>
+      <path d="M156 646c14-7 28-7 42 0"/>
+    </g>
+    <!-- 海岸線 -->
+    <path class="ln2" d="M0 632c96 12 190 22 268 44M0 676c76 14 152 24 214 44"/>
+  </g>
+
+  <!-- ── 懸崖：岩壁 ── -->
+  <g>
+    <path d="M366 664 C 452 640 560 622 680 616 C 780 611 856 616 900 620 L900 780 L366 780 Z" fill="#D2B48F"/>
+    <path d="M366 664 C 452 640 560 622 680 616 C 780 611 856 616 900 620" class="lnR" stroke-width="3.2"/>
+    <path class="lnR" d="M366 664 L372 780M436 652 L444 780M528 636 L534 780M638 620 L642 780M760 616 L764 780M862 618 L866 780"/>
+    <path class="lnR" d="M392 706c22-6 44-8 66-6M498 690c26-6 52-7 78-4M676 676c28-4 56-4 84-1"/>
+  </g>
+
+  <!-- ── 懸崖：草皮 ── -->
+  <g>
+    <path d="M360 654 C 440 604 556 576 682 570 C 782 565 856 572 900 578 L900 622 C 856 618 780 613 680 618 C 560 624 452 642 366 666 Z"
+          fill="#94BE55"/>
+    <path d="M360 654 C 440 604 556 576 682 570 C 782 565 856 572 900 578" class="lnG" stroke-width="3.4"/>
+    <path d="M366 666 C 452 642 560 624 680 618 C 780 613 856 618 900 622" class="lnG" stroke-width="2.6" opacity=".8"/>
+    <!-- 草叢 -->
+    <g class="lnG" stroke-width="2.4">
+      <path d="M430 634l6-14 6 14M452 626l6-14 6 14M520 610l6-14 6 14M604 596l6-14 6 14M700 588l6-14 6 14M796 588l6-14 6 14"/>
+    </g>
+    <!-- 小花 -->
+    <g>
+      <g transform="translate(486 616)"><circle r="4.4" fill="#FFFFFF" stroke="#5C7F30" stroke-width="1.6"/><circle r="1.6" fill="#F5B31E"/></g>
+      <g transform="translate(660 596)"><circle r="4.4" fill="#FFFFFF" stroke="#5C7F30" stroke-width="1.6"/><circle r="1.6" fill="#F5B31E"/></g>
+      <g transform="translate(756 602)"><circle r="4.4" fill="#FFFFFF" stroke="#5C7F30" stroke-width="1.6"/><circle r="1.6" fill="#F5B31E"/></g>
+    </g>
+  </g>
+
+  <!-- ── 右側灌木 ── -->
+  <g>
+    <path d="M812 574c-10-22 8-42 30-38 6-18 30-22 42-8 20-6 38 10 34 30 14 6 16 26 2 34z" fill="#6E9B3C" stroke="#4E7128" stroke-width="3"/>
+    <path class="lnG" d="M834 566c8-6 18-6 26 0M868 578c8-6 18-6 26 0" stroke="#4E7128" stroke-width="2"/>
+  </g>
+
+</svg>

@@ -14,6 +14,10 @@ namespace LazyTravel.Services
 
         // 尚未接 Cookie 認證,還沒有真的「當前登入管理員」可以拿,判定人先從 Employees 表隨機挑一位真實員工代稱
 
+        // 後台人員不在 Members 表,但 Reports.ReporterID 是 NOT NULL 外鍵,
+        // 由後台代為提出的檢舉就掛在這個佔位帳號底下(跟 AdminLogService 用的是同一筆)
+        private const string SystemAdminEmail = "system-admin@lazytravel.local";
+
         private readonly LazyTravel.Models.EfModels.LazyTravelDBContext _context;
         private readonly INotificationService _notificationService;
         private readonly IAdminLogService _adminLogService;
@@ -251,23 +255,27 @@ namespace LazyTravel.Services
 
         // 後台其他模組(例如 Vlog 行程文章的「提出檢舉」)直接建立檢舉單用。
         // 前台的 /Report/Create 走自己的流程(可以上傳截圖),這裡是後台內部呼叫,沒有證據圖。
+        //
+        // 注意:呼叫端傳進來的兩個 account 參數不一定是 Email。Vlog 後台傳的是顯示名稱
+        // (被檢舉人是 Member.Name,檢舉人是登入員工的 User.Identity.Name),所以這裡 Email 跟
+        // Name 都要試。而後台員工不在 Members 裡,但 Reports.ReporterID 是 NOT NULL 外鍵指向
+        // Members,查不到時就退回系統管理員那筆佔位會員,真正的操作人姓名記在 AdminLogs 裡不會遺失。
         public async Task<Report> SubmitAsync(ReportTargetType targetType, int targetId, string targetTitle,
             string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason)
         {
-            var reporterId = await _context.Members
-                .Where(m => m.Email == reporterAccount)
-                .Select(m => (int?)m.MemberId)
-                .FirstOrDefaultAsync();
+            var matchedReporterId = await ResolveMemberIdAsync(reporterAccount);
+            var isProxySubmit = matchedReporterId is null;
 
-            var reportedMemberId = await _context.Members
-                .Where(m => m.Email == reportedMemberAccount)
-                .Select(m => (int?)m.MemberId)
-                .FirstOrDefaultAsync();
+            var reporterId = matchedReporterId ?? await ResolveMemberIdAsync(SystemAdminEmail);
 
             if (reporterId is null)
             {
-                throw new InvalidOperationException($"找不到檢舉人帳號:{reporterAccount}");
+                throw new InvalidOperationException(
+                    $"找不到檢舉人「{reporterAccount}」,也找不到系統管理員帳號 {SystemAdminEmail}");
             }
+
+            // Reports.ReportedMemberID 允許 NULL,查不到就留空,不擋下整筆檢舉
+            var reportedMemberId = await ResolveMemberIdAsync(reportedMemberAccount);
 
             var efReport = new EfReport
             {
@@ -278,6 +286,8 @@ namespace LazyTravel.Services
                 TargetTitle = targetTitle,
                 ReasonCategory = (byte)reasonCategory,
                 Reason = reason,
+                // 檢舉人是後台員工(不在 Members)時,把真正的操作人記進補充說明,避免只看到系統管理員
+                Description = isProxySubmit ? $"由後台人員「{reporterAccount}」代為提出" : null,
                 ReportStatus = (byte)ReportStatus.Pending,
                 CreatedAt = DateTime.Now
             };
@@ -293,6 +303,20 @@ namespace LazyTravel.Services
                 targetId: efReport.ReportId);
 
             return ToDomain(efReport);
+        }
+
+        // account 可能是 Email 也可能是 Member.Name,兩種都試
+        private async Task<int?> ResolveMemberIdAsync(string? account)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                return null;
+            }
+
+            return await _context.Members
+                .Where(m => m.Email == account || m.Name == account)
+                .Select(m => (int?)m.MemberId)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, string reviewerName)

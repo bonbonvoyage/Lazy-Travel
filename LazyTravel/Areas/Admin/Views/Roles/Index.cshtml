@@ -11,37 +11,7 @@
 }
 
 <style>
-    .modern-tabs-wrapper {
-        display: inline-flex;
-        background-color: var(--surface-alt);
-        padding: 0.35rem;
-        border-radius: var(--radius-pill);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
-        margin-bottom: 1.5rem;
-    }
-
-    .modern-tab {
-        color: var(--text-secondary);
-        font-weight: 600;
-        padding: 0.6rem 1.5rem;
-        border-radius: var(--radius-pill);
-        text-decoration: none;
-        transition: all 0.25s ease-in-out;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-        .modern-tab:hover {
-            color: var(--sea-800);
-            background-color: var(--sand-100);
-        }
-
-        .modern-tab.active {
-            background-color: #ffffff;
-            color: var(--sea-700);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+    /* .modern-tabs-wrapper / .modern-tab 統一由 admin.css 提供資料夾頁籤樣式。 */
 
     .perm-badge {
         font-size: 0.75rem;
@@ -108,6 +78,7 @@
      ========================================== -->
 @if (activeTab == "roles")
 {
+    <div class="folder-tab-panel p-4 mb-4">
     <div class="d-flex justify-content-end mb-3">
         <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#createRoleModal">
             + 建立新職務角色
@@ -166,6 +137,7 @@
             }
         }
     </div>
+    </div>
 }
 
 <!-- ==========================================
@@ -174,7 +146,7 @@
 @if (activeTab == "permissions")
 {
     <!-- 🌟 重構：滿版雙欄式搜尋列 -->
-    <div class="premium-card mb-4">
+    <div class="premium-card folder-tab-panel mb-4">
         <div class="card-body p-4">
             <form asp-action="Index" method="get" class="row g-3 align-items-end">
                 <input type="hidden" name="activeTab" value="permissions" />
@@ -252,7 +224,7 @@
     var roleLogs = ViewBag.RoleLogs as IEnumerable<LazyTravel.Models.DTOs.AdminLogDto>;
 
     <!-- 🌟 重構：滿版搜尋列 -->
-    <div class="premium-card mb-4">
+    <div class="premium-card folder-tab-panel mb-4">
         <div class="card-body p-4">
             <form asp-action="Index" method="get" class="row g-3 align-items-end">
                 <input type="hidden" name="activeTab" value="logs" />
