@@ -175,9 +175,6 @@
                             @:未登入
                         }
                     </span>
-                    <img class="rounded-circle border"
-                         src="https://ui-avatars.com/api/?name=@(User.Identity?.Name ?? "U")&background=0284c7&color=fff&size=32"
-                         alt="Avatar" style="width: 32px; height: 32px; object-fit: cover;">
 
                     <!-- 指向剛建好的 AuthController 的 Logout 動作 -->
                     <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post" class="m-0">

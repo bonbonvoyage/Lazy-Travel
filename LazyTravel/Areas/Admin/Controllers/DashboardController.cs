@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LazyTravel.Areas.Admin.Controllers
 {
     // 未登入會被 AdminAuth 這個 Cookie scheme 導去 Program.cs 設定的 LoginPath(/Admin/Auth/Login)
-    [Authorize(Policy = "RequireDashboardRead")]
+    //[Authorize(Policy = "RequireDashboardRead")]
     [Area("Admin")]
     public class DashboardController : Controller
     {
