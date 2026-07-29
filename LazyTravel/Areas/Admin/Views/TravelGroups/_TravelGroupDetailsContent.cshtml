@@ -6,6 +6,31 @@
         .OrderByDescending(log => log.CreatedAt)
         .Take(3)
         .ToList();
+    var operationEmployeeNames = ViewBag.OperationEmployeeNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+
+    string JoinRuleLabel(byte joinRule) => joinRule switch
+    {
+        0 => "直接加入",
+        1 => "需審核",
+        _ => $"未知({joinRule})"
+    };
+
+    string GroupStatusLabel(byte groupStatus) => groupStatus switch
+    {
+        0 => "等待中",
+        1 => "成行中",
+        2 => "分帳中",
+        3 => "行程結束",
+        _ => $"未知({groupStatus})"
+    };
+
+    string MemberRoleLabel(byte memberRole) => memberRole switch
+    {
+        0 => "團員",
+        1 => "團主",
+        2 => "團員",
+        _ => $"未知({memberRole})"
+    };
 }
 
 <table class="table table-bordered">
@@ -34,7 +59,12 @@
         <td>
             @if (Model.OwnerMember != null)
             {
-                <span>@Model.OwnerMember.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@Model.OwnerMember.MemberId">@Model.OwnerMember.MemberId</a><span>)</span>
+                <span>@Model.OwnerMember.Name</span>
+                <span>(Id=</span>
+
+                <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@Model.OwnerMember.MemberId">@Model.OwnerMember.MemberId</a>
+            
+                <span>)</span>
             }
             else
             {
@@ -49,8 +79,8 @@
             @if (Model.GroupMembers != null && Model.GroupMembers.Any())
             {
                 var activeMembers = Model.GroupMembers
-                    .Where(m => m.IsRemoved == false && m.LeftAt == null)
-                    .ToList();
+                .Where(m => m.IsRemoved == false && m.LeftAt == null)
+                .ToList();
 
                 if (activeMembers.Any())
                 {
@@ -65,14 +95,19 @@
 
                         if (member.Member != null)
                         {
-                            <span>@member.Member.Name</span><span>(Id=</span><a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@member.Member.MemberId">@member.Member.MemberId</a><span>)</span>
+                            <span>@member.Member.Name</span>
+                            <span>(Id=</span>
+
+                            <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@member.Member.MemberId">@member.Member.MemberId</a>
+            
+                            <span>)</span>
                         }
                         else
                         {
                             <span>—</span>
                         }
 
-                        <span>(@member.MemberRole)</span>
+                        <span>(@MemberRoleLabel(member.MemberRole))</span>
                     }
                 }
                 else
@@ -104,12 +139,12 @@
 
     <tr>
         <th>加入規則</th>
-        <td>@Model.JoinRule</td>
+        <td>@JoinRuleLabel(Model.JoinRule)</td>
     </tr>
 
     <tr>
         <th>揪團狀態</th>
-        <td>@Model.GroupStatus</td>
+        <td>@GroupStatusLabel(Model.GroupStatus)</td>
     </tr>
 
     <tr>
@@ -182,7 +217,7 @@
                                 </div>
                                 <div class="small mt-1">@log.Remark</div>
                                 <div class="text-muted small mt-1">
-                                    @(log.ChangedByEmployee != null ? $"{log.ChangedByEmployee.Name}(Id={log.ChangedByEmployee.EmployeeId})" : "系統管理員")
+                                    @(log.ChangedByEmployeeId.HasValue && operationEmployeeNames.TryGetValue(log.ChangedByEmployeeId.Value, out var employeeName) ? $"{employeeName}(Id={log.ChangedByEmployeeId.Value})" : "系統管理員")
                                 </div>
                             </div>
                         }

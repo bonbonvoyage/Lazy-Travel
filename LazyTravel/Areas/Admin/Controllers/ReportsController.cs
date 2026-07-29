@@ -176,9 +176,15 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Details), new { id = request.Id, returnUrl = safeReturnUrl });
             }
 
-            // 尚未接上真的登入系統時 User.Identity?.Name 是 null,先從 Employees 表隨機挑一位;
-            // 之後會員登入功能做好後,這裡會自動改成取真正登入的管理員姓名
-            var reviewerName = User.Identity?.Name ?? _reportService.GetRandomReviewerAlias();
+            // 審核人員一律取登入員工姓名(Admin/AuthController 登入時寫進 ClaimTypes.Name 的 Employees.Name),
+            // 沒登入就擋下來,不編一個代稱掛名 —— 操作紀錄的重點就是「誰做的」,寫錯人比沒得寫更糟
+            var reviewerName = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(reviewerName))
+            {
+                TempData["Message"] = "送出失敗:請先登入後台再進行審核";
+                return RedirectToAction(nameof(Details), new { id = request.Id, returnUrl = safeReturnUrl });
+            }
+
             var outcome = await _reportService.JudgeAsync(request.Id, request.Decision, request.Note, request.IsMalicious, reviewerName);
 
             if (!outcome.Found)
