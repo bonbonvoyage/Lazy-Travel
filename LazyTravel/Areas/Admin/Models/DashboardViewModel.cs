@@ -25,8 +25,9 @@ namespace LazyTravel.Areas.Admin.Models
 
     public class DashboardViewModel
     {
-        // 公告模組還沒建置,先固定顯示提示文字
-        public string NoticeMessage { get; set; } = "目前沒有公告內容。之後接上「公告與通知」模組後,會顯示最新一則系統公告。";
+        // dbo.Announcements 沒有啟用中的公告時顯示這句
+        public const string DefaultNotice = "目前沒有公告內容。之後接上「公告與通知」模組後,會顯示最新一則系統公告。";
+        public string NoticeMessage { get; set; } = DefaultNotice;
         public List<DashboardModuleCard> Modules { get; set; } = new();
     }
 }

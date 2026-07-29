@@ -45,6 +45,13 @@ namespace LazyTravel.Areas.Admin.Controllers
 				? _reportService.Query(new ReportQueryOptions()).PendingCount
 				: 0;
 
+			// ponytail: 只讀一個字串,直接 SqlQuery,不建 entity 也不動自動產生的 DbContext。
+			// 公告模組要做新增/編輯時再補 Announcement entity。資料表見 sql/Announcements_Seed.sql
+			var notice = await _context.Database
+				// 欄位一定要叫 Value:EF 會把這段包成子查詢再套 FirstOrDefault,只認 Value 這個名字
+				.SqlQuery<string>($"SELECT TOP 1 Content AS [Value] FROM dbo.Announcements WHERE IsActive = 1 ORDER BY CreatedAt DESC")
+				.FirstOrDefaultAsync();
+
 			// 一次撈近期紀錄,再依 TargetTable 分流到各卡片自己的「最近動作」——
 			// TravelGroups 目前沒有任何地方會寫入這個 log(TravelGroupsController 沒呼叫 WriteAsync),
 			// 所以揪團管理卡會如實顯示空清單,不是漏寫
@@ -64,6 +71,8 @@ namespace LazyTravel.Areas.Admin.Controllers
 
 			var viewModel = new DashboardViewModel
 			{
+				// 沒有啟用中的公告就沿用預設提示文字
+				NoticeMessage = notice ?? DashboardViewModel.DefaultNotice,
 				Modules = new List<DashboardModuleCard>
 				{
 					new()
