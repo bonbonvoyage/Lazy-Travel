@@ -19,6 +19,8 @@ namespace LazyTravel.Areas.Admin.Models
         // 對應 Index.cshtml 裡的 .mod-card.c-xxx 配色 class(member / article / group / report)
         public string ColorKey { get; set; } = "member";
         public List<DashboardLogEntry> RecentLogs { get; set; } = new();
+        // 看得到這張卡所需的 PermissionCode,對應 _AdminLayout 側欄同一組權限
+        public string RequiredPermission { get; set; } = string.Empty;
     }
 
     public class DashboardViewModel

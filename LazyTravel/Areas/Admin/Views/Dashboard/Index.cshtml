@@ -21,6 +21,11 @@
     };
 }
 
+@if (!Model.Modules.Any())
+{
+    <div class="dash-mod-none">你目前的權限尚未開放任何管理模組,請聯絡系統管理員。</div>
+}
+
 <div class="dash-mod-grid">
     @foreach (var module in Model.Modules)
     {
@@ -67,8 +72,15 @@
         .dash-notice svg { width: 34px; height: 34px; flex-shrink: 0; opacity: .9; }
         .dash-notice-eyebrow { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
 
-        .dash-mod-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; }
+        /* auto-fit:卡片被權限濾掉時自動收合欄數,不會留一排空格 */
+        .dash-mod-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .9rem; }
         @@media (max-width: 900px) { .dash-mod-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .dash-mod-none {
+            background: var(--surface-alt); border-radius: var(--radius-lg);
+            padding: 2rem 1.4rem; text-align: center;
+            font-size: .88rem; color: var(--text-secondary);
+        }
 
         .dash-mod-card {
             position: relative;

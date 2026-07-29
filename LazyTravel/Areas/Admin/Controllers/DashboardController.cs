@@ -33,10 +33,17 @@ namespace LazyTravel.Areas.Admin.Controllers
 		{
 			ViewData["Title"] = "總覽";
 
-			var memberCount = await _context.Members.CountAsync();
-			var activeGroupCount = await _context.TravelGroups.CountAsync(g => !g.IsDelete);
-			var publishedVlogCount = VlogPostStore.GetAll().Count(p => !p.IsDelete && p.Status == VlogPostStatus.Published);
-			var pendingReportCount = _reportService.Query(new ReportQueryOptions()).PendingCount;
+			// 沒權限的模組連統計都不用查,直接省掉那一次 DB round trip
+			bool Can(string permissionCode) => User.HasClaim("Permission", permissionCode);
+
+			var memberCount = Can("member:account:read") ? await _context.Members.CountAsync() : 0;
+			var activeGroupCount = Can("social:travelgroup:read") ? await _context.TravelGroups.CountAsync(g => !g.IsDelete) : 0;
+			var publishedVlogCount = Can("content:vlog:read")
+				? VlogPostStore.GetAll().Count(p => !p.IsDelete && p.Status == VlogPostStatus.Published)
+				: 0;
+			var pendingReportCount = Can("content:report:read")
+				? _reportService.Query(new ReportQueryOptions()).PendingCount
+				: 0;
 
 			// 一次撈近期紀錄,再依 TargetTable 分流到各卡片自己的「最近動作」——
 			// TravelGroups 目前沒有任何地方會寫入這個 log(TravelGroupsController 沒呼叫 WriteAsync),
@@ -66,6 +73,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatLabel = "位會員",
 						StatValue = memberCount,
 						ColorKey = "member",
+						RequiredPermission = "member:account:read",
 						RecentLogs = LogsFor("Members", 2)
 					},
 					new()
@@ -75,6 +83,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatLabel = "篇已發布",
 						StatValue = publishedVlogCount,
 						ColorKey = "article",
+						RequiredPermission = "content:vlog:read",
 						RecentLogs = LogsFor("VlogPosts", 2)
 					},
 					new()
@@ -84,6 +93,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatLabel = "個揪團",
 						StatValue = activeGroupCount,
 						ColorKey = "group",
+						RequiredPermission = "social:travelgroup:read",
 						RecentLogs = LogsFor("TravelGroups", 2)
 					},
 					new()
@@ -94,10 +104,13 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatValue = pendingReportCount,
 						Badge = pendingReportCount > 0 ? pendingReportCount : null,
 						ColorKey = "report",
+						RequiredPermission = "content:report:read",
 						RecentLogs = LogsFor("Reports", 2)
 					},
 				}
 			};
+
+			viewModel.Modules = viewModel.Modules.Where(m => Can(m.RequiredPermission)).ToList();
 
 			return View(viewModel);
 		}
