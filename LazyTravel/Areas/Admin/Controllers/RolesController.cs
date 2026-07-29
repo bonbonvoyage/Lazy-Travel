@@ -1,5 +1,5 @@
 ﻿using LazyTravel.Models.DTOs;
-using LazyTravel.Services;
+using LazyTravel.Models.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 

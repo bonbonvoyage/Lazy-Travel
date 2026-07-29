@@ -1,7 +1,6 @@
 ﻿using LazyTravel.Models.DTOs;
+using LazyTravel.Models.Services;
 using LazyTravel.Models.ViewModels;
-using LazyTravel.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
@@ -21,7 +20,6 @@ namespace LazyTravel.Areas.Admin.Controllers
 		// ==========================================
 		// 1.1 會員管理主控制台 (整合雙頁籤功能)
 		// ==========================================
-		[Authorize(Policy = "RequireMemberRead")] // 🌟 加入門禁：必須要有讀取權限才能進入列表
 		public IActionResult Index(
 			// --- 必要參數 (無預設值) 必須放前面 ---
 			string keyword, byte? status, byte? gender,
@@ -82,7 +80,6 @@ namespace LazyTravel.Areas.Admin.Controllers
 		// ==========================================
 		// 1.2 檢視會員詳細資料 (含最新資安遮罩邏輯)
 		// ==========================================
-		[Authorize(Policy = "RequireMemberRead")]
 		public IActionResult Details(int id)
 		{
 			var dto = _memberService.GetMemberDetail(id);
@@ -91,26 +88,29 @@ namespace LazyTravel.Areas.Admin.Controllers
 				return NotFound();
 			}
 
-			// 🌟 改變邏輯：不管你是誰，初始載入畫面時「一律強制遮蔽」！
-			// 必須透過畫面上的按鈕發送 AJAX 請求才能解鎖並留存紀錄。
-			if (!string.IsNullOrEmpty(dto.Phone) && dto.Phone.Length >= 10)
-			{
-				dto.Phone = $"{dto.Phone.Substring(0, 4)}-***-{dto.Phone.Substring(dto.Phone.Length - 3)}";
-			}
+			int currentAdminRole = 1;
 
-			if (!string.IsNullOrEmpty(dto.LineId))
+			if (currentAdminRole < 2)
 			{
-				dto.LineId = dto.LineId.Length > 3 ? $"{dto.LineId.Substring(0, 3)}***" : "***";
-			}
+				if (!string.IsNullOrEmpty(dto.Phone) && dto.Phone.Length >= 10)
+				{
+					dto.Phone = $"{dto.Phone.Substring(0, 4)}-***-{dto.Phone.Substring(dto.Phone.Length - 3)}";
+				}
 
-			if (!string.IsNullOrEmpty(dto.InstagramUrl))
-			{
-				dto.InstagramUrl = "instagram.com/***";
-			}
+				if (!string.IsNullOrEmpty(dto.LineId))
+				{
+					dto.LineId = dto.LineId.Length > 3 ? $"{dto.LineId.Substring(0, 3)}***" : "***";
+				}
 
-			if (!string.IsNullOrEmpty(dto.FacebookUrl))
-			{
-				dto.FacebookUrl = "facebook.com/***";
+				if (!string.IsNullOrEmpty(dto.InstagramUrl))
+				{
+					dto.InstagramUrl = "instagram.com/***";
+				}
+
+				if (!string.IsNullOrEmpty(dto.FacebookUrl))
+				{
+					dto.FacebookUrl = "facebook.com/***";
+				}
 			}
 
 			var editDto = new MemberEditDto
@@ -127,47 +127,10 @@ namespace LazyTravel.Areas.Admin.Controllers
 
 			return View(dto);
 		}
-		// ==========================================
-		// 🌟 新增 API：供前端 AJAX 呼叫以解除遮蔽並寫入紀錄
-		// ==========================================
-		[HttpPost]
-		// 🌟 刪除 Route 標籤，讓系統預設路由處理
-		[Authorize(Policy = "RequireMemberRead")] // 基本門禁
-		[ValidateAntiForgeryToken] // 防止 CSRF 攻擊
-		public IActionResult Unmask(int id)
-		{
-			// 雙重檢查：確認該員工真的有「解除遮蔽」的細粒度權限
-			if (!User.HasClaim("Permission", "member:pii:unmask") && !User.HasClaim("Permission", "system:employee:manage"))
-			{
-				return Unauthorized(new { message = "權限不足，無法調閱個資" });
-			}
-
-			// 從資料庫取得「未遮蔽」的真實資料
-			var realDto = _memberService.GetMemberDetail(id);
-			if (realDto == null) return NotFound();
-
-			// 取得目前操作員工的 ID 與 IP
-			int currentAdminId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "1");
-			string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-
-			// 寫入調閱日誌！
-			_memberService.LogPiiUnmask(id, currentAdminId, ipAddress);
-
-			// 把真實資料回傳給前端的 AJAX
-			return Json(new
-			{
-				success = true,
-				phone = string.IsNullOrEmpty(realDto.Phone) ? "未填寫" : realDto.Phone,
-				lineId = string.IsNullOrEmpty(realDto.LineId) ? "未綁定" : realDto.LineId,
-				ig = string.IsNullOrEmpty(realDto.InstagramUrl) ? "未綁定" : realDto.InstagramUrl,
-				fb = string.IsNullOrEmpty(realDto.FacebookUrl) ? "未綁定" : realDto.FacebookUrl
-			});
-		}
 
 		// ==========================================
 		// 1.3 儲存會員編輯資料
 		// ==========================================
-		[Authorize(Policy = "RequireMemberBlock")] // 🌟 核心防護：確保就算駭客猜到這支 API 的網址，沒有權限也無法發送 POST 請求停權別人！
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		// 🌟 恢復優雅的 Model Binding

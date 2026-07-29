@@ -21,8 +21,6 @@ namespace LazyTravel.Services
         public int CurrentPage { get; set; }
         public int TotalPages { get; set; }
         public int TotalCount { get; set; }
-        // 套用篩選條件(Type/Status/關鍵字...)後、分頁前的筆數;TotalCount 是不管篩選的全部筆數,兩者意義不同
-        public int FilteredCount { get; set; }
         public int PendingCount { get; set; }
         public int UpheldCount { get; set; }
         public int DismissedCount { get; set; }

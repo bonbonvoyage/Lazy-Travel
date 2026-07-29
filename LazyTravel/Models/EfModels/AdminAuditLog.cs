@@ -36,9 +36,6 @@ public partial class AdminAuditLog
     [Unicode(false)]
     public string IPAddress { get; set; }
 
-    [StringLength(1000)]
-    public string Description { get; set; }
-
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 

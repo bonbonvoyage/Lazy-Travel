@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Models.Services
 {
 	public class MemberService : IMemberService
 	{
@@ -33,8 +33,8 @@ namespace LazyTravel.Services
 			if (!string.IsNullOrWhiteSpace(keyword))
 			{
 				query = query.Where(m =>
-					m.Name != null && m.Name.Contains(keyword) ||
-					m.Email != null && m.Email.Contains(keyword));
+					(m.Name != null && m.Name.Contains(keyword)) ||
+					(m.Email != null && m.Email.Contains(keyword)));
 			}
 
 			if (status.HasValue)
@@ -59,7 +59,7 @@ namespace LazyTravel.Services
 					Email = m.Email,
 					Name = m.Name,
 					Gender = m.Gender,
-					Age = m.BirthDate.HasValue ? DateTime.Now.Year - m.BirthDate.Value.Year : null,
+					Age = m.BirthDate.HasValue ? (DateTime.Now.Year - m.BirthDate.Value.Year) : null,
 					Occupation = m.Occupation,
 					MBTI = m.Mbti,
 					Status = m.Status,
@@ -180,22 +180,6 @@ namespace LazyTravel.Services
 			return true;
 		}
 
-		public void LogPiiUnmask(int memberId, int currentAdminId, string adminIp)
-		{
-			var log = new AdminAuditLog
-			{
-				EmployeeId = currentAdminId,
-				Action = "member:pii:unmask",
-				TargetResource = "Members",
-				TargetId = memberId.ToString(),
-				IPAddress = adminIp ?? "127.0.0.1",
-				Description = "解除遮蔽並調閱會員完整個資",
-				CreatedAt = DateTime.Now
-			};
-			_context.AdminAuditLogs.Add(log);
-			_context.SaveChanges();
-		}
-
 		public (IEnumerable<AdminLogDto> Data, int TotalCount) GetMemberAdminLogs(
 			string adminKeyword = null,
 			string targetKeyword = null,
@@ -275,12 +259,6 @@ namespace LazyTravel.Services
 				{
 					friendlyAction = "處分會員資料";
 					friendlyDesc = "強制重置違規欄位 (姓名、簡介或大頭貼)";
-				}
-				// 🌟 關鍵修復：加上對個資解碼的中文轉換判斷
-				else if (log.Action == "member:pii:unmask")
-				{
-					friendlyAction = "調閱個資";
-					friendlyDesc = "解除遮蔽並調閱會員完整個資";
 				}
 
 				// 🌟 將原因附加到 Description 的最後面

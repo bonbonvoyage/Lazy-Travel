@@ -56,6 +56,8 @@ public partial class Member
 
     public byte Status { get; set; }
 
+    public byte Role { get; set; }
+
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
@@ -80,10 +82,10 @@ public partial class Member
     public DateTime? LockoutEndDate { get; set; }
 
     [InverseProperty("Admin")]
-    public virtual ICollection<AdminPermission> AdminPermissions { get; set; } = new List<AdminPermission>();
+    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
 
     [InverseProperty("Admin")]
-    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
+    public virtual ICollection<AdminPermission> AdminPermissions { get; set; } = new List<AdminPermission>();
 
     [InverseProperty("Blocked")]
     public virtual ICollection<Block> BlockBlockeds { get; set; } = new List<Block>();
@@ -162,6 +164,9 @@ public partial class Member
 
     [InverseProperty("OwnerMember")]
     public virtual ICollection<TravelGroup> TravelGroups { get; set; } = new List<TravelGroup>();
+
+    [InverseProperty("ChangeByMember")]
+    public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
 
     [InverseProperty("Member")]
     public virtual ICollection<VlogPost> VlogPosts { get; set; } = new List<VlogPost>();
