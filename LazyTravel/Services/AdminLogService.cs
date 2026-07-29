@@ -36,7 +36,7 @@ namespace LazyTravel.Services
                 TargetTable = targetTable ?? "Unknown",
                 TargetId = targetId,
                 Description = detail,
-                IPAddress = "127.0.0.1",
+                Ipaddress = "127.0.0.1",
                 CreatedAt = DateTime.Now,
             });
 
@@ -65,48 +65,6 @@ namespace LazyTravel.Services
                 .ToListAsync();
 
             return logs.Select(ToDto).ToList();
-        }
-
-        // 篩選 + 分頁查詢,給檢舉審核台的操作紀錄分頁用。
-        // 用「動作名稱」而不是 TargetTable 界定範圍:檢舉模組寫的紀錄裡,「自動停權」這類是記在
-        // TargetTable="Members"(因為改動的是會員狀態),不是 "Reports",用 TargetTable 篩會漏掉。
-        public async Task<(List<AdminLog> Data, int TotalCount)> QueryAsync(
-            IEnumerable<string> actionScope, string? operatorKeyword, string? detailKeyword, string? action, int page, int pageSize = 10)
-        {
-            var scopeList = actionScope.ToList();
-            var query = _context.AdminLogs
-                .AsNoTracking()
-                .Include(l => l.Admin)
-                .Where(l => scopeList.Contains(l.Action));
-
-            if (!string.IsNullOrWhiteSpace(operatorKeyword))
-            {
-                query = query.Where(l => l.Admin != null && l.Admin.Name.Contains(operatorKeyword));
-            }
-
-            if (!string.IsNullOrWhiteSpace(action))
-            {
-                query = query.Where(l => l.Action == action);
-            }
-
-            int totalCount = await query.CountAsync();
-
-            var logs = await query
-                .OrderByDescending(l => l.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            var result = logs.Select(ToDto).ToList();
-
-            // Description 是自由文字,資料庫端查不了關鍵字,拿到這一頁的資料後在記憶體裡篩
-            if (!string.IsNullOrWhiteSpace(detailKeyword))
-            {
-                result = result.Where(r => r.Detail.Contains(detailKeyword, StringComparison.OrdinalIgnoreCase)).ToList();
-                totalCount = result.Count;
-            }
-
-            return (result, totalCount);
         }
 
         private static AdminLog ToDto(EfAdminLog log) => new()

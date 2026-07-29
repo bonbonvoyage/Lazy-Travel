@@ -13,7 +13,6 @@ namespace LazyTravel.Models
         public int? TargetId { get; set; }
 
         public string Detail { get; set; } = string.Empty;
-        public string? IPAddress { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }
