@@ -307,6 +307,21 @@
         {
             <span class="btn btn-sm btn-outline-secondary disabled">下一頁 →</span>
         }
+
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a class="btn btn-sm btn-outline-primary"
+               asp-action="Index" asp-route-type="@Model.Type" asp-route-status="@Model.Status"
+               asp-route-reasonCategory="@Model.ReasonCategory" asp-route-keyword="@Model.Keyword"
+               asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+               asp-route-page="@Model.TotalPages">
+                最後一頁 →|
+            </a>
+        }
+        else
+        {
+            <span class="btn btn-sm btn-outline-secondary disabled">最後一頁 →|</span>
+        }
     </nav>
 
 </div>

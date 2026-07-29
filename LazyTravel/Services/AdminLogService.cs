@@ -52,7 +52,8 @@ namespace LazyTravel.Services
                 .Take(take)
                 .ToListAsync();
 
-            return logs.Select(ToDto).ToList();
+            var employeeNames = await GetEmployeeNamesByEmailAsync(logs);
+            return logs.Select(l => ToDto(l, employeeNames)).ToList();
         }
 
         public async Task<List<AdminLog>> GetForTargetAsync(string targetTable, int targetId)
@@ -64,7 +65,8 @@ namespace LazyTravel.Services
                 .OrderByDescending(l => l.CreatedAt)
                 .ToListAsync();
 
-            return logs.Select(ToDto).ToList();
+            var employeeNames = await GetEmployeeNamesByEmailAsync(logs);
+            return logs.Select(l => ToDto(l, employeeNames)).ToList();
         }
 
         // 篩選 + 分頁查詢,給檢舉審核台的操作紀錄分頁用。
@@ -81,7 +83,18 @@ namespace LazyTravel.Services
 
             if (!string.IsNullOrWhiteSpace(operatorKeyword))
             {
-                query = query.Where(l => l.Admin != null && l.Admin.Name.Contains(operatorKeyword));
+                // 畫面上「執行管理員」顯示的是 Employees 姓名(見 ToDto),搜尋framework也要對得起來,
+                // 不然使用者照畫面打員工姓名(例如「浚翔」)會查不到東西。
+                // 用 Email 反查符合關鍵字的員工,再用 Email 比對 Admin,同時保留原本比對 Member.Name
+                // 的邏輯(查不到對應員工姓名時,畫面退回顯示 Member 姓名,搜尋也要能對得上)。
+                var matchingEmails = await _context.Employees
+                    .AsNoTracking()
+                    .Where(e => e.Name.Contains(operatorKeyword))
+                    .Select(e => e.Email)
+                    .ToListAsync();
+
+                query = query.Where(l => l.Admin != null &&
+                    (l.Admin.Name.Contains(operatorKeyword) || matchingEmails.Contains(l.Admin.Email)));
             }
 
             if (!string.IsNullOrWhiteSpace(action))
@@ -97,7 +110,8 @@ namespace LazyTravel.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            var result = logs.Select(ToDto).ToList();
+            var employeeNames = await GetEmployeeNamesByEmailAsync(logs);
+            var result = logs.Select(l => ToDto(l, employeeNames)).ToList();
 
             // Description 是自由文字,資料庫端查不了關鍵字,拿到這一頁的資料後在記憶體裡篩
             if (!string.IsNullOrWhiteSpace(detailKeyword))
@@ -109,16 +123,47 @@ namespace LazyTravel.Services
             return (result, totalCount);
         }
 
-        private static AdminLog ToDto(EfAdminLog log) => new()
+        // 「審核人員」對外顯示要優先用 Employees 表的姓名(真實員工身分),不是 Members 表的暱稱。
+        // AdminLogs.AdminID 這個外鍵本身還是照組長定案指向 Members,這裡只在顯示這一步,
+        // 用 Member 的 Email 去反查 Employees 裡對應的員工姓名;查不到就退回原本的 Member 姓名。
+        private static AdminLog ToDto(EfAdminLog log, IReadOnlyDictionary<string, string> employeeNamesByEmail)
         {
-            Id = log.LogId,
-            OperatorName = log.Admin?.Name ?? "系統管理員",
-            Action = log.Action,
-            TargetTable = log.TargetTable,
-            TargetId = log.TargetId,
-            Detail = log.Description ?? string.Empty,
-            CreatedAt = log.CreatedAt,
-        };
+            string? displayName = null;
+            if (log.Admin?.Email is { } email && employeeNamesByEmail.TryGetValue(email, out var employeeName))
+            {
+                displayName = employeeName;
+            }
+
+            return new()
+            {
+                Id = log.LogId,
+                OperatorName = displayName ?? log.Admin?.Name ?? "系統管理員",
+                Action = log.Action,
+                TargetTable = log.TargetTable,
+                TargetId = log.TargetId,
+                Detail = log.Description ?? string.Empty,
+                CreatedAt = log.CreatedAt,
+            };
+        }
+
+        private async Task<IReadOnlyDictionary<string, string>> GetEmployeeNamesByEmailAsync(List<EfAdminLog> logs)
+        {
+            var emails = logs
+                .Where(l => l.Admin != null)
+                .Select(l => l.Admin!.Email)
+                .Distinct()
+                .ToList();
+
+            if (emails.Count == 0)
+            {
+                return new Dictionary<string, string>();
+            }
+
+            return await _context.Employees
+                .AsNoTracking()
+                .Where(e => emails.Contains(e.Email))
+                .ToDictionaryAsync(e => e.Email, e => e.Name);
+        }
 
         private async Task<int> ResolveSystemAdminIdAsync()
         {
