@@ -60,48 +60,11 @@
             padding: .3rem .9rem;
         }
 
-        /* 整頁切換:檢舉審核台 / 操作紀錄 */
-        .report-view-tabs {
-            display: flex;
-            gap: .3rem;
-            border-bottom: 1px solid var(--border-soft);
-            margin-bottom: 1.25rem;
-        }
-        .report-view-tab {
-            border: none;
-            background: none;
-            padding: .6rem 1.1rem;
-            font-size: .92rem;
-            color: var(--text-secondary);
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-        }
-        .report-view-tab:hover { color: var(--sea-700); }
-        .report-view-tab.active {
-            color: var(--sea-700);
-            font-weight: 500;
-            border-bottom-color: var(--sea-600);
-        }
-        .report-view-pane { display: none; }
-        .report-view-pane.active { display: block; }
-
-        /* 頁籤右邊帶筆數的小圓標 */
-        .report-tab-count {
-            display: inline-block;
-            min-width: 1.4rem;
-            padding: .05rem .4rem;
-            margin-left: .35rem;
-            border-radius: var(--radius-pill);
-            background-color: var(--sand-200);
-            color: var(--sand-500);
-            font-size: .75rem;
-            font-weight: 600;
-            text-align: center;
-        }
-        .report-view-tab.active .report-tab-count {
-            background-color: var(--sea-100);
-            color: var(--sea-700);
-        }
+        /* 整頁切換:檢舉審核台 / 操作紀錄
+           .report-view-tabs / .report-view-tab / .report-view-pane / .report-tab-count
+           的外觀已改為與「揪團管理」一致的資料夾式頁籤，定義搬到
+           wwwroot/css/admin.css 的「5-2. 資料夾式頁內籤」由三頁共用。
+           本頁的 HTML、切換邏輯、路由參數都沒有變動，只換外觀。 */
 
         /* 重設按鈕緊跟在最後一個欄位後面,不強制對齊最右邊
            (margin-left:auto 在欄位換行時會單獨佔一整行、留下一大段空白,故不使用) */

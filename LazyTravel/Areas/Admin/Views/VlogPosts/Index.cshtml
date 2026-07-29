@@ -51,26 +51,29 @@
     <a asp-action="Create" class="btn btn-sm btn-coral ms-auto">＋ 新增文章</a>
 </div>
 
-@* ---------- 發文者篩選：後台目前只有官方能登入，這裡讓官方可以切換「我的文章」跟「其他會員的文章」，兩者互斥 ---------- *@
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="filter-chip @(!Model.OnlyMine ? "on" : "")"
-       asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">會員文章</a>
-    <a class="filter-chip @(Model.OnlyMine ? "on" : "")"
-       asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">官方文章</a>
-</div>
+@* ---------- 篩選命令列：只整理視覺群組，既有路由參數與篩選邏輯維持不變 ---------- *@
+<div class="vlog-filter-command">
+    <div class="vlog-filter-source" aria-label="文章來源">
+        <a class="@(!Model.OnlyMine ? "active" : "")"
+           asp-action="Index" asp-route-onlyMine="false" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">會員文章</a>
+        <a class="@(Model.OnlyMine ? "active" : "")"
+           asp-action="Index" asp-route-onlyMine="true" asp-route-status="@Model.Status" asp-route-showDeleted="@Model.ShowDeleted" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">官方文章</a>
+    </div>
 
-@* ---------- 狀態篩選 chips ---------- *@
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="filter-chip @(!Model.ShowDeleted && string.IsNullOrEmpty(Model.Status) ? "on" : "")"
-       asp-action="Index" asp-route-status="" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部 (@Model.TotalPosts)</a>
-    <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Draft) ? "on" : "")"
-       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Draft)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">草稿 (@Model.DraftCount)</a>
-    <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.PendingReview) ? "on" : "")"
-       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.PendingReview)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">待審核 (@Model.PendingReviewCount)</a>
-    <a class="filter-chip @(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Published) ? "on" : "")"
-       asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Published)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已發布 (@Model.PublishedCount)</a>
-    <a class="filter-chip @(Model.ShowDeleted ? "on" : "")"
-       asp-action="Index" asp-route-showDeleted="true" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已刪除 (@Model.DeletedCount)</a>
+    <nav class="vlog-filter-status" aria-label="文章狀態">
+        <a class="@(!Model.ShowDeleted && string.IsNullOrEmpty(Model.Status) ? "active" : "")"
+           asp-action="Index" asp-route-status="" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">全部 <span>@Model.TotalPosts</span></a>
+        <a class="@(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Draft) ? "active" : "")"
+           asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Draft)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">草稿 <span>@Model.DraftCount</span></a>
+        <a class="@(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.PendingReview) ? "active" : "")"
+           asp-action="Index" asp-route-status="@nameof(VlogPostStatus.PendingReview)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">待審核 <span>@Model.PendingReviewCount</span></a>
+        <a class="@(!Model.ShowDeleted && Model.Status == nameof(VlogPostStatus.Published) ? "active" : "")"
+           asp-action="Index" asp-route-status="@nameof(VlogPostStatus.Published)" asp-route-showDeleted="false" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已發布 <span>@Model.PublishedCount</span></a>
+        <a class="@(Model.ShowDeleted ? "active" : "")"
+           asp-action="Index" asp-route-showDeleted="true" asp-route-onlyMine="@Model.OnlyMine" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">已刪除 <span>@Model.DeletedCount</span></a>
+    </nav>
+
+    <span class="vlog-filter-total">共 @Model.TotalPosts 篇文章</span>
 </div>
 
 @* ---------- 資料表 ---------- *@

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A 暖沙雜誌風 — Lazy Travel 首頁</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="../css/brand.css" />
+<link rel="stylesheet" href="_shared.css" />
+
+<style>
+/* ============================================================
+   A 版：暖沙雜誌風
+   氣質 —— 慢、留白多、像一本旅遊誌。沙色當主場，海藍退成配角，
+   珊瑚橘全頁只出現在「開始揪團」這一顆 CTA 上。
+   ============================================================ */
+
+/* ---------- Hero：左文右圖的不對稱版面 ---------- */
+.hero-a { padding: 4.5rem 0 3.5rem; }
+.hero-a h1 {
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  line-height: 1.35;
+  color: var(--sea-800);
+  margin: .6rem 0 1.1rem;
+}
+.hero-a h1 em {
+  font-style: normal;
+  color: var(--coral-600);
+}
+.hero-a .lede {
+  color: var(--text-secondary);
+  max-width: 30rem;
+  line-height: 1.9;
+}
+
+/* 搜尋列：一張暖白卡，欄位之間用細線分隔而不是外框 */
+.search-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 30px rgba(31, 61, 78, .08);
+  padding: .55rem .55rem .55rem 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  flex-wrap: wrap;
+}
+.search-field { flex: 1 1 8rem; min-width: 0; padding: .5rem 0; }
+.search-field + .search-field { border-left: 1px solid var(--border-soft); padding-left: 1.1rem; }
+.search-field label {
+  display: block;
+  font-size: .72rem;
+  color: var(--text-muted);
+  margin-bottom: .1rem;
+}
+.search-field input,
+.search-field select {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: .95rem;
+  color: var(--ink);
+  padding: 0;
+}
+.search-field input:focus,
+.search-field select:focus { outline: none; }
+.search-card .btn { flex: 0 0 auto; min-height: 48px; }
+
+.trust-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem;
+  margin-top: 1.4rem;
+  font-size: .86rem;
+  color: var(--text-secondary);
+}
+.trust-row b { color: var(--sea-700); font-variant-numeric: tabular-nums; }
+
+/* 右側照片拼貼：主圖 + 一張偏移的小卡，帶一點手作感的傾斜 */
+.collage { position: relative; padding-bottom: 3rem; }
+.collage .shot-main {
+  height: 24rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 44px rgba(31, 61, 78, .14);
+}
+.collage .shot-sub {
+  position: absolute;
+  left: -1.5rem; bottom: 0;
+  width: 11rem; height: 8rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 28px rgba(31, 61, 78, .16);
+  border: 5px solid var(--surface);
+  transform: rotate(-4deg);
+}
+.collage .shot-tag {
+  position: absolute;
+  right: -.6rem; top: 1.6rem;
+  background: var(--surface);
+  border-radius: var(--radius-pill);
+  padding: .45rem 1rem;
+  font-size: .82rem;
+  color: var(--sea-700);
+  box-shadow: 0 6px 20px rgba(31, 61, 78, .12);
+  display: flex; align-items: center; gap: .4rem;
+}
+
+/* ---------- 分類籤 ---------- */
+.cat-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+.cat-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  border: 1px solid var(--sand-200);
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill);
+  padding: .55rem 1.1rem;
+  font-size: .9rem;
+  text-decoration: none;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.cat-chip:hover { background: var(--sea-50); color: var(--sea-700); border-color: var(--sea-200); }
+.cat-chip.on { background: var(--sea-600); border-color: var(--sea-600); color: #fff; }
+
+/* ---------- 區塊標題：左標題右連結，中間一條沙色細線 ---------- */
+.sec-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.5rem; }
+.sec-head h2 { font-size: 1.7rem; margin: 0; white-space: nowrap; }
+.sec-head .rule { flex: 1; height: 1px; background: var(--sand-200); }
+.sec-head a { font-size: .88rem; color: var(--sea-600); text-decoration: none; white-space: nowrap; }
+.sec-head a:hover { text-decoration: underline; }
+
+/* ---------- 精選：一大兩小的雜誌排版 ---------- */
+.feat-lg {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(31, 61, 78, .06);
+  height: 100%;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.feat-lg:hover { transform: translateY(-4px); box-shadow: 0 12px 34px rgba(31, 61, 78, .12); color: inherit; }
+.feat-lg .ph { height: 17rem; }
+.feat-lg .body { padding: 1.5rem 1.6rem 1.7rem; }
+.feat-lg h3 { font-size: 1.5rem; margin: .5rem 0 .6rem; }
+.feat-lg p { color: var(--text-secondary); line-height: 1.85; margin: 0; }
+
+.feat-sm {
+  display: flex; gap: 1rem; text-decoration: none; color: inherit;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(31, 61, 78, .05);
+  transition: transform .25s ease;
+}
+.feat-sm:hover { transform: translateY(-3px); color: inherit; }
+.feat-sm .ph { flex: 0 0 8.5rem; }
+.feat-sm .body { padding: .95rem 1.1rem .95rem 0; }
+.feat-sm h3 { font-size: 1.05rem; margin: .3rem 0 .35rem; }
+.feat-sm .meta { font-size: .78rem; color: var(--text-muted); }
+
+.byline { display: flex; align-items: center; gap: .45rem; font-size: .82rem; color: var(--text-secondary); }
+.byline .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: .65rem; color: #fff; }
+
+/* ---------- 揪團列表：橫式長條，日期方塊在左 ---------- */
+.trip-row {
+  display: flex; align-items: center; gap: 1.25rem;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.35rem;
+  text-decoration: none; color: inherit;
+  box-shadow: 0 2px 12px rgba(31, 61, 78, .04);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.trip-row:hover { transform: translateX(4px); box-shadow: 0 6px 22px rgba(31, 61, 78, .1); color: inherit; }
+.date-box {
+  flex: 0 0 auto;
+  width: 3.6rem; text-align: center;
+  background: var(--sand-100);
+  border-radius: var(--radius-sm);
+  padding: .5rem .2rem;
+  line-height: 1.2;
+}
+.date-box .m { font-size: .7rem; color: var(--text-muted); }
+.date-box .d { font-family: var(--font-display); font-size: 1.35rem; color: var(--sea-800); }
+.trip-row .main { flex: 1 1 auto; min-width: 0; }
+.trip-row h3 { font-size: 1.05rem; margin: 0 0 .3rem; }
+.trip-row .tags { display: flex; gap: .35rem; flex-wrap: wrap; }
+.trip-row .side { flex: 0 0 auto; width: 10rem; }
+.trip-row .side .nums { font-size: .78rem; color: var(--text-secondary); margin-bottom: .35rem; display: flex; justify-content: space-between; }
+
+/* ---------- 旅人的話 ---------- */
+.quote-card {
+  background: var(--surface-alt);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem 1.5rem;
+  height: 100%;
+}
+.quote-card .mark { font-family: var(--font-display); font-size: 2.4rem; color: var(--sand-300); line-height: .6; }
+.quote-card p { color: var(--text-secondary); line-height: 1.9; margin: .8rem 0 1.2rem; }
+
+/* ---------- 結尾 CTA ---------- */
+.cta-band {
+  background: var(--sand-100);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+.cta-band h2 { font-size: 1.9rem; margin-bottom: .6rem; }
+.cta-band p { color: var(--text-secondary); margin-bottom: 1.6rem; }
+
+@media (max-width: 991.98px) {
+  .hero-a { padding-top: 2.5rem; }
+  .collage { margin-top: 2.5rem; }
+  .collage .shot-sub { left: auto; right: 0; }
+  .trip-row { flex-wrap: wrap; }
+  .trip-row .side { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ 導覽列（沿用 _Layout.cshtml 的 .navbar-lazy） ══════════ -->
+<header>
+  <nav class="navbar navbar-expand-lg navbar-lazy sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">Lazy Travel</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navA"
+              aria-controls="navA" aria-expanded="false" aria-label="切換導覽">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navA">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">首頁</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">找行程</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">找旅伴</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">揪團行程</a></li>
+          <li class="nav-item ms-lg-2"><a class="btn btn-primary btn-sm" href="#">登入 / 註冊</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ══════════ Hero ══════════ -->
+  <section class="hero-a">
+    <div class="container">
+      <div class="row align-items-center g-5">
+
+        <div class="col-lg-7">
+          <span class="eyebrow">慢慢走，才看得見風景</span>
+          <h1>找一個對的旅伴，<br />走一段<em>不趕路</em>的旅程</h1>
+          <p class="lede">
+            這裡沒有一天七個景點的行程表。把你想去的地方寫下來，
+            慢遊會幫你找到步調相同的人，一起把日子過成旅行。
+          </p>
+
+          <form class="search-card mt-4" onsubmit="return false;">
+            <div class="search-field">
+              <label for="a-region">想去哪</label>
+              <select id="a-region">
+                <option>不限地區</option>
+                <option>宜蘭・花東</option>
+                <option>台南・嘉義</option>
+                <option>離島</option>
+                <option>日本</option>
+              </select>
+            </div>
+            <div class="search-field">
+              <label for="a-date">什麼時候</label>
+              <input id="a-date" type="text" placeholder="這個週末" />
+            </div>
+            <div class="search-field">
+              <label for="a-kw">想做什麼</label>
+              <input id="a-kw" type="text" placeholder="溫泉、老街、看海" />
+            </div>
+            <button class="btn btn-coral" type="submit">找行程</button>
+          </form>
+
+          <div class="trust-row">
+            <span><b>1,284</b> 位旅人在路上</span>
+            <span><b>312</b> 個進行中的團</span>
+            <span><b>96%</b> 的團順利成行</span>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="collage">
+            <div class="ph ph-sand shot-main" role="img" aria-label="示意圖：暖沙色調的海岸公路"></div>
+            <div class="ph ph-leaf shot-sub" role="img" aria-label="示意圖：山中步道"></div>
+            <span class="shot-tag">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 21s-7-4.5-7-10a7 7 0 0114 0c0 5.5-7 10-7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+              本週最熱・宜蘭南方澳
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 分類 ══════════ -->
+  <section class="container pb-2">
+    <div class="cat-row">
+      <a class="cat-chip on" href="#">全部</a>
+      <a class="cat-chip" href="#">海島</a>
+      <a class="cat-chip" href="#">山線縱走</a>
+      <a class="cat-chip" href="#">城市散步</a>
+      <a class="cat-chip" href="#">美食巡禮</a>
+      <a class="cat-chip" href="#">露營</a>
+      <a class="cat-chip" href="#">鐵道慢旅</a>
+      <a class="cat-chip" href="#">溫泉</a>
+    </div>
+  </section>
+
+  <!-- ══════════ 本週精選 ══════════ -->
+  <section class="container py-5">
+    <div class="sec-head">
+      <h2>本週精選</h2>
+      <span class="rule"></span>
+      <a href="#">看全部行程 →</a>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <a class="feat-lg" href="#">
+          <div class="ph ph-sea" role="img" aria-label="示意圖：清晨的海岸線"></div>
+          <div class="body">
+            <div class="byline">
+              <span class="dot av-1" aria-hidden="true">游</span>
+              游雅婷
+              <span class="official-badge">✓ 官方合作</span>
+            </div>
+            <h3>四天三夜，把東海岸開到底</h3>
+            <p>
+              從蘇澳出發，沿著台十一線一路往南。不排景點，只排幾個一定要停下來的地方——
+              清水斷崖的日出、石梯坪的潮間帶，還有那間開了三十年的麵店。
+            </p>
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <span class="badge badge-sea px-3 py-2">花東</span>
+              <span class="badge badge-leaf px-3 py-2">自駕</span>
+              <span class="badge badge-sand px-3 py-2">4 天</span>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="d-flex flex-column gap-4 h-100">
+          <a class="feat-sm" href="#">
+            <div class="ph ph-leaf" role="img" aria-label="示意圖：山林步道"></div>
+            <div class="body">
+              <span class="meta">3 天 2 夜・嘉義</span>
+              <h3>阿里山的第二種走法</h3>
+              <div class="byline"><span class="dot av-2" aria-hidden="true">陳</span>陳柏睿</div>
+            </div>
+          </a>
+          <a class="feat-sm" href="#">
+            <div class="ph ph-coral" role="img" aria-label="示意圖：黃昏的老街"></div>
+            <div class="body">
+              <span class="meta">2 天 1 夜・台南</span>
+              <h3>台南老屋咖啡地圖</h3>
+              <div class="byline"><span class="dot av-3" aria-hidden="true">林</span>林思妤</div>
+            </div>
+          </a>
+          <a class="feat-sm" href="#">
+            <div class="ph ph-deep" role="img" aria-label="示意圖：離島的海"></div>
+            <div class="body">
+              <span class="meta">5 天 4 夜・澎湖</span>
+              <h3>跳島，然後什麼都不做</h3>
+              <div class="byline"><span class="dot av-4" aria-hidden="true">吳</span>吳承翰</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 正在揪團 ══════════ -->
+  <section class="container py-5">
+    <div class="sec-head">
+      <h2>正在揪團</h2>
+      <span class="rule"></span>
+      <a href="#">看全部揪團 →</a>
+    </div>
+
+    <div class="d-flex flex-column gap-3">
+
+      <a class="trip-row" href="#">
+        <div class="date-box"><div class="m">8月</div><div class="d">09</div></div>
+        <div class="main">
+          <h3>南方澳一日：漁港、豆腐岬、看夕陽</h3>
+          <div class="tags">
+            <span class="badge badge-sea px-3 py-1">宜蘭</span>
+            <span class="badge badge-leaf px-3 py-1">不開車也能去</span>
+            <span class="badge badge-sand px-3 py-1">1 天</span>
+          </div>
+        </div>
+        <div class="side">
+          <div class="nums"><span>已報名 6 / 8</span><span>差 2 位</span></div>
+          <div class="join-bar is-hot"><span style="width:75%"></span></div>
+          <div class="avatar-stack mt-2">
+            <span class="av av-1" aria-hidden="true">游</span>
+            <span class="av av-2" aria-hidden="true">陳</span>
+            <span class="av av-3" aria-hidden="true">林</span>
+            <span class="av av-4" aria-hidden="true">吳</span>
+            <span class="av av-more" aria-hidden="true">+2</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="trip-row" href="#">
+        <div class="date-box"><div class="m">8月</div><div class="d">16</div></div>
+        <div class="main">
+          <h3>合歡北峰單攻，配一頓埔里的晚餐</h3>
+          <div class="tags">
+            <span class="badge badge-sea px-3 py-1">南投</span>
+            <span class="badge badge-leaf px-3 py-1">有點硬</span>
+            <span class="badge badge-sand px-3 py-1">2 天</span>
+          </div>
+        </div>
+        <div class="side">
+          <div class="nums"><span>已報名 4 / 10</span><span>還很空</span></div>
+          <div class="join-bar"><span style="width:40%"></span></div>
+          <div class="avatar-stack mt-2">
+            <span class="av av-2" aria-hidden="true">陳</span>
+            <span class="av av-3" aria-hidden="true">林</span>
+            <span class="av av-1" aria-hidden="true">游</span>
+            <span class="av av-more" aria-hidden="true">+1</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="trip-row" href="#">
+        <div class="date-box"><div class="m">8月</div><div class="d">23</div></div>
+        <div class="main">
+          <h3>台南三日：只走沒有排隊的店</h3>
+          <div class="tags">
+            <span class="badge badge-sea px-3 py-1">台南</span>
+            <span class="badge badge-leaf px-3 py-1">吃為主</span>
+            <span class="badge badge-sand px-3 py-1">3 天</span>
+          </div>
+        </div>
+        <div class="side">
+          <div class="nums"><span>已報名 9 / 10</span><span>剩最後 1 位</span></div>
+          <div class="join-bar is-hot"><span style="width:90%"></span></div>
+          <div class="avatar-stack mt-2">
+            <span class="av av-3" aria-hidden="true">林</span>
+            <span class="av av-4" aria-hidden="true">吳</span>
+            <span class="av av-1" aria-hidden="true">游</span>
+            <span class="av av-2" aria-hidden="true">陳</span>
+            <span class="av av-more" aria-hidden="true">+5</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ══════════ 旅人的話 ══════════ -->
+  <section class="container py-5">
+    <div class="sec-head">
+      <h2>旅人的話</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="quote-card">
+          <div class="mark">「</div>
+          <p>第一次跟陌生人出去玩會怕，但團主把行程寫得很清楚，連幾點吃飯都寫了。四天下來沒有人在趕路。</p>
+          <div class="byline"><span class="dot av-1" aria-hidden="true">游</span>游雅婷・參加過 7 個團</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="quote-card">
+          <div class="mark">「</div>
+          <p>分帳功能救了我。以前出去玩最怕算錢，現在按一按就好，回家不用再對帳到半夜。</p>
+          <div class="byline"><span class="dot av-2" aria-hidden="true">陳</span>陳柏睿・開過 3 次團</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="quote-card">
+          <div class="mark">「</div>
+          <p>我把自己走過的路線寫成 Vlog，後來真的有人照著走，還回來留言跟我說謝謝。這個很值得。</p>
+          <div class="byline"><span class="dot av-3" aria-hidden="true">林</span>林思妤・寫了 12 篇行程</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 結尾 CTA ══════════ -->
+  <section class="container py-5">
+    <div class="cta-band">
+      <h2>你的下一段旅程，還缺一個伴</h2>
+      <p>開一個團只要三分鐘。寫下你想去的地方，剩下的交給我們。</p>
+      <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <a class="btn btn-primary btn-lg" href="#">我要開團</a>
+        <a class="btn btn-outline-primary btn-lg" href="#">先看看有什麼團</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer-lazy mt-5 py-4">
+  <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
+    <span>&copy; 2026 Lazy Travel</span>
+    <span>慢慢走，才看得見風景。</span>
+  </div>
+</footer>
+
+<!-- Mockup 版本切換（正式落地時刪掉） -->
+<nav class="mock-switch" aria-label="Mockup 版本切換">
+  <a class="on" href="home-a-sand.html">A 暖沙雜誌</a>
+  <a href="home-b-sea.html">B 海藍沉浸</a>
+  <a href="home-c-bento.html">C Bento 網格</a>
+</nav>
+
+<script src="../lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
