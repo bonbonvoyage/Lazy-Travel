@@ -22,7 +22,8 @@ namespace LazyTravel.Services
 		// ==========================================
 		// 1.3 編輯會員資料與狀態
 		// ==========================================
-		bool EditMember(MemberEditDto dto);
+		// currentAdminId:實際執行處分的員工,會寫進 AdminLogs 的操作人欄位
+		bool EditMember(MemberEditDto dto, int currentAdminId);
 
 		// 🌟 新增：記錄調閱會員個資的日誌
 		void LogPiiUnmask(int memberId, int currentAdminId, string adminIp);
