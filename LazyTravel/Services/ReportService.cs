@@ -1,5 +1,6 @@
 using LazyTravel.Models;
 using EfReport = LazyTravel.Models.EfModels.Report;
+using EfMember = LazyTravel.Models.EfModels.Member;
 using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Services
@@ -265,20 +266,16 @@ namespace LazyTravel.Services
             var matchedReporterId = await ResolveMemberIdAsync(reporterAccount);
             var isProxySubmit = matchedReporterId is null;
 
-            var reporterId = matchedReporterId ?? await ResolveMemberIdAsync(SystemAdminEmail);
-
-            if (reporterId is null)
-            {
-                throw new InvalidOperationException(
-                    $"找不到檢舉人「{reporterAccount}」,也找不到系統管理員帳號 {SystemAdminEmail}");
-            }
+            // 佔位會員不存在就自己補一筆,不要把整個送出檢舉擋掉——它是 Reports.ReporterID
+            // 這個 NOT NULL 外鍵的必要佔位人,不是真人帳號,被人從 Members 清掉是會發生的事
+            var reporterId = matchedReporterId ?? await EnsureSystemAdminMemberIdAsync();
 
             // Reports.ReportedMemberID 允許 NULL,查不到就留空,不擋下整筆檢舉
             var reportedMemberId = await ResolveMemberIdAsync(reportedMemberAccount);
 
             var efReport = new EfReport
             {
-                ReporterId = reporterId.Value,
+                ReporterId = reporterId,
                 ReportedMemberId = reportedMemberId,
                 ReportType = (byte)targetType,
                 TargetId = targetId,
@@ -302,6 +299,42 @@ namespace LazyTravel.Services
                 targetId: efReport.ReportId);
 
             return ToDomain(efReport);
+        }
+
+        // 取得系統管理員佔位會員的 MemberID,沒有就建一筆。
+        // 跟 AdminLogService.ResolveMemberIdByEmailAsync 同一套做法(含唯一鍵撞單的處理),
+        // 兩邊用的是同一筆佔位會員。
+        private async Task<int> EnsureSystemAdminMemberIdAsync()
+        {
+            var existing = await _context.Members.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Email == SystemAdminEmail);
+            if (existing is not null)
+            {
+                return existing.MemberId;
+            }
+
+            var placeholder = new EfMember
+            {
+                Email = SystemAdminEmail,
+                Name = "系統管理員",
+                CreatedAt = DateTime.Now,
+            };
+
+            try
+            {
+                _context.Members.Add(placeholder);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // 同時搶著建立同一筆時,Email 唯一鍵會擋下重複插入,改成查已經存在的那筆
+                _context.Entry(placeholder).State = EntityState.Detached;
+                var raceWinner = await _context.Members.AsNoTracking()
+                    .FirstAsync(m => m.Email == SystemAdminEmail);
+                return raceWinner.MemberId;
+            }
+
+            return placeholder.MemberId;
         }
 
         // account 可能是 Email 也可能是 Member.Name,兩種都試
