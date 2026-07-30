@@ -1,6 +1,8 @@
 @model LazyTravel.ViewModels.ReportDetailsViewModel
 @using LazyTravel.Models
+@using Microsoft.AspNetCore.Authorization
 @inject LazyTravel.Services.IReportLookupService LookupService
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 
 @{
     ViewData["Title"] = $"檢舉案件 #{Model.Report.Id}";
@@ -243,68 +245,72 @@
 
     @if (Model.Report.Status == ReportStatus.Pending)
     {
-        <h3 class="h6 mb-2" style="color:var(--text-secondary);">審核</h3>
-        @if (Model.PendingSuspensionDays.HasValue)
+        <!-- 🌟 權限判斷：使用 AuthorizationService 檢查是否有 "RequireReportAudit" 政策 -->
+        @if ((await AuthorizationService.AuthorizeAsync(User, "RequireReportAudit")).Succeeded)
         {
-            <div class="suspend-warning-card @suspendLevelClass">
-                <span class="icon">@(Model.PendingSuspensionDays >= 5 ? "🚫" : "⚠")</span>
-                <div>
-                    <div class="title">若判定「檢舉成立」將觸發自動停權・@suspendLevelLabel</div>
-                    <div class="small">
-                        此帳號累計違規將達 @(Model.UpheldCountForAccount + 1) 次,停權
-                        <span class="days">@Model.PendingSuspensionDays 天</span>
+            <h3 class="h6 mb-2" style="color:var(--text-secondary);">審核</h3>
+            @if (Model.PendingSuspensionDays.HasValue)
+            {
+                <div class="suspend-warning-card @suspendLevelClass">
+                    <span class="icon">@(Model.PendingSuspensionDays >= 5 ? "🚫" : "⚠")</span>
+                    <div>
+                        <div class="title">若判定「檢舉成立」將觸發自動停權・@suspendLevelLabel</div>
+                        <div class="small">
+                            此帳號累計違規將達 @(Model.UpheldCountForAccount + 1) 次,停權
+                            <span class="days">@Model.PendingSuspensionDays 天</span>
+                        </div>
+                    </div>
+                </div>
+            }
+            <form asp-action="Judge" method="post" id="judgeForm" style="max-width:480px;">
+                <input type="hidden" name="id" value="@Model.Report.Id" />
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                <input type="hidden" name="decision" id="decisionInput" />
+                <textarea name="note" id="noteTextarea" class="form-control mb-1" rows="4" maxlength="200"
+                  placeholder="處置備註(選填,最多 200 字)"></textarea>
+                <div class="char-counter mb-2"><span id="noteCharCount">0</span>/200</div>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" name="isMalicious" value="true" id="isMaliciousCheckbox" />
+                    <label class="form-check-label" for="isMaliciousCheckbox">
+                        標記為惡意檢舉(非單純誤判或證據不足)
+                    </label>
+                </div>
+                <div class="judge-note-hint">只有判定「不成立」時才會生效</div>
+
+                <div class="judge-info-note">ⓘ 判定後將通知雙方,且無法再修改</div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-coral judge-confirm-btn"
+                            data-decision="Upheld"
+                            data-confirm="確定要判定「檢舉成立」嗎?此動作無法復原,系統會通知被檢舉會員。@(Model.PendingSuspensionDays.HasValue ? $"⚠ 此帳號將觸發自動停權,共 {Model.PendingSuspensionDays} 天。" : "")">
+                        檢舉成立
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary judge-confirm-btn"
+                            id="dismissBtn" data-decision="Dismissed"
+                            data-confirm-base="確定要判定「不成立」嗎?此動作無法復原。"
+                            data-confirm-malicious="@(Model.PendingReporterSuspensionDays.HasValue ? $"⚠ 已勾選惡意檢舉,此檢舉人帳號將觸發自動停權,共 {Model.PendingReporterSuspensionDays} 天。" : "已勾選惡意檢舉,將計入該檢舉人的惡意檢舉次數。")">
+                        不成立
+                    </button>
+                </div>
+            </form>
+
+            @* 判定確認彈窗 *@
+            <div class="modal fade" id="judgeConfirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" style="font-family:var(--font-display); color:var(--sea-800);">確認判定</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                        </div>
+                        <div class="modal-body" id="judgeConfirmModalBody"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="judgeConfirmSubmitBtn">確定</button>
+                        </div>
                     </div>
                 </div>
             </div>
         }
-        <form asp-action="Judge" method="post" id="judgeForm" style="max-width:480px;">
-            <input type="hidden" name="id" value="@Model.Report.Id" />
-            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
-            <input type="hidden" name="decision" id="decisionInput" />
-            <textarea name="note" id="noteTextarea" class="form-control mb-1" rows="4" maxlength="200"
-                      placeholder="處置備註(選填,最多 200 字)"></textarea>
-            <div class="char-counter mb-2"><span id="noteCharCount">0</span>/200</div>
-            <div class="form-check mb-1">
-                <input class="form-check-input" type="checkbox" name="isMalicious" value="true" id="isMaliciousCheckbox" />
-                <label class="form-check-label" for="isMaliciousCheckbox">
-                    標記為惡意檢舉(非單純誤判或證據不足)
-                </label>
-            </div>
-            <div class="judge-note-hint">只有判定「不成立」時才會生效</div>
-
-            <div class="judge-info-note">ⓘ 判定後將通知雙方,且無法再修改</div>
-
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-coral judge-confirm-btn"
-                        data-decision="Upheld"
-                        data-confirm="確定要判定「檢舉成立」嗎?此動作無法復原,系統會通知被檢舉會員。@(Model.PendingSuspensionDays.HasValue ? $"⚠ 此帳號將觸發自動停權,共 {Model.PendingSuspensionDays} 天。" : "")">
-                    檢舉成立
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary judge-confirm-btn"
-                        id="dismissBtn" data-decision="Dismissed"
-                        data-confirm-base="確定要判定「不成立」嗎?此動作無法復原。"
-                        data-confirm-malicious="@(Model.PendingReporterSuspensionDays.HasValue ? $"⚠ 已勾選惡意檢舉,此檢舉人帳號將觸發自動停權,共 {Model.PendingReporterSuspensionDays} 天。" : "已勾選惡意檢舉,將計入該檢舉人的惡意檢舉次數。")">
-                    不成立
-                </button>
-            </div>
-        </form>
-
-        @* 判定確認彈窗,取代瀏覽器原生 confirm(),位置置中、樣式可控 *@
-        <div class="modal fade" id="judgeConfirmModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" style="font-family:var(--font-display); color:var(--sea-800);">確認判定</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
-                    </div>
-                    <div class="modal-body" id="judgeConfirmModalBody"></div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary btn-sm" id="judgeConfirmSubmitBtn">確定</button>
-                    </div>
-                </div>
-            </div>
-        </div>
     }
     else
     {
