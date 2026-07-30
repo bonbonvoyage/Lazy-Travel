@@ -105,11 +105,24 @@ builder.Services.AddAuthorization(options =>
 	options.AddPolicy("RequireMemberBlock", policy => policy.RequireClaim("Permission", "member:account:block"));
 	options.AddPolicy("RequireReportAudit", policy => policy.RequireClaim("Permission", "content:report:audit"));
 
-	// --- 社群內容管理 ---
+	// --- 社群內容管理 (Vlog) ---
+	// 閱讀權限 (小編與主管共用)
 	options.AddPolicy("RequireVlogRead", policy => policy.RequireClaim("Permission", "content:vlog:read"));
+	options.AddPolicy("RequireVlogAudit", policy => policy.RequireClaim("Permission", "content:vlog:audit"));
+
+	// 小編專屬權限
+	options.AddPolicy("RequireVlogCreate", policy => policy.RequireClaim("Permission", "content:vlog:create"));
+	options.AddPolicy("RequireVlogUpdate", policy => policy.RequireClaim("Permission", "content:vlog:update"));
+	options.AddPolicy("RequireVlogSubmit", policy => policy.RequireClaim("Permission", "content:vlog:submit"));
+	options.AddPolicy("RequireContentDelete", policy => policy.RequireClaim("Permission", "content:vlog:delete"));
+	options.AddPolicy("RequireVlogRestore", policy => policy.RequireClaim("Permission", "content:vlog:restore"));
+
+	// 主管專屬權限
+	options.AddPolicy("RequireVlogPublish", policy => policy.RequireClaim("Permission", "content:vlog:publish"));
+	options.AddPolicy("RequireVlogReturn", policy => policy.RequireClaim("Permission", "content:vlog:return"));
+
 	options.AddPolicy("RequireForumRead", policy => policy.RequireClaim("Permission", "content:forum:read"));
 	options.AddPolicy("RequireTravelGroupRead", policy => policy.RequireClaim("Permission", "social:travelgroup:read"));
-	options.AddPolicy("RequireContentDelete", policy => policy.RequireClaim("Permission", "content:vlog:delete"));
 
 	// --- 財務與數據 ---
 	options.AddPolicy("RequirePlanRead", policy => policy.RequireClaim("Permission", "finance:plan:read"));

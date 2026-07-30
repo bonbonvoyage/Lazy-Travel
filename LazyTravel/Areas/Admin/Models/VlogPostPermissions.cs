@@ -1,5 +1,6 @@
 using LazyTravel.Models;
 using LazyTravel.Models.EfModels;
+using System.Security.Claims; // 必須引用這個來讀取使用者的 Claims
 
 namespace LazyTravel.Areas.Admin.Models;
 
@@ -34,62 +35,77 @@ public class VlogPostPermissions
     // Details 頁（小編，僅會員文章）
     public bool CanReport { get; set; }
 
-    public static VlogPostPermissions For(VlogPost post, bool hasPendingReport)
-    {
-        var isOfficial = MemberLookup.IsOfficial(post.Member);
-        var permissions = new VlogPostPermissions { IsOfficial = isOfficial };
+	public static VlogPostPermissions For(VlogPost post, bool hasPendingReport, ClaimsPrincipal user)
+	{
+		var isOfficial = MemberLookup.IsOfficial(post.Member);
+		var permissions = new VlogPostPermissions { IsOfficial = isOfficial };
 
-        if (post.IsDelete)
-        {
-            permissions.CanRestore = true;
-            return permissions;
-        }
+		// 讀取當前使用者的權限 (包含超級管理員的萬能鑰匙)
+		bool hasSuperAdmin = user.HasClaim("Permission", "ROLE_SUPER_ADMIN");
+		bool hasCreate = user.HasClaim("Permission", "content:vlog:create") || hasSuperAdmin;
+		bool hasUpdate = user.HasClaim("Permission", "content:vlog:update") || hasSuperAdmin;
+		bool hasDelete = user.HasClaim("Permission", "content:vlog:delete") || hasSuperAdmin;
+		bool hasSubmit = user.HasClaim("Permission", "content:vlog:submit") || hasSuperAdmin;
+		bool hasRestore = user.HasClaim("Permission", "content:vlog:restore") || hasSuperAdmin;
+		bool hasPublish = user.HasClaim("Permission", "content:vlog:publish") || hasSuperAdmin;
+		bool hasReturn = user.HasClaim("Permission", "content:vlog:return") || hasSuperAdmin;
+		// 🌟 1. 抓取新的檢舉權限
+		bool hasAudit = user.HasClaim("Permission", "content:vlog:audit") || hasSuperAdmin;
+		// 🌟 2. 抓取檢舉中心的審核與觀看權限 (用來控制查看檢舉、檢舉不成立按鈕)
+		bool hasReportRead = user.HasClaim("Permission", "content:report:read") || hasSuperAdmin;
+		bool hasReportAudit = user.HasClaim("Permission", "content:report:audit") || hasSuperAdmin;
 
-        if (!isOfficial)
-        {
-            // 會員文章：不是小編寫的，沒有草稿/送審/退回草稿這條路。
-            // 小編永遠可以提出檢舉；主管只有在「有檢舉待處理」時才出手：查看檢舉、判不成立、或刪除。
-            permissions.CanReport = true;
+		// 如果是已刪除的文章
+		if (post.IsDelete)
+		{
+			permissions.CanRestore = hasRestore;
+			return permissions;
+		}
 
-            if (hasPendingReport)
-            {
-                permissions.CanViewReport = true;
-                permissions.CanDismissReport = true;
-                permissions.CanDelete = true;
-            }
+		// 如果是「會員文章」
+		if (!isOfficial)
+		{
+			// 🌟 會員文章邏輯：
+			if (hasPendingReport)
+			{
+				// 如果已經被檢舉(待處理)，顯示查看檢舉、檢舉不成立、刪除文章
+				permissions.CanViewReport = hasReportRead;
+				permissions.CanDismissReport = hasReportAudit;
+				permissions.CanDelete = hasReportAudit;
+			}
+			else
+			{
+				// 如果還沒被檢舉，根據 content:vlog:audit 決定是否顯示檢舉表單
+				permissions.CanReport = hasAudit;
+			}
+			return permissions;
+		}
 
-            return permissions;
-        }
+		// ---------- 以下都是官方文章 ----------
 
-        // ---------- 以下都是官方文章 ----------
+		if (post.Status == VlogPostStatus.Draft)
+		{
+			permissions.CanEdit = hasUpdate;
+			permissions.CanSubmit = hasSubmit;
+			//permissions.CanDelete = hasDelete;
+			return permissions;
+		}
 
-        // 小編只能編輯／送審自己還沒送出的草稿；送審或已發布後要請主管「退回草稿」才能再編輯。
-        permissions.CanEdit = post.Status == VlogPostStatus.Draft;
-        permissions.CanSubmit = permissions.CanEdit;
+		if (post.Status == VlogPostStatus.PendingReview)
+		{
+			// 待審核狀態，只有具備對應權限的主管才能看到按鈕
+			permissions.CanApprove = hasPublish;
+			permissions.CanReturnToDraft = hasReturn;
+			return permissions;
+		}
 
-        if (hasPendingReport)
-        {
-            // 有檢舉待處理時，優先處理檢舉，不顯示審核通過（避免跟檢舉判定衝突）
-            permissions.CanViewReport = true;
-            permissions.CanReturnToDraft = true;
-            permissions.CanDelete = true;
-            return permissions;
-        }
+		if (post.Status == VlogPostStatus.Published)
+		{
+			// 已發布文章，可以設定主管能退回或刪除
+			permissions.CanReturnToDraft = hasReturn;
+			permissions.CanDelete = hasDelete;
+		}
 
-        if (post.Status == VlogPostStatus.PendingReview)
-        {
-            // 送審中：主管只能通過或退回，不給直接刪除（避免刪掉小編還在等審核的成果）
-            permissions.CanApprove = true;
-            permissions.CanReturnToDraft = true;
-            return permissions;
-        }
-
-        if (post.Status == VlogPostStatus.Published)
-        {
-            permissions.CanReturnToDraft = true;
-            permissions.CanDelete = true;
-        }
-
-        return permissions;
-    }
+		return permissions;
+	}
 }

@@ -132,7 +132,12 @@ namespace LazyTravel.Areas.Admin.Controllers
 			{
 				return RedirectToAction("Index", "TravelGroups", new { area = "Admin" });
 			}
-			// 6. 極端情況：連基本列表都不能看，就給他去權限不足畫面
+			// 6. 只有員工管理權限 (人資專員 HR)
+			else if (userPermissions.Contains("system:employee:read"))
+			{
+				return RedirectToAction("Index", "Employees", new { area = "Admin" });
+			}
+			// 7. 極端情況：連基本列表都不能看，就給他去權限不足畫面
 			else
 			{
 				return RedirectToAction("AccessDenied", "Auth", new { area = "Admin" });
