@@ -109,6 +109,30 @@
         3 => "行程結束",
         _ => $"未知({groupStatus})"
     };
+
+    string GetLogValueDisplayName(string? fieldName, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "—";
+        }
+
+        return fieldName switch
+        {
+            "ReviewStatus" when value == "0" => "違規",
+            "ReviewStatus" when value == "1" => "正常",
+            "GroupStatus" when byte.TryParse(value, out var status) => GroupStatusLabel(status),
+            "IsDelete" when value == "0" => "違規",
+            "IsDelete" when value == "1" => "正常",
+            "IsDelete" when value.Equals("False", StringComparison.OrdinalIgnoreCase) => "未刪除",
+            "IsDelete" when value.Equals("True", StringComparison.OrdinalIgnoreCase) => "已刪除",
+            "IsPublic" when value == "0" => "不公開",
+            "IsPublic" when value == "1" => "公開",
+            "IsPublic" when value.Equals("False", StringComparison.OrdinalIgnoreCase) => "不公開",
+            "IsPublic" when value.Equals("True", StringComparison.OrdinalIgnoreCase) => "公開",
+            _ => value
+        };
+    }
 }
 
 <ul class="nav nav-tabs admin-tabs" id="groupTabs" role="tablist">
@@ -209,7 +233,7 @@
                                     <span>(Id=</span>
 
                                     <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
-                        
+
                                     <span>)</span>
                                 }
                                 else
@@ -371,7 +395,7 @@
                                     <span>(Id=</span>
 
                                     <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
-                        
+
                                     <span>)</span>
                                 }
                                 else
@@ -531,7 +555,7 @@
                                     <span>(Id=</span>
 
                                     <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
-                        
+
                                     <span>)</span>
                                 }
                                 else
@@ -654,14 +678,14 @@
                             <td>#@item.GroupId</td>
                             <td>@item.ChangeType</td>
                             <td>@GetFieldDisplayName(item.FieldName)</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.OldValue) ? "—" : item.OldValue)</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.NewValue) ? "—" : item.NewValue)</td>
+                            <td>@GetLogValueDisplayName(item.FieldName, item.OldValue)</td>
+                            <td>@GetLogValueDisplayName(item.FieldName, item.NewValue)</td>
                             <td class="text-start">@(string.IsNullOrWhiteSpace(item.Remark) ? "—" : item.Remark)</td>
                             <td>
                                 @if (item.ChangedByEmployeeId.HasValue && Model.LogEmployeeNames.TryGetValue(item.ChangedByEmployeeId.Value, out var employeeName))
                                 {
                                     <span>@employeeName</span>
-                        
+
                                     <span>(Id=@item.ChangedByEmployeeId.Value)</span>
                                 }
                                 else

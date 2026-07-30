@@ -1,9 +1,11 @@
 ﻿using LazyTravel.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
+	[Authorize(Policy = "RequireEmployeeRead")]
 	[Area("Admin")]
 	public class EmployeesController : Controller
 	{

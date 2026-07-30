@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lazytravel-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "LazyTravel@123"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "LazyTravel@123", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: lazytravel-web
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=LazyTravel;User Id=sa;Password=LazyTravel@123;Encrypt=false;TrustServerCertificate=true;"
+      ASPNETCORE_ENVIRONMENT: "Production"
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    volumes:
+      - ./LazyTravel:/app/LazyTravel
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:

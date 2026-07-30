@@ -2,6 +2,7 @@ using LazyTravel.Areas.Admin.Models;
 using LazyTravel.Models;
 using LazyTravel.Models.EfModels;
 using LazyTravel.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -171,8 +172,8 @@ namespace LazyTravel.Areas.Admin.Controllers
                 LastReviewer = reviewLog?.OperatorName,
                 LastReviewedAt = reviewLog?.CreatedAt,
                 LastReviewNote = latestJudged?.AdminNotes,
-                Permissions = VlogPostPermissions.For(post, hasPendingReport),
-            };
+				Permissions = VlogPostPermissions.For(post, hasPendingReport, User),
+			};
 
             return View(vm);
         }
@@ -450,7 +451,8 @@ namespace LazyTravel.Areas.Admin.Controllers
         // POST /Admin/VlogPosts/ReportPost/5（小編對會員文章提出檢舉；官方文章不走這裡，是自己人不用檢舉自己）
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ReportPost(int id, ReportReasonCategory reasonCategory, string reason)
+		[Authorize(Policy = "RequireVlogAudit")]
+		public async Task<IActionResult> ReportPost(int id, ReportReasonCategory reasonCategory, string reason)
         {
             var post = await _context.VlogPosts.Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
@@ -491,7 +493,8 @@ namespace LazyTravel.Areas.Admin.Controllers
         // POST /Admin/VlogPosts/DismissReport/5（主管判定會員文章的檢舉不成立；官方文章走「退回草稿」，不走這裡）
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DismissReport(int id)
+		[Authorize(Policy = "RequireReportAudit")]
+		public async Task<IActionResult> DismissReport(int id)
         {
             var post = await _context.VlogPosts.Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
             if (post is null)
@@ -546,8 +549,8 @@ namespace LazyTravel.Areas.Admin.Controllers
                 EditingNode = editingNode,
                 EditingStayHours = editingHours,
                 EditingStayMinutes = editingMinutes,
-                Permissions = VlogPostPermissions.For(post, hasPendingReport: false),
-                LastReturnNote = lastReturn?.Detail,
+				Permissions = VlogPostPermissions.For(post, hasPendingReport: false, User),
+				LastReturnNote = lastReturn?.Detail,
                 LastReturnedAt = lastReturn?.CreatedAt,
             };
         }

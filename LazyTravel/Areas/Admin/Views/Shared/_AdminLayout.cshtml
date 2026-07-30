@@ -89,11 +89,11 @@
 
                         <a class="nav-link @NavActive("VlogPosts")" asp-area="Admin" asp-controller="VlogPosts" asp-action="Index">Vlog 行程文章</a>
                     }
-                    if (canSeeForums)
+                  /*  if (canSeeForums)
                     {
 
                         <a class="nav-link @NavActive("Forum")" asp-area="Admin" asp-controller="Forum" asp-action="Index">論壇管理</a>
-                    }
+                    }*/
                     if (canSeeTravelGroups)
                     {
 
@@ -101,7 +101,7 @@
                     }
                 }
 
-                @* 🌟 群組三：財務與數據 *@
+               /* @* 🌟 群組三：財務與數據 *@
                 @if (canSeePlans || canSeeSplits || canSeeAnalytics)
                 {
                     <div class="nav-group-label">財務與數據</div>
@@ -120,14 +120,14 @@
 
                         <a class="nav-link @NavActive("Analytics")" asp-area="Admin" asp-controller="Analytics" asp-action="Index">數據分析</a>
                     }
-                }
+                }*/
 
-                @* 🌟 群組四：系統 *@
+              /*  @* 🌟 群組四：系統 *@
                 @if (canSeeNotifications)
                 {
                     <div class="nav-group-label">系統</div>
                     <a class="nav-link @NavActive("Notifications")" asp-area="Admin" asp-controller="Notifications" asp-action="Index">公告與通知</a>
-                }
+                }*/
 
                 @* 🌟 群組五：內部管理 *@
                 @if (canSeeEmployees || canSeeRoles)

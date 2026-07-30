@@ -133,6 +133,50 @@
                                 }
                             </td>
                         </tr>
+
+                        <!-- 訂閱方案與登入稽核 -->
+                        <tr class="table-primary">
+                            <td colspan="2" class="fw-bold text-center">方案與系統狀態</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">目前方案</th>
+                            <td>
+                                <span class="badge bg-primary">@Model.CurrentPlanName</span>
+                                @if (Model.PlanExpiryDate.HasValue)
+                                {
+                                    <small class="text-muted ms-2">到期日: @Model.PlanExpiryDate.Value.ToString("yyyy/MM/dd")</small>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">最後登入時間</th>
+                            <td>
+                                @if (Model.LastLoginAt.HasValue)
+                                {
+                                    @Model.LastLoginAt.Value.ToString("yyyy/MM/dd HH:mm:ss")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">無登入紀錄</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">最近登入 IP</th>
+                            <td>
+                                @if (string.IsNullOrEmpty(Model.LastLoginIp))
+                                {
+                                    <span class="text-muted">無紀錄</span>
+                                }
+                                else
+                                {
+                                    <span class="font-monospace">@Model.LastLoginIp</span>
+                                    <a href="https://ipinfo.io/@Model.LastLoginIp" target="_blank" class="btn btn-sm btn-link p-0 ms-2 text-decoration-none" title="查詢 IP 來源">
+                                        <i class="fas fa-map-marker-alt text-danger"></i> 查位置
+                                    </a>
+                                }
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
