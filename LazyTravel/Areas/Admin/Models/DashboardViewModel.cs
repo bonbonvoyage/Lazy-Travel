@@ -19,12 +19,15 @@ namespace LazyTravel.Areas.Admin.Models
         // 對應 Index.cshtml 裡的 .mod-card.c-xxx 配色 class(member / article / group / report)
         public string ColorKey { get; set; } = "member";
         public List<DashboardLogEntry> RecentLogs { get; set; } = new();
+        // 看得到這張卡所需的 PermissionCode,對應 _AdminLayout 側欄同一組權限
+        public string RequiredPermission { get; set; } = string.Empty;
     }
 
     public class DashboardViewModel
     {
-        // 公告模組還沒建置,先固定顯示提示文字
-        public string NoticeMessage { get; set; } = "目前沒有公告內容。之後接上「公告與通知」模組後,會顯示最新一則系統公告。";
+        // dbo.Announcements 沒有啟用中的公告時顯示這句
+        public const string DefaultNotice = "目前沒有公告內容。之後接上「公告與通知」模組後,會顯示最新一則系統公告。";
+        public string NoticeMessage { get; set; } = DefaultNotice;
         public List<DashboardModuleCard> Modules { get; set; } = new();
     }
 }

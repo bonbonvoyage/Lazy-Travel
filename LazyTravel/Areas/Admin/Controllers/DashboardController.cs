@@ -4,6 +4,7 @@ using LazyTravel.Models.EfModels;
 using LazyTravel.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Areas.Admin.Controllers
@@ -33,10 +34,33 @@ namespace LazyTravel.Areas.Admin.Controllers
 		{
 			ViewData["Title"] = "總覽";
 
-			var memberCount = await _context.Members.CountAsync();
-			var activeGroupCount = await _context.TravelGroups.CountAsync(g => !g.IsDelete);
-			var publishedVlogCount = VlogPostStore.GetAll().Count(p => !p.IsDelete && p.Status == VlogPostStatus.Published);
-			var pendingReportCount = _reportService.Query(new ReportQueryOptions()).PendingCount;
+			// 沒權限的模組連統計都不用查,直接省掉那一次 DB round trip
+			bool Can(string permissionCode) => User.HasClaim("Permission", permissionCode);
+
+			var memberCount = Can("member:account:read") ? await _context.Members.CountAsync() : 0;
+			var activeGroupCount = Can("social:travelgroup:read") ? await _context.TravelGroups.CountAsync(g => !g.IsDelete) : 0;
+			var publishedVlogCount = Can("content:vlog:read")
+				? VlogPostStore.GetAll().Count(p => !p.IsDelete && p.Status == VlogPostStatus.Published)
+				: 0;
+			var pendingReportCount = Can("content:report:read")
+				? _reportService.Query(new ReportQueryOptions()).PendingCount
+				: 0;
+
+			// ponytail: 只讀一個字串,直接 SqlQuery,不建 entity 也不動自動產生的 DbContext。
+			// 公告模組要做新增/編輯時再補 Announcement entity。資料表見 sql/Announcements_Seed.sql
+			string notice = null;
+			try
+			{
+				notice = await _context.Database
+					// 欄位一定要叫 Value:EF 會把這段包成子查詢再套 FirstOrDefault,只認 Value 這個名字
+					.SqlQuery<string>($"SELECT TOP 1 Content AS [Value] FROM dbo.Announcements WHERE IsActive = 1 ORDER BY CreatedAt DESC")
+					.FirstOrDefaultAsync();
+			}
+			catch (SqlException)
+			{
+				// 公告表還沒建(還沒跑 sql/Announcements_Seed.sql)就當作沒有公告。
+				// 一張示範用的表不該讓整個總覽 500,登入後會直接轉來這裡。
+			}
 
 			// 一次撈近期紀錄,再依 TargetTable 分流到各卡片自己的「最近動作」——
 			// TravelGroups 目前沒有任何地方會寫入這個 log(TravelGroupsController 沒呼叫 WriteAsync),
@@ -57,6 +81,8 @@ namespace LazyTravel.Areas.Admin.Controllers
 
 			var viewModel = new DashboardViewModel
 			{
+				// 沒有啟用中的公告就沿用預設提示文字
+				NoticeMessage = notice ?? DashboardViewModel.DefaultNotice,
 				Modules = new List<DashboardModuleCard>
 				{
 					new()
@@ -66,6 +92,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatLabel = "位會員",
 						StatValue = memberCount,
 						ColorKey = "member",
+						RequiredPermission = "member:account:read",
 						RecentLogs = LogsFor("Members", 2)
 					},
 					new()
@@ -75,6 +102,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatLabel = "篇已發布",
 						StatValue = publishedVlogCount,
 						ColorKey = "article",
+						RequiredPermission = "content:vlog:read",
 						RecentLogs = LogsFor("VlogPosts", 2)
 					},
 					new()
@@ -84,6 +112,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatLabel = "個揪團",
 						StatValue = activeGroupCount,
 						ColorKey = "group",
+						RequiredPermission = "social:travelgroup:read",
 						RecentLogs = LogsFor("TravelGroups", 2)
 					},
 					new()
@@ -94,10 +123,13 @@ namespace LazyTravel.Areas.Admin.Controllers
 						StatValue = pendingReportCount,
 						Badge = pendingReportCount > 0 ? pendingReportCount : null,
 						ColorKey = "report",
+						RequiredPermission = "content:report:read",
 						RecentLogs = LogsFor("Reports", 2)
 					},
 				}
 			};
+
+			viewModel.Modules = viewModel.Modules.Where(m => Can(m.RequiredPermission)).ToList();
 
 			return View(viewModel);
 		}
