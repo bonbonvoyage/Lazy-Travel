@@ -13,12 +13,23 @@ namespace LazyTravel.Services
     public class MemberModerationService : IMemberModerationService
     {
         private readonly IMemberService _memberService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private const byte SuspendedStatus = 2;
 
-        public MemberModerationService(IMemberService memberService)
+        public MemberModerationService(IMemberService memberService, IHttpContextAccessor httpContextAccessor)
         {
             _memberService = memberService;
+            _httpContextAccessor = httpContextAccessor;
         }
+
+        // 自動停權是在審核人的那個 HTTP 請求裡同步跑的,所以操作人就是當下登入的審核人。
+        // 這樣才不用為了一個 ID 去改 ReportService 一路上的簽章。
+        // ponytail: 抓不到就退回 1,拿不到 HttpContext 的情境(背景工作)目前不存在;
+        // 真的要跑背景停權時,改成把操作人 ID 從 SuspendAsync 參數傳進來。
+        private int CurrentAdminId =>
+            int.TryParse(
+                _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                out int id) ? id : 1;
 
         public Task SuspendAsync(int memberId, int days, string reason)
         {
@@ -32,7 +43,7 @@ namespace LazyTravel.Services
                 // 檢舉審核台自己會呼叫 INotificationService 發停權通知,這裡不用重複發一次
                 SendNotification = false,
                 AdminReason = $"檢舉審核台自動停權({days}天)"
-            });
+            }, CurrentAdminId);
 
             return Task.CompletedTask;
         }

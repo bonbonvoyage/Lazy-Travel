@@ -114,7 +114,7 @@ namespace LazyTravel.Services
 			};
 		}
 
-		public bool EditMember(MemberEditDto dto)
+		public bool EditMember(MemberEditDto dto, int currentAdminId)
 		{
 			var member = _context.Members.FirstOrDefault(x => x.MemberId == dto.MemberID);
 			if (member == null) return false;
@@ -154,7 +154,7 @@ namespace LazyTravel.Services
 
 			var log = new AdminAuditLog
 			{
-				EmployeeId = 1,
+				EmployeeId = currentAdminId,
 				Action = actionCode,
 				TargetResource = "Members",
 				TargetId = logTargetId, // 🌟 這裡把原因也包進去了
