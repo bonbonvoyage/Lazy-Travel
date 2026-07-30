@@ -173,6 +173,13 @@ namespace LazyTravel.Areas.Admin.Controllers
 		// 🌟 恢復優雅的 Model Binding
 		public IActionResult Edit(MemberEditDto editDto)
 		{
+			// 會員編號沒綁到就別再往下走：Details/0 是不存在的頁面，錯誤會被藏在一個看不懂的畫面裡
+			if (editDto.MemberID <= 0)
+			{
+				TempData["ErrorMessage"] = "表單沒有帶到會員編號，處分未執行。請重新整理該會員頁面後再試一次。";
+				return RedirectToAction(nameof(Index));
+			}
+
 			// 防呆：如果 Model 驗證失敗，直接退回
 			if (!ModelState.IsValid)
 			{

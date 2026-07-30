@@ -149,37 +149,41 @@
                     <h5 class="card-title mb-0"><i class="fas fa-gavel me-2"></i>資料處置與帳號管制</h5>
                 </div>
                 <div class="card-body">
+                    @* 這裡刻意不用 asp-for:asp-for 指的是區域變數 editDto,產生的欄位名會是
+                       「editDto.MemberID」,跟手動指定的 name 混在一起。Edit 的參數也叫 editDto,
+                       Model Binder 看到有 editDto. 前綴就整包用前綴綁,沒前綴的 MemberID 被略過 → 綁成 0。
+                       全部改成純 name/value,所見即所得。 *@
                     <form asp-action="Edit" method="post">
-                        <input type="hidden" asp-for="@editDto.MemberID" name="MemberID" />
+                        <input type="hidden" name="MemberID" value="@Model.MemberID" />
 
                         <div class="mb-4 border border-warning p-3 rounded bg-light">
                             <label class="form-label fw-bold text-warning text-darken mb-1"><i class="fas fa-eraser me-1"></i>強制重置違規資料</label>
                             <div class="form-text mb-3">勾選後要求會員重新填寫。</div>
                             <div class="form-check mb-2">
-                                <input asp-for="@editDto.ResetName" class="form-check-input border-secondary" type="checkbox" name="ResetName" id="resetName">
+                                <input class="form-check-input border-secondary" type="checkbox" name="ResetName" value="true" id="resetName">
                                 <label class="form-check-label text-dark" for="resetName">重置 <strong>姓名/暱稱</strong></label>
                             </div>
                             <div class="form-check mb-2">
-                                <input asp-for="@editDto.ResetBio" class="form-check-input border-secondary" type="checkbox" name="ResetBio" id="resetBio">
+                                <input class="form-check-input border-secondary" type="checkbox" name="ResetBio" value="true" id="resetBio">
                                 <label class="form-check-label text-dark" for="resetBio">清空 <strong>個人簡介</strong></label>
                             </div>
                             <div class="form-check mb-2">
-                                <input asp-for="@editDto.RemoveAvatar" class="form-check-input border-secondary" type="checkbox" name="RemoveAvatar" id="removeAvatar">
+                                <input class="form-check-input border-secondary" type="checkbox" name="RemoveAvatar" value="true" id="removeAvatar">
                                 <label class="form-check-label text-dark" for="removeAvatar">移除 <strong>大頭貼</strong></label>
                             </div>
                         </div>
 
                         <div class="mb-4 border p-3 rounded bg-light">
-                            <label asp-for="@editDto.Status" class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i>帳號管制狀態</label>
-                            <select asp-for="@editDto.Status" name="Status" class="form-select border-danger">
-                                <option value="1">🟢 正常啟用</option>
-                                <option value="2">🔴 強制停權 (鎖定發文與互動權限)</option>
+                            <label for="status" class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i>帳號管制狀態</label>
+                            <select name="Status" id="status" class="form-select border-danger">
+                                <option value="1" selected="@(editDto.Status != 2)">🟢 正常啟用</option>
+                                <option value="2" selected="@(editDto.Status == 2)">🔴 強制停權 (鎖定發文與互動權限)</option>
                             </select>
                         </div>
 
                         <div class="mb-4">
-                            <label asp-for="@editDto.AdminReason" class="form-label fw-bold text-danger">操作原因 (必填稽核用) *</label>
-                            <input asp-for="@editDto.AdminReason" name="AdminReason" class="form-control" required />
+                            <label for="adminReason" class="form-label fw-bold text-danger">操作原因 (必填稽核用) *</label>
+                            <input name="AdminReason" id="adminReason" class="form-control" maxlength="200" required />
                         </div>
 
                         <div class="d-grid gap-2">
