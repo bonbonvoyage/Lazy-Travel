@@ -1,0 +1,350 @@
+@model ItineraryViewModel
+@{
+    ViewData["Title"] = "編輯文章";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">Vlog 行程文章</a></li>
+    <li class="breadcrumb-item active" aria-current="page">編輯文章</li>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success py-2 mb-3" role="alert">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger py-2 mb-3" role="alert">@errorMessage</div>
+}
+
+@if (!Model.Permissions.CanEdit)
+{
+    <div class="alert alert-warning">
+        <div class="fw-medium mb-1">這篇文章目前無法編輯</div>
+        <div class="small mb-2">
+            @(Model.Post.IsDelete
+                ? "文章已被刪除，請聯絡主管或系統管理員還原後才能編輯。"
+                : !Model.Permissions.IsOfficial
+                    ? "這是會員自己發表的文章，不是官方文章，小編不能編輯。如果內容有問題，請到「檢視」頁提出檢舉。"
+                    : "文章已送出審核或已發布，請聯絡主管把文章「退回草稿」後才能再編輯。")
+        </div>
+        <a asp-action="Index" class="btn btn-sm btn-outline-primary">返回列表</a>
+    </div>
+    return;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.LastReturnNote))
+{
+    <div class="alert alert-warning">
+        <div class="fw-medium mb-1"><i class="bi bi-arrow-return-left"></i> 主管退回草稿的原因</div>
+        <div class="small mb-1">@Model.LastReturnNote</div>
+        @if (Model.LastReturnedAt is DateTime lastReturnedAt)
+        {
+            <div class="small text-muted">退回時間：@lastReturnedAt.ToString("yyyy/MM/dd HH:mm")</div>
+        }
+    </div>
+}
+
+<form asp-action="Edit" asp-route-id="@Model.Post.PostId" method="post" enctype="multipart/form-data" novalidate>
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    @await Html.PartialAsync("_Form", Model.Post)
+</form>
+
+@* ---------- 每日行程列表（併入編輯頁，往下捲動管理） ---------- *@
+<hr class="my-4" />
+
+<style>
+    /* 時間軸樣式：編號圓圈 + 連接線，跟前台的行程展示保持同一套視覺語言 */
+    .itinerary-node-row { position: relative; padding-left: 2.75rem; }
+    .itinerary-node-dot {
+        position: absolute;
+        left: 0;
+        top: .1rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background-color: var(--sea-600);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-size: .85rem;
+        flex-shrink: 0;
+        z-index: 1;
+    }
+    .itinerary-node-row:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 2.2rem;
+        bottom: -.6rem;
+        width: 2px;
+        background-color: var(--border-soft);
+    }
+
+    /* lang="en-GB" 在部分瀏覽器對 <input type="time"> 沒有實際效果，
+       這裡直接把 Chrome/Edge 內建的上下午子欄位隱藏掉，確保「停留時間」一定是純 24 小時格式。 */
+    #itineraryStayDuration::-webkit-datetime-edit-ampm-field {
+        display: none;
+    }
+
+    /* 每日行程改成頁籤切換，不再往下無限延伸 */
+    .itinerary-day-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        border-bottom: 1px solid var(--border-soft);
+        padding-bottom: .75rem;
+        margin-bottom: 1rem;
+    }
+    .itinerary-day-tab {
+        border: 1px solid var(--border-soft);
+        background-color: var(--surface);
+        color: var(--text-secondary);
+        border-radius: var(--radius-pill);
+        padding: .35rem .9rem;
+        font-size: .85rem;
+        cursor: pointer;
+    }
+    .itinerary-day-tab.active {
+        background-color: var(--sea-600);
+        border-color: var(--sea-600);
+        color: #fff;
+        font-weight: 600;
+    }
+    .itinerary-day-panel { display: none; }
+    .itinerary-day-panel.active { display: block; }
+</style>
+
+<h2 id="itinerary-section" class="h5 mb-3" style="font-family:var(--font-display); color:var(--sea-800); scroll-margin-top: 1rem;"><i class="bi bi-calendar3"></i> 每日行程列表</h2>
+
+<div class="row g-4 align-items-start">
+    <div class="col-lg-7">
+        <div class="admin-table-card p-3 p-lg-4">
+            <h2 class="h6 mb-3" style="font-family:var(--font-display); color:var(--sea-800);">
+                @Model.Post.Title － 共 @Model.Post.TravelDays 天
+            </h2>
+
+            @if (!Model.Nodes.Any())
+            {
+                <p class="text-muted small mb-0">還沒有任何行程，從右邊表單新增第一個吧。</p>
+            }
+            else
+            {
+                var dayGroups = Model.Nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key).ToList();
+                var activeDay = Model.EditingNode?.DayNumber ?? dayGroups.First().Key;
+
+                <div class="itinerary-day-tabs">
+                    @foreach (var dayGroup in dayGroups)
+                    {
+                        <button type="button" class="itinerary-day-tab @(dayGroup.Key == activeDay ? "active" : "")" data-itinerary-day="@dayGroup.Key">第 @dayGroup.Key 天</button>
+                    }
+                </div>
+
+                @foreach (var dayGroup in dayGroups)
+                {
+                    <div class="itinerary-day-panel @(dayGroup.Key == activeDay ? "active" : "")" data-itinerary-day-panel="@dayGroup.Key">
+                        @{ var dayNodes = dayGroup.ToList(); }
+                        @for (var i = 0; i < dayNodes.Count; i++)
+                        {
+                            var node = dayNodes[i];
+                            <div class="itinerary-node-row mb-3">
+                                <div class="itinerary-node-dot">@(i + 1)</div>
+                                <div class="d-flex align-items-start justify-content-between gap-2 p-2"
+                                     style="background-color: @(Model.EditingNode?.NodeId == node.NodeId ? "var(--sea-50)" : "transparent"); border-radius:var(--radius-sm);">
+                                    <div class="d-flex gap-2">
+                                        @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
+                                        {
+                                            <img src="@node.MediaUrl" alt=""
+                                                 style="width:56px;height:56px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0;" />
+                                        }
+                                        <div>
+                                            <div class="small text-muted">
+                                                <i class="bi bi-clock"></i> @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
+                                                @if (!string.IsNullOrWhiteSpace(node.StayTime))
+                                                {
+                                                    <text> （停留 @node.StayTime）</text>
+                                                }
+                                            </div>
+                                            <div class="fw-medium"><i class="bi bi-geo-alt-fill"></i> @node.LocationName</div>
+                                            @if (!string.IsNullOrWhiteSpace(node.Description))
+                                            {
+                                                <div class="text-muted small">@node.Description</div>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(node.Remarks))
+                                            {
+                                                <div class="text-muted small">備註：@node.Remarks</div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-column gap-1">
+                                        <a asp-action="Edit" asp-route-id="@Model.Post.PostId" asp-route-editId="@node.NodeId" asp-fragment="itinerary-section"
+                                           class="btn btn-sm btn-outline-primary">編輯</a>
+                                        <form asp-action="DeleteNode" method="post" class="d-inline"
+                                              onsubmit="return confirm('確定要刪除「@node.LocationName」這個行程嗎？');">
+                                            <input type="hidden" name="nodeId" value="@node.NodeId" />
+                                            <input type="hidden" name="postId" value="@Model.Post.PostId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="admin-table-card p-3 p-lg-4">
+            @{
+                var editing = Model.EditingNode;
+            }
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 mb-0" style="font-family:var(--font-display); color:var(--sea-800);">
+                    @if (editing is null)
+                    {
+                        <text><i class="bi bi-plus-circle"></i> 新增行程</text>
+                    }
+                    else
+                    {
+                        <text><i class="bi bi-pencil-square"></i> 編輯行程－@editing.LocationName</text>
+                    }
+                </h2>
+                @if (editing is not null)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Post.PostId" asp-fragment="itinerary-section" class="btn btn-sm btn-link text-secondary">取消編輯</a>
+                }
+            </div>
+
+            <form asp-action="@(editing is null ? "AddNode" : "UpdateNode")" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="postId" value="@Model.Post.PostId" />
+                @if (editing is not null)
+                {
+                    <input type="hidden" name="nodeId" value="@editing.NodeId" />
+                    <input type="hidden" name="existingMediaUrl" value="@editing.MediaUrl" />
+                }
+
+                <div class="mb-2">
+                    <label class="form-label">第幾天</label>
+                    <input type="number" name="dayNumber" class="form-control" min="1"
+                           value="@(editing?.DayNumber ?? 1)" required />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label"><i class="bi bi-geo-alt-fill"></i> 地點名稱</label>
+                    <input type="text" name="locationName" class="form-control" placeholder="例如：七星潭"
+                           value="@editing?.LocationName" required />
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label"><i class="bi bi-clock"></i> 抵達</label>
+                        <input type="time" name="arrivalTime" id="itineraryArrivalTime" class="form-control"
+                               value="@(editing?.ArrivalTime?.ToString("HH:mm"))" onchange="lazyTravelAutoStay()" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label"><i class="bi bi-clock"></i> 離開</label>
+                        <input type="time" name="departureTime" id="itineraryDepartureTime" class="form-control"
+                               value="@(editing?.DepartureTime?.ToString("HH:mm"))" onchange="lazyTravelAutoStay()" />
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label"><i class="bi bi-clock"></i> 停留時間</label>
+                    <div class="form-text mt-0 mb-1">填好抵達／離開時間會自動帶入，也可以手動調整（時：分＝停留幾小時幾分鐘，不是時鐘時間）。</div>
+                    @* 這是「停留多久」不是「幾點幾分」，上下午沒有意義；真正生效的隱藏規則在上面 <style> 裡。 *@
+                    <input type="time" name="stayDuration" id="itineraryStayDuration" class="form-control" lang="en-GB"
+                           value="@($"{Model.EditingStayHours:D2}:{Model.EditingStayMinutes:D2}")" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label"><i class="bi bi-image"></i> 景點圖片</label>
+                    <input type="file" name="mediaFile" accept="image/*" class="form-control" />
+                    <div class="form-text">支援 jpg / png / gif / webp，大小上限 5MB。@(editing is not null && !string.IsNullOrWhiteSpace(editing.MediaUrl) ? "上傳新圖片會取代目前的圖片。" : "")</div>
+                    @if (editing is not null && !string.IsNullOrWhiteSpace(editing.MediaUrl))
+                    {
+                        <img src="@editing.MediaUrl" alt="目前圖片"
+                             style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius-sm);margin-top:.5rem;" />
+                    }
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label"><i class="bi bi-chat-square-text"></i> 景點介紹</label>
+                    <textarea name="description" class="form-control" rows="2">@editing?.Description</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">備註（交通/門票）</label>
+                    <textarea name="remarks" class="form-control" rows="2">@editing?.Remarks</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    @if (editing is null)
+                    {
+                        <text><i class="bi bi-plus-lg"></i> 新增下一個地點</text>
+                    }
+                    else
+                    {
+                        <text>儲存變更</text>
+                    }
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    @{ await Html.RenderPartialAsync("_ContentEditorAssets"); }
+
+    <script>
+        // 填好抵達/離開時間後自動算出停留時間，帶入「停留時間」欄位（跟抵達/離開一樣是 <input type="time">，
+        // 借用時鐘格式表示「持續多久」）；使用者仍可手動改，只有抵達或離開變動時才會重算。
+        function lazyTravelAutoStay() {
+            var arrivalEl = document.getElementById('itineraryArrivalTime');
+            var departureEl = document.getElementById('itineraryDepartureTime');
+            var stayEl = document.getElementById('itineraryStayDuration');
+            if (!arrivalEl.value || !departureEl.value) {
+                return;
+            }
+
+            function toMinutes(hhmm) {
+                var parts = hhmm.split(':');
+                return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+            }
+
+            var diff = toMinutes(departureEl.value) - toMinutes(arrivalEl.value);
+            if (diff < 0) {
+                diff += 24 * 60; // 離開時間比抵達早，當作跨夜行程，隔天才離開
+            }
+
+            var hours = Math.min(Math.floor(diff / 60), 23); // <input type="time"> 最多到 23 小時
+            var minutes = diff % 60;
+
+            function pad2(n) { return (n < 10 ? '0' : '') + n; }
+            stayEl.value = pad2(hours) + ':' + pad2(minutes);
+        }
+
+        // 每日行程頁籤：點哪一天就只顯示那一天的清單
+        document.querySelectorAll('.itinerary-day-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var day = tab.getAttribute('data-itinerary-day');
+
+                document.querySelectorAll('.itinerary-day-tab').forEach(function (t) {
+                    t.classList.toggle('active', t === tab);
+                });
+                document.querySelectorAll('.itinerary-day-panel').forEach(function (panel) {
+                    panel.classList.toggle('active', panel.getAttribute('data-itinerary-day-panel') === day);
+                });
+            });
+        });
+    </script>
+}

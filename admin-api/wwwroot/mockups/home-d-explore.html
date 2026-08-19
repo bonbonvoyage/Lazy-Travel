@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>D Explore 風 — LazyTravel 首頁模板</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   D 版：Explore 風（毛玻璃）
+   ------------------------------------------------------------
+   範圍：只做參考圖那一屏 —— 導覽列 + Hero + 搜尋列，往下沒有內容。
+
+   毛玻璃分四層，每層後面都真的有東西可以透，不是貼半透明色塊：
+     1. 頁面底  柔焦色團（青／珊瑚／薰衣草）
+     2. 白色外殼 rgba(255,255,255,.62) + blur(30px)  ← 透出底層色團
+     3. Hero 左panel 深藍玻璃 + blur(22px)            ← 透出右邊風景
+     4. 搜尋列   白玻璃 + blur(26px)，上移壓在風景上  ← 透出風景
+
+   跟 brand.css 的關係（要改回品牌色都只有一行）：
+     --accent / --accent-hover 換成 #B85433 / #D46A47（coral-600/500）
+   ============================================================ */
+
+:root {
+  --navy-900: #0E2233;
+  --navy-800: #1B3F58;
+
+  /* 強調色（換品牌橘就改這三行） */
+  --accent:       #4FC3E8;
+  --accent-hover: #35B4DD;
+  --accent-ink:   #06222F;
+
+  --ink:   #12293A;
+  --ink-2: #4E6274;
+  --ink-3: #8496A4;
+
+  /* 玻璃 */
+  --glass-shell:  rgba(255, 255, 255, .62);
+  --glass-panel:  rgba(255, 255, 255, .52);
+  --glass-dark:   rgba(10, 27, 40, .52);
+  --glass-line:   rgba(255, 255, 255, .55);
+  --glass-line-d: rgba(255, 255, 255, .16);
+
+  --font-display: "Poppins", "Noto Sans TC", sans-serif;
+  --font-body:    "Noto Sans TC", "PingFang TC", sans-serif;
+
+  --r-sm: 12px;
+  --r-lg: 26px;
+  --r-xl: 34px;
+  --r-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  padding: 1.25rem;
+  background: #E4EAF0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ---------- 層 1：頁面底的柔焦色團，讓上面的玻璃有東西可以透 ---------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -1;
+  background:
+    radial-gradient(38% 46% at 14% 18%,  rgba(79, 195, 232, .55) 0%, transparent 70%),
+    radial-gradient(34% 42% at 86% 12%,  rgba(255, 176, 132, .48) 0%, transparent 70%),
+    radial-gradient(44% 50% at 74% 88%,  rgba(138, 142, 226, .42) 0%, transparent 72%),
+    radial-gradient(40% 44% at 24% 92%,  rgba(107, 209, 190, .40) 0%, transparent 72%);
+  filter: blur(28px);
+}
+
+h1, .brand-word { font-family: var(--font-display); font-weight: 700; letter-spacing: -.01em; }
+a { text-decoration: none; }
+
+/* ---------- 層 2：白色玻璃外殼 ---------- */
+.shell {
+  width: 100%;
+  max-width: 1180px;
+  height: 100%;
+  background: var(--glass-shell);
+  backdrop-filter: blur(30px) saturate(1.5);
+  -webkit-backdrop-filter: blur(30px) saturate(1.5);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-xl);
+  box-shadow: 0 30px 80px rgba(14, 34, 51, .16);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.shell-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem clamp(1rem, 2.6vw, 1.9rem) clamp(1.4rem, 2.6vw, 1.9rem);
+}
+
+/* ============================================================
+   導覽列
+   ============================================================ */
+.nav-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 1.05rem clamp(1rem, 2.6vw, 1.9rem);
+  border-bottom: 1px solid rgba(255, 255, 255, .5);
+  background: rgba(255, 255, 255, .34);
+}
+.brand { display: flex; align-items: center; gap: .55rem; flex-shrink: 0; }
+.brand svg { width: 26px; height: 26px; color: var(--accent-hover); }
+.brand-word { font-size: 1.22rem; color: var(--navy-900); }
+
+.nav-menu { display: flex; align-items: center; gap: 1.6rem; flex: 1; min-width: 0; }
+
+.nav-links { display: flex; align-items: center; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.nav-links a {
+  display: block;
+  padding: .45rem .85rem;
+  font-size: .95rem;
+  color: var(--ink-2);
+  border-radius: var(--r-sm);
+  transition: color .2s ease, background-color .2s ease;
+}
+.nav-links a:hover { color: var(--navy-900); background: rgba(255, 255, 255, .6); }
+.nav-links a.on { color: var(--navy-900); font-weight: 500; position: relative; }
+.nav-links a.on::after {
+  content: "";
+  position: absolute;
+  left: .85rem; right: .85rem; bottom: .05rem;
+  height: 2px; border-radius: 2px;
+  background: var(--accent-hover);
+}
+
+/* 搜尋框：玻璃 */
+.nav-search {
+  margin-left: auto;
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(255, 255, 255, .5);
+  border: 1px solid rgba(255, 255, 255, .7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--r-pill);
+  padding: .5rem 1.1rem;
+  min-width: 13rem;
+}
+.nav-search svg { width: 16px; height: 16px; color: var(--ink-3); flex-shrink: 0; }
+.nav-search input {
+  border: none; background: none; outline: none;
+  font-family: inherit; font-size: .9rem; color: var(--ink);
+  width: 100%;
+}
+.nav-search input::placeholder { color: var(--ink-3); }
+
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  width: 40px; height: 40px;
+  border: 1px solid rgba(255, 255, 255, .7);
+  background: rgba(255, 255, 255, .5);
+  border-radius: var(--r-sm);
+  color: var(--navy-900);
+  cursor: pointer;
+  place-items: center;
+}
+.nav-toggle svg { width: 20px; height: 20px; }
+
+/* ---------- 按鈕 ---------- */
+.btn-a, .btn-navy, .btn-glass {
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  border: none; cursor: pointer;
+  border-radius: var(--r-pill);
+  font-family: var(--font-body);
+  font-size: .95rem; font-weight: 500;
+  padding: .72rem 1.65rem;
+  min-height: 44px;
+  transition: background-color .22s ease, transform .18s ease, box-shadow .22s ease;
+}
+.btn-a { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 18px rgba(79, 195, 232, .35); }
+.btn-a:hover { background: var(--accent-hover); color: var(--accent-ink); transform: translateY(-1px); box-shadow: 0 10px 26px rgba(79, 195, 232, .45); }
+.btn-navy { background: var(--navy-900); color: #fff; }
+.btn-navy:hover { background: var(--navy-800); color: #fff; transform: translateY(-1px); }
+.btn-glass {
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+}
+.btn-glass:hover { background: rgba(255, 255, 255, .26); color: #fff; transform: translateY(-1px); }
+.btn-sm { padding: .5rem 1.15rem; min-height: 38px; font-size: .88rem; }
+
+/* ============================================================
+   Hero：風景滿版鋪底，左邊疊一片深藍毛玻璃
+   ============================================================ */
+.hero {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(14, 34, 51, .22);
+}
+.hero .scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* 層 3：深藍玻璃面板，透出後面的風景 */
+.hero-copy {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 52%;
+  z-index: 3;
+  padding: clamp(1.6rem, 3.2vw, 2.9rem);
+  display: flex; flex-direction: column; justify-content: center;
+  background: linear-gradient(to right, rgba(8, 24, 36, .74) 0%, rgba(8, 24, 36, .46) 100%);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  border-right: 1px solid var(--glass-line-d);
+  /* 右緣羽化，玻璃不留硬邊 */
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 82%, transparent 100%);
+          mask-image: linear-gradient(to right, #000 0%, #000 82%, transparent 100%);
+}
+.hero-copy h1 {
+  color: #fff;
+  font-size: clamp(1.9rem, 3.6vw, 3rem);
+  line-height: 1.24;
+  margin: 0 0 1rem;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, .3);
+}
+.hero-copy h1 span { color: var(--accent); display: block; }
+.hero-copy p {
+  color: rgba(255, 255, 255, .8);
+  font-size: .97rem;
+  line-height: 1.8;
+  max-width: 22rem;
+  margin: 0 0 1.8rem;
+}
+.hero-copy .btn-a { align-self: flex-start; }
+
+/* 浮在風景上的玻璃小卡（放右上，避開下面被搜尋列蓋住的區域） */
+.glass-chip {
+  position: absolute;
+  right: clamp(1rem, 2.4vw, 1.9rem);
+  top: clamp(1rem, 2.4vw, 1.9rem);
+  z-index: 4;
+  display: flex; align-items: center; gap: .7rem;
+  background: rgba(255, 255, 255, .17);
+  border: 1px solid rgba(255, 255, 255, .34);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border-radius: var(--r-pill);
+  padding: .55rem 1.15rem .55rem .6rem;
+  color: #fff;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .18);
+}
+.glass-chip .dots { display: flex; }
+.glass-chip .dots i {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .55);
+  margin-left: -9px;
+  display: grid; place-items: center;
+  font-size: .64rem; font-style: normal; font-weight: 600;
+  color: #fff;
+}
+.glass-chip .dots i:first-child { margin-left: 0; }
+.glass-chip .dots i:nth-child(1) { background: #3E8FB0; }
+.glass-chip .dots i:nth-child(2) { background: #6E9E7A; }
+.glass-chip .dots i:nth-child(3) { background: #C9825E; }
+.glass-chip .txt { font-size: .84rem; line-height: 1.35; }
+.glass-chip .txt b { font-family: var(--font-display); font-weight: 600; }
+.glass-chip .txt small { display: block; color: rgba(255, 255, 255, .72); font-size: .74rem; }
+
+/* ============================================================
+   層 4：搜尋列 —— 白玻璃，上移壓在風景上緣
+   ============================================================ */
+.searchbar {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 6;
+  margin: -2.6rem clamp(.8rem, 2.2vw, 2.2rem) 0;
+  background: var(--glass-panel);
+  backdrop-filter: blur(26px) saturate(1.6);
+  -webkit-backdrop-filter: blur(26px) saturate(1.6);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 16px 40px rgba(14, 34, 51, .18);
+  padding: 1.05rem 1.25rem;
+  display: flex; align-items: center; gap: 1.25rem;
+}
+.sb-field { flex: 1 1 9rem; min-width: 0; }
+.sb-field + .sb-field { border-left: 1px solid rgba(255, 255, 255, .6); padding-left: 1.25rem; }
+.sb-field label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: .3rem;
+}
+.sb-field select, .sb-field input {
+  border: none; background: none; outline: none;
+  font-family: inherit; font-size: .98rem; font-weight: 500;
+  color: var(--ink); width: 100%; padding: 0;
+}
+.searchbar .btn-navy { flex: 0 0 auto; }
+
+/* ============================================================
+   右下圓鈕
+   ============================================================ */
+.fab {
+  position: fixed; right: 26px; bottom: 26px; z-index: 40;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .28);
+  background: rgba(14, 34, 51, .58);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #fff;
+  display: grid; place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(14, 34, 51, .3);
+  transition: transform .2s ease, background-color .2s ease;
+}
+.fab:hover { background: rgba(14, 34, 51, .78); transform: translateY(-2px); }
+.fab svg { width: 20px; height: 20px; }
+
+/* ============================================================
+   響應式
+   ============================================================ */
+@media (max-width: 991.98px) {
+  .nav-bar { flex-wrap: wrap; gap: .8rem; }
+  .nav-toggle { display: grid; }
+  .nav-menu {
+    display: none;
+    order: 3; width: 100%;
+    flex-direction: column; align-items: stretch;
+    gap: .7rem; padding-top: .3rem;
+  }
+  .nav-bar.open .nav-menu { display: flex; }
+  .nav-links { flex-direction: column; align-items: stretch; gap: .1rem; }
+  .nav-links a { padding: .6rem .85rem; }
+  .nav-links a.on::after { left: .85rem; right: auto; width: 1.4rem; }
+  .nav-search { margin-left: 0; width: 100%; }
+  .hero-copy { width: 62%; }
+}
+
+@media (max-width: 767.98px) {
+  body { padding: 0; overflow: auto; }
+  html, body { height: auto; min-height: 100%; }
+  .shell { border-radius: 0; height: auto; min-height: 100vh; border: none; }
+
+  .hero { min-height: 26rem; }
+  /* 手機改成整片壓在底部，仍然是玻璃 */
+  .hero-copy {
+    width: 100%;
+    top: auto; bottom: 0;
+    justify-content: flex-end;
+    background: linear-gradient(to bottom, rgba(8, 24, 36, 0) 0%, rgba(8, 24, 36, .72) 42%, rgba(8, 24, 36, .88) 100%);
+    border-right: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 26%, #000 100%);
+  }
+  .glass-chip { top: clamp(.8rem, 3vw, 1.2rem); }
+
+  .searchbar { flex-direction: column; align-items: stretch; gap: .9rem; margin-inline: .9rem; }
+  /* 直向排列時 flex-basis 會變成「高度」基準，9rem 會把每欄撐成 144px，關掉 */
+  .sb-field { flex: 0 0 auto; }
+  .sb-field + .sb-field { border-left: none; border-top: 1px solid rgba(255,255,255,.6); padding-left: 0; padding-top: .9rem; }
+  .searchbar .btn-navy { width: 100%; }
+}
+
+/* 矮螢幕微縮 */
+@media (min-width: 768px) and (max-height: 720px) {
+  .hero-copy p { margin-bottom: 1.2rem; }
+  .searchbar { padding: .85rem 1.1rem; }
+}
+
+/* 不支援 backdrop-filter 的瀏覽器：改用不透明底，不會變成看不清的白霧 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .shell      { background: rgba(255, 255, 255, .94); }
+  .searchbar  { background: rgba(255, 255, 255, .92); }
+  .hero-copy  { background: linear-gradient(to right, rgba(8,24,36,.92) 0%, rgba(8,24,36,.7) 100%); }
+  .glass-chip { background: rgba(10, 27, 40, .6); }
+  .nav-search { background: rgba(255, 255, 255, .85); }
+}
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     風景：純 SVG，用大氣層次（越遠越淡）+ 柔焦雲海 + 顆粒質感畫的，
+     不依賴任何外部圖檔。接真照片時整個 <svg class="scene"> 換成
+     <img class="scene" src="@Model.HeroImage" alt="…"> 即可，
+     CSS 的 .scene 已經是 position:absolute inset:0 + 滿版。
+     ════════════════════════════════════════════════════════════ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- 畫布比例 1200×560 ≈ 2.14:1，貼近 Hero 的實際長寬，
+         這樣 slice 幾乎不裁切，四層稜線都留得住 -->
+    <symbol id="sc-sunset" viewBox="0 0 1200 560" preserveAspectRatio="xMidYMid slice">
+
+      <!-- 天空：多階漸層，從夜藍一路壓到地平線的暖橘 -->
+      <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0"   stop-color="#0C1B2E"/>
+        <stop offset=".16" stop-color="#182C4A"/>
+        <stop offset=".32" stop-color="#324566"/>
+        <stop offset=".46" stop-color="#5D5674"/>
+        <stop offset=".58" stop-color="#96677A"/>
+        <stop offset=".68" stop-color="#C58166"/>
+        <stop offset=".79" stop-color="#E4A16F"/>
+        <stop offset=".89" stop-color="#F3C089"/>
+        <stop offset="1"   stop-color="#FADCAF"/>
+      </linearGradient>
+
+      <radialGradient id="gGlow" cx=".5" cy=".5" r=".5">
+        <stop offset="0"   stop-color="#FFE4B4" stop-opacity=".95"/>
+        <stop offset=".38" stop-color="#FFC98C" stop-opacity=".3"/>
+        <stop offset="1"   stop-color="#FFC98C" stop-opacity="0"/>
+      </radialGradient>
+
+      <radialGradient id="gVig" cx=".5" cy=".44" r=".8">
+        <stop offset=".52" stop-color="#000" stop-opacity="0"/>
+        <stop offset="1"   stop-color="#000" stop-opacity=".34"/>
+      </radialGradient>
+
+      <!-- 空氣霧：疊在中景山下緣，做出「越遠越淡」 -->
+      <linearGradient id="gHaze" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#F6CDA2" stop-opacity="0"/>
+        <stop offset="1" stop-color="#F6CDA2" stop-opacity=".5"/>
+      </linearGradient>
+
+      <filter id="fCloud" x="-20%" y="-140%" width="140%" height="380%">
+        <feGaussianBlur stdDeviation="13"/>
+      </filter>
+      <filter id="fThin" x="-20%" y="-200%" width="140%" height="500%">
+        <feGaussianBlur stdDeviation="9"/>
+      </filter>
+      <filter id="fSun" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="5"/>
+      </filter>
+      <!-- 顆粒：讓畫面不要像一張乾淨的向量圖 -->
+      <filter id="fGrain">
+        <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="4" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+
+      <rect width="1200" height="560" fill="url(#gSky)"/>
+
+      <!-- 太陽與光暈 -->
+      <circle cx="862" cy="238" r="250" fill="url(#gGlow)"/>
+      <circle cx="862" cy="238" r="25" fill="#FFF2D4" opacity=".96" filter="url(#fSun)"/>
+
+      <!-- 高空薄雲 -->
+      <g filter="url(#fThin)" opacity=".42">
+        <ellipse cx="250" cy="112" rx="230" ry="12" fill="#E7C3BE"/>
+        <ellipse cx="650" cy="78"  rx="280" ry="9"  fill="#EACCBD"/>
+        <ellipse cx="1010" cy="148" rx="220" ry="11" fill="#F1D3B9"/>
+      </g>
+
+      <!-- 遠山：淡到快被空氣吃掉 -->
+      <path d="M0 400 L0 296 C 90 262 150 230 232 256 C 314 282 358 224 442 248
+               C 526 272 578 230 664 256 C 750 282 806 242 892 266
+               C 978 290 1046 262 1120 282 C 1160 293 1184 300 1200 304 L1200 400 Z"
+            fill="#9DB4C9" opacity=".5"/>
+
+      <!-- 中景山 -->
+      <path id="pMid" d="M0 450 L0 352 C 100 314 178 348 262 378 C 346 408 396 340 486 366
+               C 576 392 634 350 724 378 C 814 406 876 362 962 386
+               C 1048 410 1128 388 1200 372 L1200 450 Z"
+            fill="#5A7995" opacity=".84"/>
+      <use href="#pMid" fill="url(#gHaze)"/>
+
+      <!-- 雲海：柔焦帶狀，卡在中景與近景之間 -->
+      <g filter="url(#fCloud)">
+        <ellipse cx="180" cy="412" rx="330" ry="26" fill="#FBE7D6" opacity=".8"/>
+        <ellipse cx="560" cy="400" rx="350" ry="21" fill="#FDEEE0" opacity=".74"/>
+        <ellipse cx="960" cy="416" rx="330" ry="27" fill="#F9E2D0" opacity=".78"/>
+        <ellipse cx="380" cy="432" rx="280" ry="18" fill="#FFF3E7" opacity=".6"/>
+        <ellipse cx="820" cy="438" rx="300" ry="19" fill="#FCEADB" opacity=".58"/>
+      </g>
+
+      <!-- 近山：穿出雲海，這層開始要清楚 -->
+      <path d="M0 560 L0 430 C 96 386 186 428 276 462 C 366 496 424 434 520 464
+               C 616 494 682 448 780 478 C 878 508 946 466 1040 490
+               C 1110 508 1164 500 1200 492 L1200 560 Z"
+            fill="#26445F"/>
+
+      <!-- 前景稜線：最深，把整張畫面壓住 -->
+      <path d="M0 560 L0 500 C 140 470 280 508 420 524 C 560 540 700 512 840 526
+               C 960 538 1090 522 1200 506 L1200 560 Z"
+            fill="#0B1826"/>
+
+      <rect width="1200" height="560" fill="url(#gVig)"/>
+      <rect width="1200" height="560" filter="url(#fGrain)" opacity=".055"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+
+  <!-- ══════════ 導覽列 ══════════ -->
+  <header class="nav-bar" id="navBar">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/>
+      </svg>
+      <span class="brand-word">LazyTravel</span>
+    </a>
+
+    <button class="nav-toggle" type="button" id="navToggle" aria-expanded="false" aria-controls="navMenu" aria-label="開啟選單">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+
+    <div class="nav-menu" id="navMenu">
+      <nav aria-label="主選單">
+        <ul class="nav-links">
+          <li><a class="on" href="#" aria-current="page">首頁</a></li>
+          <li><a href="#">找行程</a></li>
+          <li><a href="#">揪團</a></li>
+          <li><a href="#">常見問題</a></li>
+        </ul>
+      </nav>
+
+      <form class="nav-search" role="search" onsubmit="return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+        <label class="sr-only" for="topq">搜尋行程</label>
+        <input id="topq" type="search" placeholder="搜尋目的地" />
+      </form>
+    </div>
+
+    <a class="btn-a btn-sm" href="#">Pro</a>
+  </header>
+
+  <div class="shell-body">
+
+    <!-- ══════════ Hero ══════════ -->
+    <section class="hero">
+      <svg class="scene" role="img" aria-label="插畫：日落時分的雲海與層疊山稜"><use href="#sc-sunset"/></svg>
+
+      <div class="hero-copy">
+        <h1>探索世界<span>用你的步調</span>慢慢走</h1>
+        <p>找到步調相同的旅伴，走一段不用趕的路。目前有 312 個團正在成形，等你加入。</p>
+        <a class="btn-a" href="#">開始探索</a>
+      </div>
+
+      <div class="glass-chip">
+        <span class="dots" aria-hidden="true"><i>游</i><i>陳</i><i>林</i></span>
+        <span class="txt"><b>312 個團正在成形</b><small>本週新增 24 個</small></span>
+      </div>
+    </section>
+
+    <!-- ══════════ 搜尋列 ══════════ -->
+    <form class="searchbar" onsubmit="return false;">
+      <div class="sb-field">
+        <label for="f-loc">目的地</label>
+        <select id="f-loc">
+          <option>宜蘭</option><option>花蓮・台東</option><option>台南</option>
+          <option>阿里山</option><option>澎湖</option><option>日本</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <label for="f-date">出發日期</label>
+        <input id="f-date" type="text" value="08/09 – 08/12" />
+      </div>
+      <div class="sb-field">
+        <label for="f-ppl">人數</label>
+        <input id="f-ppl" type="text" value="2 位成人" />
+      </div>
+      <button class="btn-navy" type="submit">搜尋</button>
+    </form>
+
+  </div>
+</div>
+
+<button class="fab" type="button" aria-label="往下看更多">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+</button>
+
+<script>
+  var bar = document.getElementById('navBar');
+  var tgl = document.getElementById('navToggle');
+  tgl.addEventListener('click', function () {
+    var open = bar.classList.toggle('open');
+    tgl.setAttribute('aria-expanded', String(open));
+    tgl.setAttribute('aria-label', open ? '關閉選單' : '開啟選單');
+  });
+</script>
+</body>
+</html>

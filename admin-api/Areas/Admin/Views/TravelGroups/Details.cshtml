@@ -1,0 +1,19 @@
+﻿@model LazyTravel.Models.EfModels.TravelGroup
+
+@{
+    ViewData["Title"] = "揪團詳細內容";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">揪團管理</a></li>
+    <li class="breadcrumb-item active" aria-current="page">@Model.GroupTitle</li>
+}
+
+<partial name="_TravelGroupDetailsContent" model="Model" />
+
+<a asp-area="Admin"
+   asp-controller="TravelGroups"
+   asp-action="Index"
+   class="btn btn-outline-primary mt-3">
+    返回列表
+</a>

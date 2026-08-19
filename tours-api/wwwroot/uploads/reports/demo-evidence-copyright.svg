@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="700" viewBox="0 0 500 700">
+  <rect width="500" height="700" fill="#f5f3ee"/>
+  <rect x="0" y="0" width="500" height="70" fill="#2B5A72"/>
+  <text x="30" y="42" font-family="Microsoft JhengHei, sans-serif" font-size="18" fill="#ffffff">圖片來源比對</text>
+
+  <text x="30" y="105" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">A. 官方網站原圖</text>
+  <rect x="30" y="118" width="200" height="140" rx="8" fill="#8fb3c7"/>
+  <rect x="30" y="118" width="200" height="140" rx="8" fill="none" stroke="#cccccc"/>
+  <circle cx="70" cy="155" r="14" fill="#f7e7b8"/>
+  <path d="M30 230 L85 175 L125 215 L165 180 L230 240 L230 258 L30 258 Z" fill="#6f97ab"/>
+  <text x="130" y="200" font-family="Microsoft JhengHei, sans-serif" font-size="20" fill="#ffffff" fill-opacity="0.65" text-anchor="middle" transform="rotate(-20 130 200)">OFFICIAL</text>
+  <text x="30" y="278" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">usj-official.example.com</text>
+
+  <text x="270" y="105" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">B. 本站被檢舉文章封面</text>
+  <rect x="270" y="118" width="200" height="140" rx="8" fill="#8fb3c7"/>
+  <rect x="270" y="118" width="200" height="140" rx="8" fill="none" stroke="#cccccc"/>
+  <circle cx="310" cy="155" r="14" fill="#f7e7b8"/>
+  <path d="M270 230 L325 175 L365 215 L405 180 L470 240 L470 258 L270 258 Z" fill="#6f97ab"/>
+  <text x="370" y="200" font-family="Microsoft JhengHei, sans-serif" font-size="20" fill="#ffffff" fill-opacity="0.65" text-anchor="middle" transform="rotate(-20 370 200)">OFFICIAL</text>
+  <text x="270" y="278" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">大阪環球影城親子遊 4 天 3 夜</text>
+
+  <rect x="270" y="118" width="200" height="140" rx="8" fill="none" stroke="#c0392b" stroke-width="3"/>
+  <rect x="330" y="292" width="140" height="26" rx="6" fill="#c0392b"/>
+  <text x="400" y="310" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">殘留他站浮水印</text>
+
+  <rect x="30" y="345" width="440" height="255" rx="10" fill="#ffffff"/>
+  <text x="50" y="378" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">比對結果</text>
+  <line x1="50" y1="392" x2="450" y2="392" stroke="#e5e0d5"/>
+  <text x="50" y="422" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">圖片尺寸</text>
+  <text x="200" y="422" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">1200 x 800 / 1200 x 800  相同</text>
+  <text x="50" y="452" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">浮水印文字</text>
+  <text x="200" y="452" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">OFFICIAL(位置一致)</text>
+  <text x="50" y="482" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">原圖發布日</text>
+  <text x="200" y="482" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">2025/11/02</text>
+  <text x="50" y="512" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">本站發布日</text>
+  <text x="200" y="512" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">2026/07/21</text>
+  <text x="50" y="552" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">相似度</text>
+  <rect x="200" y="540" width="200" height="14" rx="7" fill="#e5e0d5"/>
+  <rect x="200" y="540" width="196" height="14" rx="7" fill="#c0392b"/>
+  <text x="412" y="552" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#c0392b">98%</text>
+  <text x="50" y="583" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999">檢舉人補充:圖片有其他網站浮水印痕跡。</text>
+
+  <rect x="0" y="640" width="500" height="60" fill="#f0f0f0"/>
+  <text x="250" y="675" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999" text-anchor="middle">※ 此為專題展示用模擬截圖,非真實內容</text>
+</svg>

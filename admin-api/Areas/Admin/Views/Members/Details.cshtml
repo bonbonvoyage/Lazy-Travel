@@ -1,0 +1,303 @@
+﻿@model LazyTravel.Models.DTOs.MemberDetailDto
+
+@* 🌟 注入授權服務 *@
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+
+@{
+    ViewData["Title"] = "會員詳細資料與處分";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    var editDto = ViewBag.EditDto as LazyTravel.Models.DTOs.MemberEditDto;
+
+    // 🌟 事先判斷是否擁有處分權限，以決定畫面排版要不要切兩半
+    bool canBlock = (await AuthorizationService.AuthorizeAsync(User, null, "RequireMemberBlock")).Succeeded;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 text-gray-800">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm me-2">
+            <i class="fas fa-arrow-left"></i> 返回列表
+        </a>
+        會員詳細資料：@Model.Name
+    </h2>
+</div>
+
+<!-- 操作提示訊息 -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- 🌟 AJAX 呼叫時需要的防偽驗證權杖 (隱藏表單) -->
+<form id="antiforgery-form" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="row justify-content-center">
+    <!-- 左側：會員資料檢視 (如果有處分表單就佔一半寬度 col-lg-6，如果沒有就稍微置中佔 8 格寬度 col-lg-8) -->
+    <div class="@(canBlock ? "col-lg-6" : "col-lg-8") mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="fas fa-user-circle me-2"></i>基本與聯絡資訊</h5>
+
+                <div id="piiActionArea">
+                    @* 判斷：是否有權限調閱個資 *@
+                    @if (User.HasClaim("Permission", "member:pii:unmask") || User.HasClaim("Permission", "system:employee:manage"))
+                    {
+                        <button type="button" id="unmaskBtn" class="btn btn-sm btn-warning fw-bold shadow-sm" onclick="unmaskPii(@Model.MemberID)">
+                            <i class="fas fa-eye"></i> 解除遮蔽並調閱
+                        </button>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary"><i class="fas fa-eye-slash me-1"></i>無調閱權限</span>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                    {
+                        <img src="@Model.AvatarUrl" alt="大頭貼" class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/120?text=No+Image'" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center text-white" style="width: 120px; height: 120px; font-size: 3rem;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    }
+                </div>
+
+                <table class="table table-bordered table-sm align-middle">
+                    <tbody>
+                        <tr>
+                            <th class="w-25 bg-light">會員編號</th>
+                            <td>@Model.MemberID</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">真實姓名/暱稱</th>
+                            <td>@Model.Name</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">註冊時間</th>
+                            <td>@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                        </tr>
+
+                        <tr class="table-secondary">
+                            <td colspan="2" class="fw-bold text-center">通訊錄與社群綁定</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">1. 登入信箱</th>
+                            <td>@Model.Email</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">2. 聯絡電話</th>
+                            <td id="td-phone">
+                                @Model.Phone
+                                @if (Model.Phone != null && Model.Phone.Contains("***"))
+                                {
+                                    <span class="badge bg-secondary ms-1 pii-badge">保護中</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">3. Line ID</th>
+                            <td id="td-line">
+                                @Model.LineId
+                                @if (Model.LineId != null && Model.LineId.Contains("***"))
+                                {
+                                    <span class="badge bg-secondary ms-1 pii-badge">保護中</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">4. Instagram</th>
+                            <td id="td-ig">
+                                @Model.InstagramUrl
+                                @if (Model.InstagramUrl != null && Model.InstagramUrl.Contains("***"))
+                                {
+                                    <span class="badge bg-secondary ms-1 pii-badge">保護中</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">5. Facebook</th>
+                            <td id="td-fb">
+                                @Model.FacebookUrl
+                                @if (Model.FacebookUrl != null && Model.FacebookUrl.Contains("***"))
+                                {
+                                    <span class="badge bg-secondary ms-1 pii-badge">保護中</span>
+                                }
+                            </td>
+                        </tr>
+
+                        <!-- 訂閱方案與登入稽核 -->
+                        <tr class="table-primary">
+                            <td colspan="2" class="fw-bold text-center">方案與系統狀態</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">目前方案</th>
+                            <td>
+                                <span class="badge bg-primary">@Model.CurrentPlanName</span>
+                                @if (Model.PlanExpiryDate.HasValue)
+                                {
+                                    <small class="text-muted ms-2">到期日: @Model.PlanExpiryDate.Value.ToString("yyyy/MM/dd")</small>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">最後登入時間</th>
+                            <td>
+                                @if (Model.LastLoginAt.HasValue)
+                                {
+                                    @Model.LastLoginAt.Value.ToString("yyyy/MM/dd HH:mm:ss")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">無登入紀錄</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">最近登入 IP</th>
+                            <td>
+                                @if (string.IsNullOrEmpty(Model.LastLoginIp))
+                                {
+                                    <span class="text-muted">無紀錄</span>
+                                }
+                                else
+                                {
+                                    <span class="font-monospace">@Model.LastLoginIp</span>
+                                    <a href="https://ipinfo.io/@Model.LastLoginIp" target="_blank" class="btn btn-sm btn-link p-0 ms-2 text-decoration-none" title="查詢 IP 來源">
+                                        <i class="fas fa-map-marker-alt text-danger"></i> 查位置
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側：資料處分與停權管制 -->
+    @* 🌟 如果有 canBlock 權限，才印出右邊的表單；如果沒有，這邊什麼都不印！ *@
+    @if (canBlock)
+    {
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-gavel me-2"></i>資料處置與帳號管制</h5>
+                </div>
+                <div class="card-body">
+                    @* 這裡刻意不用 asp-for:asp-for 指的是區域變數 editDto,產生的欄位名會是
+                       「editDto.MemberID」,跟手動指定的 name 混在一起。Edit 的參數也叫 editDto,
+                       Model Binder 看到有 editDto. 前綴就整包用前綴綁,沒前綴的 MemberID 被略過 → 綁成 0。
+                       全部改成純 name/value,所見即所得。 *@
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" name="MemberID" value="@Model.MemberID" />
+
+                        <div class="mb-4 border border-warning p-3 rounded bg-light">
+                            <label class="form-label fw-bold text-warning text-darken mb-1"><i class="fas fa-eraser me-1"></i>強制重置違規資料</label>
+                            <div class="form-text mb-3">勾選後要求會員重新填寫。</div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input border-secondary" type="checkbox" name="ResetName" value="true" id="resetName">
+                                <label class="form-check-label text-dark" for="resetName">重置 <strong>姓名/暱稱</strong></label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input border-secondary" type="checkbox" name="ResetBio" value="true" id="resetBio">
+                                <label class="form-check-label text-dark" for="resetBio">清空 <strong>個人簡介</strong></label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input border-secondary" type="checkbox" name="RemoveAvatar" value="true" id="removeAvatar">
+                                <label class="form-check-label text-dark" for="removeAvatar">移除 <strong>大頭貼</strong></label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 border p-3 rounded bg-light">
+                            <label for="status" class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i>帳號管制狀態</label>
+                            <select name="Status" id="status" class="form-select border-danger">
+                                <option value="1" selected="@(editDto.Status != 2)">🟢 正常啟用</option>
+                                <option value="2" selected="@(editDto.Status == 2)">🔴 強制停權 (鎖定發文與互動權限)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="adminReason" class="form-label fw-bold text-danger">操作原因 (必填稽核用) *</label>
+                            <input name="AdminReason" id="adminReason" class="form-control" maxlength="200" required />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-1"></i> 執行處分
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function unmaskPii(memberId) {
+            if (!confirm("調閱會員完整個資將寫入系統稽核紀錄，請問是否繼續？")) return;
+
+            // 抓取畫面上自動產生的防偽權杖
+            var token = $('input[name="__RequestVerificationToken"]').first().val();
+
+           $.ajax({
+                // 🌟 直接寫死絕對路徑，避開 Razor 解析問題
+                url: '/Admin/Members/Unmask',
+                type: 'POST',
+                data: {
+                    id: memberId,
+                    __RequestVerificationToken: token
+                },
+                success: function(res) {
+                    if (res.success) {
+                        $('#td-phone').text(res.phone);
+                        $('#td-line').text(res.lineId);
+
+                        if (res.ig !== "未綁定") {
+                            $('#td-ig').html(`<a href="${res.ig}" target="_blank"><i class="fab fa-instagram text-danger"></i> 前往查看</a>`);
+                        } else {
+                            $('#td-ig').text("未綁定");
+                        }
+
+                        if (res.fb !== "未綁定") {
+                            $('#td-fb').html(`<a href="${res.fb}" target="_blank"><i class="fab fa-facebook text-primary"></i> 前往查看</a>`);
+                        } else {
+                            $('#td-fb').text("未綁定");
+                        }
+
+                        $('.pii-badge').remove();
+                        $('#piiActionArea').html('<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> 已留存調閱紀錄</span>');
+
+                        alert("✅ 調閱成功，已寫入稽核紀錄。");
+                    }
+                },
+                error: function(xhr) {
+                    // 如果這版再報錯，請直接看 Console 裡的紅色錯誤訊息
+                    console.error("AJAX 失敗詳細資訊:", xhr.responseText);
+
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        alert("調閱失敗：您的權限不足。(請嘗試登出再重新登入)");
+                    } else if (xhr.status === 400) {
+                        alert("調閱失敗：安全驗證 (Token) 失敗。請重新整理網頁。");
+                    } else {
+                        var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "系統發生未知錯誤。";
+                        alert("調閱失敗：" + msg);
+                    }
+                }
+            });
+        }
+    </script>
+}

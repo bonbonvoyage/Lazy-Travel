@@ -1,0 +1,207 @@
+@model VlogPost
+
+<style>
+    /* Quill 圖文編輯器,套用品牌圓角與邊框色,維持跟其他表單元件一致 */
+    .ql-toolbar.ql-snow {
+        border-color: var(--border-soft);
+        border-top-left-radius: var(--radius-sm);
+        border-top-right-radius: var(--radius-sm);
+        background-color: var(--surface-alt);
+    }
+    .ql-container.ql-snow {
+        border-color: var(--border-soft);
+        border-bottom-left-radius: var(--radius-sm);
+        border-bottom-right-radius: var(--radius-sm);
+        min-height: 260px;
+        font-family: var(--font-body);
+        font-size: 1rem;
+        background-color: var(--surface);
+    }
+    .ql-editor.ql-blank::before { color: var(--text-muted); font-style: normal; }
+
+    .form-section-title {
+        font-family: var(--font-display);
+        color: var(--sea-800);
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    /* 大張封面上傳區：整塊都能點擊觸發檔案選擇，選好圖片後直接當背景預覽 */
+    .cover-dropzone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .3rem;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: var(--radius-md);
+        border: 2px dashed var(--border-soft);
+        background-color: var(--surface-alt);
+        background-size: cover;
+        background-position: center;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: border-color .15s ease;
+        margin: 0;
+    }
+    .cover-dropzone:hover { border-color: var(--sea-500); }
+    .cover-dropzone.has-image { border-style: solid; }
+    .cover-dropzone.has-image .cover-dropzone-plus,
+    .cover-dropzone.has-image .cover-dropzone-text { display: none; }
+    .cover-dropzone-plus {
+        font-size: 2rem;
+        line-height: 1;
+        color: var(--sea-600);
+    }
+    .cover-dropzone-text { font-size: .85rem; }
+</style>
+
+<script>
+    // 選好檔案後先在畫面上換圖(當成背景圖預覽)，不用等表單送出。真正存檔還是要按「儲存」。
+    function lazyTravelPreviewCover(input) {
+        var dropzone = document.getElementById('coverDropzone');
+        if (!dropzone || !input.files || !input.files[0]) {
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            dropzone.style.backgroundImage = "url('" + e.target.result + "')";
+            dropzone.classList.add('has-image');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+</script>
+
+<div class="row g-4 align-items-start">
+    <div class="col-lg-8">
+        @* 隱形佔位：跟右欄「封面大圖」上方按鈕列同高，讓兩欄的卡片頂端對齊。
+           margin-top 是為了把整排往上拉近麵包屑一點，抵消 Bootstrap g-4 gutter 自動加的欄位上邊距。 *@
+        <div class="invisible mb-3" style="height:38px; margin-top:-12px;"></div>
+
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-file-earmark-text"></i> 文章基本資料</h2>
+
+            <div class="mb-0">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="例如：花蓮三天兩夜，慢慢晃海岸線" />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-compass"></i> 行程資訊</h2>
+
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label asp-for="Destination" class="form-label"></label>
+                    <input asp-for="Destination" class="form-control" placeholder="例如：花蓮" />
+                    <span asp-validation-for="Destination" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="TravelDays" class="form-label"></label>
+                    <input asp-for="TravelDays" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="TravelDays" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="TravelPeople" class="form-label"></label>
+                    <select asp-for="TravelPeople" class="form-select">
+                        <option value="@TravelGroupSize.Solo" selected="@(Model.TravelPeople == TravelGroupSize.Solo)">1人 獨旅</option>
+                        <option value="@TravelGroupSize.Small" selected="@(Model.TravelPeople == TravelGroupSize.Small)">2-4人 精緻團</option>
+                        <option value="@TravelGroupSize.Large" selected="@(Model.TravelPeople == TravelGroupSize.Large)">5人以上 團體</option>
+                    </select>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="TravelDate" class="form-label"></label>
+                    <input type="date" name="TravelDate" class="form-control"
+                           value="@(Model.TravelDate?.ToString("yyyy-MM-dd"))" />
+                    <span asp-validation-for="TravelDate" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-table-card p-3 p-lg-4">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-journal-text"></i> 內文</h2>
+            <div class="form-text mb-2">行程總體心得，每天的詳細景點請往下捲動至「每日行程列表」管理。</div>
+            @* 實際送出表單的欄位：畫面上隱藏，送出前由下方 JS 把編輯器內容同步進來 *@
+            <textarea asp-for="Content" style="display:none;"></textarea>
+            <div id="content-editor"></div>
+            <span asp-validation-for="Content" class="text-danger small"></span>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="d-flex justify-content-end gap-2 mb-3" style="margin-top:-12px;">
+            @if (Model.PostId > 0)
+            {
+                <a asp-action="Index" class="btn btn-outline-primary">取消</a>
+                <button type="submit" name="action" value="draft" class="btn btn-outline-primary">儲存草稿</button>
+                <button type="submit" name="action" value="submit" class="btn btn-primary">送出審核</button>
+            }
+            else
+            {
+                <a asp-action="Index" class="btn btn-outline-primary">取消</a>
+                <button type="submit" class="btn btn-primary">儲存文章</button>
+            }
+        </div>
+
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-image"></i> 封面大圖</h2>
+
+            <label for="coverFileInput" id="coverDropzone" class="cover-dropzone @(string.IsNullOrWhiteSpace(Model.MediaUrl) ? "" : "has-image")"
+                   style="@(string.IsNullOrWhiteSpace(Model.MediaUrl) ? "" : $"background-image:url('{Model.MediaUrl}')")">
+                <i class="bi bi-cloud-arrow-up cover-dropzone-plus"></i>
+                <span class="cover-dropzone-text">點擊上傳封面大圖</span>
+            </label>
+            <input type="file" id="coverFileInput" name="CoverFile" accept="image/*" class="visually-hidden" onchange="lazyTravelPreviewCover(this)" />
+            @* 沒有選新檔案時，編輯頁要保留原本的封面網址 *@
+            <input type="hidden" name="ExistingMediaUrl" value="@Model.MediaUrl" />
+            <div class="form-text mt-2">支援 jpg / png / gif / webp，大小上限 5MB。@(string.IsNullOrWhiteSpace(Model.MediaUrl) ? "" : "上傳新圖片會取代目前的封面。")</div>
+
+            @* 目前只支援圖片，先不顯示媒體類型選項；之後要開放影片時把下面這行換回 select 就好 *@
+            <input type="hidden" asp-for="MediaType" value="@VlogMediaType.Photo" />
+        </div>
+
+        <div class="admin-table-card p-3 p-lg-4">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-broadcast"></i> 發布設定</h2>
+
+            <div class="mb-3">
+                <label class="form-label">文章狀態</label>
+                <div class="form-control-plaintext">
+                    <span class="status-pill @Model.Status.ToPillClass()">@Model.Status.ToLabel()</span>
+                </div>
+                <div class="form-text">
+                    @(Model.PostId > 0
+                        ? "用右上角「儲存草稿」／「送出審核」切換，這裡不能直接改。"
+                        : "新文章一律先存成草稿，之後在編輯頁再送出審核。")
+                </div>
+            </div>
+
+            <div class="@(Model.PostId > 0 ? "mb-3" : "mb-0")">
+                <label asp-for="MemberId" class="form-label"></label>
+                <div class="form-control-plaintext fw-medium">
+                    @(Model.Member?.Name ?? $"會員 #{Model.MemberId}")@(MemberLookup.IsOfficial(Model.Member) ? "（官方帳號）" : "")
+                </div>
+                <input type="hidden" asp-for="MemberId" />
+                <div class="form-text">Members 後台與 Cookie 認證尚未接上，先固定顯示此帳號。</div>
+            </div>
+
+            @if (Model.PostId > 0)
+            {
+                <div class="mb-3">
+                    <label class="form-label">建立時間</label>
+                    <div class="form-control-plaintext">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</div>
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label">最後更新</label>
+                    <div class="form-control-plaintext">@(Model.UpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
