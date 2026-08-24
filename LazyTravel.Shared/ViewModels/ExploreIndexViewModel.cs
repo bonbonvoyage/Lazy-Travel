@@ -1,6 +1,6 @@
 using LazyTravel.Models.EfModels;
 
-namespace LazyTravel.Models;
+namespace LazyTravel.Shared.ViewModels;
 
 // 前台「找行程」頁面用的 ViewModel，聚合搜尋條件、精選文章、排行榜。
 public class ExploreIndexViewModel

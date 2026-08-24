@@ -1,6 +1,6 @@
 using LazyTravel.Models;
 using LazyTravel.Services;
-using LazyTravel.ViewModels;
+using LazyTravel.Shared.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
