@@ -1,8 +1,8 @@
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
     public class ReportLookupService : IReportLookupService
     {

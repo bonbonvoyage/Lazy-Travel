@@ -1,6 +1,6 @@
-@model LazyTravel.ViewModels.ReportSubmitViewModel
-@using LazyTravel.Models
-@inject LazyTravel.Services.IReportLookupService LookupService
+@model LazyTravel.Shared.ViewModels.ReportSubmitViewModel
+@using LazyTravel.Shared.Models
+@inject LazyTravel.Shared.Services.IReportLookupService LookupService
 @{
     ViewData["Title"] = "檢舉";
     var allTypes = LookupService.GetTypeOptions();

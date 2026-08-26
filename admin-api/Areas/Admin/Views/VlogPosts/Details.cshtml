@@ -269,9 +269,10 @@
                                     <div class="flex-grow-1">
                                         <div class="itinerary-stop-time">
                                             @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
-                                            @if (!string.IsNullOrWhiteSpace(node.StayTime))
+                                            @{ var stayLabel = node.StayTime.ToStayLabel(); }
+                                            @if (!string.IsNullOrWhiteSpace(stayLabel))
                                             {
-                                                <text>（停留 @node.StayTime）</text>
+                                                <text>（停留 @stayLabel）</text>
                                             }
                                         </div>
                                         <div class="itinerary-stop-title"><i class="bi bi-geo-alt-fill"></i> @node.LocationName</div>

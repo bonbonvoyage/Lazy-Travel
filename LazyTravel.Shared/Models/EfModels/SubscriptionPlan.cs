@@ -2,32 +2,22 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class SubscriptionPlan
 {
-    [Key]
-    [Column("PlanID")]
     public int PlanId { get; set; }
 
-    [Required]
-    [StringLength(50)]
     public string PlanName { get; set; }
 
-    [Column(TypeName = "decimal(10, 2)")]
     public decimal Price { get; set; }
 
     public int DurationDays { get; set; }
 
-    [StringLength(300)]
     public string Description { get; set; }
 
     public bool IsActive { get; set; }
 
-    [InverseProperty("Plan")]
     public virtual ICollection<MemberSubscription> MemberSubscriptions { get; set; } = new List<MemberSubscription>();
 }

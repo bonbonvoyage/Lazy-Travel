@@ -1,6 +1,6 @@
-﻿using LazyTravel.Models.EfModels;
+﻿using LazyTravel.Shared.Models.EfModels;
 using LazyTravel.Shared.ViewModels;
-using LazyTravel.Services;
+using LazyTravel.Shared.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,14 +15,23 @@ namespace LazyTravel.Areas.Admin.Controllers
 		private readonly LazyTravelDBContext _context;
 
 		// 審核狀態篩選僅開放這 3 種（配合前台簡化後的下拉選單）
+		// 🌟 篩選用的下拉選單/查詢字串維持中文字串（URL 好讀，View 不用改），
+		// 內部要跟 TravelGroup.ReviewStatus（現在是 enum）比對時再用 ReviewStatusByLabel 轉換。
 		private static readonly string[] AllowedReviewStatuses =
 		{
 			"正常", "檢舉審核中", "違規"
 		};
 
-		private static readonly string[] AbnormalReviewStatuses =
+		private static readonly Dictionary<string, TravelGroupReviewStatus> ReviewStatusByLabel = new()
 		{
-			"檢舉審核中", "違規"
+			["正常"] = TravelGroupReviewStatus.Normal,
+			["檢舉審核中"] = TravelGroupReviewStatus.PendingReview,
+			["違規"] = TravelGroupReviewStatus.Violation,
+		};
+
+		private static readonly TravelGroupReviewStatus[] AbnormalReviewStatusValues =
+		{
+			TravelGroupReviewStatus.PendingReview, TravelGroupReviewStatus.Violation
 		};
 
 		public TravelGroupsController(LazyTravelDBContext context)
@@ -86,13 +95,13 @@ namespace LazyTravel.Areas.Admin.Controllers
 
 
 			// 審核狀態單選（唯一保留的篩選分類）
-			if (!string.IsNullOrWhiteSpace(selectedReviewStatus))
+			if (!string.IsNullOrWhiteSpace(selectedReviewStatus) && ReviewStatusByLabel.TryGetValue(selectedReviewStatus, out var selectedStatusValue))
 			{
-				query = query.Where(g => g.ReviewStatus == selectedReviewStatus);
+				query = query.Where(g => g.ReviewStatus == selectedStatusValue);
 			}
 
 			var activeQuery = query.Where(g => g.IsDelete == false);
-			var abnormalQuery = query.Where(g => g.IsDelete == false && AbnormalReviewStatuses.Contains(g.ReviewStatus));
+			var abnormalQuery = query.Where(g => g.IsDelete == false && AbnormalReviewStatusValues.Contains(g.ReviewStatus));
 			var deletedQuery = query.Where(g => g.IsDelete == true);
 
 			// 排序：預設編號小到大
@@ -145,9 +154,10 @@ namespace LazyTravel.Areas.Admin.Controllers
 				.Take(pageSize)
 				.ToListAsync();
 
+			// 🌟 ChangeByMemberId 欄名維持不變（對應實際欄位 ChangeByMemberID），
+			// 但外鍵已改指向 Employees，這裡存的是操作管理員的 EmployeeID，且欄位非 nullable。
 			var logEmployeeIds = logs
-				.Where(l => l.ChangedByEmployeeId.HasValue)
-				.Select(l => l.ChangedByEmployeeId!.Value)
+				.Select(l => l.ChangeByMemberId)
 				.Distinct()
 				.ToList();
 
@@ -252,7 +262,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 			}
 
 			// 只有已判定違規的揪團才允許後台軟刪除
-			if (group.ReviewStatus != "違規")
+			if (group.ReviewStatus != TravelGroupReviewStatus.Violation)
 			{
 				TempData["ErrorMessage"] = "只有已判定違規的揪團可以刪除。";
 				return RedirectToAction(nameof(Index), new { tab = "active" });
@@ -271,7 +281,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 				"0",
 				"1",
 				string.IsNullOrWhiteSpace(reportReason)
-					? $"審核狀態為「{group.ReviewStatus}」，移至已刪除清單。"
+					? $"審核狀態為「{group.ReviewStatus.ToLabel()}」，移至已刪除清單。"
 					: reportReason));
 
 			await _context.SaveChangesAsync();
@@ -299,11 +309,11 @@ namespace LazyTravel.Areas.Admin.Controllers
 				return NotFound();
 			}
 
-			var oldReviewStatus = group.ReviewStatus;
+			var oldReviewStatus = group.ReviewStatus.ToLabel();
 
 			// 還原代表從已刪除清單移回所有揪團清單，審核狀態回復正常
 			group.IsDelete = false;
-			group.ReviewStatus = "正常";
+			group.ReviewStatus = TravelGroupReviewStatus.Normal;
 			group.IsPublic = true;
 			group.UpdatedAt = DateTime.Now;
 
@@ -377,7 +387,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 			return new TravelGroupsLog
 			{
 				GroupId = group.GroupId,
-				ChangedByEmployeeId = GetCurrentEmployeeId(),
+				ChangeByMemberId = GetCurrentEmployeeId(),
 				ChangeType = changeType,
 				FieldName = fieldName,
 				OldValue = oldValue,
@@ -457,8 +467,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 		private async Task<Dictionary<int, string>> GetOperationEmployeeNamesAsync(IEnumerable<TravelGroupsLog>? logs)
 		{
 			var employeeIds = (logs ?? Enumerable.Empty<TravelGroupsLog>())
-				.Where(l => l.ChangedByEmployeeId.HasValue)
-				.Select(l => l.ChangedByEmployeeId!.Value)
+				.Select(l => l.ChangeByMemberId)
 				.Distinct()
 				.ToList();
 

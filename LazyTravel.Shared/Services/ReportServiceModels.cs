@@ -1,6 +1,6 @@
-using LazyTravel.Models;
+using LazyTravel.Shared.Models;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
     // Controller 傳給 Service 的查詢條件,對應檢舉審核台的篩選列
     public class ReportQueryOptions

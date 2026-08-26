@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace LazyTravel.Models.DTOs
+namespace LazyTravel.Shared.Models.DTOs
 {
 	// ==========================================
 	// 1.2 & 1.4 檢視會員詳細資料 (包含訂閱與登入稽核)
@@ -9,31 +9,31 @@ namespace LazyTravel.Models.DTOs
 	public class MemberDetailDto
 	{
 		public int MemberID { get; set; }
-		public string Email { get; set; }
-		public string Name { get; set; }
+		public string Email { get; set; } = string.Empty;
+		public string Name { get; set; } = string.Empty;
 
-		public string Phone { get; set; }
-		public string LineId { get; set; }
-		public string InstagramUrl { get; set; }
-		public string FacebookUrl { get; set; }
+		public string? Phone { get; set; }
+		public string? LineId { get; set; }
+		public string? InstagramUrl { get; set; }
+		public string? FacebookUrl { get; set; }
 		public bool IsEmailConfirmed { get; set; }
 
-		public string AvatarUrl { get; set; }
+		public string? AvatarUrl { get; set; }
 		public DateOnly? BirthDate { get; set; }
 		public byte Gender { get; set; }
-		public string Occupation { get; set; }
-		public string MBTI { get; set; }
-		public string Bio { get; set; }
+		public string? Occupation { get; set; }
+		public string? MBTI { get; set; }
+		public string? Bio { get; set; }
 
 		public byte Status { get; set; }
-		// 🌟 已移除：public byte Role { get; set; } 
+		// 🌟 已移除：public byte Role { get; set; }
 		public DateTime CreatedAt { get; set; }
 
-		public string CurrentPlanName { get; set; }
+		public string CurrentPlanName { get; set; } = string.Empty;
 		public DateTime? PlanExpiryDate { get; set; }
 
 		public DateTime? LastLoginAt { get; set; }
-		public string LastLoginIp { get; set; }
+		public string? LastLoginIp { get; set; }
 	}
 
 	// ==========================================
@@ -61,6 +61,6 @@ namespace LazyTravel.Models.DTOs
 		[Display(Name = "操作原因 (必填稽核用) *")]
 		[Required(ErrorMessage = "請填寫操作原因以供稽核")]
 		[StringLength(200)]
-		public string AdminReason { get; set; }
+		public string AdminReason { get; set; } = string.Empty;
 	}
 }

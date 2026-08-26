@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
-using LazyTravel.Models.DTOs;
-using LazyTravel.Services;
+using LazyTravel.Shared.Models.DTOs;
+using LazyTravel.Shared.Services;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
     // 接上 10 黃浚翔的正式 IMemberService.EditMember。直接用 MemberID 呼叫,不再透過 Email 反查。
     // 商業邏輯(要不要重置暱稱/簡介、要不要另外發通知)還是集中在 MemberService 那一層,這裡只負責轉接。

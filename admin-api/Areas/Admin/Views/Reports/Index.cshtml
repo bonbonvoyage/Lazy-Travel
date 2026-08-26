@@ -1,6 +1,6 @@
-@model LazyTravel.ViewModels.ReportIndexViewModel
-@using LazyTravel.Models
-@inject LazyTravel.Services.IReportLookupService LookupService
+@model LazyTravel.Shared.ViewModels.ReportIndexViewModel
+@using LazyTravel.Shared.Models
+@inject LazyTravel.Shared.Services.IReportLookupService LookupService
 
 @{
     ViewData["Title"] = "檢舉審核台";
@@ -293,7 +293,7 @@
 
     @{
         var logTotalPages = Model.LogTotalPages == 0 ? 1 : Model.LogTotalPages;
-        var logActions = LazyTravel.Services.ReportService.LogActionScope;
+        var logActions = LazyTravel.Shared.Services.ReportService.LogActionScope;
     }
 
     <form method="get" asp-action="Index" class="report-filter-bar d-flex flex-wrap align-items-end gap-3 mb-3">
@@ -352,8 +352,8 @@
                         @foreach (var log in Model.Logs)
                         {
                             <tr>
-                                <td class="text-muted">#@log.Id</td>
-                                <td class="fw-bold"><i class="fas fa-user-shield text-info me-1"></i>@log.OperatorName</td>
+                                <td class="text-muted">#@log.LogID</td>
+                                <td class="fw-bold"><i class="fas fa-user-shield text-info me-1"></i>@log.AdminName</td>
                                 <td>
                                     @if (log.Action.StartsWith("自動停權"))
                                     {
@@ -369,16 +369,16 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (log.TargetTable == "Reports" && log.TargetId.HasValue)
+                                    @if (log.TargetResource == "Reports" && !string.IsNullOrEmpty(log.TargetID))
                                     {
-                                        <a asp-action="Details" asp-route-id="@log.TargetId">案件 #@log.TargetId</a>
+                                        <a asp-action="Details" asp-route-id="@log.TargetID">案件 #@log.TargetID</a>
                                     }
                                     else
                                     {
                                         <span class="text-muted">—</span>
                                     }
                                 </td>
-                                <td class="text-start small text-muted">@log.Detail</td>
+                                <td class="text-start small text-muted">@log.Description</td>
                                 <td class="text-muted">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
                             </tr>
                         }

@@ -1,4 +1,4 @@
-@model LazyTravel.Models.ViewModels.TravelGroupAdminIndexViewModel
+@model LazyTravel.Shared.ViewModels.TravelGroupAdminIndexViewModel
 
 @{
     bool IsTab(string tab) => Model.Tab == tab;
@@ -209,7 +209,7 @@
                             data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })"
                             style="cursor:pointer;">
                             <td>
-                                @if (item.ReviewStatus == "違規")
+                                @if (item.ReviewStatus == TravelGroupReviewStatus.Violation)
                                 {
                                     <form asp-area="Admin"
                                           asp-controller="TravelGroups"
@@ -232,7 +232,7 @@
                                     <span>@item.OwnerMember.Name</span>
                                     <span>(Id=</span>
 
-                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
+                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.Id">@item.OwnerMember.Id</a>
 
                                     <span>)</span>
                                 }
@@ -244,7 +244,7 @@
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
                             <td>@GroupStatusLabel(item.GroupStatus)</td>
-                            <td>@item.ReviewStatus</td>
+                            <td>@item.ReviewStatus.ToLabel()</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
                                 {
@@ -371,7 +371,7 @@
                             data-detail-url="@Url.Action("DetailsPanel", "TravelGroups", new { area = "Admin", id = item.GroupId })"
                             style="cursor:pointer;">
                             <td>
-                                @if (item.ReviewStatus == "違規")
+                                @if (item.ReviewStatus == TravelGroupReviewStatus.Violation)
                                 {
                                     <form asp-area="Admin"
                                           asp-controller="TravelGroups"
@@ -394,7 +394,7 @@
                                     <span>@item.OwnerMember.Name</span>
                                     <span>(Id=</span>
 
-                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
+                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.Id">@item.OwnerMember.Id</a>
 
                                     <span>)</span>
                                 }
@@ -406,7 +406,7 @@
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
                             <td>@GroupStatusLabel(item.GroupStatus)</td>
-                            <td>@item.ReviewStatus</td>
+                            <td>@item.ReviewStatus.ToLabel()</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
                                 {
@@ -554,7 +554,7 @@
                                     <span>@item.OwnerMember.Name</span>
                                     <span>(Id=</span>
 
-                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.MemberId">@item.OwnerMember.MemberId</a>
+                                    <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@item.OwnerMember.Id">@item.OwnerMember.Id</a>
 
                                     <span>)</span>
                                 }
@@ -566,7 +566,7 @@
                             <td>@item.CurrentPeople</td>
                             <td>@item.MaxPeople</td>
                             <td>@GroupStatusLabel(item.GroupStatus)</td>
-                            <td>@item.ReviewStatus</td>
+                            <td>@item.ReviewStatus.ToLabel()</td>
                             <td>
                                 @if (item.StartDate != null && item.EndDate != null)
                                 {
@@ -682,11 +682,11 @@
                             <td>@GetLogValueDisplayName(item.FieldName, item.NewValue)</td>
                             <td class="text-start">@(string.IsNullOrWhiteSpace(item.Remark) ? "—" : item.Remark)</td>
                             <td>
-                                @if (item.ChangedByEmployeeId.HasValue && Model.LogEmployeeNames.TryGetValue(item.ChangedByEmployeeId.Value, out var employeeName))
+                                @if (Model.LogEmployeeNames.TryGetValue(item.ChangeByMemberId, out var employeeName))
                                 {
                                     <span>@employeeName</span>
 
-                                    <span>(Id=@item.ChangedByEmployeeId.Value)</span>
+                                    <span>(Id=@item.ChangeByMemberId)</span>
                                 }
                                 else
                                 {

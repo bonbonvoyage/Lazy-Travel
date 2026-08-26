@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using LazyTravel.Models;
+using LazyTravel.Shared.Models;
 using Microsoft.AspNetCore.Http;
 
-namespace LazyTravel.ViewModels
+namespace LazyTravel.Shared.ViewModels
 {
     // 前台送出檢舉的表單資料。目前前台還沒有登入系統,也還沒有 Vlog/會員/揪團的瀏覽頁,
     // 所以檢舉人帳號、被檢舉對象都先用手動輸入 Email/文字,等對應頁面做出來後可以改成自動帶入。

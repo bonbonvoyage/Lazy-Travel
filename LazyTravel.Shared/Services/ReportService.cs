@@ -1,9 +1,10 @@
-using LazyTravel.Models;
-using EfReport = LazyTravel.Models.EfModels.Report;
-using EfMember = LazyTravel.Models.EfModels.Member;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.DTOs;
+using EfReport = LazyTravel.Shared.Models.EfModels.Report;
+using EfMember = LazyTravel.Shared.Models.EfModels.Member;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
     public class ReportService : IReportService
     {
@@ -19,14 +20,14 @@ namespace LazyTravel.Services
         // 由後台代為提出的檢舉就掛在這個佔位帳號底下(跟 AdminLogService 用的是同一筆)
         private const string SystemAdminEmail = "system-admin@lazytravel.local";
 
-        private readonly LazyTravel.Models.EfModels.LazyTravelDBContext _context;
+        private readonly LazyTravel.Shared.Models.EfModels.LazyTravelDBContext _context;
         private readonly INotificationService _notificationService;
         private readonly IAdminLogService _adminLogService;
         private readonly IMemberModerationService _memberModerationService;
         private readonly IReportLookupService _lookupService;
 
         public ReportService(
-            LazyTravel.Models.EfModels.LazyTravelDBContext context,
+            LazyTravel.Shared.Models.EfModels.LazyTravelDBContext context,
             INotificationService notificationService,
             IAdminLogService adminLogService,
             IMemberModerationService memberModerationService,
@@ -75,22 +76,6 @@ namespace LazyTravel.Services
                 .ToList()
                 .Select(ToDomain)
                 .ToList();
-        }
-
-        public string GetRandomReviewerAlias()
-        {
-            // 「審核人員」對外顯示的是 Employees 的員工姓名(見 AdminLogService.ToDto),沒登入時的
-            // 代稱也要從 Employees 挑,挑 Members 的話寫進 AdminLogs 後反查不到員工,畫面只會顯示「系統管理員」
-            var reviewerNames = _context.Employees
-                .Select(e => e.Name)
-                .ToList();
-            if (reviewerNames.Count == 0)
-            {
-                return "審核員";
-            }
-            // Random.Shared 是執行緒安全的(.NET 6+);ASP.NET Core 每個請求可能跑在不同執行緒,
-            // 用手動建立的 static Random 共用會有併發問題,內部狀態壞掉後 Next() 會一直回傳同一個值
-            return reviewerNames[Random.Shared.Next(reviewerNames.Count)];
         }
 
         public ReportQueryResult Query(ReportQueryOptions options)
@@ -261,7 +246,7 @@ namespace LazyTravel.Services
         // Name 都要試。而後台員工不在 Members 裡,但 Reports.ReporterID 是 NOT NULL 外鍵指向
         // Members,查不到時就退回系統管理員那筆佔位會員,真正的操作人姓名記在 AdminLogs 裡不會遺失。
         public async Task<Report> SubmitAsync(ReportTargetType targetType, int targetId, string targetTitle,
-            string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason)
+            string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason, int employeeId)
         {
             var matchedReporterId = await ResolveMemberIdAsync(reporterAccount);
             var isProxySubmit = matchedReporterId is null;
@@ -292,11 +277,11 @@ namespace LazyTravel.Services
             await _context.SaveChangesAsync();
 
             await _adminLogService.WriteAsync(
-                reporterAccount,
+                employeeId,
                 "提出檢舉",
                 $"檢舉 {targetType.ToDisplayName()}「{targetTitle}」:{reason}",
-                targetTable: "Reports",
-                targetId: efReport.ReportId);
+                targetResource: "Reports",
+                targetId: efReport.ReportId.ToString());
 
             return ToDomain(efReport);
         }
@@ -306,11 +291,11 @@ namespace LazyTravel.Services
         // 兩邊用的是同一筆佔位會員。
         private async Task<int> EnsureSystemAdminMemberIdAsync()
         {
-            var existing = await _context.Members.AsNoTracking()
+            var existing = await _context.Users.AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Email == SystemAdminEmail);
             if (existing is not null)
             {
-                return existing.MemberId;
+                return existing.Id;
             }
 
             var placeholder = new EfMember
@@ -322,19 +307,19 @@ namespace LazyTravel.Services
 
             try
             {
-                _context.Members.Add(placeholder);
+                _context.Users.Add(placeholder);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateException)
             {
                 // 同時搶著建立同一筆時,Email 唯一鍵會擋下重複插入,改成查已經存在的那筆
                 _context.Entry(placeholder).State = EntityState.Detached;
-                var raceWinner = await _context.Members.AsNoTracking()
+                var raceWinner = await _context.Users.AsNoTracking()
                     .FirstAsync(m => m.Email == SystemAdminEmail);
-                return raceWinner.MemberId;
+                return raceWinner.Id;
             }
 
-            return placeholder.MemberId;
+            return placeholder.Id;
         }
 
         // account 可能是 Email 也可能是 Member.Name,兩種都試
@@ -345,13 +330,13 @@ namespace LazyTravel.Services
                 return null;
             }
 
-            return await _context.Members
+            return await _context.Users
                 .Where(m => m.Email == account || m.Name == account)
-                .Select(m => (int?)m.MemberId)
+                .Select(m => (int?)m.Id)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, string reviewerName)
+        public async Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, int employeeId)
         {
             var efReport = await _context.Reports
                 .Include(r => r.Reporter)
@@ -396,11 +381,11 @@ namespace LazyTravel.Services
                 $"您於 {report.CreatedAt:yyyy/MM/dd} 檢舉的「{report.TargetTitle}」,審核結果為:{resultText}");
 
             await _adminLogService.WriteAsync(
-                reviewerName,
+                employeeId,
                 "審核檢舉",
                 $"檢舉單 #{report.Id}({_lookupService.GetTypeName(report.TargetType)}:{report.TargetTitle})判定為「{resultText}」",
-                targetTable: "Reports",
-                targetId: report.Id);
+                targetResource: "Reports",
+                targetId: report.Id.ToString());
 
             var message = $"檢舉單 #{report.Id} 已判定為「{resultText}」";
 
@@ -417,14 +402,14 @@ namespace LazyTravel.Services
                 {
                     var suspendMessage = await ApplySuspendIfThresholdReachedAsync(
                         report.ReportedMemberId.Value, report.ReportedMemberAccount, upheldCount, violationReasonLabel: "檢舉成立", accountRoleLabel: "帳號",
-                        violationVerbPrefix: "", logAction: "自動停權", report.Id, reviewerName);
+                        violationVerbPrefix: "", logAction: "自動停權", report.Id, employeeId);
                     if (suspendMessage != null)
                     {
                         message += $";{suspendMessage}";
                     }
                     else if (upheldCount == SuspendThreshold)
                     {
-                        await WarnNearThresholdAsync(report.ReportedMemberAccount, upheldCount, accountRoleLabel: "帳號", report.Id, reviewerName);
+                        await WarnNearThresholdAsync(report.ReportedMemberAccount, upheldCount, accountRoleLabel: "帳號", report.Id, employeeId);
                     }
                 }
             }
@@ -438,14 +423,14 @@ namespace LazyTravel.Services
 
                 var suspendMessage = await ApplySuspendIfThresholdReachedAsync(
                     report.ReporterId, report.ReporterAccount, maliciousCount, violationReasonLabel: "惡意檢舉", accountRoleLabel: "檢舉人",
-                    violationVerbPrefix: "惡意檢舉", logAction: "自動停權(惡意檢舉)", report.Id, reviewerName);
+                    violationVerbPrefix: "惡意檢舉", logAction: "自動停權(惡意檢舉)", report.Id, employeeId);
                 if (suspendMessage != null)
                 {
                     message += $";{suspendMessage}";
                 }
                 else if (maliciousCount == SuspendThreshold)
                 {
-                    await WarnNearThresholdAsync(report.ReporterAccount, maliciousCount, accountRoleLabel: "檢舉人", report.Id, reviewerName);
+                    await WarnNearThresholdAsync(report.ReporterAccount, maliciousCount, accountRoleLabel: "檢舉人", report.Id, employeeId);
                 }
             }
 
@@ -456,7 +441,7 @@ namespace LazyTravel.Services
         // 沒達門檻回傳 null(不觸發任何動作);達門檻回傳一句可以直接接到判定結果訊息後面的描述文字
         private async Task<string?> ApplySuspendIfThresholdReachedAsync(
             int memberId, string account, int violationCount, string violationReasonLabel, string accountRoleLabel,
-            string violationVerbPrefix, string logAction, int reportId, string reviewerName)
+            string violationVerbPrefix, string logAction, int reportId, int employeeId)
         {
             var suspendDaysIfAny = CalculateSuspendDays(violationCount);
             if (!suspendDaysIfAny.HasValue)
@@ -476,10 +461,10 @@ namespace LazyTravel.Services
                 $"您的帳號因{suspendReason},已停權 {suspendDays} 天。");
 
             await _adminLogService.WriteAsync(
-                reviewerName,
+                employeeId,
                 logAction,
                 $"帳號 {account} {violationVerbPrefix}累犯 {violationCount} 次,停權 {suspendDays} 天(觸發自檢舉單 #{reportId})",
-                targetTable: "Members",
+                targetResource: "Members",
                 targetId: null);
 
             return $"{accountRoleLabel}「{account}」{violationVerbPrefix}累犯 {violationCount} 次,已自動停權 {suspendDays} 天";
@@ -487,7 +472,7 @@ namespace LazyTravel.Services
 
         // 累犯次數剛好等於門檻(還沒超過,不會觸發停權)時,發預警通知 + 寫進真的 AdminLogs,
         // 讓會員管理那邊的「快凍結」篩選找得到「什麼時候達到這個狀態」的紀錄,不是只靠即時查詢
-        private async Task WarnNearThresholdAsync(string account, int violationCount, string accountRoleLabel, int reportId, string reviewerName)
+        private async Task WarnNearThresholdAsync(string account, int violationCount, string accountRoleLabel, int reportId, int employeeId)
         {
             await _notificationService.SendAsync(
                 account,
@@ -495,31 +480,31 @@ namespace LazyTravel.Services
                 $"您目前累計 {violationCount} 次違規查證屬實,已達自動停權門檻,再一次查證屬實將會被停權,請留意平台規範。");
 
             await _adminLogService.WriteAsync(
-                reviewerName,
+                employeeId,
                 "接近停權門檻",
                 $"{accountRoleLabel}「{account}」累計 {violationCount} 次違規查證屬實,已達門檻(再一次將觸發自動停權,觸發自檢舉單 #{reportId})",
-                targetTable: "Members",
+                targetResource: "Members",
                 targetId: null);
         }
 
-        public async Task<List<AdminLog>> GetRecentReportLogsAsync(int take)
+        public async Task<List<AdminLogDto>> GetRecentReportLogsAsync(int take)
         {
             var recentLogs = await _adminLogService.GetRecentAsync(50);
-            return recentLogs.Where(l => l.TargetTable == "Reports").Take(take).ToList();
+            return recentLogs.Where(l => l.TargetResource == "Reports").Take(take).ToList();
         }
 
-        // 檢舉模組會寫進 AdminLogs 的動作名稱清單,用來界定「操作紀錄」分頁要撈哪些紀錄
+        // 檢舉模組會寫進 AdminAuditLogs 的動作名稱清單,用來界定「操作紀錄」分頁要撈哪些紀錄
         // (Views/Reports/Index.cshtml 的篩選下拉選單也是用同一份清單,兩邊要保持一致)
         public static readonly string[] LogActionScope = { "審核檢舉", "自動停權", "自動停權(惡意檢舉)", "接近停權門檻" };
 
-        public Task<(List<AdminLog> Data, int TotalCount)> GetReportLogsAsync(string? operatorKeyword, string? detailKeyword, string? action, int page)
+        public Task<(List<AdminLogDto> Data, int TotalCount)> GetReportLogsAsync(string? operatorKeyword, string? detailKeyword, string? action, int page)
         {
             return _adminLogService.QueryAsync(LogActionScope, operatorKeyword, detailKeyword, action, page);
         }
 
-        public async Task<AdminLog?> GetReviewLogAsync(int reportId)
+        public async Task<AdminLogDto?> GetReviewLogAsync(int reportId)
         {
-            var logs = await _adminLogService.GetForTargetAsync("Reports", reportId);
+            var logs = await _adminLogService.GetForTargetAsync("Reports", reportId.ToString());
             return logs.FirstOrDefault();
         }
     }

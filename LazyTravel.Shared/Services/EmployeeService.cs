@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using LazyTravel.Models.DTOs;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models.DTOs;
+using LazyTravel.Shared.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 using BCrypt.Net;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
 	public class EmployeeService : IEmployeeService
 	{
@@ -20,7 +20,7 @@ namespace LazyTravel.Services
 		// ==========================================
 		// 🌟 1. 員工身分驗證與登入 (Security)
 		// ==========================================
-		public (bool Success, string Message, EmployeeDto EmployeeData) Login(string email, string password, string ipAddress)
+		public (bool Success, string Message, EmployeeDto? EmployeeData) Login(string email, string password, string ipAddress)
 		{
 			// 尋找員工及其關聯的角色與權限
 			var emp = _context.Employees
@@ -84,7 +84,7 @@ namespace LazyTravel.Services
 		// ==========================================
 		// 🌟 2. 員工管理 (Employee Management)
 		// ==========================================
-		public IEnumerable<EmployeeDto> GetAllEmployees(string keyword = null)
+		public IEnumerable<EmployeeDto> GetAllEmployees(string? keyword = null)
 		{
 			var query = _context.Employees
 				.Include(e => e.EmployeeRoles)
@@ -117,7 +117,7 @@ namespace LazyTravel.Services
 		public (bool Success, string Message) PromoteToEmployee(string email, List<int> roleIds, int currentAdminId)
 		{
 			// 確認該 Email 存在於前台會員表
-			var member = _context.Members.FirstOrDefault(m => m.Email == email);
+			var member = _context.Users.FirstOrDefault(m => m.Email == email);
 			if (member == null) return (false, "找不到對應的會員信箱。");
 
 			// 確認該 Email 是否已經是員工
@@ -200,7 +200,7 @@ namespace LazyTravel.Services
 			return (true, "員工已停權，將無法登入後台。");
 		}
 
-		public (IEnumerable<AdminLogDto> Data, int TotalCount) GetEmployeeAdminLogs(string keyword = null, int page = 1)
+		public (IEnumerable<AdminLogDto> Data, int TotalCount) GetEmployeeAdminLogs(string? keyword = null, int page = 1)
 		{
 			int pageSize = 10;
 			var query = _context.AdminAuditLogs.Include(l => l.Employee).Where(l => l.TargetResource == "Employees").AsQueryable();
@@ -222,7 +222,7 @@ namespace LazyTravel.Services
 								TargetID = l.TargetId,
 								TargetMemberName = "員工 ID: " + l.TargetId,
 								Description = l.Description,
-								IPAddress = l.IPAddress,
+								IPAddress = l.Ipaddress,
 								CreatedAt = l.CreatedAt
 							}).ToList();
 
@@ -234,7 +234,7 @@ namespace LazyTravel.Services
 		// ==========================================
 		public IEnumerable<RoleDto> GetAllRoles()
 		{
-			return _context.Roles.Include(r => r.Permissions).Select(r => new RoleDto
+			return _context.StaffRoles.Include(r => r.Permissions).Select(r => new RoleDto
 			{
 				RoleID = r.RoleId,
 				RoleCode = r.RoleCode,
@@ -260,7 +260,7 @@ namespace LazyTravel.Services
 				role.Permissions = perms;
 			}
 
-			_context.Roles.Add(role);
+			_context.StaffRoles.Add(role);
 			_context.SaveChanges();
 
 			LogAdminAction(currentAdminId, "system:role:create", "Roles", role.RoleId.ToString(), $"建立角色: {role.RoleName}");
@@ -271,7 +271,7 @@ namespace LazyTravel.Services
 
 		public (bool Success, string Message) EditRole(int roleId, List<int> permissionIds, int currentAdminId)
 		{
-			var role = _context.Roles.Include(r => r.Permissions).FirstOrDefault(r => r.RoleId == roleId);
+			var role = _context.StaffRoles.Include(r => r.Permissions).FirstOrDefault(r => r.RoleId == roleId);
 			if (role == null) return (false, "找不到該角色。");
 			if (roleId == 1) return (false, "無法編輯系統內建最高擁有者角色。");
 
@@ -290,14 +290,14 @@ namespace LazyTravel.Services
 
 		public (bool Success, string Message) DeleteRole(int roleId, int currentAdminId)
 		{
-			var role = _context.Roles.FirstOrDefault(r => r.RoleId == roleId);
+			var role = _context.StaffRoles.FirstOrDefault(r => r.RoleId == roleId);
 			if (role == null) return (false, "找不到該角色。");
 			if (roleId == 1) return (false, "無法刪除系統內建最高擁有者角色。");
 
 			if (_context.EmployeeRoles.Any(er => er.RoleId == roleId))
 				return (false, "仍有員工綁定此角色，無法刪除！請先將員工撤除此職務。");
 
-			_context.Roles.Remove(role);
+			_context.StaffRoles.Remove(role);
 			LogAdminAction(currentAdminId, "system:role:delete", "Roles", roleId.ToString(), $"刪除角色: {role.RoleName}");
 			_context.SaveChanges();
 
@@ -307,7 +307,7 @@ namespace LazyTravel.Services
 		// ==========================================
 		// 🌟 4. 權限 (Permissions) 字典管理
 		// ==========================================
-		public IEnumerable<PermissionDto> GetAllPermissions(string keyword = null)
+		public IEnumerable<PermissionDto> GetAllPermissions(string? keyword = null)
 		{
 			var q = _context.Permissions.AsQueryable();
 			if (!string.IsNullOrWhiteSpace(keyword))
@@ -372,7 +372,7 @@ namespace LazyTravel.Services
 			return (true, "刪除權限成功！");
 		}
 
-		public (IEnumerable<AdminLogDto> Data, int TotalCount) GetRoleAdminLogs(string keyword = null, int page = 1)
+		public (IEnumerable<AdminLogDto> Data, int TotalCount) GetRoleAdminLogs(string? keyword = null, int page = 1)
 		{
 			int pageSize = 10;
 			var query = _context.AdminAuditLogs.Include(l => l.Employee).Where(l => l.TargetResource == "Roles" || l.TargetResource == "Permissions").AsQueryable();
@@ -393,7 +393,7 @@ namespace LazyTravel.Services
 								Action = l.Action,
 								TargetID = l.TargetId,
 								Description = l.Description,
-								IPAddress = l.IPAddress,
+								IPAddress = l.Ipaddress,
 								CreatedAt = l.CreatedAt
 							}).ToList();
 
@@ -411,7 +411,7 @@ namespace LazyTravel.Services
 				Action = action,
 				TargetResource = resource,
 				TargetId = targetId,
-				IPAddress = "127.0.0.1",
+				Ipaddress = "127.0.0.1",
 				Description = desc,
 				CreatedAt = DateTime.Now
 			});

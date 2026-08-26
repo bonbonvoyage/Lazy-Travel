@@ -1,6 +1,6 @@
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models.EfModels;
 
-namespace LazyTravel.Services;
+namespace LazyTravel.Shared.Services;
 
 // 對應規格書第 13 表 ItineraryNodes 的假資料倉儲，用法同 VlogPostStore。
 // 假資料本身在 VlogPostStore.Seed() 裡一併建立（那裡才拿得到剛產生文章的 PostId），

@@ -2,55 +2,36 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class GroupMember
 {
-    [Key]
-    [Column("GroupMemberID")]
     public int GroupMemberId { get; set; }
 
-    [Column("GroupID")]
     public int GroupId { get; set; }
 
-    [Column("MemberID")]
     public int MemberId { get; set; }
 
     public byte MemberRole { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime JoinedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? LeftAt { get; set; }
 
     public bool IsRemoved { get; set; }
 
-    [Column("RemovedByMemberID")]
     public int? RemovedByMemberId { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? RemovedAt { get; set; }
 
-    [StringLength(300)]
     public string RemoveReason { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [ForeignKey("GroupId")]
-    [InverseProperty("GroupMembers")]
     public virtual TravelGroup Group { get; set; }
 
-    [ForeignKey("MemberId")]
-    [InverseProperty("GroupMemberMembers")]
     public virtual Member Member { get; set; }
 
-    [ForeignKey("RemovedByMemberId")]
-    [InverseProperty("GroupMemberRemovedByMembers")]
     public virtual Member RemovedByMember { get; set; }
 }

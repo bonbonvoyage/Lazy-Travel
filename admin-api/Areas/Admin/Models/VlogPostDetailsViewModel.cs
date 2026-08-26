@@ -1,5 +1,5 @@
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
 
 namespace LazyTravel.Areas.Admin.Models;
 

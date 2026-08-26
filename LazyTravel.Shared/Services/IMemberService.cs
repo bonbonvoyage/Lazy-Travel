@@ -1,7 +1,7 @@
-﻿using LazyTravel.Models.DTOs;
+using LazyTravel.Shared.Models.DTOs;
 using System.Collections.Generic;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
 	public interface IMemberService
 	{
@@ -17,7 +17,7 @@ namespace LazyTravel.Services
 		// ==========================================
 		// 1.2 取得單一會員詳細資料
 		// ==========================================
-		MemberDetailDto GetMemberDetail(int id);
+		MemberDetailDto? GetMemberDetail(int id);
 
 		// ==========================================
 		// 1.3 編輯會員資料與狀態

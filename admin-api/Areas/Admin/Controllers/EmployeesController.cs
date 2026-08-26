@@ -1,4 +1,4 @@
-﻿using LazyTravel.Services;
+﻿using LazyTravel.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;

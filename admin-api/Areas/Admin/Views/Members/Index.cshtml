@@ -1,4 +1,4 @@
-﻿@model IEnumerable<LazyTravel.Models.ViewModels.MemberIndexVm>
+﻿@model IEnumerable<LazyTravel.Shared.ViewModels.MemberIndexVm>
 
 @{
     ViewData["Title"] = "會員管理控制台";
@@ -22,7 +22,7 @@
     int logCurrentPage = ViewBag.LogCurrentPage ?? 1;
     int logTotalPages = ViewBag.LogTotalPages ?? 1;
     int logTotalCount = ViewBag.LogTotalCount ?? 0;
-    var logList = ViewBag.Logs as IEnumerable<LazyTravel.Models.DTOs.AdminLogDto>;
+    var logList = ViewBag.Logs as IEnumerable<LazyTravel.Shared.Models.DTOs.AdminLogDto>;
 }
 
 <!-- 自訂現代化 UI 樣式 -->

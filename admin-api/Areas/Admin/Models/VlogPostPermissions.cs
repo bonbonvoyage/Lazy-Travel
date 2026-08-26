@@ -1,5 +1,5 @@
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
 using System.Security.Claims; // 必須引用這個來讀取使用者的 Claims
 
 namespace LazyTravel.Areas.Admin.Models;

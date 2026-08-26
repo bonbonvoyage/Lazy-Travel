@@ -1,10 +1,11 @@
 using LazyTravel.Areas.Admin.Models;
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
-using LazyTravel.Services;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
+using LazyTravel.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
@@ -32,6 +33,17 @@ namespace LazyTravel.Areas.Admin.Controllers
             _adminLogService = adminLogService;
             _reportService = reportService;
             _imageUploadService = imageUploadService;
+        }
+
+        // 操作紀錄/檢舉判定一律要用真正登入員工的 EmployeeID(Admin/AuthController 登入時寫進 ClaimTypes.NameIdentifier),
+        // 這裡集中解析,拿不到就丟例外——沒登入不應該能走到任何會寫 AdminAuditLogs 的動作(Controller 上都已經有 [Authorize])
+        private int GetCurrentEmployeeId()
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int employeeId))
+            {
+                throw new InvalidOperationException("無法識別目前登入的員工身分，請重新登入後台。");
+            }
+            return employeeId;
         }
 
         // GET /Admin/VlogPosts
@@ -121,7 +133,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             };
 
             var recentLogs = await _adminLogService.GetRecentAsync(50);
-            vm.RecentLogs = recentLogs.Where(l => l.TargetTable == "VlogPosts").Take(20).ToList();
+            vm.RecentLogs = recentLogs.Where(l => l.TargetResource == "VlogPosts").Take(20).ToList();
 
             ViewData["Title"] = "Vlog 行程文章";
             return View(vm);
@@ -147,7 +159,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             // 用一筆不存在資料庫的假 Report（Id=-1）借道 GetRelatedReports 撈「同一篇文章」的全部檢舉紀錄，
             // 不動檢舉中心（IReportService）任何既有邏輯，純讀取。
-            var reports = _reportService.GetRelatedReports(new LazyTravel.Models.Report { Id = -1, TargetType = ReportTargetType.VlogPost, TargetId = id });
+            var reports = _reportService.GetRelatedReports(new LazyTravel.Shared.Models.Report { Id = -1, TargetType = ReportTargetType.VlogPost, TargetId = id });
             var hasPendingReport = reports.Any(r => r.Status == ReportStatus.Pending);
             var latestJudged = reports
                 .Where(r => r.Status != ReportStatus.Pending)
@@ -169,7 +181,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                         : reports.Any(r => r.Status == ReportStatus.Upheld)
                             ? "違規"
                             : "正常（無檢舉）",
-                LastReviewer = reviewLog?.OperatorName,
+                LastReviewer = reviewLog?.AdminName,
                 LastReviewedAt = reviewLog?.CreatedAt,
                 LastReviewNote = latestJudged?.AdminNotes,
 				Permissions = VlogPostPermissions.For(post, hasPendingReport, User),
@@ -179,18 +191,20 @@ namespace LazyTravel.Areas.Admin.Controllers
         }
 
         // GET /Admin/VlogPosts/Create
+        [Authorize(Policy = "RequireVlogCreate")]
         public async Task<IActionResult> Create()
         {
             ViewData["Title"] = "新增文章";
             // Cookie 認證尚未接上，先固定用 LazyTravel 官方當發文會員
             var officialId = await ResolveOfficialMemberIdAsync();
-            var official = await _context.Members.AsNoTracking().FirstOrDefaultAsync(m => m.MemberId == officialId);
+            var official = await _context.Users.AsNoTracking().FirstOrDefaultAsync(m => m.Id == officialId);
             return View(new VlogPost { TravelDays = 1, MemberId = officialId, Member = official });
         }
 
         // POST /Admin/VlogPosts/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "RequireVlogCreate")]
         public async Task<IActionResult> Create(VlogPost post, IFormFile? coverFile)
         {
             if (coverFile is not null && coverFile.Length > 0 && !IsAllowedImage(coverFile))
@@ -215,7 +229,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             if (!ModelState.IsValid)
             {
                 ViewData["Title"] = "新增文章";
-                post.Member = await _context.Members.AsNoTracking().FirstOrDefaultAsync(m => m.MemberId == post.MemberId);
+                post.Member = await _context.Users.AsNoTracking().FirstOrDefaultAsync(m => m.Id == post.MemberId);
                 return View(post);
             }
 
@@ -232,11 +246,11 @@ namespace LazyTravel.Areas.Admin.Controllers
             await _context.SaveChangesAsync();
 
             await _adminLogService.WriteAsync(
-                User.Identity?.Name ?? "管理員",
+                GetCurrentEmployeeId(),
                 "新增文章",
                 $"新增文章「{post.Title}」",
-                targetTable: "VlogPosts",
-                targetId: post.PostId);
+                targetResource: "VlogPosts",
+                targetId: post.PostId.ToString());
 
             TempData["SuccessMessage"] = $"文章「{post.Title}」已新增，可以繼續往下新增每日行程。";
             return RedirectToAction(nameof(Edit), new { id = post.PostId });
@@ -244,6 +258,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 
         // GET /Admin/VlogPosts/Edit/5
         // 小編編輯自己草稿用的頁面。editId 有值時，下方行程表單切成「編輯行程」模式。
+        [Authorize(Policy = "RequireVlogUpdate")]
         public async Task<IActionResult> Edit(int id, int? editId = null)
         {
             var post = await _context.VlogPosts.AsNoTracking().Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
@@ -260,6 +275,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // action="draft" 儲存草稿、action="submit" 送出審核，由 _Form.cshtml 的兩個送出按鈕決定。
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "RequireVlogUpdate")]
         public async Task<IActionResult> Edit(int id, VlogPost post, IFormFile? coverFile, string? existingMediaUrl, string action = "draft")
         {
             post.PostId = id;
@@ -326,11 +342,11 @@ namespace LazyTravel.Areas.Admin.Controllers
 
             var isSubmit = action == "submit";
             await _adminLogService.WriteAsync(
-                User.Identity?.Name ?? "小編",
+                GetCurrentEmployeeId(),
                 isSubmit ? "送出審核" : "儲存草稿",
                 isSubmit ? $"文章「{post.Title}」已送出審核" : $"編輯文章「{post.Title}」",
-                targetTable: "VlogPosts",
-                targetId: post.PostId);
+                targetResource: "VlogPosts",
+                targetId: post.PostId.ToString());
 
             TempData["SuccessMessage"] = isSubmit ? $"文章「{post.Title}」已送出審核。" : $"文章「{post.Title}」已儲存為草稿。";
             return RedirectToAction(nameof(Index));
@@ -339,6 +355,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // POST /Admin/VlogPosts/Delete/5（軟刪除，設定 IsDelete = true）
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "RequireContentDelete")]
         public async Task<IActionResult> Delete(int id)
         {
             var post = await _context.VlogPosts.FirstOrDefaultAsync(p => p.PostId == id);
@@ -352,11 +369,11 @@ namespace LazyTravel.Areas.Admin.Controllers
             await _context.SaveChangesAsync();
 
             await _adminLogService.WriteAsync(
-                User.Identity?.Name ?? "管理員",
+                GetCurrentEmployeeId(),
                 "刪除文章",
                 $"刪除文章「{post.Title}」",
-                targetTable: "VlogPosts",
-                targetId: post.PostId);
+                targetResource: "VlogPosts",
+                targetId: post.PostId.ToString());
 
             TempData["SuccessMessage"] = $"文章「{post.Title}」已刪除，可在「已刪除」分頁還原。";
             return RedirectToAction(nameof(Index));
@@ -365,6 +382,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // POST /Admin/VlogPosts/Restore/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "RequireVlogRestore")]
         public async Task<IActionResult> Restore(int id)
         {
             var post = await _context.VlogPosts.FirstOrDefaultAsync(p => p.PostId == id);
@@ -378,11 +396,11 @@ namespace LazyTravel.Areas.Admin.Controllers
             await _context.SaveChangesAsync();
 
             await _adminLogService.WriteAsync(
-                User.Identity?.Name ?? "管理員",
+                GetCurrentEmployeeId(),
                 "還原文章",
                 $"還原文章「{post.Title}」",
-                targetTable: "VlogPosts",
-                targetId: post.PostId);
+                targetResource: "VlogPosts",
+                targetId: post.PostId.ToString());
 
             TempData["SuccessMessage"] = $"文章「{post.Title}」已還原。";
             return RedirectToAction(nameof(Index));
@@ -393,6 +411,7 @@ namespace LazyTravel.Areas.Admin.Controllers
         // Edit 頁再把最近一次的「退回草稿」紀錄撈出來顯示給小編看。
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> ToggleStatus(int id, VlogPostStatus to, string? note = null, bool fromDetails = false)
         {
             var post = await _context.VlogPosts.Include(p => p.Member).FirstOrDefaultAsync(p => p.PostId == id);
@@ -418,6 +437,21 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return Forbid();
             }
 
+            // ToggleStatus 一支 action 同時處理三種轉換,各自需要的權限不一樣(比照 VlogPostPermissions.For 的判斷),
+            // [Authorize] 屬性只能擋「沒登入」,實際「有沒有做這件事的權限」要照轉換目標分開檢查。
+            var hasSuperAdmin = User.HasClaim("Permission", "ROLE_SUPER_ADMIN");
+            var requiredPermission = to switch
+            {
+                VlogPostStatus.PendingReview => "content:vlog:submit",
+                VlogPostStatus.Published => "content:vlog:publish",
+                VlogPostStatus.Draft => "content:vlog:return",
+                _ => null,
+            };
+            if (requiredPermission is not null && !hasSuperAdmin && !User.HasClaim("Permission", requiredPermission))
+            {
+                return Forbid();
+            }
+
             if (to == VlogPostStatus.Draft && string.IsNullOrWhiteSpace(note))
             {
                 TempData["ErrorMessage"] = "退回草稿前請先填寫原因，讓小編知道要修改哪裡。";
@@ -438,11 +472,11 @@ namespace LazyTravel.Areas.Admin.Controllers
                 : $"文章「{post.Title}」狀態改為「{to.ToLabel()}」";
 
             await _adminLogService.WriteAsync(
-                User.Identity?.Name ?? "管理員",
+                GetCurrentEmployeeId(),
                 action,
                 detail,
-                targetTable: "VlogPosts",
-                targetId: post.PostId);
+                targetResource: "VlogPosts",
+                targetId: post.PostId.ToString());
 
             TempData["SuccessMessage"] = $"文章「{post.Title}」已更新為「{to.ToLabel()}」。";
             return fromDetails ? RedirectToAction(nameof(Details), new { id }) : RedirectToAction(nameof(Index));
@@ -478,7 +512,8 @@ namespace LazyTravel.Areas.Admin.Controllers
                 post.Member?.Name ?? $"會員 #{post.MemberId}",
                 User.Identity?.Name ?? "小編",
                 reasonCategory,
-                reason);
+                reason,
+                GetCurrentEmployeeId());
 
             // 會員文章被檢舉後，Status 跟著改成「待審核」，讓列表頁可以直接靠 Status 判斷要顯示
             // 「查看檢舉」還是「提出檢舉」，不用另外查 Reports 表。判定不成立後會改回「已發布」。
@@ -507,7 +542,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return Forbid();
             }
 
-            var reports = _reportService.GetRelatedReports(new LazyTravel.Models.Report { Id = -1, TargetType = ReportTargetType.VlogPost, TargetId = id });
+            var reports = _reportService.GetRelatedReports(new LazyTravel.Shared.Models.Report { Id = -1, TargetType = ReportTargetType.VlogPost, TargetId = id });
             var pendingReport = reports.FirstOrDefault(r => r.Status == ReportStatus.Pending);
             if (pendingReport is null)
             {
@@ -515,8 +550,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            var reviewerName = User.Identity?.Name ?? _reportService.GetRandomReviewerAlias();
-            await _reportService.JudgeAsync(pendingReport.Id, ReportStatus.Dismissed, "於 Vlog 行程文章後台判定不成立", isMalicious: false, reviewerName);
+            await _reportService.JudgeAsync(pendingReport.Id, ReportStatus.Dismissed, "於 Vlog 行程文章後台判定不成立", isMalicious: false, GetCurrentEmployeeId());
 
             // 檢舉不成立，文章 Status 改回「已發布」，跟「提出檢舉時改成待審核」互相對應。
             post.Status = VlogPostStatus.Published;
@@ -537,9 +571,9 @@ namespace LazyTravel.Areas.Admin.Controllers
                 .OrderBy(n => n.DayNumber).ThenBy(n => n.ArrivalTime).ToListAsync();
 
             var editingNode = editId.HasValue ? nodes.FirstOrDefault(n => n.NodeId == editId.Value) : null;
-            var (editingHours, editingMinutes) = ParseStayTime(editingNode?.StayTime);
+            var (editingHours, editingMinutes) = SplitStayMinutes(editingNode?.StayTime);
 
-            var logs = await _adminLogService.GetForTargetAsync("VlogPosts", post.PostId);
+            var logs = await _adminLogService.GetForTargetAsync("VlogPosts", post.PostId.ToString());
             var lastReturn = logs.Where(l => l.Action == "退回草稿").OrderByDescending(l => l.CreatedAt).FirstOrDefault();
 
             return new ItineraryViewModel
@@ -550,7 +584,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 EditingStayHours = editingHours,
                 EditingStayMinutes = editingMinutes,
 				Permissions = VlogPostPermissions.For(post, hasPendingReport: false, User),
-				LastReturnNote = lastReturn?.Detail,
+				LastReturnNote = lastReturn?.Description,
                 LastReturnedAt = lastReturn?.CreatedAt,
             };
         }
@@ -598,7 +632,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 DayNumber = dayNumber < 1 ? 1 : dayNumber,
                 LocationName = locationName,
                 ArrivalTime = TimeOnly.TryParse(arrivalTime, out var at) ? at : null,
-                StayTime = FormatStayTimeFromDuration(stayDuration),
+                StayTime = ParseStayDurationToMinutes(stayDuration),
                 DepartureTime = TimeOnly.TryParse(departureTime, out var dt) ? dt : null,
                 MediaUrl = mediaUrl,
                 MediaType = VlogMediaType.Photo, // 目前只支援圖片，之後要開放影片時這裡改回接表單參數
@@ -611,9 +645,10 @@ namespace LazyTravel.Areas.Admin.Controllers
             return RedirectToAction(nameof(Edit), null, new { id = postId }, "itinerary-section");
         }
 
-        // 「停留時間」表單欄位現在是 <input type="time">，借用時鐘格式(HH:mm)表示「持續多久」而不是「幾點幾分」。
+        // 「停留時間」表單欄位是 <input type="time">，借用時鐘格式(HH:mm)表示「持續多久」而不是「幾點幾分」。
         // 例如輸入 02:35 代表停留 2 小時 35 分鐘，跟抵達/離開時間欄位是同一種輸入元件，操作起來一致。
-        private static string? FormatStayTimeFromDuration(string? stayDuration)
+        // 🌟 StayTime 這次資料庫重建後改存分鐘數（int?），這裡直接算成總分鐘數，不用再組文字。
+        private static int? ParseStayDurationToMinutes(string? stayDuration)
         {
             if (string.IsNullOrWhiteSpace(stayDuration))
             {
@@ -623,54 +658,20 @@ namespace LazyTravel.Areas.Admin.Controllers
             var parts = stayDuration.Split(':');
             var hours = parts.Length > 0 && int.TryParse(parts[0], out var h) ? h : 0;
             var minutes = parts.Length > 1 && int.TryParse(parts[1], out var m) ? m : 0;
-            return FormatStayTime(hours, minutes);
+
+            var totalMinutes = hours * 60 + minutes;
+            return totalMinutes > 0 ? totalMinutes : null;
         }
 
-        // 把「停留時間」的小時/分鐘組合成一句文字存進 StayTime(nvarchar(50))
-        private static string? FormatStayTime(int hours, int minutes)
+        // ParseStayDurationToMinutes 的反向操作：把分鐘數拆回小時/分鐘，供編輯表單預填時間欄位。
+        private static (int Hours, int Minutes) SplitStayMinutes(int? totalMinutes)
         {
-            if (hours <= 0 && minutes <= 0)
-            {
-                return null;
-            }
-
-            var parts = new List<string>();
-            if (hours > 0)
-            {
-                parts.Add($"{hours} 小時");
-            }
-            if (minutes > 0)
-            {
-                parts.Add($"{minutes} 分鐘");
-            }
-
-            return string.Join(" ", parts);
-        }
-
-        // FormatStayTime 的反向操作：把既有的文字解析回小時/分鐘，供編輯表單預填時間欄位。
-        // 假資料裡有些筆數是「1.5 小時」這種小數格式（不是「1 小時 30 分鐘」），要先特別處理，
-        // 不然下面 (\d+)小時 的規則會把小數點後的數字誤判成小時數（1.5 小時 → 誤解成 5 小時）。
-        private static (int Hours, int Minutes) ParseStayTime(string? stayTime)
-        {
-            if (string.IsNullOrWhiteSpace(stayTime))
+            if (!totalMinutes.HasValue || totalMinutes.Value <= 0)
             {
                 return (0, 0);
             }
 
-            var decimalMatch = System.Text.RegularExpressions.Regex.Match(stayTime.Trim(), @"^(\d+(?:\.\d+)?)\s*小時$");
-            if (decimalMatch.Success && double.TryParse(decimalMatch.Groups[1].Value, out var decimalHours))
-            {
-                var totalMinutes = (int)Math.Round(decimalHours * 60);
-                return (totalMinutes / 60, totalMinutes % 60);
-            }
-
-            var hourMatch = System.Text.RegularExpressions.Regex.Match(stayTime, @"(\d+)\s*小時");
-            var minuteMatch = System.Text.RegularExpressions.Regex.Match(stayTime, @"(\d+)\s*分鐘");
-
-            var hours = hourMatch.Success ? int.Parse(hourMatch.Groups[1].Value) : 0;
-            var minutes = minuteMatch.Success ? int.Parse(minuteMatch.Groups[1].Value) : 0;
-
-            return (hours, minutes);
+            return (totalMinutes.Value / 60, totalMinutes.Value % 60);
         }
 
         // POST /Admin/VlogPosts/UpdateNode
@@ -716,7 +717,7 @@ namespace LazyTravel.Areas.Admin.Controllers
             node.DayNumber = dayNumber < 1 ? 1 : dayNumber;
             node.LocationName = locationName;
             node.ArrivalTime = TimeOnly.TryParse(arrivalTime, out var at) ? at : null;
-            node.StayTime = FormatStayTimeFromDuration(stayDuration);
+            node.StayTime = ParseStayDurationToMinutes(stayDuration);
             node.DepartureTime = TimeOnly.TryParse(departureTime, out var dt) ? dt : null;
             node.MediaUrl = mediaUrl;
             node.MediaType = VlogMediaType.Photo;
@@ -765,7 +766,7 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return _cachedOfficialMemberId.Value;
             }
 
-            var official = await _context.Members.AsNoTracking()
+            var official = await _context.Users.AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Email == MemberLookup.OfficialAccountEmail);
             if (official is null)
             {
@@ -773,8 +774,8 @@ namespace LazyTravel.Areas.Admin.Controllers
                     $"找不到官方帳號（Email = {MemberLookup.OfficialAccountEmail}），請先在 Members 資料表建立這筆資料。");
             }
 
-            _cachedOfficialMemberId = official.MemberId;
-            return official.MemberId;
+            _cachedOfficialMemberId = official.Id;
+            return official.Id;
         }
 
         // ---------- 檔案上傳共用小工具 ----------

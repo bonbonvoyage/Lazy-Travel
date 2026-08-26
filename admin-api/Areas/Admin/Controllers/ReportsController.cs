@@ -1,9 +1,10 @@
-using LazyTravel.Models;
-using LazyTravel.Services;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Services;
 using LazyTravel.Shared.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using System.Security.Claims;
 
 namespace LazyTravel.Areas.Admin.Controllers
 {
@@ -177,16 +178,15 @@ namespace LazyTravel.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Details), new { id = request.Id, returnUrl = safeReturnUrl });
             }
 
-            // 審核人員一律取登入員工姓名(Admin/AuthController 登入時寫進 ClaimTypes.Name 的 Employees.Name),
+            // 審核人員一律取登入員工的真實 EmployeeID(Admin/AuthController 登入時寫進 ClaimTypes.NameIdentifier),
             // 沒登入就擋下來,不編一個代稱掛名 —— 操作紀錄的重點就是「誰做的」,寫錯人比沒得寫更糟
-            var reviewerName = User.Identity?.Name;
-            if (string.IsNullOrWhiteSpace(reviewerName))
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int employeeId))
             {
                 TempData["Message"] = "送出失敗:請先登入後台再進行審核";
                 return RedirectToAction(nameof(Details), new { id = request.Id, returnUrl = safeReturnUrl });
             }
 
-            var outcome = await _reportService.JudgeAsync(request.Id, request.Decision, request.Note, request.IsMalicious, reviewerName);
+            var outcome = await _reportService.JudgeAsync(request.Id, request.Decision, request.Note, request.IsMalicious, employeeId);
 
             if (!outcome.Found)
             {

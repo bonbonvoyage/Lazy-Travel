@@ -1,6 +1,6 @@
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models.EfModels;
 
-namespace LazyTravel.Services;
+namespace LazyTravel.Shared.Services;
 
 // 對應規格書第 14 表 PostInteractions 的假資料倉儲。
 // 只提供讀取統計數字用（讚數/收藏數），不提供後台編輯——按讚/收藏本來就是前台會員的行為。

@@ -2,50 +2,36 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class ForumPost
 {
-    [Key]
-    [Column("ForumPostID")]
     public int ForumPostId { get; set; }
 
-    [Column("MemberID")]
     public int MemberId { get; set; }
 
-    public int Category { get; set; }
+    public int CategoryId { get; set; }
 
-    [Required]
-    [StringLength(150)]
     public string Title { get; set; }
 
-    [Required]
     public string Content { get; set; }
 
     public bool IsPinned { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     public bool IsDelete { get; set; }
 
-    [InverseProperty("ForumPost")]
+    public virtual Category Category { get; set; }
+
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
 
-    [InverseProperty("ForumPost")]
     public virtual ICollection<ForumImage> ForumImages { get; set; } = new List<ForumImage>();
 
-    [InverseProperty("ForumPost")]
     public virtual ICollection<ForumInteract> ForumInteracts { get; set; } = new List<ForumInteract>();
 
-    [ForeignKey("MemberId")]
-    [InverseProperty("ForumPosts")]
     public virtual Member Member { get; set; }
 }

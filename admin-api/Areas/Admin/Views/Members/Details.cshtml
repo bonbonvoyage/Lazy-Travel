@@ -1,4 +1,4 @@
-﻿@model LazyTravel.Models.DTOs.MemberDetailDto
+﻿@model LazyTravel.Shared.Models.DTOs.MemberDetailDto
 
 @* 🌟 注入授權服務 *@
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
@@ -7,7 +7,7 @@
     ViewData["Title"] = "會員詳細資料與處分";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 
-    var editDto = ViewBag.EditDto as LazyTravel.Models.DTOs.MemberEditDto;
+    var editDto = ViewBag.EditDto as LazyTravel.Shared.Models.DTOs.MemberEditDto;
 
     // 🌟 事先判斷是否擁有處分權限，以決定畫面排版要不要切兩半
     bool canBlock = (await AuthorizationService.AuthorizeAsync(User, null, "RequireMemberBlock")).Succeeded;
@@ -220,8 +220,8 @@
                         <div class="mb-4 border p-3 rounded bg-light">
                             <label for="status" class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i>帳號管制狀態</label>
                             <select name="Status" id="status" class="form-select border-danger">
-                                <option value="1" selected="@(editDto.Status != 2)">🟢 正常啟用</option>
-                                <option value="2" selected="@(editDto.Status == 2)">🔴 強制停權 (鎖定發文與互動權限)</option>
+                                <option value="1" selected="@(editDto?.Status != 2)">🟢 正常啟用</option>
+                                <option value="2" selected="@(editDto?.Status == 2)">🔴 強制停權 (鎖定發文與互動權限)</option>
                             </select>
                         </div>
 

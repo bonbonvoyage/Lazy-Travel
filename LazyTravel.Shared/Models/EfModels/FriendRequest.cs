@@ -2,40 +2,26 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class FriendRequest
 {
-    [Key]
-    [Column("RequestID")]
     public int RequestId { get; set; }
 
-    [Column("RequesterID")]
     public int RequesterId { get; set; }
 
-    [Column("ReceiverID")]
     public int ReceiverId { get; set; }
 
-    [StringLength(300)]
     public string Message { get; set; }
 
     public byte RequestStatus { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? ReviewedAt { get; set; }
 
-    [ForeignKey("ReceiverId")]
-    [InverseProperty("FriendRequestReceivers")]
     public virtual Member Receiver { get; set; }
 
-    [ForeignKey("RequesterId")]
-    [InverseProperty("FriendRequestRequesters")]
     public virtual Member Requester { get; set; }
 }

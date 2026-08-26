@@ -1,4 +1,4 @@
-﻿@using LazyTravel.Services
+﻿@using LazyTravel.Shared.Services
 @{
     ViewData["Title"] = "權限與角色管理";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
@@ -214,7 +214,7 @@
      ========================================== -->
 @if (activeTab == "logs")
 {
-    var roleLogs = ViewBag.RoleLogs as IEnumerable<LazyTravel.Models.DTOs.AdminLogDto>;
+    var roleLogs = ViewBag.RoleLogs as IEnumerable<LazyTravel.Shared.Models.DTOs.AdminLogDto>;
 
     <!-- 🌟 重構：滿版搜尋列 -->
     <div class="premium-card folder-tab-panel mb-4">

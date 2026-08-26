@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
-namespace LazyTravel.Models.DTOs
+namespace LazyTravel.Shared.Models.DTOs
 {
 	public class AdminLoginDto
 	{
