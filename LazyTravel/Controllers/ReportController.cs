@@ -1,7 +1,7 @@
 using LazyTravel.Models;
 using LazyTravel.Models.EfModels;
 using LazyTravel.Services;
-using LazyTravel.Shared.ViewModels;
+using LazyTravel.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
