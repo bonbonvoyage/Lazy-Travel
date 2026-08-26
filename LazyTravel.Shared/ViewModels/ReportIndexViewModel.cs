@@ -1,6 +1,7 @@
-using LazyTravel.Models;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.DTOs;
 
-namespace LazyTravel.ViewModels
+namespace LazyTravel.Shared.ViewModels
 {
     // 檢舉審核台列表頁的強型別 ViewModel,取代原本散落各處的 ViewData["..."]
     public class ReportIndexViewModel
@@ -23,7 +24,7 @@ namespace LazyTravel.ViewModels
         public int UpheldCount { get; set; }
         public int DismissedCount { get; set; }
 
-        public List<AdminLog> RecentLogs { get; set; } = new();
+        public List<AdminLogDto> RecentLogs { get; set; } = new();
 
         // 操作紀錄分頁的篩選條件跟分頁資訊(版面比照會員管理的操作紀錄分頁)
         public string? LogOperatorKeyword { get; set; }
@@ -32,7 +33,7 @@ namespace LazyTravel.ViewModels
         public int LogCurrentPage { get; set; } = 1;
         public int LogTotalPages { get; set; }
         public int LogTotalCount { get; set; }
-        public List<AdminLog> Logs { get; set; } = new();
+        public List<AdminLogDto> Logs { get; set; } = new();
 
         public bool HasFilter =>
             Type != null || Status != null || ReasonCategory != null ||

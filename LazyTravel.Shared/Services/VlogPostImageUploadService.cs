@@ -3,7 +3,7 @@ using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 
-namespace LazyTravel.Services;
+namespace LazyTravel.Shared.Services;
 
 // VlogPosts 專用的圖床上傳：新增的圖片（封面大圖、景點圖片）丟到 Cloudflare R2（S3 相容 API），
 // 不影響舊圖——舊圖還是本機 wwwroot/uploads/vlog/ 底下的路徑，維持原狀。

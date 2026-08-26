@@ -1,7 +1,7 @@
-@model LazyTravel.Models.EfModels.TravelGroup
+@model LazyTravel.Shared.Models.EfModels.TravelGroup
 
 @{
-    var recentOperationRemarks = (Model.TravelGroupsLogs ?? Enumerable.Empty<LazyTravel.Models.EfModels.TravelGroupsLog>())
+    var recentOperationRemarks = (Model.TravelGroupsLogs ?? Enumerable.Empty<LazyTravel.Shared.Models.EfModels.TravelGroupsLog>())
         .Where(log => !string.IsNullOrWhiteSpace(log.Remark))
         .OrderByDescending(log => log.CreatedAt)
         .Take(3)
@@ -62,7 +62,7 @@
                 <span>@Model.OwnerMember.Name</span>
                 <span>(Id=</span>
 
-                <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@Model.OwnerMember.MemberId">@Model.OwnerMember.MemberId</a>
+                <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@Model.OwnerMember.Id">@Model.OwnerMember.Id</a>
             
                 <span>)</span>
             }
@@ -98,7 +98,7 @@
                             <span>@member.Member.Name</span>
                             <span>(Id=</span>
 
-                            <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@member.Member.MemberId">@member.Member.MemberId</a>
+                            <a class="member-link" asp-area="Admin" asp-controller="Members" asp-action="Details" asp-route-id="@member.Member.Id">@member.Member.Id</a>
             
                             <span>)</span>
                         }
@@ -149,7 +149,7 @@
 
     <tr>
         <th>審核狀態</th>
-        <td>@Model.ReviewStatus</td>
+        <td>@Model.ReviewStatus.ToLabel()</td>
     </tr>
 
     <tr>
@@ -217,7 +217,7 @@
                                 </div>
                                 <div class="small mt-1">@log.Remark</div>
                                 <div class="text-muted small mt-1">
-                                    @(log.ChangedByEmployeeId.HasValue && operationEmployeeNames.TryGetValue(log.ChangedByEmployeeId.Value, out var employeeName) ? $"{employeeName}(Id={log.ChangedByEmployeeId.Value})" : "系統管理員")
+                                    @(operationEmployeeNames.TryGetValue(log.ChangeByMemberId, out var employeeName) ? $"{employeeName}(Id={log.ChangeByMemberId})" : "系統管理員")
                                 </div>
                             </div>
                         }

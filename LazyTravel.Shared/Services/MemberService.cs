@@ -1,11 +1,11 @@
-﻿using LazyTravel.Models.DTOs;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models.DTOs;
+using LazyTravel.Shared.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
 	public class MemberService : IMemberService
 	{
@@ -24,7 +24,7 @@ namespace LazyTravel.Services
 		{
 			int pageSize = 10;
 
-			var query = _context.Members
+			var query = _context.Users
 				.Include(m => m.MemberSubscriptions)
 				.ThenInclude(ms => ms.Plan)
 				.AsNoTracking()
@@ -55,8 +55,8 @@ namespace LazyTravel.Services
 				.Take(pageSize)
 				.Select(m => new MemberDto
 				{
-					MemberID = m.MemberId,
-					Email = m.Email,
+					MemberID = m.Id,
+					Email = m.Email ?? string.Empty,
 					Name = m.Name,
 					Gender = m.Gender,
 					Age = m.BirthDate.HasValue ? DateTime.Now.Year - m.BirthDate.Value.Year : null,
@@ -73,13 +73,13 @@ namespace LazyTravel.Services
 			return (pagedData, totalCount);
 		}
 
-		public MemberDetailDto GetMemberDetail(int id)
+		public MemberDetailDto? GetMemberDetail(int id)
 		{
-			var m = _context.Members
+			var m = _context.Users
 				.Include(x => x.MemberSubscriptions)
 				.ThenInclude(ms => ms.Plan)
 				.AsNoTracking()
-				.FirstOrDefault(x => x.MemberId == id);
+				.FirstOrDefault(x => x.Id == id);
 
 			if (m == null) return null;
 
@@ -90,16 +90,16 @@ namespace LazyTravel.Services
 
 			return new MemberDetailDto
 			{
-				MemberID = m.MemberId,
-				Email = m.Email,
+				MemberID = m.Id,
+				Email = m.Email ?? string.Empty,
 				Name = m.Name,
-				Phone = m.Phone,
+				Phone = m.PhoneNumber,
 				LineId = m.LineId,
 				InstagramUrl = m.InstagramUrl,
 				FacebookUrl = m.FacebookUrl,
-				IsEmailConfirmed = m.IsEmailConfirmed,
+				IsEmailConfirmed = m.EmailConfirmed,
 				AvatarUrl = m.AvatarUrl,
-				BirthDate = m.BirthDate,
+				BirthDate = m.BirthDate.HasValue ? DateOnly.FromDateTime(m.BirthDate.Value) : null,
 				Gender = m.Gender,
 				Occupation = m.Occupation,
 				MBTI = m.Mbti,
@@ -116,7 +116,7 @@ namespace LazyTravel.Services
 
 		public bool EditMember(MemberEditDto dto, int currentAdminId)
 		{
-			var member = _context.Members.FirstOrDefault(x => x.MemberId == dto.MemberID);
+			var member = _context.Users.FirstOrDefault(x => x.Id == dto.MemberID);
 			if (member == null) return false;
 
 			// 判斷目前的狀態，決定寫入什麼 Action 到日誌中
@@ -146,10 +146,10 @@ namespace LazyTravel.Services
 			// 我們可以把它附加在 TargetId 後面，或者在我們將來擴充資料表時存入 Description 欄位
 			// 目前的變通作法：把它存在 TargetId 欄位，用逗號分隔 (例如 "133, 測試原因")
 			// 更好的做法：如果可以，請修改資料庫新增一個 Reason 欄位。這裡我先用 TargetId 欄位來示範。
-			string logTargetId = $"{member.MemberId}";
+			string logTargetId = $"{member.Id}";
 			if (!string.IsNullOrWhiteSpace(dto.AdminReason))
 			{
-				logTargetId = $"{member.MemberId}|{dto.AdminReason}";
+				logTargetId = $"{member.Id}|{dto.AdminReason}";
 			}
 
 			var log = new AdminAuditLog
@@ -158,7 +158,7 @@ namespace LazyTravel.Services
 				Action = actionCode,
 				TargetResource = "Members",
 				TargetId = logTargetId, // 🌟 這裡把原因也包進去了
-				IPAddress = "127.0.0.1",
+				Ipaddress = "127.0.0.1",
 				CreatedAt = DateTime.Now
 			};
 			_context.AdminAuditLogs.Add(log);
@@ -167,8 +167,8 @@ namespace LazyTravel.Services
 			{
 				var notification = new Notification
 				{
-					MemberId = member.MemberId,
-					Type = 1,
+					MemberId = member.Id,
+					NotificationCategory = 1,
 					Content = $"您的帳號資料因違反社群規範已被系統管理員變更。原因：{dto.AdminReason}。若有疑問請聯繫客服。",
 					IsRead = false,
 					CreatedAt = DateTime.Now
@@ -188,7 +188,7 @@ namespace LazyTravel.Services
 				Action = "member:pii:unmask",
 				TargetResource = "Members",
 				TargetId = memberId.ToString(),
-				IPAddress = adminIp ?? "127.0.0.1",
+				Ipaddress = adminIp ?? "127.0.0.1",
 				Description = "解除遮蔽並調閱會員完整個資",
 				CreatedAt = DateTime.Now
 			};
@@ -252,8 +252,8 @@ namespace LazyTravel.Services
 				var targetMemberName = "未知會員";
 				if (int.TryParse(memberIdStr, out int memberId))
 				{
-					targetMemberName = _context.Members
-						.Where(m => m.MemberId == memberId)
+					targetMemberName = _context.Users
+						.Where(m => m.Id == memberId)
 						.Select(m => m.Name)
 						.FirstOrDefault() ?? "未知會員 (已刪除)";
 				}
@@ -299,7 +299,7 @@ namespace LazyTravel.Services
 					TargetID = memberIdStr, // 回傳乾淨的 ID 給前端
 					TargetMemberName = targetMemberName,
 					Description = friendlyDesc, // 🌟 包含原因的完整描述
-					IPAddress = log.IPAddress,
+					IPAddress = log.Ipaddress,
 					CreatedAt = log.CreatedAt
 				};
 			}).ToList();

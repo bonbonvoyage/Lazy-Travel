@@ -1,4 +1,4 @@
-namespace LazyTravel.Services;
+namespace LazyTravel.Shared.Services;
 
 // 文章內文（Quill 存的 HTML）驗證共用：去標籤取純文字給「必填」跟「不當字眼偵測」共用。
 // 髒話清單是簡單的字串比對，不是語意分析，擋不住同音字/注音/符號夾雜刻意規避的寫法，

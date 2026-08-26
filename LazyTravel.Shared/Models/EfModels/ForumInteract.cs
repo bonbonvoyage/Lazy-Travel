@@ -2,34 +2,20 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
-[PrimaryKey("ForumPostId", "MemberId", "ActionType")]
 public partial class ForumInteract
 {
-    [Key]
-    [Column("ForumPostID")]
     public int ForumPostId { get; set; }
 
-    [Key]
-    [Column("MemberID")]
     public int MemberId { get; set; }
 
-    [Key]
     public byte ActionType { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [ForeignKey("ForumPostId")]
-    [InverseProperty("ForumInteracts")]
     public virtual ForumPost ForumPost { get; set; }
 
-    [ForeignKey("MemberId")]
-    [InverseProperty("ForumInteracts")]
     public virtual Member Member { get; set; }
 }

@@ -2,36 +2,26 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class Notification
 {
-    [Key]
-    [Column("NotificationID")]
     public int NotificationId { get; set; }
 
-    [Column("MemberID")]
     public int MemberId { get; set; }
 
-    public byte Type { get; set; }
+    public byte NotificationCategory { get; set; }
 
-    [Column("RelatedID")]
+    public byte? TargetType { get; set; }
+
     public int? RelatedId { get; set; }
 
-    [Required]
-    [StringLength(255)]
     public string Content { get; set; }
 
     public bool IsRead { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [ForeignKey("MemberId")]
-    [InverseProperty("Notifications")]
     public virtual Member Member { get; set; }
 }

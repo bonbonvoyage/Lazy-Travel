@@ -1,6 +1,6 @@
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
-using LazyTravel.Services;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
+using LazyTravel.Shared.Services;
 using LazyTravel.Shared.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,13 +31,13 @@ namespace LazyTravel.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ReportSubmitViewModel form)
         {
-            var reporter = await _context.Members.FirstOrDefaultAsync(m => m.Email == form.ReporterEmail);
+            var reporter = await _context.Users.FirstOrDefaultAsync(m => m.Email == form.ReporterEmail);
             if (reporter == null)
             {
                 ModelState.AddModelError(nameof(form.ReporterEmail), "查無此帳號,請確認 Email 是否正確");
             }
 
-            var reportedMember = await _context.Members.FirstOrDefaultAsync(m => m.Email == form.ReportedMemberEmail);
+            var reportedMember = await _context.Users.FirstOrDefaultAsync(m => m.Email == form.ReportedMemberEmail);
             if (reportedMember == null)
             {
                 ModelState.AddModelError(nameof(form.ReportedMemberEmail), "查無此帳號,請確認 Email 是否正確");
@@ -56,13 +56,13 @@ namespace LazyTravel.Controllers
             var evidenceUrl = await _imageStorage.UploadAsync(form.Evidence!, "檢舉");
 
             // EfModels.Report 欄位是 byte/raw 型別(對齊資料表),enum 要轉型別再存
-            var report = new LazyTravel.Models.EfModels.Report
+            var report = new LazyTravel.Shared.Models.EfModels.Report
             {
-                ReporterId = reporter!.MemberId,
-                ReportedMemberId = reportedMember!.MemberId,
+                ReporterId = reporter!.Id,
+                ReportedMemberId = reportedMember!.Id,
                 ReportType = (byte)form.TargetType,
                 // 檢舉「會員」類型時,被檢舉內容就是這個會員本人,對象編號直接沿用會員編號
-                TargetId = form.TargetType == ReportTargetType.Member ? reportedMember.MemberId : form.TargetId,
+                TargetId = form.TargetType == ReportTargetType.Member ? reportedMember.Id : form.TargetId,
                 TargetTitle = form.TargetType == ReportTargetType.Member ? reportedMember.Name : form.TargetTitle,
                 ReasonCategory = (byte)form.ReasonCategory,
                 Reason = form.Reason,

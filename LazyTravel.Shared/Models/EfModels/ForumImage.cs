@@ -2,28 +2,18 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class ForumImage
 {
-    [Key]
-    [Column("ImageID")]
     public int ImageId { get; set; }
 
-    [Column("ForumPostID")]
     public int ForumPostId { get; set; }
 
-    [Required]
-    [StringLength(500)]
     public string ImageUrl { get; set; }
 
     public int SortOrder { get; set; }
 
-    [ForeignKey("ForumPostId")]
-    [InverseProperty("ForumImages")]
     public virtual ForumPost ForumPost { get; set; }
 }

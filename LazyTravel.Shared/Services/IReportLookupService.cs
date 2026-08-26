@@ -1,6 +1,6 @@
-using LazyTravel.Models;
+using LazyTravel.Shared.Models;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
     // 「類型/類別/狀態」的中文對照,改成查資料庫(ReportTargetTypes/ReportReasonCategories/ReportStatuses),
     // 不再寫死在程式碼裡。這三張表資料量小、幾乎不會變動,查一次就快取起來,不用每次都打資料庫。

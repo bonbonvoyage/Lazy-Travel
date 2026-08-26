@@ -1,14 +1,14 @@
-﻿using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Services;
+namespace LazyTravel.Shared.Services;
 
 public static class TGReviewStatusService
 {
-	public const string Normal = "正常";
-	public const string PendingReview = "檢舉審核中";
-	public const string Violation = "違規";
+	public const TravelGroupReviewStatus Normal = TravelGroupReviewStatus.Normal;
+	public const TravelGroupReviewStatus PendingReview = TravelGroupReviewStatus.PendingReview;
+	public const TravelGroupReviewStatus Violation = TravelGroupReviewStatus.Violation;
 
 	public static async Task SyncAsync(LazyTravelDBContext context)
 	{

@@ -1,4 +1,4 @@
-namespace LazyTravel.Models;
+namespace LazyTravel.Shared.Models;
 
 
 public static class MemberLookup
@@ -15,6 +15,6 @@ public static class MemberLookup
         (OfficialAccountEmail, "LazyTravel 官方", true),
     };
 
-    public static bool IsOfficial(LazyTravel.Models.EfModels.Member? member) =>
+    public static bool IsOfficial(LazyTravel.Shared.Models.EfModels.Member? member) =>
         member?.Email == OfficialAccountEmail;
 }

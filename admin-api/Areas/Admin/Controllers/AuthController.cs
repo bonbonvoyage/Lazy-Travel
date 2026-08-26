@@ -1,5 +1,5 @@
-﻿using LazyTravel.Models.DTOs;
-using LazyTravel.Services;
+﻿using LazyTravel.Shared.Models.DTOs;
+using LazyTravel.Shared.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -63,7 +63,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 			// 呼叫 Service 驗證
 			var result = _employeeService.Login(dto.Email, dto.Password, ipAddress);
 
-			if (!result.Success)
+			if (!result.Success || result.EmployeeData is null)
 			{
 				// 為了資安，不論是帳號錯還是密碼錯，都給一樣的錯誤訊息
 				ModelState.AddModelError(string.Empty, result.Message);

@@ -1,6 +1,7 @@
-using LazyTravel.Models;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.DTOs;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
     // 檢舉中心的商業邏輯統一收在這裡,ReportsController 只負責接請求、組 ViewModel、回傳 View
     public interface IReportService
@@ -33,22 +34,22 @@ namespace LazyTravel.Services
         // 如果這筆案件被標記為惡意檢舉,檢舉人會不會被停權;不會回傳 null,會的話回傳停權天數
         int? GetPendingReporterSuspensionDays(int maliciousCountForReporter);
 
-        // 尚未接 Cookie 認證前,判定人先用隨機代稱
-        string GetRandomReviewerAlias();
-
-        Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, string reviewerName);
+        // employeeId 是登入員工的真實 EmployeeID(取自 ClaimTypes.NameIdentifier),審核人一律要是真實登入的員工
+        Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, int employeeId);
 
         // 建立一筆新的檢舉（例如小編在 Vlog 行程文章後台對會員文章提出檢舉）。純新增，不動既有判定/查詢邏輯。
+        // employeeId 是實際提出檢舉的登入員工,只用來寫進 AdminAuditLogs 的操作紀錄;
+        // reporterAccount 仍是 Reports.ReporterID 這個 NOT NULL 外鍵要用的顯示名稱/Email,兩者用途不同,都要保留。
         Task<Report> SubmitAsync(ReportTargetType targetType, int targetId, string targetTitle,
-            string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason);
+            string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason, int employeeId);
 
         // 這個模組相關的操作紀錄(給檢舉審核台頁面用)
-        Task<List<AdminLog>> GetRecentReportLogsAsync(int take);
+        Task<List<AdminLogDto>> GetRecentReportLogsAsync(int take);
 
         // 操作紀錄篩選 + 分頁(版面比照會員管理的操作紀錄分頁)
-        Task<(List<AdminLog> Data, int TotalCount)> GetReportLogsAsync(string? operatorKeyword, string? detailKeyword, string? action, int page);
+        Task<(List<AdminLogDto> Data, int TotalCount)> GetReportLogsAsync(string? operatorKeyword, string? detailKeyword, string? action, int page);
 
-        // 單一案件的審核紀錄(誰審的、什麼時候審的,取自 AdminLogs)
-        Task<AdminLog?> GetReviewLogAsync(int reportId);
+        // 單一案件的審核紀錄(誰審的、什麼時候審的,取自 AdminAuditLogs)
+        Task<AdminLogDto?> GetReviewLogAsync(int reportId);
     }
 }

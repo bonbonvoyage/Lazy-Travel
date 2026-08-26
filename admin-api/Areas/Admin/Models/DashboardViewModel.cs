@@ -1,6 +1,6 @@
 namespace LazyTravel.Areas.Admin.Models
 {
-    // 各模組操作紀錄的顯示格式,來源是 IAdminLogService 依 TargetTable 篩出來的紀錄
+    // 各模組操作紀錄的顯示格式,來源是 IAdminLogService 依 TargetResource 篩出來的紀錄
     public class DashboardLogEntry
     {
         public DateTime CreatedAt { get; set; }

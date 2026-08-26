@@ -1,6 +1,6 @@
 ﻿@model IEnumerable<EmployeeDto>
 @using System.Linq
-@using LazyTravel.Services
+@using LazyTravel.Shared.Services
 
 @{
     ViewData["Title"] = "員工管理";
@@ -264,7 +264,7 @@
 }
 else if (subTab == "logs")
 {
-    var employeeLogs = ViewBag.EmployeeLogs as IEnumerable<LazyTravel.Models.DTOs.AdminLogDto>;
+    var employeeLogs = ViewBag.EmployeeLogs as IEnumerable<LazyTravel.Shared.Models.DTOs.AdminLogDto>;
 
     <!-- 🌟 操作紀錄專用面板 -->
     <div class="premium-card folder-tab-panel mb-4">

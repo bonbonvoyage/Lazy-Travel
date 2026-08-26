@@ -1,7 +1,7 @@
 using LazyTravel.Areas.Admin.Models;
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
-using LazyTravel.Services;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
+using LazyTravel.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -37,7 +37,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 			// 沒權限的模組連統計都不用查,直接省掉那一次 DB round trip
 			bool Can(string permissionCode) => User.HasClaim("Permission", permissionCode);
 
-			var memberCount = Can("member:account:read") ? await _context.Members.CountAsync() : 0;
+			var memberCount = Can("member:account:read") ? await _context.Users.CountAsync() : 0;
 			var activeGroupCount = Can("social:travelgroup:read") ? await _context.TravelGroups.CountAsync(g => !g.IsDelete) : 0;
 			var publishedVlogCount = Can("content:vlog:read")
 				? VlogPostStore.GetAll().Count(p => !p.IsDelete && p.Status == VlogPostStatus.Published)
@@ -48,7 +48,7 @@ namespace LazyTravel.Areas.Admin.Controllers
 
 			// ponytail: 只讀一個字串,直接 SqlQuery,不建 entity 也不動自動產生的 DbContext。
 			// 公告模組要做新增/編輯時再補 Announcement entity。資料表見 sql/Announcements_Seed.sql
-			string notice = null;
+			string? notice = null;
 			try
 			{
 				notice = await _context.Database
@@ -62,20 +62,20 @@ namespace LazyTravel.Areas.Admin.Controllers
 				// 一張示範用的表不該讓整個總覽 500,登入後會直接轉來這裡。
 			}
 
-			// 一次撈近期紀錄,再依 TargetTable 分流到各卡片自己的「最近動作」——
+			// 一次撈近期紀錄,再依 TargetResource 分流到各卡片自己的「最近動作」——
 			// TravelGroups 目前沒有任何地方會寫入這個 log(TravelGroupsController 沒呼叫 WriteAsync),
 			// 所以揪團管理卡會如實顯示空清單,不是漏寫
 			var recentLogs = await _adminLogService.GetRecentAsync(50);
-			List<DashboardLogEntry> LogsFor(string targetTable, int take) =>
+			List<DashboardLogEntry> LogsFor(string targetResource, int take) =>
 				recentLogs
-					.Where(log => log.TargetTable == targetTable)
+					.Where(log => log.TargetResource == targetResource)
 					.OrderByDescending(log => log.CreatedAt)
 					.Take(take)
 					.Select(log => new DashboardLogEntry
 					{
 						CreatedAt = log.CreatedAt,
 						Action = log.Action,
-						Detail = log.Detail
+						Detail = log.Description
 					})
 					.ToList();
 

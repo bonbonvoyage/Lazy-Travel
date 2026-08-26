@@ -1,8 +1,8 @@
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Services;
+namespace LazyTravel.Shared.Services;
 
 // 一次性的示範資料匯入：把 VlogPostStore/ItineraryNodeStore/PostInteractionStore 這幾個
 // 記憶體假資料倉儲（Controller 已經不再讀它們了）的內容，寫進真的 LazyTravelDB 三張表。
@@ -22,11 +22,11 @@ public static class VlogPostDbSeeder
         // 所以只在 Members 是空的時候依序塞這 4 筆示範會員——IDENTITY 從空表開始會依序配到 1~4，
         // 剛好對上 VlogPostStore 寫死的 MemberID。Members 已經有資料(例如共用開發資料庫)就不動，
         // 直接沿用既有帳號；官方帳號一律用 Email(MemberLookup.OfficialAccountEmail) 判斷，不是用 ID。
-        if (!await context.Members.AnyAsync())
+        if (!await context.Users.AnyAsync())
         {
             foreach (var (email, name, isOfficial) in MemberLookup.Members)
             {
-                context.Members.Add(new LazyTravel.Models.EfModels.Member
+                context.Users.Add(new LazyTravel.Shared.Models.EfModels.Member
                 {
                     Email = email,
                     Name = name,

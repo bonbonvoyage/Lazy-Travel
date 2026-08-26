@@ -1,5 +1,6 @@
-using LazyTravel.Models;
-using LazyTravel.Models.EfModels;
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.DTOs;
+using LazyTravel.Shared.Models.EfModels;
 
 namespace LazyTravel.Areas.Admin.Models;
 
@@ -34,6 +35,6 @@ public class VlogPostIndexViewModel
     public int PendingReviewCount { get; set; }
     public int DeletedCount { get; set; }
 
-    // 操作紀錄籤用，只取 TargetTable="VlogPosts" 的紀錄
-    public List<LazyTravel.Models.AdminLog> RecentLogs { get; set; } = new();
+    // 操作紀錄籤用，只取 TargetResource="VlogPosts" 的紀錄
+    public List<AdminLogDto> RecentLogs { get; set; } = new();
 }

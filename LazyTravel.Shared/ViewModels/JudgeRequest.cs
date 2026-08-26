@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using LazyTravel.Models;
+using LazyTravel.Shared.Models;
 
-namespace LazyTravel.ViewModels
+namespace LazyTravel.Shared.ViewModels
 {
     // Judge 表單送出的資料。官方 Reports.AdminNotes 欄位是 nvarchar(500),
     // 這裡刻意收緊到 200 字(業務規則,比資料庫欄位更嚴格),資料庫欄位本身不用改

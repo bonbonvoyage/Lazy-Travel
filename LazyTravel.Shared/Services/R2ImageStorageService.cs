@@ -3,7 +3,7 @@ using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 
-namespace LazyTravel.Services
+namespace LazyTravel.Shared.Services
 {
     // 用 AWS S3 SDK 連 Cloudflare R2(R2 相容 S3 協定,同一套 SDK 可以直接用)。
     // 上傳完回傳的是 PublicUrl + 檔案路徑組出來的公開網址,前端直接用這個網址顯示圖片。

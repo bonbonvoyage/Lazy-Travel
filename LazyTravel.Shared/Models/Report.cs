@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace LazyTravel.Models
+namespace LazyTravel.Shared.Models
 {
     // 數值對齊《Lazy Travel 旅遊平台 - 全模組資料庫規格書》官方 ReportType 定義(1:會員,2:Vlog文章,4:揪團)
     // 官方還有 3:論壇貼文、5:留言,目前系統還沒有對應模組,先不加,等那兩個功能做出來再補
@@ -126,8 +126,8 @@ namespace LazyTravel.Models
         [Display(Name = "檢舉時間")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // 審核人員/審核時間依官方 schema 不存在 Reports 表上,改成從 AdminLogs 查
-        // (TargetTable="Reports", TargetID=此筆 Id)反查,不再存於這個 Model
+        // 審核人員/審核時間依官方 schema 不存在 Reports 表上,改成從 AdminAuditLogs 查
+        // (TargetResource="Reports", TargetId=此筆 Id)反查,不再存於這個 Model
 
         // 官方 Reports.AdminNotes 是 nvarchar(500),這裡收緊到 200 字(業務規則,資料庫欄位本身不用改)
         [StringLength(200, ErrorMessage = "處置備註不可超過 200 字")]

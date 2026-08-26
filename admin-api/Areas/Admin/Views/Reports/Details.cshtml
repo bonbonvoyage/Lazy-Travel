@@ -1,7 +1,7 @@
-@model LazyTravel.ViewModels.ReportDetailsViewModel
-@using LazyTravel.Models
+@model LazyTravel.Shared.ViewModels.ReportDetailsViewModel
+@using LazyTravel.Shared.Models
 @using Microsoft.AspNetCore.Authorization
-@inject LazyTravel.Services.IReportLookupService LookupService
+@inject LazyTravel.Shared.Services.IReportLookupService LookupService
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 
 @{
@@ -319,7 +319,7 @@
             <tbody>
                 <tr>
                     <th class="text-muted" style="width:110px;">審核人員</th>
-                    <td>@(Model.ReviewLog?.OperatorName ?? "—")</td>
+                    <td>@(Model.ReviewLog?.AdminName ?? "—")</td>
                 </tr>
                 <tr>
                     <th class="text-muted">審核時間</th>
