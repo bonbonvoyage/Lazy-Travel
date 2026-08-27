@@ -1,305 +1,79 @@
-@{
-    ViewData["Title"] = "首頁";
-    // 這頁是整張設計圖 + 透明熱區，圖裡面自己就有導覽列和 footer，
-    // 所以不套 _Layout（不然會多出一組重複的選單）。
-    Layout = null;
-}
+@model LazyTravel.ViewModels.HomeIndexViewModel
+@{ ViewData["Title"] = "首頁"; Layout = null; }
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Lazy Travel</title>
-
+    <title>首頁 - LazyTravel</title>
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <style>
-        /* ============================================================
-                   首頁：整張設計圖 + 透明熱區覆蓋
-                   ------------------------------------------------------------
-                   圖：wwwroot/img/pic.png（1536 × 1024）
-
-                   熱區全部用「百分比」定位，圖片放大縮小時熱區會自己跟著跑，
-                   不用針對每種螢幕各寫一組座標。
-
-                   百分比不是目測的，是掃描 pic.png 的像素量出來的，
-                   註解裡有原始像素座標，之後換圖可以照同樣方式重算。
-                   ============================================================ */
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            background: #FCFAF8; /* 跟圖片底色一致，兩側留白不會突兀（實際從 pic.png 邊緣吸色量出來的） */
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* 圖片外框：position:relative 是熱區定位的基準。
-                   用 inline-block 讓外框剛好貼合圖片，百分比才不會偏掉。 */
-        .stage {
-            position: relative;
-            display: inline-block;
-            line-height: 0; /* 消掉 <img> 底下的行高空隙 */
-            max-width: 100%;
-        }
-
-            .stage img {
-                display: block;
-                max-width: 100%;
-                max-height: 100dvh; /* 保證整張圖一屏看得完，不用捲動 */
-                width: auto;
-                height: auto;
-            }
-
-        /* ---------- 透明熱區共用樣式 ---------- */
-        .hotspot {
-            position: absolute;
-            display: block;
-            z-index: 2;
-            border-radius: 6px;
-            /* 想確認位置時把下面這行的註解拿掉，會出現半透明紅框。
-                       （也可以直接在網址後面加 ?debug，或在頁面上按鍵盤 D，不用改程式碼） */
-            /* background-color: rgba(255, 0, 0, 0.4); */
-        }
-
-            .hotspot:hover {
-                background-color: rgba(29, 99, 196, 0.13);
-                outline: 2px solid rgba(29, 99, 196, 0.45);
-            }
-
-            .hotspot:focus-visible {
-                outline: 3px solid #1D63C4;
-                outline-offset: 2px;
-                background-color: rgba(29, 99, 196, 0.13);
-            }
-
-        /* ============================================================
-                   熱區座標（要微調就改這四個百分比：top / left / width / height）
-                   每行後面是圖片上的實際像素範圍，已各留約 14px 的點擊緩衝
-                   ============================================================ */
-
-        /* ★ CMS → 後台管理系統   文字實際落在 x 622-663, y 54-70 */
-        .hs-cms {
-            top: 3.91%;
-            left: 39.45%;
-            width: 4.75%;
-            height: 4.30%;
-        }
-
-        .hs-home {
-            top: 4.10%;
-            left: 12.11%;
-            width: 5.66%;
-            height: 5.08%;
-        }
-        /* x 198-261, y 54-88（含底線） */
-        .hs-about {
-            top: 3.91%;
-            left: 20.70%;
-            width: 5.99%;
-            height: 4.30%;
-        }
-        /* x 330-398 */
-        .hs-contact {
-            top: 3.91%;
-            left: 29.49%;
-            width: 7.55%;
-            height: 4.30%;
-        }
-        /* x 465-557 */
-        .hs-logo {
-            top: 3.91%;
-            left: 3.91%;
-            width: 4.04%;
-            height: 8.11%;
-        }
-        /* x 60-121, y 40-122 */
-        .hs-search {
-            top: 3.52%;
-            left: 94.08%;
-            width: 3.26%;
-            height: 4.88%;
-        }
-        /* x 1453-1487 */
-        .hs-readmore {
-            top: 64.65%;
-            left: 5.40%;
-            width: 17.97%;
-            height: 8.11%;
-        }
-        /* x 83-358, y 662-744 */
-
-        .hs-fb {
-            top: 91.99%;
-            left: 3.52%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 60-91   */
-        .hs-ig {
-            top: 91.99%;
-            left: 8.27%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 134-164 */
-        .hs-tw {
-            top: 91.99%;
-            left: 13.15%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 208-239 */
-        .hs-yt {
-            top: 91.99%;
-            left: 18.29%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 283-324 */
-        .hs-help {
-            top: 91.99%;
-            left: 27.15%;
-            width: 7.03%;
-            height: 4.30%;
-        }
-        /* x 425-517 */
-
-        /* ---------- 除錯模式 ----------
-                   網址加 ?debug，或在頁面上按鍵盤 D，會顯示所有熱區的紅框與名稱 */
-        body.debug .hotspot {
-            background-color: rgba(255, 0, 0, 0.4);
-            outline: 1px solid #C00;
-        }
-
-            body.debug .hotspot::after {
-                content: attr(data-label);
-                position: absolute;
-                left: 0;
-                top: 100%;
-                font: 11px/1.4 monospace;
-                color: #C00;
-                background: #fff;
-                padding: 1px 4px;
-                white-space: nowrap;
-            }
-
-        /* ============================================================
-                   手機：圖片縮小後熱區會小到點不到（CMS 在 375px 寬只剩約 18px），
-                   所以窄螢幕改在圖片下方補一排真的文字選單。
-                   ============================================================ */
-        .mobile-nav {
-            display: none;
-        }
-
-        @@media (max-width: 767.98px) {
-            body {
-                justify-content: flex-start;
-            }
-
-            .stage img {
-                max-height: none;
-            }
-
-            .hotspot {
-                pointer-events: none;
-            }
-            /* 手機停用熱區，避免誤觸 */
-
-            .mobile-nav {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: .25rem 1.5rem;
-                padding: 1rem 1rem 1.5rem;
-                font: 500 .82rem/1 system-ui, "Noto Sans TC", sans-serif;
-                letter-spacing: .1em;
-            }
-
-                .mobile-nav a {
-                    display: block;
-                    padding: 1rem .5rem; /* 撐到 44px 以上的觸控高度 */
-                    color: #55565A;
-                    text-decoration: none;
-                }
-
-                    .mobile-nav a.on {
-                        color: #1D63C4;
-                    }
-        }
-
-        /* 螢幕閱讀器專用（整頁只有一張圖對 SEO 和無障礙不利，補一份純文字導覽） */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0,0,0,0);
-            white-space: nowrap;
-            border: 0;
-        }
+        .home-content { max-width: 1440px; margin: 30px auto; padding: 0 36px; }
+        .home-search { margin: 28px 0 36px; min-height: 72px; }
+        .home-search button { border: 0; background: transparent; color: var(--accent); padding: 12px 18px; }
+        .home-search .bi { color: var(--text-muted); }
+        .home-search input { width: 100%; border: 0; background: transparent; color: var(--text-muted); font: inherit; }
+        .home-content .row-section { margin-bottom: 42px; }
+        .article-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--text-muted); font-size: .8rem; }
+        @@media (max-width: 760px) { .home-content { margin: 16px auto; padding: 0; } .home-search { flex-wrap: wrap; } .home-search .search-field { flex: 1 1 100%; min-width: 0; } .home-search button { width: 100%; } .row-empty { white-space: normal; overflow-wrap: anywhere; } }
     </style>
 </head>
-<body>
-
-    @* 純文字導覽：畫面上看不到，但螢幕閱讀器與搜尋引擎讀得到 *@
-    <nav class="sr-only" aria-label="主選單">
-        <ul>
-            <li><a asp-controller="Home" asp-action="Index">首頁</a></li>
-            <li><a asp-controller="Explore" asp-action="Index">找行程</a></li>
-            <li><a asp-area="Admin" asp-controller="Auth" asp-action="Login">CMS 後台管理系統</a></li>
-        </ul>
-    </nav>
-
-    <div class="stage">
-
-        <img src="~/img/pic.png" asp-append-version="true"
-             width="1536" height="1024"
-             alt="Lazy Travel 首頁：背包客站在海岸懸崖上眺望遠方，左側是 Lazy Travel 標題與 READ MORE 按鈕" />
-
-        @* ★ CMS → 後台管理系統。未登入會被 Admin 的 Cookie 認證導去 Admin/Auth/Login *@
-        <a class="hotspot hs-cms" data-label="CMS" aria-label="CMS 後台管理系統"
-           asp-area="Admin" asp-controller="Dashboard" asp-action="Index"></a>
-
-        <a class="hotspot hs-logo" data-label="LOGO" aria-label="回首頁"
-           asp-controller="Home" asp-action="Index"></a>
-        <a class="hotspot hs-home" data-label="HOME" aria-label="首頁"
-           asp-controller="Home" asp-action="Index"></a>
-        <a class="hotspot hs-about" data-label="ABOUT" aria-label="關於我們" href="#"></a>
-        <a class="hotspot hs-contact" data-label="CONTACT" aria-label="聯絡我們" href="#"></a>
-        <a class="hotspot hs-search" data-label="SEARCH" aria-label="搜尋"
-           asp-controller="Explore" asp-action="Index"></a>
-        <a class="hotspot hs-readmore" data-label="READ MORE" aria-label="了解更多"
-           asp-controller="Explore" asp-action="Index"></a>
-
-        <a class="hotspot hs-fb" data-label="FB" aria-label="Facebook" href="#"></a>
-        <a class="hotspot hs-ig" data-label="IG" aria-label="Instagram" href="#"></a>
-        <a class="hotspot hs-tw" data-label="TW" aria-label="Twitter" href="#"></a>
-        <a class="hotspot hs-yt" data-label="YT" aria-label="YouTube" href="#"></a>
-        <a class="hotspot hs-help" data-label="HELP" aria-label="說明" href="#"></a>
-
-    </div>
-
-    @* 手機用的真文字選單 *@
-    <nav class="mobile-nav" aria-label="主選單（行動版）">
-        <a class="on" asp-controller="Home" asp-action="Index">HOME</a>
-        <a href="#">ABOUT</a>
-        <a href="#">CONTACT</a>
-        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">CMS</a>
-    </nav>
-
-    <script>
-        // ?debug 或按 D 鍵切換紅框
-        if (location.search.indexOf('debug') > -1) document.body.classList.add('debug');
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'd' || e.key === 'D') document.body.classList.toggle('debug');
-        });
-    </script>
+<body class="home-app">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "Home")
+    <div class="sidebar-scrim" id="sidebarScrim"></div>
+    <main class="main">
+        <div class="home-content">
+            <form class="search-bar home-search" asp-controller="TravelGroups" asp-action="Index" method="get">
+                <label class="search-field"><i class="bi bi-geo-alt" aria-hidden="true"></i>
+                    <select name="region" aria-label="區域"><option value="">所有區域</option>
+                        @foreach (var region in new[] { "亞洲", "歐洲", "北美洲", "南美洲", "非洲", "大洋洲", "南極洲" }) { <option>@region</option> }
+                    </select>
+                </label>
+                <label class="search-field"><i class="bi bi-globe" aria-hidden="true"></i>
+                    <select name="country" aria-label="國家"><option value="">所有國家</option>
+                        @foreach (var country in Model.Countries) { <option>@country</option> }
+                    </select>
+                </label>
+                <label class="search-field"><i class="bi bi-calendar" aria-hidden="true"></i>
+                    <select name="maxDays" aria-label="行程天數"><option value="">不限天數</option><option value="3">3 天以內</option><option value="7">7 天以內</option><option value="14">14 天以內</option></select>
+                </label>
+                <button type="submit" aria-label="搜尋行程"><i class="bi bi-search" aria-hidden="true"></i> 搜尋</button>
+            </form>
+            <section class="row-section" aria-labelledby="trips-heading">
+                <header class="row-head"><h3 id="trips-heading">熱門行程</h3><a class="row-more" asp-controller="TravelGroups" asp-action="Index">查看全部 ›</a></header>
+                <div class="row-track">
+                @foreach (var trip in Model.Trips)
+                {
+                    <a class="trip-card" asp-controller="TravelGroups" asp-action="Details" asp-route-id="@trip.Id">
+                        <div class="art">@if (!string.IsNullOrWhiteSpace(trip.Image)) { <img src="@trip.Image" alt="@trip.Title" loading="lazy" /> }</div>
+                        <div class="body"><div class="title">@trip.Title</div><div class="trip-meta">
+                            @if (trip.Start.HasValue && trip.End.HasValue) { var days = Math.Max(1, trip.End.Value.DayNumber - trip.Start.Value.DayNumber + 1); <span>@(days)天@(Math.Max(0, days - 1))夜</span> }
+                            else { <span>日期待定</span> }
+                            <span>·</span><span><i class="bi bi-person" aria-hidden="true"></i> @trip.People/@trip.MaxPeople 人</span>
+                        </div></div>
+                    </a>
+                }
+                @if (Model.Trips.Count == 0) { <p class="row-empty">目前還沒有公開行程。<a asp-controller="TravelGroups" asp-action="Create">建立第一趟旅行</a></p> }
+                </div>
+            </section>
+            <section class="row-section" aria-labelledby="articles-heading">
+                <header class="row-head"><h3 id="articles-heading">熱門文章</h3><a class="row-more" asp-controller="Explore" asp-action="Index">查看全部 ›</a></header>
+                <div class="row-track">
+                @foreach (var article in Model.Articles)
+                {
+                    <a class="article-card" asp-controller="Explore" asp-action="Details" asp-route-id="@article.Id">
+                        <div class="art">@if (!string.IsNullOrWhiteSpace(article.Image)) { <img src="@article.Image" alt="@article.Title" loading="lazy" /> }</div>
+                        <div class="body"><div class="title">@article.Title</div><div class="article-meta"><span><i class="bi bi-person" aria-hidden="true"></i> @article.Author</span><time datetime="@article.CreatedAt.ToString("yyyy-MM-dd")">@article.CreatedAt.ToString("yyyy/MM/dd")</time></div></div>
+                    </a>
+                }
+                @if (Model.Articles.Count == 0) { <p class="row-empty">目前還沒有公開文章。</p> }
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
 </body>
 </html>

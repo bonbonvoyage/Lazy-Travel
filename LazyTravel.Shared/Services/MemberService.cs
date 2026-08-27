@@ -3,6 +3,7 @@ using LazyTravel.Shared.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
 namespace LazyTravel.Shared.Services
@@ -15,6 +16,7 @@ namespace LazyTravel.Shared.Services
 		{
 			_context = context;
 		}
+
 
 		public (IEnumerable<MemberDto> Data, int TotalCount) GetAllMembers(
 			string keyword = null,

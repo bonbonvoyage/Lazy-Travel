@@ -1,0 +1,167 @@
+@model LazyTravel.ViewModels.TravelGroupIndexViewModel
+@{
+    ViewData["Title"] = "揪團找旅伴";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/travelgroups-index.css" asp-append-version="true" />
+</head>
+<body class="home-app groups-page">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "TravelGroups")
+    <main class="main groups-main">
+        <div class="groups-shell">
+            <header class="groups-heading">
+                <p class="groups-eyebrow">Find your travel partner</p>
+                <h1>揪團找旅伴</h1>
+                <p>找一群步調相近的人，把想去的地方變成一起出發的旅程。</p>
+            </header>
+
+            <form class="groups-filter" method="get" asp-action="Index">
+                <input type="hidden" name="scope" value="@Model.Scope" />
+                <input type="hidden" name="maxDays" value="@Model.MaxDays" />
+                <input type="hidden" id="groupStartDate" name="startDate" value="@Model.StartDate" />
+                <input type="hidden" id="groupEndDate" name="endDate" value="@Model.EndDate" />
+
+                <label class="filter-control">
+                    <svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>
+                    <span>區域</span>
+                    <select id="groupRegion" name="region">
+                        <option value="">所有區域</option>
+                        @foreach (var item in Model.Regions)
+                        {
+                            <option value="@item" selected="@(Model.Region == item)">@item</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-control">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9Z"/></svg>
+                    <span>國家</span>
+                    <select id="groupCountry" name="country" data-selected="@Model.Country">
+                        <option value="">所有國家</option>
+                        @foreach (var item in Model.Countries)
+                        {
+                            <option value="@item" selected="@(Model.Country == item)">@item</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-control filter-control-date" for="groupDateRange">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                    <span>行程區間</span>
+                    <input id="groupDateRange" type="text" value="@Model.DateRangeText" placeholder="選擇起訖日期" autocomplete="off" readonly />
+                </label>
+
+                <button class="filter-submit" type="submit" aria-label="搜尋揪團">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                </button>
+            </form>
+
+            <section class="groups-board" aria-labelledby="board-title">
+                <div class="board-toolbar">
+                    <nav class="groups-tabs" aria-label="揪團分類">
+                        <a class="@(Model.Scope == "all" ? "active" : "")" asp-action="Index" asp-route-scope="all" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" id="board-title">所有揪團</a>
+                        <button type="button" disabled title="登入後即可查看">我的行程</button>
+                        <a class="@(Model.Scope == "recommended" ? "active" : "")" asp-action="Index" asp-route-scope="recommended" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">揪團推薦</a>
+                    </nav>
+                    <a class="create-group" asp-action="Create"><span>＋</span> 新增揪團</a>
+                </div>
+
+                @if (Model.Groups.Count == 0)
+                {
+                    <div class="groups-empty">
+                        <div class="empty-icon">⌁</div>
+                        <h2>目前沒有符合條件的揪團</h2>
+                        <p>換個區域或日期看看，也可以清除條件瀏覽全部。</p>
+                        <a asp-action="Index">清除篩選</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="groups-grid">
+                    @foreach (var group in Model.Groups)
+                    {
+                        <article class="group-card">
+                            <a class="card-cover" asp-action="Details" asp-route-id="@group.GroupId" aria-label="查看 @group.Title">
+                                @if (!string.IsNullOrWhiteSpace(group.CoverImageUrl))
+                                {
+                                    <img src="@group.CoverImageUrl" alt="@group.Title" />
+                                }
+                                else
+                                {
+                                    <span class="cover-fallback">LazyTravel</span>
+                                }
+                            </a>
+                            <button class="favorite-button" type="button" aria-label="收藏 @group.Title" aria-pressed="false">
+                                <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg>
+                            </button>
+                            <div class="card-content">
+                                <a class="card-title" asp-action="Details" asp-route-id="@group.GroupId">@group.Title</a>
+                                <p class="card-meta"><span>⌖</span> @group.Country@(string.IsNullOrWhiteSpace(group.Region) ? "" : $"・{group.Region}")</p>
+                                <p class="card-meta"><span>▣</span> @group.DateText</p>
+                                <div class="card-tags">
+                                    @foreach (var tag in group.Tags)
+                                    {
+                                        <span>@tag</span>
+                                    }
+                                </div>
+                                <div class="card-progress"><span>♙</span><strong>@group.CurrentPeople</strong> / @group.MaxPeople 人</div>
+                                <footer class="card-footer">
+                                    <div class="owner-avatar">
+                                        @if (!string.IsNullOrWhiteSpace(group.OwnerAvatarUrl))
+                                        {
+                                            <img src="@group.OwnerAvatarUrl" alt="" />
+                                        }
+                                        else
+                                        {
+                                            <span>@group.OwnerName[..1]</span>
+                                        }
+                                    </div>
+                                    <div class="owner-copy">
+                                        <strong>@group.OwnerName</strong>
+                                        <small>揪團發起人</small>
+                                    </div>
+                                    <span class="status-badge status-@group.Status">@group.StatusText</span>
+                                </footer>
+                            </div>
+                        </article>
+                    }
+                    </div>
+                }
+
+                @if (Model.TotalPages > 1)
+                {
+                    <nav class="groups-pagination" aria-label="揪團分頁">
+                        <a class="@(Model.Page == 1 ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="上一頁">‹</a>
+                        @for (var i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <a class="@(i == Model.Page ? "active" : "")" asp-action="Index" asp-route-page="@i" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope">@i</a>
+                        }
+                        <a class="@(Model.Page == Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="下一頁">›</a>
+                    </nav>
+                }
+            </section>
+        </div>
+    </main>
+</div>
+
+<script src="~/lib/flatpickr/flatpickr.min.js" asp-append-version="true"></script>
+<script>
+    window.travelGroupCountryOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CountriesByRegion));
+    window.travelGroupAllCountries = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AllCountries));
+</script>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/travelgroups-index.js" asp-append-version="true"></script>
+</body>
+</html>

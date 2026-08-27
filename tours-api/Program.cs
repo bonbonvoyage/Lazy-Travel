@@ -38,6 +38,39 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 builder.Services.AddScoped<LazyTravel.Shared.Services.VlogPostImageUploadService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IImageStorageService, LazyTravel.Shared.Services.R2ImageStorageService>();
 
+// 前台登入驗證服務
+builder.Services.AddScoped<IMemberAuthService, MemberAuthService>();
+
+// 前台會員 Cookie 認證
+builder.Services.AddAuthentication("MemberAuth")
+	.AddCookie("MemberAuth", options =>
+	{
+		options.Cookie.Name = "LazyTravel.Member.Session";
+		// 🌟 Vue 是獨立網域/Port 呼叫這支 API,Cookie 要能跨站帶過去,一定要 None + Secure
+		options.Cookie.SameSite = SameSiteMode.None;
+		options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+		options.Events.OnRedirectToLogin = context =>
+		{
+			context.Response.StatusCode = 401;
+			return Task.CompletedTask;
+		};
+	});
+builder.Services.AddAuthorization();
+
+// 🌟 CORS:給 Vue 前端呼叫用。允許的網址從 appsettings.json 的 Cors:AllowedOrigins 讀,
+// 之後 Vue 那邊確定實際開發網址後,只要改設定檔,不用改程式碼。
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("FrontendPolicy", policy =>
+	{
+		policy.WithOrigins(allowedOrigins)
+			  .AllowAnyHeader()
+			  .AllowAnyMethod()
+			  .AllowCredentials(); // 因為要帶 Cookie,不能用 AllowAnyOrigin
+	});
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -66,6 +99,9 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("FrontendPolicy");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
 	name: "default",
