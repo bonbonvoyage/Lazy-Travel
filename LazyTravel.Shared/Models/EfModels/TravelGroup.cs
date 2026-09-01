@@ -46,6 +46,13 @@ public partial class TravelGroup
 
     public string Region { get; set; }
 
+    // 🌟 V4 規格書新增欄位（住宿偏好相關），資料庫已用 add_travelgroups_columns_v4.sql 補上。
+    public string AccommType { get; set; }
+
+    public bool? CanShareRoom { get; set; }
+
+    public string AccommNote { get; set; }
+
     public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 
     public virtual ICollection<GroupMember> GroupMembers { get; set; } = new List<GroupMember>();
@@ -61,4 +68,6 @@ public partial class TravelGroup
     public virtual ICollection<TravelGroupItineraryItem> TravelGroupItineraryItems { get; set; } = new List<TravelGroupItineraryItem>();
 
     public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
+
+    public virtual ICollection<TravelGroupTag> TravelGroupTags { get; set; } = new List<TravelGroupTag>();
 }

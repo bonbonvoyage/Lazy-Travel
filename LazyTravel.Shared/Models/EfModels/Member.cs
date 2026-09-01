@@ -28,9 +28,6 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 	public virtual ICollection<Follow> FollowFollowees { get; set; } = new List<Follow>();
 	public virtual ICollection<Follow> FollowFollowers { get; set; } = new List<Follow>();
-	public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
-	public virtual ICollection<ForumInteract> ForumInteracts { get; set; } = new List<ForumInteract>();
-	public virtual ICollection<ForumPost> ForumPosts { get; set; } = new List<ForumPost>();
 	public virtual ICollection<FriendRequest> FriendRequestReceivers { get; set; } = new List<FriendRequest>();
 	public virtual ICollection<FriendRequest> FriendRequestRequesters { get; set; } = new List<FriendRequest>();
 	public virtual ICollection<Friendship> FriendshipMemberId1Navigations { get; set; } = new List<Friendship>();
@@ -42,6 +39,7 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 	public virtual ICollection<MemberSkill> MemberSkills { get; set; } = new List<MemberSkill>();
 	public virtual ICollection<MemberSubscription> MemberSubscriptions { get; set; } = new List<MemberSubscription>();
+	public virtual ICollection<MemberTravelDna> MemberTravelDnas { get; set; } = new List<MemberTravelDna>();
 	public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 	public virtual ICollection<PostInteraction> PostInteractions { get; set; } = new List<PostInteraction>();
 	public virtual ICollection<Report> ReportReportedMembers { get; set; } = new List<Report>();
