@@ -22,6 +22,9 @@ builder.Services.AddScoped<LazyTravel.Shared.Services.IMemberService, LazyTravel
 builder.Services.AddScoped<LazyTravel.Shared.Services.IMemberModerationService, LazyTravel.Shared.Services.MemberModerationService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IReportService, LazyTravel.Shared.Services.ReportService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IReportLookupService, LazyTravel.Shared.Services.ReportLookupService>();
+builder.Services.AddScoped<LazyTravel.Shared.Services.ICurrentMemberAccessor, LazyTravel.Shared.Services.CurrentMemberAccessor>();
+builder.Services.AddScoped<LazyTravel.Shared.Services.IMemberProfileService, LazyTravel.Shared.Services.MemberProfileService>();
+builder.Services.AddScoped<LazyTravel.Shared.Services.IContactBookService, LazyTravel.Shared.Services.ContactBookService>();
 
 // 圖床 (Cloudflare R2)
 builder.Services.AddSingleton<IAmazonS3>(sp =>
@@ -37,6 +40,18 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 });
 builder.Services.AddScoped<LazyTravel.Shared.Services.VlogPostImageUploadService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IImageStorageService, LazyTravel.Shared.Services.R2ImageStorageService>();
+
+// 會員大頭貼上傳：R2 帳號金鑰還沒建好之前，先用本機 wwwroot/uploads/avatars/ 代替。
+// 用 Keyed Service 註冊，只有 MemberProfileService 會拿到這個 "avatar" 版本，
+// 不會影響上面 VlogPost 用的那個（沒有 key，還是走 R2）。
+// LocalImageStorageService 建構子要吃 webRootPath 字串（不是 IWebHostEnvironment——
+// LazyTravel.Shared 這個類別庫沒有參考 ASP.NET Core 的 Hosting 套件），這裡用
+// builder.Environment.WebRootPath 帶進去。
+// 等組長把正式的 R2 帳號、appsettings 的 CloudflareR2 設定都填好之後，
+// 把下面這個 factory 換成回傳 new R2ImageStorageService(...) 就好，
+// 其他程式碼完全不用動。
+builder.Services.AddKeyedScoped<LazyTravel.Shared.Services.IImageStorageService>("avatar", (sp, key) =>
+	new LazyTravel.Shared.Services.LocalImageStorageService(builder.Environment.WebRootPath));
 
 var app = builder.Build();
 

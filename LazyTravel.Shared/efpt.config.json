@@ -27,10 +27,6 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Categories]",
-         "ObjectType": 0
-      },
-      {
          "Name": "[dbo].[EmployeeRoles]",
          "ObjectType": 0
       },
@@ -48,22 +44,6 @@
       },
       {
          "Name": "[dbo].[Follows]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ForumComments]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ForumImages]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ForumInteracts]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ForumPosts]",
          "ObjectType": 0
       },
       {
@@ -123,6 +103,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[MemberTravelDNA]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[MemberUserRoles]",
          "ObjectType": 0
       },
@@ -167,6 +151,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[TravelDNADimensions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TravelDNAOptions]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[TravelGroupBudgets]",
          "ObjectType": 0
       },
@@ -187,6 +179,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[TravelGroupTags]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[TravelSkills]",
          "ObjectType": 0
       },
@@ -196,6 +192,10 @@
       },
       {
          "Name": "[dbo].[VlogPosts]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VlogPostTags]",
          "ObjectType": 0
       }
    ],
