@@ -87,8 +87,8 @@ namespace LazyTravel.Shared.Services
                 .Select(ms => ms.Skill.SkillName)
                 .ToList();
 
-            var dimensions = _context.TravelDnadimensions
-                .Include(d => d.TravelDnaoptions)
+            var dimensions = _context.TravelDnaDimensions
+                .Include(d => d.TravelDnaOptions)
                 .OrderBy(d => d.DimensionId)
                 .ToList();
 
@@ -100,7 +100,7 @@ namespace LazyTravel.Shared.Services
             {
                 var row = dnaRows.FirstOrDefault(r => r.DimensionId == dim.DimensionId);
                 byte score = row?.Score ?? (byte)50; // 還沒填過就先給中間值
-                var option = dim.TravelDnaoptions.FirstOrDefault(o => score >= o.MinScore && score <= o.MaxScore);
+                var option = dim.TravelDnaOptions.FirstOrDefault(o => score >= o.MinScore && score <= o.MaxScore);
 
                 return new TravelDnaDto
                 {
@@ -118,8 +118,8 @@ namespace LazyTravel.Shared.Services
                 MemberId = member.Id,
                 Name = member.Name,
                 AvatarUrl = member.AvatarUrl,
-                BirthDate = member.BirthDate.HasValue ? DateOnly.FromDateTime(member.BirthDate.Value) : null,
-                Age = member.BirthDate.HasValue ? CalcAge(member.BirthDate.Value) : null,
+                BirthDate = member.BirthDate,
+                Age = member.BirthDate.HasValue ? CalcAge(member.BirthDate.Value.ToDateTime(TimeOnly.MinValue)) : null,
                 Gender = member.Gender,
                 Occupation = member.Occupation,
                 Mbti = member.Mbti,
@@ -187,7 +187,7 @@ namespace LazyTravel.Shared.Services
             }
 
             member.Name = dto.Name;
-            member.BirthDate = dto.BirthDate.HasValue ? dto.BirthDate.Value.ToDateTime(TimeOnly.MinValue) : null;
+            member.BirthDate = dto.BirthDate;
             member.Gender = dto.Gender;
             member.Occupation = dto.Occupation;
             member.Mbti = dto.Mbti;

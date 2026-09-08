@@ -25,11 +25,7 @@ public partial class TravelGroupsLog
 
     public string Remark { get; set; }
 
-    // 🌟 這欄位實體資料庫欄名是 ChangeByMemberID（歷史命名，舊版程式碼也曾經把它
-    // 對應成 ChangedByEmployeeId），但實際用途一直是記錄「操作的管理員(Employee)」，
-    // 不是會員(Member)。資料庫重建後 EF 反向工程一度誤判成指向 Members 資料表，
-    // 已請使用者將外鍵改指回 Employees，這裡手動把巡覽屬性對應調整為 Employee。
-    public virtual Employee ChangeByEmployee { get; set; }
+    public virtual Employee ChangeByMember { get; set; }
 
     public virtual TravelGroup Group { get; set; }
 }

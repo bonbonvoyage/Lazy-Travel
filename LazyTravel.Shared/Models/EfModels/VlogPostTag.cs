@@ -5,17 +5,19 @@ using System.Collections.Generic;
 
 namespace LazyTravel.Shared.Models.EfModels;
 
-public partial class PostInteraction
+public partial class VlogPostTag
 {
+    public int TagId { get; set; }
+
     public int PostId { get; set; }
 
-    public int MemberId { get; set; }
+    public string TagName { get; set; }
 
-    public PostInteractionType ActionType { get; set; }
+    public string TagCategory { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual Member Member { get; set; }
+    public bool IsDelete { get; set; }
 
     public virtual VlogPost Post { get; set; }
 }
