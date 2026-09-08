@@ -3,6 +3,7 @@ using LazyTravel.Shared.Models.DTOs;
 using EfReport = LazyTravel.Shared.Models.EfModels.Report;
 using EfMember = LazyTravel.Shared.Models.EfModels.Member;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace LazyTravel.Shared.Services
 {
@@ -25,19 +26,25 @@ namespace LazyTravel.Shared.Services
         private readonly IAdminLogService _adminLogService;
         private readonly IMemberModerationService _memberModerationService;
         private readonly IReportLookupService _lookupService;
+        // 會員自己在主頁送出檢舉時可以附上截圖佐證（見 SubmitMemberReportAsync），
+        // 跟期中版本 /Report/Create 用的是同一個服務、同一種「folder 分類」用法，
+        // 直接用預設(非 keyed)註冊的那份就好(tours-api/admin-api 的 Program.cs 都已經注了 R2ImageStorageService)。
+        private readonly IImageStorageService _imageStorage;
 
         public ReportService(
             LazyTravel.Shared.Models.EfModels.LazyTravelDBContext context,
             INotificationService notificationService,
             IAdminLogService adminLogService,
             IMemberModerationService memberModerationService,
-            IReportLookupService lookupService)
+            IReportLookupService lookupService,
+            IImageStorageService imageStorage)
         {
             _context = context;
             _notificationService = notificationService;
             _adminLogService = adminLogService;
             _memberModerationService = memberModerationService;
             _lookupService = lookupService;
+            _imageStorage = imageStorage;
         }
 
         // Reports 的資料庫存取層(EfModels.Report,欄位跟資料表一模一樣,byte/raw 型別)
@@ -282,6 +289,45 @@ namespace LazyTravel.Shared.Services
                 $"檢舉 {targetType.ToDisplayName()}「{targetTitle}」:{reason}",
                 targetResource: "Reports",
                 targetId: efReport.ReportId.ToString());
+
+            return ToDomain(efReport);
+        }
+
+        // 會員自己在主頁按「檢舉」用的簡化版，見 IReportService.SubmitMemberReportAsync 的註解。
+        public async Task<Report> SubmitMemberReportAsync(int reporterId, int reportedMemberId, ReportReasonCategory reasonCategory, string reason, IFormFile? evidence = null)
+        {
+            var reportedMember = await _context.Users.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == reportedMemberId);
+
+            // 截圖佐證是選填，比照期中版本 /Report/Create 的做法，folder 用 "reports" 分類，
+            // 有選檔案(Length > 0)才真的上傳，避免前端沒選檔案時傳來一個空檔案物件也去打 API。
+            string? evidenceUrl = null;
+            if (evidence != null && evidence.Length > 0)
+            {
+                evidenceUrl = await _imageStorage.UploadAsync(evidence, "reports");
+            }
+
+            var efReport = new EfReport
+            {
+                ReporterId = reporterId,
+                ReportedMemberId = reportedMemberId,
+                ReportType = (byte)ReportTargetType.Member,
+                // 檢舉「會員」類型時,被檢舉內容就是這個會員本人,對象編號直接沿用會員編號
+                // (跟 ReportController.Create 那邊的既有規則一致)。
+                TargetId = reportedMemberId,
+                TargetTitle = reportedMember?.Name,
+                ReasonCategory = (byte)reasonCategory,
+                Reason = reason,
+                EvidenceUrl = evidenceUrl,
+                ReportStatus = (byte)ReportStatus.Pending,
+                CreatedAt = DateTime.Now,
+            };
+
+            _context.Reports.Add(efReport);
+            await _context.SaveChangesAsync();
+
+            // 這是會員自己的動作,不是後台操作,所以不寫 AdminAuditLogs
+            // (那個表是給後台審核台用的操作紀錄,見上面 SubmitAsync 那邊的用法)。
 
             return ToDomain(efReport);
         }

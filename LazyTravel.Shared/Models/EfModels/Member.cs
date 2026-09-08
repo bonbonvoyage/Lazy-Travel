@@ -16,6 +16,7 @@ public partial class Member : IdentityUser<int>
 	public string? Occupation { get; set; }
 	public string? Mbti { get; set; }
 	public string? Bio { get; set; }
+	public string? City { get; set; } // 居住地，例如「台北・大安」；資料表第 33 個欄位，補在 Word 資料表文件裡了
 	public byte Status { get; set; }
 	public DateTime CreatedAt { get; set; }
 	public DateTime? LastLoginAt { get; set; }
@@ -42,6 +43,7 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 	public virtual ICollection<MemberSkill> MemberSkills { get; set; } = new List<MemberSkill>();
 	public virtual ICollection<MemberSubscription> MemberSubscriptions { get; set; } = new List<MemberSubscription>();
+	public virtual ICollection<MemberTravelDNA> MemberTravelDnas { get; set; } = new List<MemberTravelDNA>();
 	public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 	public virtual ICollection<PostInteraction> PostInteractions { get; set; } = new List<PostInteraction>();
 	public virtual ICollection<Report> ReportReportedMembers { get; set; } = new List<Report>();

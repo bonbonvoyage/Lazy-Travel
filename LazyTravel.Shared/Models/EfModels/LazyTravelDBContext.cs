@@ -39,6 +39,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 	public virtual DbSet<LoginHistory> LoginHistories { get; set; }
 	public virtual DbSet<MemberSkill> MemberSkills { get; set; }
 	public virtual DbSet<MemberSubscription> MemberSubscriptions { get; set; }
+	public virtual DbSet<MemberTravelDNA> MemberTravelDnas { get; set; }
 	public virtual DbSet<Notification> Notifications { get; set; }
 	public virtual DbSet<Permission> Permissions { get; set; }
 	public virtual DbSet<PostInteraction> PostInteractions { get; set; }
@@ -48,6 +49,8 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 	public virtual DbSet<ReportTargetTypeLookup> ReportTargetTypeLookups { get; set; }
 	public virtual DbSet<Role> StaffRoles { get; set; }
 	public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+	public virtual DbSet<TravelDNADimension> TravelDnadimensions { get; set; }
+	public virtual DbSet<TravelDNAOption> TravelDnaoptions { get; set; }
 	public virtual DbSet<TravelGroup> TravelGroups { get; set; }
 	public virtual DbSet<TravelGroupBudget> TravelGroupBudgets { get; set; }
 	public virtual DbSet<TravelGroupImage> TravelGroupImages { get; set; }
@@ -431,6 +434,34 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasConstraintName("FK_MemberSubscriptions_Plan");
 		});
 
+		// 🌟 補上的三張表：TravelDNADimensions / TravelDNAOptions / MemberTravelDNA
+		// 手動比照 EF Core Power Tools 的輸出風格寫的，欄位、預設值、FK、CHECK 都對照
+		// SQLQuery0901.sql 建置腳本核對過。等組長那邊資料庫連得上、能重新跑 Power
+		// Tools scaffold 時，可以直接整份覆蓋掉，屆時命名應該會很接近。
+		modelBuilder.Entity<MemberTravelDNA>(entity =>
+		{
+			// 🐛 修正：這裡本來沒有 ToTable，EF 預設會拿 DbSet 屬性名稱
+			// 「MemberTravelDnas」當表名去查，但資料庫裡實際的表名是單數的
+			// 「MemberTravelDNA」（對照 SQLQuery0901.sql 第 430 行），
+			// 兩個字串不一樣（不是只有大小寫差異），所以每次查詢都會噴
+			// SqlException: 無效的物件名稱 'MemberTravelDnas'。
+			entity.ToTable("MemberTravelDNA");
+			entity.HasKey(e => new { e.MemberId, e.DimensionId });
+			entity.Property(e => e.MemberId).HasColumnName("MemberID");
+			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+			entity.Property(e => e.Score).HasDefaultValue((byte)50);
+			entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
+
+			entity.HasOne(d => d.Member).WithMany(p => p.MemberTravelDnas)
+				.HasForeignKey(d => d.MemberId)
+				.OnDelete(DeleteBehavior.Cascade)
+				.HasConstraintName("FK_MemberTravelDNA_Member");
+
+			entity.HasOne(d => d.Dimension).WithMany(p => p.MemberTravelDnas)
+				.HasForeignKey(d => d.DimensionId)
+				.HasConstraintName("FK_MemberTravelDNA_Dimension");
+		});
+
 		modelBuilder.Entity<Notification>(entity =>
 		{
 			entity.HasIndex(e => new { e.MemberId, e.IsRead, e.CreatedAt }, "IX_Notifications_Member_Read_Time");
@@ -573,6 +604,34 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.IsActive).HasDefaultValue(true);
 			entity.Property(e => e.PlanName).IsRequired().HasMaxLength(50);
 			entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+		});
+
+		modelBuilder.Entity<TravelDNADimension>(entity =>
+		{
+			// DbSet 屬性叫 TravelDnadimensions，實際表名是 TravelDNADimensions——
+			// 只有大小寫不同，SQL Server 預設是不分大小寫比對表名，所以本來能動，
+			// 但明確寫出來比較保險，不用依賴資料庫的定序設定。
+			entity.ToTable("TravelDNADimensions");
+			entity.HasKey(e => e.DimensionId);
+			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+			entity.Property(e => e.DimensionName).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.LeftLabel).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.RightLabel).IsRequired().HasMaxLength(50);
+		});
+
+		modelBuilder.Entity<TravelDNAOption>(entity =>
+		{
+			// 同上，DbSet 屬性叫 TravelDnaoptions，實際表名是 TravelDNAOptions。
+			entity.ToTable("TravelDNAOptions");
+			entity.HasKey(e => e.OptionId);
+			entity.Property(e => e.OptionId).HasColumnName("OptionID");
+			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+			entity.Property(e => e.OptionName).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.Description).IsRequired().HasMaxLength(200);
+
+			entity.HasOne(d => d.Dimension).WithMany(p => p.TravelDnaoptions)
+				.HasForeignKey(d => d.DimensionId)
+				.HasConstraintName("FK_TravelDNAOptions_Dimension");
 		});
 
 		modelBuilder.Entity<TravelGroup>(entity =>

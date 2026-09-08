@@ -22,8 +22,12 @@ namespace LazyTravel.Shared.Models
     }
 
     // 常見檢舉類別,用篩選籤讓操作人員可以直接點選,不用自己打關鍵字找
-    // 這個分類不在官方 Reports schema 裡,是本機資料庫用 ALTER TABLE 額外加的欄位(2026-07-21),
-    // 只存在於這個分支的本機開發環境,還沒跟團隊/DBA 提案正式收錄進共用資料庫
+    // 📌 2026-09 已用 SSMS 直接檢查過共用資料庫的 Reports 表結構,確認 ReasonCategory／
+    // IsMalicious／TargetTitle／Description／EvidenceUrl 這 5 個欄位都已經在共用資料庫裡,
+    // 不是只存在本機開發環境——下面「還沒跟團隊/DBA 提案正式收錄」那句已經過時,可以放心
+    // 沿用這裡的程式碼跟共用資料庫互動,不用再另外遷就一份「官方 9 欄位」的簡化版本。
+    // （同時也發現 Reports 表裡多一個這裡沒對應到的 TargetSnapshot(nvarchar(500)) 欄位，
+    // EF Core 沒對應到的欄位不影響現有功能，但如果之後要用它，要記得回來補上對應屬性。）
     public enum ReportReasonCategory : byte
     {
         Spam,           // 廣告 / 垃圾訊息

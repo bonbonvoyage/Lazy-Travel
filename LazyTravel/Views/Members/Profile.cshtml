@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "個人頁面";
+    // 這頁是第一人稱 3D 案頭場景，設計稿固定 1440 × 900，
+    // 用 iframe 載入 wwwroot/members/scene.dc.html，外層負責等比縮放置中。
+    // 場景左邊的電腦螢幕點下去會跳首頁（scene 內用 window.top 導頁，
+    // 所以在 iframe 裡也會換掉整個視窗，不是只換 iframe）。
+    // 之後要套整站導覽列，把 Layout = null 拿掉即可（場景本身不含導覽列）。
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <style>
+        html, body { margin: 0; height: 100%; background: #0f0c09; overflow: hidden; }
+        #sceneFit { position: fixed; inset: 0; display: grid; place-items: center; }
+        #sceneFrame {
+            width: 1440px; height: 900px; border: 0; display: block;
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body>
+    <div id="sceneFit">
+        <iframe id="sceneFrame" src="~/members/scene.dc.html" title="會員個人頁面場景"></iframe>
+    </div>
+
+    <script>
+        // 等比縮放：設計稿 1440×900 永遠完整顯示，不裁切、不變形。
+        (function () {
+            var W = 1440, H = 900, f = document.getElementById('sceneFrame');
+            function fit() {
+                var s = Math.min(window.innerWidth / W, window.innerHeight / H);
+                f.style.transform = 'scale(' + s + ')';
+            }
+            window.addEventListener('resize', fit);
+            fit();
+        })();
+    </script>
+</body>
+</html>
