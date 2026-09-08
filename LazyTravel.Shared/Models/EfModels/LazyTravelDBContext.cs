@@ -542,19 +542,20 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 		modelBuilder.Entity<TravelGroup>(entity =>
 		{
 			entity.HasKey(e => e.GroupId);
+			entity.Ignore(e => e.AccommType);
+			entity.Ignore(e => e.CanShareRoom);
+			entity.Ignore(e => e.AccommNote);
 			entity.HasIndex(e => e.IsDelete, "IX_TravelGroups_IsDelete");
 			entity.HasIndex(e => e.StartDate, "IX_TravelGroups_StartDate");
 			entity.HasIndex(e => e.GroupStatus, "IX_TravelGroups_Status");
 
 			entity.Property(e => e.GroupId).HasColumnName("GroupID");
-			entity.Property(e => e.AccommType).HasMaxLength(50);
-			entity.Property(e => e.AccommNote).HasMaxLength(300);
 			entity.Property(e => e.Country).IsRequired().HasMaxLength(50);
 			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
 			entity.Property(e => e.CurrentPeople).HasDefaultValue(1);
 			entity.Property(e => e.Description).HasMaxLength(1000);
 			entity.Property(e => e.GroupTitle).IsRequired().HasMaxLength(100);
-			entity.Property(e => e.IsPublic).HasDefaultValue(true);
+			entity.Property(e => e.IsPublic).HasDefaultValue(true).ValueGeneratedNever();
 			entity.Property(e => e.JoinRule).HasDefaultValue((byte)1);
 			entity.Property(e => e.MaxPeople).HasDefaultValue(10);
 			entity.Property(e => e.MinPeople).HasDefaultValue(2);
@@ -578,7 +579,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
 			entity.Property(e => e.CurrencyCode).IsRequired().HasMaxLength(3).IsUnicode(false).HasDefaultValue("TWD").IsFixedLength();
 			entity.Property(e => e.GroupId).HasColumnName("GroupID");
-			entity.Property(e => e.IsRequired).HasDefaultValue(true);
+			entity.Property(e => e.IsRequired).HasDefaultValue(true).ValueGeneratedNever();
 			entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
 
 			entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupBudgets)
