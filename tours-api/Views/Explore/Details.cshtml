@@ -1,0 +1,165 @@
+@model LazyTravel.ViewModels.ExploreDetailsViewModel
+@{
+    Layout = null;
+    var post = Model.Post;
+    var author = string.IsNullOrWhiteSpace(post.Member?.Name) ? "旅人" : post.Member.Name;
+    var content = Model.PlainContent;
+    var cover = Model.Images.FirstOrDefault();
+    var days = Model.Nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key).ToList();
+    var tags = new[] { Model.Source?.Country ?? post.Destination, Model.Source?.Region, post.TravelPeople.ToLabel() }.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
+    var highlight = string.IsNullOrWhiteSpace(Model.Highlight)
+        ? content.Split(new[] { '。', '！', '？', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim()
+        : Model.Highlight;
+    var people = Model.Source is null ? post.TravelPeople.ToLabel() : $"{Model.Source.People} 人";
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@post.Title - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/explore-details.css" asp-append-version="true" />
+</head>
+<body class="home-app article-page">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "Explore")
+    <main class="main article-main">
+        <button class="page-back-button article-back" type="button" data-back-fallback="@Url.Action("Index", "Explore")" aria-label="返回上一頁">＜</button>
+        @if (Model.IsDraft)
+        {
+            <section class="article-draft">
+                <div><strong>房間匯出草稿</strong><p>已帶入房間資訊、每日行程與照片，尚未公開。</p></div>
+                <form asp-action="Publish" asp-route-id="@post.PostId" method="post"><button class="article-button" type="submit">確認並送出審核</button></form>
+            </section>
+        }
+        else if (post.Status == VlogPostStatus.PendingReview)
+        {
+            <section class="article-draft"><strong>文章審核中，通過後會公開顯示。</strong></section>
+        }
+        <div class="article-layout">
+            <article class="article-body">
+                <header class="article-hero">
+                    @if (cover is not null) { <img class="article-cover" src="@cover" alt="@post.Title" /> }
+                    <div class="article-actions">
+                        @if (post.Status == VlogPostStatus.Published)
+                        {
+                            <form asp-action="ToggleFavorite" asp-route-id="@post.PostId" method="post">
+                                <button class="article-button @(Model.IsFavorited ? "active" : "")" type="submit" aria-pressed="@Model.IsFavorited.ToString().ToLowerInvariant()">♡ @(Model.IsFavorited ? "已收藏" : "收藏")</button>
+                            </form>
+                            <form asp-action="ToggleLike" asp-route-id="@post.PostId" method="post">
+                                <button class="article-button @(Model.IsLiked ? "active" : "")" type="submit" aria-pressed="@Model.IsLiked.ToString().ToLowerInvariant()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10h-4v11h4V10Zm0 0 6-8c2 1 2 3 1 7h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7"/></svg>按讚 @Model.LikeCount</button>
+                            </form>
+                            <a class="article-button" asp-controller="Report" asp-action="Create">⚑ 檢舉文章</a>
+                        }
+                    </div>
+                    <div class="article-hero-copy">
+                        <h1>@post.Title</h1>
+                        <p>@post.TravelDays 天的旅行記錄 · @post.Destination</p>
+                        <div class="article-byline">
+                            <span class="author-avatar small">
+                                @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="" /> }
+                                else { <span>@author[..1]</span> }
+                            </span>
+                            <span>@author</span><span>·</span><time>@post.CreatedAt.ToString("yyyy/MM/dd")</time><span>·</span><span>@people 同行</span>
+                        </div>
+                    </div>
+                </header>
+
+                <section class="article-panel article-facts" aria-label="行程資訊">
+                    <div><span class="fact-icon">◎</span><div><small>國家／目的地</small><strong>@(Model.Source?.Country ?? post.Destination)</strong></div></div>
+                    <div><span class="fact-icon">⌖</span><div><small>地區</small><strong>@(string.IsNullOrWhiteSpace(Model.Source?.Region) ? "未提供" : Model.Source.Region)</strong></div></div>
+                    <div><span class="fact-icon">▦</span><div><small>旅遊日期</small><strong>@(post.TravelDate.HasValue ? $"{post.TravelDate:yyyy/MM/dd} – {post.TravelDate.Value.AddDays(Math.Max(1,post.TravelDays)-1):yyyy/MM/dd}" : "未提供")</strong></div></div>
+                    <div><span class="fact-icon">♙</span><div><small>同行人數</small><strong>@people</strong></div></div>
+                    <div class="article-tags"><span>標籤</span>@foreach (var tag in tags) { <span class="article-tag">@tag</span> }</div>
+                </section>
+
+                <section class="article-panel article-intro">
+                    <h2><span>❧</span> 旅程前言</h2>
+                    <div class="article-prose">@(string.IsNullOrWhiteSpace(content) ? "作者尚未補充旅程前言。" : content)</div>
+                    @if (Model.Source is not null)
+                    {
+                        <a class="article-source" asp-controller="TravelGroups" asp-action="Details" asp-route-id="@Model.Source.GroupId">查看原揪團房間 ↗</a>
+                    }
+                </section>
+                <section class="article-panel article-highlight">
+                    <span class="quote-mark" aria-hidden="true">“</span><h2>一句話亮點</h2>
+                    <p>@(string.IsNullOrWhiteSpace(highlight) ? "作者尚未補充旅程亮點。" : highlight)</p>
+                </section>
+                <section class="article-panel article-days">
+                    <h2><span>▦</span> 每日行程與分享</h2>
+                    @if (days.Count == 0) { <p class="article-muted">尚未提供每日行程。</p> }
+                    @foreach (var day in days)
+                    {
+                        <details class="article-day" open>
+                            <summary><span class="day-number">@day.Key</span><strong>DAY @day.Key</strong><span class="day-route">@string.Join(" · ", day.Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n)))</span><span class="day-chevron">⌄</span></summary>
+                            <div class="day-stops">
+                                <div class="day-periods">
+                                @foreach (var period in new[] { "上午", "下午", "晚上" })
+                                {
+                                    var stops = day.Where(n => (n.ArrivalTime?.Hour < 12 ? "上午" : n.ArrivalTime?.Hour < 18 ? "下午" : n.ArrivalTime.HasValue ? "晚上" : "") == period).ToList();
+                                    <div class="day-period"><span class="period-label">@period</span><div>
+                                    @if (stops.Count == 0) { <span class="article-muted">未安排</span> }
+                                    @foreach (var stop in stops) { <span class="period-stop"><time>@stop.ArrivalTime?.ToString("HH:mm")</time> @stop.LocationName</span> }
+                                    </div></div>
+                                }
+                                </div>
+                                @foreach (var stop in day.Where(n => !n.ArrivalTime.HasValue))
+                                { <p class="day-note"><strong>時間未定：</strong>@stop.LocationName</p> }
+                                @foreach (var stop in day.Where(n => !string.IsNullOrWhiteSpace(n.Description)))
+                                { <p class="day-note"><strong>心得分享 · @stop.LocationName：</strong>@stop.Description</p> }
+                                @foreach (var stop in day.Where(n => !string.IsNullOrWhiteSpace(n.Remarks)))
+                                { <p class="day-note"><strong>行程筆記：</strong>@stop.Remarks</p> }
+                            </div>
+                        </details>
+                    }
+                </section>
+            </article>
+            <aside class="article-side">
+                <section class="article-panel author-panel">
+                    <div class="author-heading">
+                        <span class="author-avatar">
+                            @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="@author 的頭像" /> }
+                            else { <span>@author[..1]</span> }
+                        </span>
+                        <strong>@author</strong>
+                    </div>
+                    <p class="author-bio">@(string.IsNullOrWhiteSpace(post.Member?.Bio) ? "這位旅人尚未填寫個人簡介。" : post.Member.Bio)</p>
+                    <dl class="author-stats">
+                        <div><dt>⌖ 所在地</dt><dd>未提供</dd></div>
+                        <div><dt>▦ 加入時間</dt><dd>@(post.Member?.CreatedAt.ToString("yyyy/MM") ?? "未提供")</dd></div>
+                        <div><dt>♧ 已發布文章</dt><dd>@Model.PublishedCount 篇</dd></div>
+                        <div><dt>✓ 已完成行程</dt><dd>@Model.CompletedCount 趟</dd></div>
+                    </dl>
+                </section>
+                <section class="article-panel article-gallery" aria-label="旅程照片">
+                    <h2>旅程相簿 <small>@Model.Images.Count 張</small></h2>
+                    <div class="article-photo-grid">
+                    @for (var i = 0; i < Math.Min(6, Model.Images.Count); i++)
+                    {
+                        <button type="button" class="article-photo" data-photo-index="@i" aria-label="@(i == 5 && Model.Images.Count > 6 ? $"更多圖片，共 {Model.Images.Count} 張" : $"查看第 {i+1} 張照片")">
+                            <img src="@Model.Images[i]" alt="旅程照片 @(i+1)" loading="lazy" />
+                            @if (i == 5 && Model.Images.Count > 6) { <span class="more-photos">＋更多圖片</span> }
+                        </button>
+                    }
+                    </div>
+                    @if (Model.Images.Count == 0) { <p class="article-muted">尚未提供旅程照片。</p> }
+                </section>
+            </aside>
+        </div>
+        <dialog class="photo-dialog" aria-label="旅程相簿">
+            <button class="photo-close" type="button" aria-label="關閉相簿">×</button>
+            <button class="photo-prev" type="button" aria-label="上一張">‹</button>
+            <figure><img id="photoFull" alt="" /><figcaption id="photoCounter" aria-live="polite"></figcaption></figure>
+            <button class="photo-next" type="button" aria-label="下一張">›</button>
+        </dialog>
+    </main>
+</div>
+<script id="articlePhotos" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Images))</script>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/explore-details.js" asp-append-version="true"></script>
+</body>
+</html>

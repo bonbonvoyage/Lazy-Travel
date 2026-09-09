@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="700" viewBox="0 0 500 700">
+  <rect width="500" height="700" fill="#e5ddd5"/>
+  <rect x="0" y="0" width="500" height="70" fill="#2B5A72"/>
+  <circle cx="45" cy="35" r="20" fill="#ffffff"/>
+  <text x="45" y="42" font-family="Microsoft JhengHei, sans-serif" font-size="18" fill="#2B5A72" text-anchor="middle">李</text>
+  <text x="80" y="40" font-family="Microsoft JhengHei, sans-serif" font-size="18" fill="#ffffff">李冠宇(代訂機票)</text>
+
+  <rect x="30" y="100" width="320" height="70" rx="14" fill="#ffffff"/>
+  <text x="50" y="130" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">您好,我這邊有便宜機票代訂服務,</text>
+  <text x="50" y="155" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">比官網便宜很多喔!</text>
+
+  <rect x="150" y="190" width="320" height="45" rx="14" fill="#dcf8c6"/>
+  <text x="170" y="218" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">真的嗎?怎麼訂?</text>
+
+  <rect x="30" y="255" width="380" height="95" rx="14" fill="#ffffff"/>
+  <text x="50" y="285" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">要先匯訂金新台幣 2000 元到我的</text>
+  <text x="50" y="310" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">私人帳戶,確認收到之後我馬上</text>
+  <text x="50" y="335" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">幫你出票,不用透過平台訂購。</text>
+
+  <rect x="150" y="365" width="320" height="45" rx="14" fill="#dcf8c6"/>
+  <text x="170" y="393" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">為什麼不用平台訂購呢?</text>
+
+  <rect x="30" y="430" width="380" height="70" rx="14" fill="#ffffff"/>
+  <text x="50" y="460" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">平台會抽成,私下匯款比較快,</text>
+  <text x="50" y="485" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">而且今天下訂明天就出票。</text>
+
+  <rect x="0" y="640" width="500" height="60" fill="#f0f0f0"/>
+  <text x="250" y="675" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999" text-anchor="middle">※ 此為專題展示用模擬截圖,非真實對話</text>
+</svg>

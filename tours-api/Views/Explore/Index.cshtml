@@ -1,0 +1,167 @@
+@model LazyTravel.ViewModels.ExploreCardsViewModel
+@{
+    ViewData["Title"] = "揪團行程分享";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/travelgroups-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/explore-index.css" asp-append-version="true" />
+</head>
+<body class="home-app groups-page explore-page">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "Explore")
+    <main class="main groups-main">
+        <div class="groups-shell">
+            @if (TempData["ArticleNotice"] is string notice)
+            {
+                <p role="status">@notice</p>
+            }
+            <header class="groups-heading">
+
+                <h1>揪團行程分享</h1>
+
+            </header>
+
+            <form class="groups-filter" method="get" asp-action="Index">
+                <input type="hidden" name="scope" value="@Model.Scope" />
+                <input type="hidden" id="groupStartDate" name="startDate" value="@Model.StartDate" />
+                <input type="hidden" id="groupEndDate" name="endDate" value="@Model.EndDate" />
+
+                <div class="filter-control filter-country">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9Z"/></svg>
+                    <label for="groupCountry">國家</label>
+                    <div class="country-combobox">
+                        <input id="groupCountry" name="country" type="text" value="@Model.Country" placeholder="輸入或選擇國家" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="groupCountryOptions" aria-describedby="countryError" />
+                        <button class="country-toggle" type="button" aria-label="展開國家選單" tabindex="-1"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+                    </div>
+                    <div id="groupCountryOptions" class="country-options" role="listbox" aria-label="國家" hidden>
+                        <div role="option" data-value="" aria-selected="false">所有國家</div>
+                        @foreach (var item in Model.AllCountries)
+                        {
+                            <div role="option" data-value="@item" aria-selected="false">@item</div>
+                        }
+                        <div class="country-empty" role="status" hidden>沒有符合的國家</div>
+                    </div>
+                    <div id="countryError" class="country-error" role="status" hidden>請選擇清單中的國家，或清空欄位。</div>
+                </div>
+
+                <label class="filter-control filter-control-date" for="groupDateRange">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                    <span>行程區間</span>
+                    <input id="groupDateRange" type="text" value="@Model.DateRangeText" placeholder="選擇起訖日期" autocomplete="off" readonly />
+                </label>
+
+                <button class="filter-submit" type="submit" aria-label="搜尋文章">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                </button>
+            </form>
+
+            <section class="groups-board" aria-labelledby="board-title">
+                <div class="board-toolbar">
+                    <nav class="groups-tabs" aria-label="文章分類">
+                        <a class="@(Model.Scope == "all" ? "active" : "")" asp-action="Index" asp-route-scope="all" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" id="board-title">所有文章</a>
+                        <button type="button" disabled title="登入後即可查看">我的行程</button>
+                        <a class="@(Model.Scope == "recommended" ? "active" : "")" asp-action="Index" asp-route-scope="recommended" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">文章推薦</a>
+                    </nav>
+                    <a class="create-group" asp-action="Create"><span>＋</span> 新增文章</a>
+                </div>
+
+                @if (Model.Articles.Count == 0)
+                {
+                    <div class="groups-empty">
+                        <div class="empty-icon">⌁</div>
+                        <h2>目前沒有符合條件的文章</h2>
+                        <p>換個國家或日期看看，也可以清除條件瀏覽全部。</p>
+                        <a asp-action="Index">清除篩選</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="groups-grid">
+                    @foreach (var article in Model.Articles)
+                    {
+                        var author = string.IsNullOrWhiteSpace(article.Member?.Name) ? "旅人" : article.Member.Name;
+                        var favorited = Model.Favorites.Contains(article.PostId);
+                        <article class="group-card">
+                            <a class="card-cover" asp-action="Details" asp-route-id="@article.PostId" aria-label="查看 @article.Title">
+                                @if (!string.IsNullOrWhiteSpace(article.MediaUrl) && article.MediaType == VlogMediaType.Photo)
+                                {
+                                    <img src="@article.MediaUrl" alt="@article.Title" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="cover-fallback">LazyTravel</span>
+                                }
+                            </a>
+                            <form method="post" asp-action="ToggleFavorite" asp-route-id="@article.PostId">
+                                <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                <button class="favorite-button" data-persisted type="submit" aria-label="@(favorited ? "取消收藏" : "收藏") @article.Title" aria-pressed="@favorited.ToString().ToLowerInvariant()">
+                                    <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg>
+                                </button>
+                            </form>
+                            <div class="card-content">
+                                <a class="card-title" asp-action="Details" asp-route-id="@article.PostId">@article.Title</a>
+                                <p class="card-meta"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg> @article.Destination</p>
+                                <p class="card-meta"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                                    @if (article.TravelDate.HasValue)
+                                    {
+                                        <span class="article-date">@article.TravelDate.Value.ToString("yyyy/MM/dd") – @article.TravelDate.Value.AddDays(Math.Max(1, article.TravelDays) - 1).ToString("yyyy/MM/dd")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="article-date">日期未提供</span>
+                                    }
+                                </p>
+                                <div class="card-progress"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5M17 5a3 3 0 0 1 0 6M18 15c3 1 4 3 4 6"/></svg><strong>@article.TravelPeople.ToLabel()</strong></div>
+                                <footer class="card-footer">
+                                    <div class="owner-avatar">
+                                        @if (!string.IsNullOrWhiteSpace(article.Member?.AvatarUrl))
+                                        {
+                                            <img src="@article.Member.AvatarUrl" alt="" loading="lazy" />
+                                        }
+                                        else
+                                        {
+                                            <span>@author[..1]</span>
+                                        }
+                                    </div>
+                                    <div class="owner-copy"><strong>@author</strong><small>行程分享者</small></div>
+                                    <span class="status-badge status-1">已發布</span>
+                                </footer>
+                            </div>
+                        </article>
+                    }
+                    </div>
+                }
+
+                @if (Model.TotalPages > 1)
+                {
+                    <nav class="groups-pagination" aria-label="文章分頁">
+                        <a class="@(Model.Page == 1 ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="上一頁">‹</a>
+                        @for (var i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <a class="@(i == Model.Page ? "active" : "")" asp-action="Index" asp-route-page="@i" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope">@i</a>
+                        }
+                        <a class="@(Model.Page == Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="下一頁">›</a>
+                    </nav>
+                }
+            </section>
+        </div>
+    </main>
+</div>
+
+<script src="~/lib/flatpickr/flatpickr.min.js" asp-append-version="true"></script>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/travelgroups-index.js" asp-append-version="true"></script>
+</body>
+</html>
+

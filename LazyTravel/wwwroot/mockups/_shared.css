@@ -1,0 +1,105 @@
+/* ============================================================
+   前台首頁 Mockup — 三版共用的輔助樣式
+   只放「示意圖佔位」與跨版本共用的小工具，
+   真正的色彩 / 圓角 / 字體全部沿用 wwwroot/css/brand.css 的 token。
+   正式落地時這支檔不需要保留。
+   ============================================================ */
+
+/* ---------- 圖片佔位：用品牌色漸層 + 山景剪影，離線也看得到 ---------- */
+.ph {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--sea-300);
+}
+.ph::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'%3E%3Ccircle cx='322' cy='46' r='21' fill='%23fff' opacity='.22'/%3E%3Cpath d='M0 200 L112 88 L192 168 L252 118 L400 200Z' fill='%23fff' opacity='.15'/%3E%3Cpath d='M0 200 L88 138 L168 200Z' fill='%23fff' opacity='.11'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center bottom;
+}
+.ph-sea   { background: radial-gradient(120% 95% at 22% 8%,  #D5E5EC 0%, #7BA8BC 45%, #244A5E 100%); }
+.ph-sand  { background: radial-gradient(120% 95% at 78% 12%, #F2EDE1 0%, #D8C9AC 45%, #A8916A 100%); }
+.ph-leaf  { background: radial-gradient(115% 100% at 30% 0%,  #E0E8D6 0%, #A9C09A 50%, #567049 100%); }
+.ph-coral { background: radial-gradient(120% 95% at 70% 8%,  #F8DDD1 0%, #EBA07F 50%, #B85433 100%); }
+.ph-deep  { background: radial-gradient(120% 95% at 42% 0%,  #ABC9D6 0%, #4F869F 55%, #1B3341 100%); }
+
+/* ---------- 頭像堆疊（顯示已報名的旅伴） ---------- */
+.avatar-stack { display: flex; align-items: center; }
+.avatar-stack .av {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  margin-left: -8px;
+  display: grid; place-items: center;
+  font-size: .7rem; font-weight: 600; color: #fff;
+}
+.avatar-stack .av:first-child { margin-left: 0; }
+.av-1 { background: var(--sea-500); }
+.av-2 { background: var(--leaf-500); }
+.av-3 { background: var(--sand-500); }
+.av-4 { background: var(--coral-500); }
+.av-more { background: var(--sea-100); color: var(--sea-700) !important; }
+
+/* ---------- 成團進度條 ---------- */
+.join-bar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--sand-200);
+  overflow: hidden;
+}
+.join-bar > span {
+  display: block; height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--sea-500);
+}
+.join-bar.is-hot > span { background: var(--coral-500); }
+
+/* ---------- 小工具 ---------- */
+.eyebrow {
+  font-size: .74rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--sea-500);
+}
+.icon { width: 1em; height: 1em; flex-shrink: 0; }
+
+/* ---------- Mockup 版本切換條（正式落地時整段刪掉） ---------- */
+.mock-switch {
+  position: fixed;
+  left: 50%; bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 1080;
+  display: flex; gap: 4px;
+  padding: 5px;
+  border-radius: var(--radius-pill);
+  background: rgba(27, 51, 65, .88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 28px rgba(27, 51, 65, .3);
+}
+.mock-switch a {
+  padding: .38rem 1rem;
+  border-radius: var(--radius-pill);
+  font-size: .82rem;
+  color: var(--sea-100);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.mock-switch a:hover { background: rgba(255, 255, 255, .12); }
+.mock-switch a.on { background: var(--surface); color: var(--sea-800); font-weight: 500; }
+
+/* ---------- 可及性：尊重使用者的減少動態設定 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ---------- 焦點框：不移除，改成品牌色 ---------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--sea-400);
+  outline-offset: 2px;
+}

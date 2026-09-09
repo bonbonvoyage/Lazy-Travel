@@ -1,0 +1,248 @@
+@{
+    ViewData["Title"] = "建立一趟新的旅行";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Noto+Serif+TC:wght@600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/travelgroup-create.css" asp-append-version="true" />
+</head>
+<body class="home-app group-create-page">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "TravelGroups")
+
+    <main class="main create-main">
+        <form class="create-shell" id="groupCreateForm"
+              data-draft-url="@Url.Action("Draft", "TravelGroups")"
+              data-save-draft-url="@Url.Action("SaveDraft", "TravelGroups")"
+              data-submit-url="@Url.Action("Submit", "TravelGroups")">
+            @Html.AntiForgeryToken()
+            <header class="create-header">
+                <div>
+                    <h1>建立一趟新的旅行</h1>
+                    <p id="stepSubtitle">先把旅程輪廓整理好，下一步再設定旅伴條件。</p>
+                </div>
+                <div class="header-actions">
+                    <button class="glass-btn" type="button" data-save-draft>
+                        <span class="btn-icon">▣</span>
+                        儲存草稿
+                    </button>
+                    <button class="primary-btn" type="button" data-next>
+                        下一步
+                        <span>→</span>
+                    </button>
+                </div>
+            </header>
+
+            <nav class="stepper" aria-label="新增揪團流程">
+                <button class="step-pill active" type="button" data-step-target="1"><span>1</span>旅程輪廓</button>
+                <i>›</i>
+                <button class="step-pill" type="button" data-step-target="2"><span>2</span>旅伴條件</button>
+                <i>›</i>
+                <button class="step-pill" type="button" data-step-target="3"><span>3</span>行程補充</button>
+            </nav>
+
+            <section class="step-panel active" data-step="1">
+                <div class="create-grid two-col">
+                    <section class="form-card">
+                        <h2>這趟旅程想去哪？ <em>✦</em></h2>
+                        <label class="field">
+                            <span>旅程名稱 <b>*</b></span>
+                            <input type="text" name="groupTitle" data-required="請輸入旅程名稱" placeholder="例如：關西賞櫻慢慢旅行" />
+                            <small class="field-error"></small>
+                        </label>
+                        <div class="field country-field">
+                            <span>想去哪個國家？ <b>*</b></span>
+                            <input id="countryInput" type="text" name="country" data-required="請輸入或選擇國家" placeholder="輸入國家，例如：日本、韓國、法國" autocomplete="off" />
+                            <div class="country-suggestions" id="countrySuggestions" aria-label="國家建議清單"></div>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <span>想去哪些城市或地區？ <b>*</b></span>
+                            <div class="chip-editor">
+                                <span class="chip">京都 <button type="button">×</button></span>
+                                <span class="chip">大阪 <button type="button">×</button></span>
+                                <span class="chip">奈良 <button type="button">×</button></span>
+                                <input id="regionInput" class="chip-input" type="text" placeholder="輸入地區，例如：神戶" />
+                                <button class="chip-add" type="button" id="addRegionBtn">＋ 新增地區</button>
+                            </div>
+                            <small class="field-error" data-chip-error></small>
+                        </div>
+                        <label class="field">
+                            <span>預計什麼時候出發？ <b>*</b></span>
+                            <input id="createDateRange" type="text" data-required="請選擇出發與回程日期" placeholder="選擇出發日期  →  選擇回程日期" readonly />
+                            <small class="field-error"></small>
+                        </label>
+                        <label class="field">
+                            <span>想對旅伴說些什麼？</span>
+                            <textarea name="description" maxlength="200" placeholder="分享這趟旅程的亮點、期待，或你想一起體驗的事吧～"></textarea>
+                            <small><output id="introCount">0</output> / 200</small>
+                        </label>
+                    </section>
+
+                    <section class="form-card cover-card">
+                        <h2><span>📸</span> 旅程封面</h2>
+                        <p>上傳一張能代表這趟旅程的照片吧！</p>
+                        <div class="cover-upload" id="coverUpload">
+                            <input id="coverFileInput" type="file" accept="image/*" hidden />
+                            <span class="upload-cloud">☁</span>
+                            <strong>點擊上傳封面圖片</strong>
+                            <small>或拖曳圖片到此處<br />建議尺寸 16:9 · JPG / PNG</small>
+                            <em class="file-name" id="coverFileName"></em>
+                        </div>
+                        <div class="support-images">
+                            <span>補充圖片（選填，最多 4 張）</span>
+                            <div>
+                                <button type="button" class="support-upload">＋</button>
+                                <button type="button" class="support-upload">＋</button>
+                                <button type="button" class="support-upload">＋</button>
+                                <button type="button" class="support-upload">＋</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="step-panel" data-step="2">
+                <div class="stacked">
+                    <section class="form-card preference-card">
+                        <h2>你想找怎樣的旅伴？ <em>✦</em></h2>
+                        <div class="option-row">
+                            <strong>旅伴偏好</strong>
+                            <button type="button" class="option active">不限</button>
+                            <button type="button" class="option">女性優先</button>
+                            <button type="button" class="option">男性優先</button>
+                            <button type="button" class="option">作息正常</button>
+                            <button type="button" class="option">喜歡拍照</button>
+                            <button type="button" class="option">可接受分房</button>
+                        </div>
+                        <div class="option-row">
+                            <strong>旅程節奏</strong>
+                            <button type="button" class="option active">悠閒慢走</button>
+                            <button type="button" class="option">行程滿檔</button>
+                            <button type="button" class="option">彈性自由</button>
+                            <button type="button" class="option">早起型</button>
+                            <button type="button" class="option">夜生活</button>
+                        </div>
+                        <div class="option-row">
+                            <strong>個性氛圍</strong>
+                            <button type="button" class="option">安靜</button>
+                            <button type="button" class="option active">愛聊天</button>
+                            <button type="button" class="option">喜歡規劃</button>
+                            <button type="button" class="option">隨性</button>
+                            <button type="button" class="option">重視安全</button>
+                        </div>
+                    </section>
+
+                    <section class="form-card people-card">
+                        <h2>人數與年齡 <small>找到舒服的人數，旅行才不會太擁擠。</small></h2>
+                        <div class="people-grid">
+                            <label>
+                                <span>最少成行</span>
+                                <div class="number-stepper"><button type="button" data-count="-1">−</button><input type="number" min="1" max="30" value="4" /><button type="button" data-count="1">＋</button></div>
+                            </label>
+                            <label>
+                                <span>人數上限</span>
+                                <div class="number-stepper"><button type="button" data-count="-1">−</button><input type="number" min="1" max="30" value="10" /><button type="button" data-count="1">＋</button></div>
+                            </label>
+                            <label class="age-range-field">
+                                <span>年齡區間</span>
+                                <div class="range-preview" id="ageRangePreview">18 - 65 歲</div>
+                                <div class="dual-range" id="ageRange">
+                                    <input id="ageMin" type="range" min="18" max="65" value="18" />
+                                    <input id="ageMax" type="range" min="18" max="65" value="65" />
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="form-card preference-card">
+                        <h2>預算與旅行風格</h2>
+                        <div class="option-row">
+                            <strong>預算風格</strong>
+                            <button type="button" class="option">極簡</button>
+                            <button type="button" class="option active">小資</button>
+                            <button type="button" class="option">舒適</button>
+                            <button type="button" class="option">奢華</button>
+                        </div>
+                        <div class="option-row">
+                            <strong>旅程焦點</strong>
+                            <button type="button" class="option active">美食</button>
+                            <button type="button" class="option active">攝影</button>
+                            <button type="button" class="option">自然景點</button>
+                            <button type="button" class="option">文化體驗</button>
+                            <button type="button" class="option">購物</button>
+                            <button type="button" class="option">溫泉</button>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="step-panel" data-step="3">
+                <div class="create-grid itinerary-layout">
+                    <section class="form-card itinerary-card">
+                        <div class="card-title-row">
+                            <h2>每天想安排什麼？</h2>
+                            <button class="round-add" id="addDayBtn" type="button" aria-label="新增一天">＋</button>
+                        </div>
+                        <div id="dayList">
+                            @for (var day = 1; day <= 3; day++)
+                            {
+                            <article class="day-card">
+                                <div class="day-badge"><small>DAY</small><strong>@day</strong></div>
+                                <div class="day-inputs">
+                                    <label><span>☼ 早</span><input placeholder="想安排哪裡？例如：清水寺參拜、祇園散步" /></label>
+                                    <label><span>☼ 中</span><input placeholder="午餐或午後行程，例如：二年坂、三年坂散步" /></label>
+                                    <label><span>☾ 晚</span><input placeholder="晚餐或夜間活動，例如：拉麵小路、夜景散策" /></label>
+                                </div>
+                                <button class="delete-day" type="button" aria-label="刪除 DAY @day">×</button>
+                            </article>
+                            }
+                        </div>
+                    </section>
+
+                    <section class="form-card budget-card">
+                        <div class="card-title-row">
+                            <h2>預算小筆記 <em>✦</em></h2>
+                            <button class="round-add" id="addBudgetBtn" type="button" aria-label="新增預算">＋</button>
+                        </div>
+                        <div id="budgetList">
+                            @foreach (var item in new[] { "住宿", "交通", "餐費", "門票", "其他" })
+                            {
+                            <div class="budget-row">
+                                <span>@item</span>
+                                <input inputmode="numeric" placeholder="金額" />
+                                <b>元</b>
+                            </div>
+                            }
+                        </div>
+                        <div class="budget-total">
+                            <span>預估每人</span>
+                            <strong>NT$ 18,500</strong>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <footer class="create-footer">
+                <a class="glass-btn cancel-btn" asp-action="Index" data-cancel>取消</a>
+                <button class="glass-btn" type="button" data-prev>← 上一步</button>
+                <button class="primary-btn" type="button" data-next>下一步 <span>→</span></button>
+            </footer>
+        </form>
+    </main>
+</div>
+
+<script src="~/lib/flatpickr/flatpickr.min.js" asp-append-version="true"></script>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/travelgroup-create.js" asp-append-version="true"></script>
+</body>
+</html>

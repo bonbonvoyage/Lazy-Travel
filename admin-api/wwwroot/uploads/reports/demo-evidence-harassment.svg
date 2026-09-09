@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="700" viewBox="0 0 500 700">
+  <rect width="500" height="700" fill="#f5f3ee"/>
+  <rect x="0" y="0" width="500" height="70" fill="#2B5A72"/>
+  <text x="30" y="42" font-family="Microsoft JhengHei, sans-serif" font-size="18" fill="#ffffff">留言區 — 沖繩四天三夜紀錄</text>
+
+  <rect x="25" y="95" width="450" height="85" rx="10" fill="#ffffff"/>
+  <circle cx="55" cy="125" r="16" fill="#8fb3c7"/>
+  <text x="55" y="131" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">王</text>
+  <text x="82" y="122" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">王小美</text>
+  <text x="82" y="142" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">2 天前</text>
+  <text x="45" y="168" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">請問水族館建議待多久呢?</text>
+
+  <rect x="25" y="195" width="450" height="105" rx="10" fill="#fdf2f2"/>
+  <circle cx="55" cy="225" r="16" fill="#b56d6d"/>
+  <text x="55" y="231" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">匿</text>
+  <text x="82" y="222" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">路人甲</text>
+  <text x="82" y="242" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">2 天前</text>
+  <text x="45" y="268" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">這種問題也在問,你是不是 XXX 啊,</text>
+  <text x="45" y="290" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">沒腦子就不要出國丟臉</text>
+
+  <rect x="25" y="315" width="450" height="105" rx="10" fill="#fdf2f2"/>
+  <circle cx="55" cy="345" r="16" fill="#b56d6d"/>
+  <text x="55" y="351" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">匿</text>
+  <text x="82" y="342" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">路人甲</text>
+  <text x="82" y="362" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">2 天前</text>
+  <text x="45" y="388" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">還敢回我?XXX 的東西,</text>
+  <text x="45" y="410" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">我看你這種人一輩子也去不了幾次</text>
+
+  <rect x="25" y="435" width="450" height="105" rx="10" fill="#fdf2f2"/>
+  <circle cx="55" cy="465" r="16" fill="#b56d6d"/>
+  <text x="55" y="471" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">匿</text>
+  <text x="82" y="462" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">路人甲</text>
+  <text x="82" y="482" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">1 天前</text>
+  <text x="45" y="508" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">你發一篇我噴一篇,不然你去檢舉啊,</text>
+  <text x="45" y="530" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">看平台敢不敢動我</text>
+
+  <rect x="25" y="195" width="450" height="345" rx="10" fill="none" stroke="#c0392b" stroke-width="3"/>
+  <rect x="315" y="555" width="160" height="28" rx="6" fill="#c0392b"/>
+  <text x="395" y="574" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">同一帳號連續攻擊</text>
+
+  <rect x="0" y="640" width="500" height="60" fill="#f0f0f0"/>
+  <text x="250" y="675" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999" text-anchor="middle">※ 此為專題展示用模擬截圖,非真實內容</text>
+</svg>

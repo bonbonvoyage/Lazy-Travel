@@ -1,0 +1,42 @@
+LazyTravel 修改紀錄（2026-07-22，由 Claude 協助處理）
+====================================================
+
+1. 資料庫（SQL Server .\SQL2025 的 LazyTravelDB）
+----------------------------------------------
+- 依照最新版 LazyTravel_DB.docx 規格書，用 sql/LazyTravelDB_Migration_v2.sql 對現有資料庫做「增量」更新（沒有清空重建）：
+  - TravelGroups 補欄位：ReviewStatus、Country、Region
+  - VlogPosts 補欄位：TravelDate、TravelPeople（tinyint）
+  - 新增資料表：TravelGroupsLog
+  - 新增模組 E 企業級 RBAC 六張表：Employees、Roles、Permissions、RolePermissions、EmployeeRoles、AdminAuditLogs
+- 另外整理出 sql/LazyTravelDB_Build.sql，是「整份重建」版本（供未來需要從零建置時參考，目前正式環境沒有跑過這份）。
+
+2. EF Core（Models/EfModels/，會員管理頁用的那套 LazyTravelDBContext）
+----------------------------------------------
+- 新增 7 個 model：TravelGroupsLog、Employee、Role、Permission、RolePermission、EmployeeRole、AdminAuditLog
+- TravelGroup.cs / VlogPost.cs 補上對應的新欄位
+- LazyTravelDBContext.cs 加上新的 DbSet 與 OnModelCreating 關聯設定
+
+3. 修復揪團後台（Models/*.cs + LazyTravelContext + TravelGroupsController）
+----------------------------------------------
+- 發現 Models/Member.cs、TravelGroup.cs、GroupMember.cs、JoinRequest.cs 是照舊版 schema_core.sql 寫的，跟資料庫實際欄位（Members 的 IsPrivateAccount/ContactBookVisibility/Role 等，TravelGroups 的 JoinRule/GroupStatus 是 tinyint 不是文字）對不上，會導致查詢直接噴錯
+- 已修正上述 4 個 Model 的欄位型別與名稱，改成跟資料庫一致
+- TravelGroupsController.cs 的 joinRule/groupStatus 篩選參數型別同步改成 byte?
+- Views/TravelGroups/Index.cshtml、Details.cshtml：JoinRule/GroupStatus/MemberRole 從 tinyint 顯示回中文字（直接加入/需審核、等待中/成行中/結束、團主/一般成員），畫面上維持原本看到的中文，不會變成顯示數字
+
+4. 揪團管理頁面補齊功能（Views/TravelGroups/Index.cshtml）
+----------------------------------------------
+- 修正一個既有 bug：已刪除清單原本讀 ViewBag.DeletedGroups（Controller 根本沒設定過這個變數，一直是空的），改成讀正確的 Model.DeletedGroups
+- 補上完整篩選表單：關鍵字、國家、地區、團主、加入規則、揪團狀態、審核狀態、是否公開、開始日期區間、建立時間區間（對應 Controller 原本就支援、但畫面上沒有做出來的參數）
+- 補上分頁按鈕（上一頁/下一頁 + 頁碼），進行中清單跟已刪除清單各自獨立分頁，換頁不會清空篩選條件
+
+5. 統一 Vlog 行程文章 / 檢舉審核台的統計呈現方式
+----------------------------------------------
+- VlogPosts/Index.cshtml、Reports/Index.cshtml：拿掉頂部的統計卡（文章總數/已發布/草稿/已刪除、全部案件/待處理/檢舉成立/不成立）
+- 統計數字改成寫進篩選籤（.filter-chip）裡，例如「已發布 (8)」「待處理 (5)」，兩頁共用同一套籤的樣式，視覺統一
+- Reports 頁原本用下拉選單選的「狀態」篩選，改成跟 Vlog 頁一樣的 chip 形式；拿掉下拉選單後補了隱藏欄位，確保送出搜尋表單時目前選的狀態不會被重置
+- 沒有更動任何 Model / Controller / ViewModel 的欄位定義，全部都是 View 端的顯示調整
+
+備註
+----------------------------------------------
+- 每次改完都有用 `dotnet build` 確認沒有編譯錯誤（過程中若遇到「檔案被鎖定」的錯誤，是因為 Visual Studio 正在偵錯執行中，跟程式碼本身正確性無關，停止偵錯後重新建置即可）
+- 目前 TravelGroups / VlogPosts 資料表在資料庫裡都還是 0 筆，畫面看到空清單是正常的，不是 bug

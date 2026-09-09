@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="700" viewBox="0 0 500 700">
+  <rect width="500" height="700" fill="#f5f3ee"/>
+  <rect x="0" y="0" width="500" height="70" fill="#2B5A72"/>
+  <text x="30" y="42" font-family="Microsoft JhengHei, sans-serif" font-size="18" fill="#ffffff">揪團說明 vs 實際行程</text>
+
+  <rect x="25" y="95" width="450" height="185" rx="10" fill="#ffffff"/>
+  <text x="45" y="125" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#2B5A72">原揪團說明(報名時)</text>
+  <line x1="45" y1="138" x2="455" y2="138" stroke="#e5e0d5"/>
+  <text x="45" y="165" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">Day1 清水寺 → 二年坂 → 錦市場</text>
+  <text x="45" y="192" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">Day2 嵐山竹林 → 天龍寺 → 渡月橋</text>
+  <text x="45" y="219" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">Day3 伏見稻荷 → 宇治平等院</text>
+  <text x="45" y="252" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999">團費 NT$ 12,800 含住宿與交通</text>
+
+  <rect x="25" y="300" width="450" height="185" rx="10" fill="#fdf2f2"/>
+  <text x="45" y="330" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#c0392b">實際行程(出發後群組公告)</text>
+  <line x1="45" y1="343" x2="455" y2="343" stroke="#eddada"/>
+  <text x="45" y="370" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">Day1 清水寺 → 二年坂 → 錦市場</text>
+  <text x="45" y="397" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">Day2 嵐山竹林(天龍寺、渡月橋取消)</text>
+  <text x="45" y="424" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">Day3 伏見稻荷(宇治平等院取消)</text>
+  <text x="45" y="457" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999">團費未調整,亦未事先徵詢團員同意</text>
+
+  <line x1="245" y1="390" x2="455" y2="390" stroke="#c0392b" stroke-width="2"/>
+  <line x1="235" y1="417" x2="455" y2="417" stroke="#c0392b" stroke-width="2"/>
+  <rect x="315" y="497" width="160" height="28" rx="6" fill="#c0392b"/>
+  <text x="395" y="516" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">兩個景點無故取消</text>
+
+  <rect x="25" y="540" width="450" height="80" rx="10" fill="#ffffff"/>
+  <text x="45" y="568" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#666666">團員群組訊息</text>
+  <text x="45" y="595" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">「說好的兩個點都沒去,團費也沒退,</text>
+  <text x="45" y="614" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#333333">問團主都不回覆。」</text>
+
+  <rect x="0" y="640" width="500" height="60" fill="#f0f0f0"/>
+  <text x="250" y="675" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999" text-anchor="middle">※ 此為專題展示用模擬截圖,非真實內容</text>
+</svg>

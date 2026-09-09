@@ -1,0 +1,18 @@
+{
+  "output": {
+    "filePath": "repopack-output.txt"
+  },
+  "include": ["**/*"],
+  "exclude": [
+    "**/wwwroot/lib/**",
+    "**/.vs/**",
+    "**/bin/**",
+    "**/obj/**",
+    "**/*.pptx",
+    "**/*.docx",
+    "**/*.sql",
+    "**/*.pdf",
+    "**/*.txt",
+    "**/repopack-output.txt"
+  ]
+}

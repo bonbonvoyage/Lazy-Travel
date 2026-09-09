@@ -1,0 +1,90 @@
+@model LazyTravel.Shared.ViewModels.ReportSubmitViewModel
+@using LazyTravel.Shared.Models
+@inject LazyTravel.Shared.Services.IReportLookupService LookupService
+@{
+    ViewData["Title"] = "檢舉";
+    var allTypes = LookupService.GetTypeOptions();
+    var allReasonCategories = LookupService.GetCategoryOptions();
+}
+
+<div class="container py-5" style="max-width: 640px;">
+    <h1 class="h3 mb-4">檢舉</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data" class="d-flex flex-column gap-3">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+        <div>
+            <label asp-for="ReporterEmail" class="form-label"></label>
+            <input asp-for="ReporterEmail" class="form-control" placeholder="you@example.com" />
+            <span asp-validation-for="ReporterEmail" class="text-danger small"></span>
+        </div>
+
+        <div>
+            <label asp-for="TargetType" class="form-label"></label>
+            <select asp-for="TargetType" class="form-select">
+                @foreach (var t in allTypes)
+                {
+                    <option value="@t.Value">@t.Name</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label asp-for="ReportedMemberEmail" class="form-label"></label>
+            <input asp-for="ReportedMemberEmail" class="form-control" placeholder="對方的帳號 Email" />
+            <span asp-validation-for="ReportedMemberEmail" class="text-danger small"></span>
+            <div class="form-text">檢舉 Vlog 文章或揪團時,請填該內容負責人(發文者/團主)的帳號。</div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-6">
+                <label asp-for="TargetId" class="form-label"></label>
+                <input asp-for="TargetId" type="number" class="form-control" placeholder="會員檢舉可留空" />
+            </div>
+            <div class="col-6">
+                <label asp-for="TargetTitle" class="form-label"></label>
+                <input asp-for="TargetTitle" class="form-control" placeholder="例如:文章標題/揪團名稱" />
+            </div>
+        </div>
+
+        <div>
+            <label asp-for="ReasonCategory" class="form-label"></label>
+            <select asp-for="ReasonCategory" class="form-select">
+                @foreach (var c in allReasonCategories)
+                {
+                    <option value="@c.Value">@c.Name</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label asp-for="Reason" class="form-label"></label>
+            <textarea asp-for="Reason" class="form-control" rows="3" maxlength="200"></textarea>
+            <span asp-validation-for="Reason" class="text-danger small"></span>
+        </div>
+
+        <div>
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="3" maxlength="500"></textarea>
+        </div>
+
+        <div>
+            <label asp-for="Evidence" class="form-label"></label>
+            <input asp-for="Evidence" type="file" class="form-control" accept="image/*" required />
+            <span asp-validation-for="Evidence" class="text-danger small"></span>
+            <div class="form-text">請上傳能佐證檢舉內容的截圖。</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">送出檢舉</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

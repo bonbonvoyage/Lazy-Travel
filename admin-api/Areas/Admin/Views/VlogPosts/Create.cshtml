@@ -1,0 +1,24 @@
+@model VlogPost
+@{
+    ViewData["Title"] = "新增文章";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">Vlog 行程文章</a></li>
+    <li class="breadcrumb-item active" aria-current="page">新增文章</li>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+}
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    @await Html.PartialAsync("_Form", Model)
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    @{ await Html.RenderPartialAsync("_ContentEditorAssets"); }
+}

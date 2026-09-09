@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="700" viewBox="0 0 500 700">
+  <rect width="500" height="700" fill="#f5f3ee"/>
+  <rect x="0" y="0" width="500" height="70" fill="#2B5A72"/>
+  <text x="30" y="42" font-family="Microsoft JhengHei, sans-serif" font-size="18" fill="#ffffff">論壇 — 日本自由行討論區</text>
+
+  <rect x="25" y="95" width="450" height="150" rx="10" fill="#ffffff"/>
+  <circle cx="55" cy="125" r="16" fill="#c9b89a"/>
+  <text x="55" y="131" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">廣</text>
+  <text x="82" y="122" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">旅遊優惠通</text>
+  <text x="82" y="142" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">3 分鐘前</text>
+  <text x="45" y="175" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">★★ 全網最低價機票 ★★ 加賴 travel_cheap888</text>
+  <text x="45" y="200" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">東京 3999 起 首爾 2999 起 名額有限</text>
+  <text x="45" y="225" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#2B5A72">http://cheap-ticket-promo.example.com</text>
+
+  <rect x="25" y="265" width="450" height="150" rx="10" fill="#ffffff"/>
+  <circle cx="55" cy="295" r="16" fill="#c9b89a"/>
+  <text x="55" y="301" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">廣</text>
+  <text x="82" y="292" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">旅遊優惠通</text>
+  <text x="82" y="312" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">5 分鐘前</text>
+  <text x="45" y="345" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">★★ 全網最低價機票 ★★ 加賴 travel_cheap888</text>
+  <text x="45" y="370" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">東京 3999 起 首爾 2999 起 名額有限</text>
+  <text x="45" y="395" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#2B5A72">http://cheap-ticket-promo.example.com</text>
+
+  <rect x="25" y="435" width="450" height="150" rx="10" fill="#ffffff"/>
+  <circle cx="55" cy="465" r="16" fill="#c9b89a"/>
+  <text x="55" y="471" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">廣</text>
+  <text x="82" y="462" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">旅遊優惠通</text>
+  <text x="82" y="482" font-family="Microsoft JhengHei, sans-serif" font-size="12" fill="#999999">8 分鐘前</text>
+  <text x="45" y="515" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">★★ 全網最低價機票 ★★ 加賴 travel_cheap888</text>
+  <text x="45" y="540" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#333333">東京 3999 起 首爾 2999 起 名額有限</text>
+  <text x="45" y="565" font-family="Microsoft JhengHei, sans-serif" font-size="15" fill="#2B5A72">http://cheap-ticket-promo.example.com</text>
+
+  <rect x="25" y="95" width="450" height="490" rx="10" fill="none" stroke="#c0392b" stroke-width="3"/>
+  <rect x="330" y="600" width="145" height="28" rx="6" fill="#c0392b"/>
+  <text x="402" y="619" font-family="Microsoft JhengHei, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">同內容連續洗版</text>
+
+  <rect x="0" y="640" width="500" height="60" fill="#f0f0f0"/>
+  <text x="250" y="675" font-family="Microsoft JhengHei, sans-serif" font-size="13" fill="#999999" text-anchor="middle">※ 此為專題展示用模擬截圖,非真實內容</text>
+</svg>

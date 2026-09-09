@@ -1,0 +1,448 @@
+﻿@model IEnumerable<LazyTravel.Shared.ViewModels.MemberIndexVm>
+
+@{
+    ViewData["Title"] = "會員管理控制台";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+
+    // 取得當前的啟動頁籤 (預設是 members)
+    string activeTab = ViewBag.ActiveTab as string ?? "members";
+
+    // 1. 會員管理分頁與篩選資訊
+    var currentKeyword = ViewBag.Keyword as string;
+    var currentStatus = ViewBag.Status as byte?;
+    var currentGender = ViewBag.Gender as byte?;
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+
+    // 2. 操作紀錄分頁與篩選資訊
+    var logAdmin = ViewBag.LogAdmin as string;
+    var logTarget = ViewBag.LogTarget as string;
+    var logAction = ViewBag.LogAction as string;
+    int logCurrentPage = ViewBag.LogCurrentPage ?? 1;
+    int logTotalPages = ViewBag.LogTotalPages ?? 1;
+    int logTotalCount = ViewBag.LogTotalCount ?? 0;
+    var logList = ViewBag.Logs as IEnumerable<LazyTravel.Shared.Models.DTOs.AdminLogDto>;
+}
+
+<!-- 自訂現代化 UI 樣式 -->
+<style>
+    /* .modern-tabs-wrapper / .modern-tab 統一由 admin.css 提供資料夾頁籤樣式。 */
+
+    /* 頂級卡片質感 */
+    .premium-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        background-color: #ffffff;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+        transition: background-color 0.2s;
+    }
+</style>
+
+<!-- ==========================================
+     頂端導覽頁籤 (現代化 Segmented Control)
+     ========================================== -->
+<div class="modern-tabs-wrapper">
+    <a class="modern-tab @(activeTab == "members" ? "active" : "")"
+       href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender">
+        <i class="fas fa-users"></i> 會員管理
+    </a>
+    <a class="modern-tab @(activeTab == "logs" ? "active" : "")"
+       href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction">
+        <i class="fas fa-shield-alt"></i> 操作紀錄
+    </a>
+</div>
+
+<!-- ==========================================
+     分流區：【頁籤一：會員管理】
+     ========================================== -->
+@if (activeTab == "members")
+{
+    <!-- 篩選面板 -->
+    <div class="premium-card folder-tab-panel mb-4">
+        <div class="card-body p-4">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="activeTab" value="members" />
+
+                <div class="col-md-3">
+                    <label class="form-label text-muted small fw-bold">帳號或姓名關鍵字</label>
+                    <input type="text" name="keyword" class="form-control rounded-3" value="@currentKeyword" placeholder="搜尋 姓名 或 信箱...">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label text-muted small fw-bold">帳號狀態</label>
+                    <select name="status" class="form-select rounded-3">
+                        <option value="">全部狀態</option>
+                        <option value="1" selected="@(currentStatus == 1 ? "selected" : null)">🟢 正常</option>
+                        <option value="2" selected="@(currentStatus == 2 ? "selected" : null)">🔴 停權</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label text-muted small fw-bold">性別</label>
+                    <select name="gender" class="form-select rounded-3">
+                        <option value="">全部性別</option>
+                        <option value="1" selected="@(currentGender == 1 ? "selected" : null)">男</option>
+                        <option value="2" selected="@(currentGender == 2 ? "selected" : null)">女</option>
+                        <option value="3" selected="@(currentGender == 3 ? "selected" : null)">其他</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3 shadow-sm">
+                        <i class="fas fa-search me-1"></i> 搜尋會員
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="?activeTab=members" class="btn btn-light border w-100 rounded-3 text-muted">清除條件</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 會員資料表 -->
+    <div class="premium-card mb-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 text-center align-middle">
+                    <thead class="bg-light text-muted fw-bold" style="font-size: 0.9rem; letter-spacing: 0.5px;">
+                        <tr>
+                            <th class="py-3">編號</th>
+                            <th class="py-3">姓名</th>
+                            <th class="py-3">帳號 (Email)</th>
+                            <th class="py-3">性別/年齡</th>
+                            <th class="py-3">職業/MBTI</th>
+                            <th class="py-3">方案</th>
+                            <th class="py-3">狀態</th>
+                            <th class="py-3">註冊日期</th>
+                            <th class="py-3">管理操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center py-5 text-muted">
+                                    <div class="display-1 text-light mb-3"><i class="fas fa-box-open"></i></div>
+                                    <p class="mb-0 fs-5">找不到符合條件的會員資料</p>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-muted">#@item.MemberID</td>
+                                    <td class="fw-bold text-dark">@item.Name</td>
+                                    <td class="text-start font-monospace text-muted">@item.Email</td>
+                                    <td>@item.GenderText / @item.AgeText</td>
+                                    <td>
+                                        @item.Occupation <br />
+                                        <span class="badge bg-light text-secondary border mt-1">@item.MBTI</span>
+                                    </td>
+                                    <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2">@item.PlanName</span></td>
+                                    <td>
+                                        <span class="badge @item.StatusBadgeClass rounded-pill px-3 py-2">@item.StatusText</span>
+                                    </td>
+                                    <td class="text-muted">@item.CreatedAtString</td>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@item.MemberID" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                                            <i class="fas fa-edit"></i> 處置
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 分頁元件 -->
+        <div class="card-footer bg-white py-3 border-top-0">
+            <div class="d-flex justify-content-between align-items-center small text-muted">
+                <span>共 @totalCount 筆資料 (第 @currentPage / @(totalPages == 0 ? 1 : totalPages) 頁)</span>
+                @if (totalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- 上一頁 -->
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@(currentPage - 1)">上一頁</a>
+                            </li>
+
+                            @if (totalPages <= 5)
+                            {
+                                for (int i = 1; i <= totalPages; i++)
+                                {
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@i">@i</a>
+                                    </li>
+                                }
+                            }
+                            else
+                            {
+                                if (currentPage <= 3)
+                                {
+                                    for (int i = 1; i <= 4; i++)
+                                    {
+                                        <li class="page-item @(i == currentPage ? "active" : "")">
+                                            <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@i">@i</a>
+                                        </li>
+                                    }
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@totalPages">@totalPages</a>
+                                    </li>
+                                }
+                                else if (currentPage >= totalPages - 2)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=1">1</a>
+                                    </li>
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    for (int i = totalPages - 3; i <= totalPages; i++)
+                                    {
+                                        <li class="page-item @(i == currentPage ? "active" : "")">
+                                            <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@i">@i</a>
+                                        </li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=1">1</a>
+                                    </li>
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    for (int i = currentPage - 1; i <= currentPage + 1; i++)
+                                    {
+                                        <li class="page-item @(i == currentPage ? "active" : "")">
+                                            <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@i">@i</a>
+                                        </li>
+                                    }
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@totalPages">@totalPages</a>
+                                    </li>
+                                }
+                            }
+
+                            <!-- 下一頁 -->
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                <a class="page-link shadow-none" href="?activeTab=members&keyword=@currentKeyword&status=@currentStatus&gender=@currentGender&page=@(currentPage + 1)">下一頁</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ==========================================
+     分流區：【頁籤二：會員模組專屬操作紀錄】
+     ========================================== -->
+@if (activeTab == "logs")
+{
+    <!-- 專用獨立搜尋面板 -->
+    <div class="premium-card folder-tab-panel mb-4">
+        <div class="card-body p-4">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="activeTab" value="logs" />
+
+                <div class="col-md-3">
+                    <label class="form-label text-muted small fw-bold">操作管理員 (名稱)</label>
+                    <input type="text" name="logAdmin" class="form-control rounded-3" value="@logAdmin" placeholder="搜尋管理員姓名...">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label text-muted small fw-bold">被處分對象 (會員名稱)</label>
+                    <input type="text" name="logTarget" class="form-control rounded-3" value="@logTarget" placeholder="搜尋會員姓名...">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label text-muted small fw-bold">處分動作分類</label>
+                    <select name="logAction" class="form-select rounded-3">
+                        <option value="">全部動作</option>
+                        <option value="處分會員資料" selected="@(logAction == "處分會員資料" ? "selected" : null)">處分會員資料</option>
+                        <option value="停權會員" selected="@(logAction == "停權會員" ? "selected" : null)">停權會員</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-info text-white w-100 rounded-3 shadow-sm">
+                        <i class="fas fa-filter me-1"></i> 篩選日誌
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="?activeTab=logs" class="btn btn-light border w-100 rounded-3 text-muted">清除條件</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 操作日誌資料表 -->
+    <div class="premium-card mb-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 text-center align-middle">
+                    <thead class="bg-light text-muted fw-bold" style="font-size: 0.9rem; letter-spacing: 0.5px;">
+                        <tr>
+                            <th class="py-3">日誌編號</th>
+                            <th class="py-3">執行管理員</th>
+                            <th class="py-3">動作</th>
+                            <th class="py-3">被影響會員</th>
+                            <th class="py-3 text-start">詳細異動說明</th>
+                            <th class="py-3">操作來源 IP</th>
+                            <th class="py-3">執行時間</th>
+                            <!-- 🌟 新增一欄：查看原因 -->
+                            <th class="py-3">查看原因</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (logList == null || !logList.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <div class="display-1 text-light mb-3"><i class="fas fa-clipboard"></i></div>
+                                    <p class="mb-0 fs-5">此條件下無任何會員操作紀錄</p>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var log in logList)
+                            {
+                                // 解析出原因字串
+                                string desc = log.Description;
+                                string reason = "";
+                                if (desc.Contains("。備註："))
+                                {
+                                    var parts = desc.Split("。備註：");
+                                    desc = parts[0];
+                                    reason = parts.Length > 1 ? parts[1] : "";
+                                }
+
+                                <tr>
+                                    <td class="text-muted">#@log.LogID</td>
+                                    <td class="fw-bold"><i class="fas fa-user-shield text-info me-1"></i>@log.AdminName</td>
+                                    <td>
+                                        @if (log.Action == "停權會員")
+                                        {
+                                            <span class="badge bg-danger rounded-pill px-3 py-2">🔴 @log.Action</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">⚠️ @log.Action</span>
+                                        }
+                                    </td>
+                                    <td class="fw-bold text-dark">@log.TargetMemberName</td>
+                                    <td class="text-start small text-muted">@desc</td> <!-- 這裡只顯示乾淨的異動說明 -->
+                                    <td><span class="badge bg-light text-secondary border">@log.IPAddress</span></td>
+                                    <td class="text-muted">@log.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                                    <td>
+                                        <!-- 🌟 如果有原因，顯示按鈕 -->
+                                        @if (!string.IsNullOrWhiteSpace(reason))
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="alert('管理員操作原因：\n\n@reason')">
+                                                <i class="fas fa-comment-dots"></i> 內容
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 操作日誌專用分頁 -->
+        <div class="card-footer bg-white py-3 border-top-0">
+            <div class="d-flex justify-content-between align-items-center small text-muted">
+                <span>共 @logTotalCount 筆日誌 (第 @logCurrentPage / @(logTotalPages == 0 ? 1 : logTotalPages) 頁)</span>
+                @if (logTotalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- 上一頁 -->
+                            <li class="page-item @(logCurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@(logCurrentPage - 1)">上一頁</a>
+                            </li>
+
+                            @if (logTotalPages <= 5)
+                            {
+                                for (int i = 1; i <= logTotalPages; i++)
+                                {
+                                    <li class="page-item @(i == logCurrentPage ? "active" : "")">
+                                        <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@i">@i</a>
+                                    </li>
+                                }
+                            }
+                            else
+                            {
+                                if (logCurrentPage <= 3)
+                                {
+                                    for (int i = 1; i <= 4; i++)
+                                    {
+                                        <li class="page-item @(i == logCurrentPage ? "active" : "")">
+                                            <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@i">@i</a>
+                                        </li>
+                                    }
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@logTotalPages">@logTotalPages</a>
+                                    </li>
+                                }
+                                else if (logCurrentPage >= logTotalPages - 2)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=1">1</a>
+                                    </li>
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    for (int i = logTotalPages - 3; i <= logTotalPages; i++)
+                                    {
+                                        <li class="page-item @(i == logCurrentPage ? "active" : "")">
+                                            <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@i">@i</a>
+                                        </li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=1">1</a>
+                                    </li>
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    for (int i = logCurrentPage - 1; i <= logCurrentPage + 1; i++)
+                                    {
+                                        <li class="page-item @(i == logCurrentPage ? "active" : "")">
+                                            <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@i">@i</a>
+                                        </li>
+                                    }
+                                    <li class="page-item disabled"><span class="page-link shadow-none border-0 text-muted bg-transparent">...</span></li>
+                                    <li class="page-item">
+                                        <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@logTotalPages">@logTotalPages</a>
+                                    </li>
+                                }
+                            }
+
+                            <!-- 下一頁 -->
+                            <li class="page-item @(logCurrentPage == logTotalPages ? "disabled" : "")">
+                                <a class="page-link shadow-none" href="?activeTab=logs&logAdmin=@logAdmin&logTarget=@logTarget&logAction=@logAction&logPage=@(logCurrentPage + 1)">下一頁</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+    </div>
+}

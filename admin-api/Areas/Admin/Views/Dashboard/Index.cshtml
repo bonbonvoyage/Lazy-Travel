@@ -1,0 +1,186 @@
+@model LazyTravel.Areas.Admin.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "總覽";
+}
+
+<div class="dash-notice">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg>
+    <div>
+        <div class="dash-notice-eyebrow">公告</div>
+        <div>@Model.NoticeMessage</div>
+    </div>
+</div>
+
+@{
+    @* 雙色調(duotone)圖示:先鋪一層 fill 的淡色塊,再描線,比純線條有份量。
+       兩層共用同一組 path,改形狀時兩邊要一起改。 *@
+    var moduleIcons = new Dictionary<string, string>
+    {
+        ["member"] =
+            "<circle cx=\"12\" cy=\"8.2\" r=\"3.6\" fill=\"currentColor\" opacity=\".16\" stroke=\"none\" />" +
+            "<path d=\"M4.8 20.2c0-3.7 3.2-6.4 7.2-6.4s7.2 2.7 7.2 6.4z\" fill=\"currentColor\" opacity=\".16\" stroke=\"none\" />" +
+            "<circle cx=\"12\" cy=\"8.2\" r=\"3.6\" /><path d=\"M4.8 20.2c0-3.7 3.2-6.4 7.2-6.4s7.2 2.7 7.2 6.4\" />",
+        ["article"] =
+            "<path d=\"M6 3.2h7.4L18.4 8.1v12.7H6z\" fill=\"currentColor\" opacity=\".16\" stroke=\"none\" />" +
+            "<path d=\"M6 3.2h7.4L18.4 8.1v12.7H6z\" /><path d=\"M13.4 3.2v4.9h5\" />" +
+            "<path d=\"M9 12.6h6M9 16.2h4\" />",
+        ["group"] =
+            "<circle cx=\"9.2\" cy=\"8.6\" r=\"3.1\" fill=\"currentColor\" opacity=\".16\" stroke=\"none\" />" +
+            "<path d=\"M2.8 19.6c0-3.2 2.9-5.6 6.4-5.6s6.4 2.4 6.4 5.6z\" fill=\"currentColor\" opacity=\".16\" stroke=\"none\" />" +
+            "<circle cx=\"9.2\" cy=\"8.6\" r=\"3.1\" /><path d=\"M2.8 19.6c0-3.2 2.9-5.6 6.4-5.6s6.4 2.4 6.4 5.6\" />" +
+            "<path d=\"M16.4 6.9a2.9 2.9 0 010 5.4M17.6 14.6c2.1.7 3.6 2.5 3.6 4.6\" />",
+        ["report"] =
+            "<path d=\"M5.8 4.6h11.4l-2.1 3.5 2.1 3.5H5.8z\" fill=\"currentColor\" opacity=\".16\" stroke=\"none\" />" +
+            "<path d=\"M5.8 4.6h11.4l-2.1 3.5 2.1 3.5H5.8z\" /><path d=\"M5.8 3.2v17.6\" />",
+    };
+}
+
+@if (!Model.Modules.Any())
+{
+    <div class="dash-mod-none">你目前的權限尚未開放任何管理模組,請聯絡系統管理員。</div>
+}
+
+<div class="dash-mod-grid">
+    @foreach (var module in Model.Modules)
+    {
+        @* 配色靠卡片上的 dash-c-xxx 設 --accent / --accent-soft,圖示、頂條、hover 邊框共用 *@
+        <a class="dash-mod-card dash-c-@module.ColorKey" href="@module.Href">
+            @if (module.Badge is int badge)
+            {
+                <span class="dash-mod-badge">@badge</span>
+            }
+            <div class="dash-mod-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">@Html.Raw(moduleIcons[module.ColorKey])</svg>
+            </div>
+            <div class="dash-mod-name">@module.Label</div>
+            <div class="dash-mod-meta"><b>@module.StatValue</b> @module.StatLabel</div>
+            <div class="dash-mod-log">
+                <div class="dash-log-eyebrow">最近動作</div>
+                @if (module.RecentLogs.Any())
+                {
+                    foreach (var log in module.RecentLogs)
+                    {
+                        <div class="dash-log-row"><span class="dash-log-t">@log.CreatedAt.ToString("MM/dd")</span>@log.Action:@log.Detail</div>
+                    }
+                }
+                else
+                {
+                    <div class="dash-log-empty">尚無操作紀錄</div>
+                }
+            </div>
+        </a>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .dash-notice {
+            background: linear-gradient(135deg, var(--sea-800), var(--sea-600));
+            color: #fff;
+            border-radius: var(--radius-lg);
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .dash-notice svg { width: 34px; height: 34px; flex-shrink: 0; opacity: .9; }
+        .dash-notice-eyebrow { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+
+        /* 固定 4 欄:卡片被權限濾掉時剩下的卡維持原本大小,不會被拉寬撐滿 */
+        .dash-mod-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: start; }
+        @@media (max-width: 1200px) { .dash-mod-grid { grid-template-columns: repeat(3, 1fr); } }
+        @@media (max-width: 900px)  { .dash-mod-grid { grid-template-columns: repeat(2, 1fr); } }
+        @@media (max-width: 560px)  { .dash-mod-grid { grid-template-columns: 1fr; } }
+
+        .dash-mod-none {
+            background: var(--surface); border: 1px dashed var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: 2.4rem 1.4rem; text-align: center;
+            font-size: .88rem; color: var(--text-secondary);
+        }
+
+        /* 每張卡自己的主色,圖示底、頂條、hover 邊框共用同一組 */
+        .dash-c-member { --accent: var(--sea-500);   --accent-soft: var(--sea-50); }
+        .dash-c-article { --accent: var(--leaf-600); --accent-soft: var(--leaf-100); }
+        .dash-c-group { --accent: var(--sand-500);   --accent-soft: var(--sand-100); }
+        .dash-c-report { --accent: var(--coral-600); --accent-soft: var(--coral-50); }
+
+        .dash-mod-card {
+            position: relative;
+            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: 1.4rem 1.2rem 1.1rem;
+            text-decoration: none;
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            gap: .55rem;
+            box-shadow: 0 1px 2px rgba(31,61,78,.04);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+        /* 頂端主色條:平常收在頂緣,hover 時整條亮起 */
+        .dash-mod-card::before {
+            content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+            background: var(--accent); opacity: .35;
+            transition: opacity .18s ease;
+        }
+        .dash-mod-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 24px rgba(31,61,78,.12);
+        }
+        .dash-mod-card:hover::before { opacity: 1; }
+        .dash-mod-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+        .dash-mod-icon {
+            width: 46px; height: 46px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            /* 淡色漸層 + 極淡邊框,比單一色塊有層次 */
+            background: linear-gradient(145deg, var(--accent-soft), var(--surface));
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+            color: var(--accent);
+            transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+        }
+        .dash-mod-icon svg { width: 24px; height: 24px; }
+        /* hover 時整塊翻成主色、圖示轉白 */
+        .dash-mod-card:hover .dash-mod-icon {
+            background: var(--accent); color: #fff;
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
+        }
+
+        .dash-mod-name { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: var(--sea-800); }
+        .dash-mod-meta { font-size: .8rem; color: var(--text-secondary); display: flex; align-items: baseline; gap: .3rem; }
+        .dash-mod-meta b { font-size: 1.75rem; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--sea-800); }
+        .dash-mod-badge {
+            position: absolute; top: 1.1rem; right: 1.1rem;
+            border-radius: var(--radius-pill); padding: .2rem .62rem;
+            font-size: .72rem; font-weight: 700;
+            background: var(--coral-600); color: #fff;
+            box-shadow: 0 2px 6px rgba(184,84,51,.3);
+        }
+
+        /* 最近動作:內凹淺色區塊,和上半部的統計數字分層 */
+        .dash-mod-log {
+            margin-top: .35rem;
+            background: var(--sand-50);
+            border-radius: var(--radius-sm);
+            padding: .65rem .75rem;
+            display: flex; flex-direction: column; gap: .4rem;
+        }
+        .dash-log-eyebrow { font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+        .dash-log-row {
+            font-size: .78rem; line-height: 1.5; color: var(--text-secondary);
+            padding-left: .55rem; border-left: 2px solid var(--accent);
+        }
+        .dash-log-t { color: var(--text-muted); font-variant-numeric: tabular-nums; margin-right: .35rem; }
+        .dash-log-empty { font-size: .78rem; color: var(--text-muted); }
+
+        @@media (prefers-reduced-motion: reduce) {
+            .dash-mod-card, .dash-mod-card::before { transition: none; }
+            .dash-mod-card:hover { transform: none; }
+        }
+    </style>
+}

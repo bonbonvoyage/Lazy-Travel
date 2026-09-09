@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(perl -0777 -ne 'print $1 if /<script>\\(.*\\)<\\\\/script>/s' lazytravel-home.html)",
+      "Bash(node --check extracted.js)"
+    ]
+  }
+}

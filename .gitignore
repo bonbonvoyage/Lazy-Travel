@@ -1,0 +1,14 @@
+## Visual Studio / .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+## 個人環境設定(每人自己的連線字串,不進版控)
+appsettings.Development.json
+
+## 其他
+*.log
+node_modules/
+~$*.docx

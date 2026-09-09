@@ -1,0 +1,55 @@
+using LazyTravel.Shared.Models;
+using LazyTravel.Shared.Models.DTOs;
+
+namespace LazyTravel.Shared.Services
+{
+    // 檢舉中心的商業邏輯統一收在這裡,ReportsController 只負責接請求、組 ViewModel、回傳 View
+    public interface IReportService
+    {
+        int SuspendThreshold { get; }
+
+        ReportQueryResult Query(ReportQueryOptions options);
+
+        Report? GetById(int id);
+
+        // 同一個被檢舉對象的其他檢舉紀錄(判斷是不是常被檢舉的目標)
+        List<Report> GetRelatedReports(Report report);
+
+        // 判定完一筆後,同一篩選條件下的下一筆待處理案件;沒有的話回傳 null
+        Report? GetNextPending(ReportQueryOptions filterOptions);
+
+        // 案件詳情頁「上一筆／下一筆」手動導航,回傳目前這筆在篩選條件下的前後案件編號
+        (int? PreviousId, int? NextId) GetAdjacentIds(int currentId, ReportQueryOptions filterOptions);
+
+        // 同一個會員(用 MemberID 比對,不是 Email)被查證屬實(檢舉成立)的次數
+        int CountUpheldForMember(int memberId);
+
+        // 如果這筆案件被判定「成立」,會不會觸發自動停權;不會回傳 null,會的話回傳停權天數
+        // upheldCountForAccount 由呼叫端傳入(通常就是 CountUpheldForMember 的結果),避免重複查詢同一個數字
+        int? GetPendingSuspensionDays(int upheldCountForAccount);
+
+        // 同一個檢舉人(用 MemberID 比對,不是 Email)被標記「惡意檢舉」的次數
+        int CountMaliciousForReporter(int reporterId);
+
+        // 如果這筆案件被標記為惡意檢舉,檢舉人會不會被停權;不會回傳 null,會的話回傳停權天數
+        int? GetPendingReporterSuspensionDays(int maliciousCountForReporter);
+
+        // employeeId 是登入員工的真實 EmployeeID(取自 ClaimTypes.NameIdentifier),審核人一律要是真實登入的員工
+        Task<JudgeOutcome> JudgeAsync(int id, ReportStatus decision, string? note, bool isMalicious, int employeeId);
+
+        // 建立一筆新的檢舉（例如小編在 Vlog 行程文章後台對會員文章提出檢舉）。純新增，不動既有判定/查詢邏輯。
+        // employeeId 是實際提出檢舉的登入員工,只用來寫進 AdminAuditLogs 的操作紀錄;
+        // reporterAccount 仍是 Reports.ReporterID 這個 NOT NULL 外鍵要用的顯示名稱/Email,兩者用途不同,都要保留。
+        Task<Report> SubmitAsync(ReportTargetType targetType, int targetId, string targetTitle,
+            string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason, int employeeId);
+
+        // 這個模組相關的操作紀錄(給檢舉審核台頁面用)
+        Task<List<AdminLogDto>> GetRecentReportLogsAsync(int take);
+
+        // 操作紀錄篩選 + 分頁(版面比照會員管理的操作紀錄分頁)
+        Task<(List<AdminLogDto> Data, int TotalCount)> GetReportLogsAsync(string? operatorKeyword, string? detailKeyword, string? action, int page);
+
+        // 單一案件的審核紀錄(誰審的、什麼時候審的,取自 AdminAuditLogs)
+        Task<AdminLogDto?> GetReviewLogAsync(int reportId);
+    }
+}

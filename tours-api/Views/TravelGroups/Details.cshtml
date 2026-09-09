@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "行程詳情";
+    Layout = null;
+    var groupId = (int)ViewData["GroupId"]!;
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/travelgroup-details.css" asp-append-version="true" />
+</head>
+<body class="home-app">
+    <div class="app">
+        @await Html.PartialAsync("_HomeSidebar", "TravelGroups")
+
+        <main class="main">
+            <form id="tg-antiforgery">@Html.AntiForgeryToken()</form>
+            <button class="page-back-button tg-back" type="button" data-back-fallback="@Url.Action("Index", "TravelGroups")" aria-label="返回上一頁">＜</button>
+            <div class="content-wrap" id="tg-root" data-group-id="@groupId">
+                <div class="tg-loading" id="tg-loading">載入中…</div>
+            </div>
+        </main>
+    </div>
+
+    <script src="~/js/travelgroup-details.js" asp-append-version="true"></script>
+</body>
+</html>

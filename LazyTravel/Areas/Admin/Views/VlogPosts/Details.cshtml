@@ -1,0 +1,503 @@
+@model VlogPostDetailsViewModel
+@{
+    ViewData["Title"] = "文章詳情";
+    var post = Model.Post;
+
+    string PlainExcerpt(string? html, int maxLen = 70)
+    {
+        if (string.IsNullOrWhiteSpace(html)) { return ""; }
+        var text = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
+        text = System.Net.WebUtility.HtmlDecode(text).Trim();
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ");
+        return text.Length > maxLen ? text.Substring(0, maxLen) + "…" : text;
+    }
+    var excerpt = PlainExcerpt(post.Content);
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-action="Index">Vlog 行程文章</a></li>
+    <li class="breadcrumb-item active" aria-current="page">檢視文章</li>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+}
+
+<style>
+    .post-content-preview {
+        color: var(--ink);
+        line-height: 1.8;
+    }
+
+        .post-content-preview h2 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            color: var(--sea-800);
+            margin-top: 1rem;
+        }
+
+        .post-content-preview h3 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--sea-800);
+            margin-top: .8rem;
+        }
+
+        .post-content-preview img {
+            max-width: 100%;
+            border-radius: var(--radius-sm);
+            margin: .5rem 0;
+        }
+
+        .post-content-preview p:last-child {
+            margin-bottom: 0;
+        }
+
+    .form-section-title {
+        font-family: var(--font-display);
+        color: var(--sea-800);
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    /* 主管操作按鈕：跟頁面其他品牌按鈕一樣用膠囊造型，語意色(藍/灰/紅)不變，只是外觀統一。 */
+    .supervisor-actions .btn {
+        border-radius: var(--radius-pill);
+        padding-inline: 1rem;
+    }
+
+    .supervisor-actions .btn-outline-secondary {
+        --bs-btn-color: var(--text-secondary);
+        --bs-btn-border-color: var(--border-soft);
+        --bs-btn-hover-color: var(--text-secondary);
+        --bs-btn-hover-bg: var(--surface-alt);
+        --bs-btn-hover-border-color: var(--text-muted);
+    }
+
+    /* 每日行程列表：日期用大圓圈編號，中間用連接線串起每一天，底下是縮圖＋文字並排的景點卡片。 */
+    .day-group {
+        position: relative;
+        padding-left: 3.25rem;
+        padding-bottom: 1.75rem;
+    }
+
+        .day-group:last-child {
+            padding-bottom: 0;
+        }
+
+    .day-badge {
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background-color: var(--sea-600);
+        color: #fff;
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 1.1rem;
+        z-index: 2;
+    }
+
+    .day-group.has-next-day::before {
+        content: '';
+        position: absolute;
+        left: 1.19rem;
+        top: 2.5rem;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--border-soft);
+    }
+
+    .itinerary-stop-card {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background-color: var(--surface);
+        padding: .5rem .75rem;
+        margin-bottom: .5rem;
+    }
+
+        .itinerary-stop-card:last-child {
+            margin-bottom: 0;
+        }
+
+    .itinerary-stop-title {
+        font-family: var(--font-display);
+        color: var(--sea-700);
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .itinerary-stop-time {
+        color: var(--text-muted);
+        font-size: .85rem;
+    }
+
+    .itinerary-stop-image {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: var(--radius-sm);
+        flex-shrink: 0;
+    }
+
+    /* 每一天可以個別收合，預設只展開第一天，避免天數多的行程一次全部攤開 */
+    .day-toggle {
+        border-radius: var(--radius-pill);
+    }
+
+    .day-stops {
+        display: none;
+    }
+
+        .day-stops.expanded {
+            display: block;
+        }
+</style>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <span class="badge rounded-pill" style="background-color:var(--sea-600); font-weight:500; padding:.5rem 1rem; font-size:.8rem;">
+        檢視頁（唯讀）
+    </span>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill"><i class="bi bi-arrow-left"></i> 返回列表</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success py-2 mb-3" role="alert">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger py-2 mb-3" role="alert">@errorMessage</div>
+}
+
+@if (post.IsDelete)
+{
+    <div class="alert alert-danger py-2 mb-3">此文章已被軟刪除，僅發文會員與後台看得到，系統管理員可在下方「還原文章」。</div>
+}
+
+<div class="row g-4 align-items-start">
+    <div class="col-lg-8">
+        @* ---------- 文章基本資料 ---------- *@
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <div class="d-flex gap-3 flex-column flex-sm-row">
+                @if (!string.IsNullOrWhiteSpace(post.MediaUrl))
+                {
+                    <img src="@post.MediaUrl" alt=""
+                         style="width:100%; max-width:260px; height:180px; object-fit:cover; border-radius:var(--radius-md); flex-shrink:0;" />
+                }
+                <div class="flex-grow-1">
+                    <h2 class="h4 mb-1" style="font-family:var(--font-display); color:var(--sea-800);">@post.Title</h2>
+                    @if (!string.IsNullOrWhiteSpace(excerpt))
+                    {
+                        <p class="text-secondary mb-2">@excerpt</p>
+                    }
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span>
+                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-person"></i> @(post.Member?.Name ?? $"會員 #{post.MemberId}")</span>
+                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-geo-alt"></i> @post.Destination</span>
+                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-calendar3"></i> @post.TravelDays 天</span>
+                        <span class="badge text-bg-light border text-dark fw-normal"><i class="bi bi-people"></i> @post.TravelPeople.ToLabel()</span>
+                    </div>
+                    <div class="text-muted small d-flex flex-wrap column-gap-3 row-gap-1">
+                        @if (post.TravelDate is not null)
+                        {
+                            <span><i class="bi bi-calendar-event"></i> 出遊日期：@post.TravelDate.Value.ToString("yyyy/MM/dd")</span>
+                        }
+                        <span><i class="bi bi-clock-history"></i> 建立時間：@post.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+                        <span><i class="bi bi-clock-history"></i> 更新時間：@(post.UpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- 內文 ---------- *@
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-journal-text"></i> 內文</h2>
+            @if (string.IsNullOrWhiteSpace(post.Content))
+            {
+                <p class="text-muted mb-0">（尚未填寫心得）</p>
+            }
+            else
+            {
+                <div class="post-content-preview">@Html.Raw(post.Content)</div>
+            }
+        </div>
+
+        @* ---------- 每日行程列表 ---------- *@
+        <div class="admin-table-card p-3 p-lg-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 mb-0" style="font-family:var(--font-display); color:var(--sea-800);"><i class="bi bi-calendar3"></i> 每日行程列表</h2>
+            </div>
+
+            @if (!Model.Nodes.Any())
+            {
+                <p class="text-muted small mb-0">這篇文章還沒有行程資料。</p>
+            }
+            else
+            {
+                var dayGroupsList = Model.Nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key).ToList();
+                for (var d = 0; d < dayGroupsList.Count; d++)
+                {
+                    var dayGroup = dayGroupsList[d];
+                    var isLastDay = d == dayGroupsList.Count - 1;
+                    var isFirstDay = d == 0;
+                    var dayNodes = dayGroup.ToList();
+                    <div class="day-group @(isLastDay ? "" : "has-next-day")">
+                        <div class="day-badge">@dayGroup.Key</div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="fw-medium">第 @dayGroup.Key 天丨@(dayNodes.Count) 個景點</div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary day-toggle" data-day-toggle="@dayGroup.Key">
+                                展開 <i class="bi @(isFirstDay ? "bi-chevron-up" : "bi-chevron-down")"></i>
+                            </button>
+                        </div>
+                        <div class="day-stops @(isFirstDay ? "expanded" : "")" data-day-stops="@dayGroup.Key">
+                            @foreach (var node in dayNodes)
+                            {
+                                <div class="itinerary-stop-card d-flex gap-3">
+                                    @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
+                                    {
+                                        <img src="@node.MediaUrl" alt="" class="itinerary-stop-image" />
+                                    }
+                                    <div class="flex-grow-1">
+                                        <div class="itinerary-stop-time">
+                                            @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
+                                            @if (!string.IsNullOrWhiteSpace(node.StayTime))
+                                            {
+                                                <text>（停留 @node.StayTime）</text>
+                                            }
+                                        </div>
+                                        <div class="itinerary-stop-title"><i class="bi bi-geo-alt-fill"></i> @node.LocationName</div>
+                                        @if (!string.IsNullOrWhiteSpace(node.Description))
+                                        {
+                                            <p class="text-secondary mb-1">@node.Description</p>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(node.Remarks))
+                                        {
+                                            <p class="text-muted small mb-0">備註：@node.Remarks</p>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        @* ---------- 文章資訊 ---------- *@
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-info-circle"></i> 文章資訊</h2>
+            <dl class="row small mb-0">
+                <dt class="col-5 text-muted">文章狀態</dt>
+                <dd class="col-7"><span class="status-pill @post.Status.ToPillClass()">@post.Status.ToLabel()</span></dd>
+                <dt class="col-5 text-muted">發布會員</dt>
+                <dd class="col-7 d-flex align-items-center gap-1">
+                    <span>@(post.Member?.Name ?? $"會員 #{post.MemberId}")</span>
+                    @if (MemberLookup.IsOfficial(post.Member))
+                    {
+                        <span class="official-badge">✓ 官方</span>
+                    }
+                </dd>
+                <dt class="col-5 text-muted">目的地</dt>
+                <dd class="col-7">@post.Destination</dd>
+                <dt class="col-5 text-muted">天數</dt>
+                <dd class="col-7">@post.TravelDays 天</dd>
+                <dt class="col-5 text-muted">旅遊人數</dt>
+                <dd class="col-7">@post.TravelPeople.ToLabel()</dd>
+                <dt class="col-5 text-muted">讚數</dt>
+                <dd class="col-7"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> @Model.LikeCount</dd>
+                <dt class="col-5 text-muted">收藏數</dt>
+                <dd class="col-7"><i class="bi bi-bookmark-fill text-warning"></i> @Model.FavoriteCount</dd>
+                <dt class="col-5 text-muted">建立時間</dt>
+                <dd class="col-7">@post.CreatedAt.ToString("yyyy/MM/dd HH:mm")</dd>
+                <dt class="col-5 text-muted">更新時間</dt>
+                <dd class="col-7">@(post.UpdatedAt?.ToString("yyyy/MM/dd HH:mm") ?? "—")</dd>
+            </dl>
+
+            @if (Model.Permissions.CanViewReport)
+            {
+                <div class="alert alert-warning py-2 px-3 mt-3 mb-0">
+                    <div class="fw-medium mb-1">審核提醒</div>
+                    <div class="small mb-2">此文章目前有待處理檢舉</div>
+                    <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostId" class="btn btn-sm btn-outline-warning">查看檢舉內容</a>
+                </div>
+            }
+        </div>
+
+        @* ---------- 提出檢舉：會員文章專用 ---------- *@
+        @if (Model.Permissions.CanReport)
+        {
+            <div id="report-section" class="admin-table-card p-3 p-lg-4 mb-3" style="scroll-margin-top: 1rem;">
+                <h2 class="h6 form-section-title mb-3"><i class="bi bi-flag"></i> 提出檢舉</h2>
+                <p class="small text-secondary mb-2">這是會員自己發表的文章，小編不能編輯或刪除，如果內容有問題可以在這裡提出檢舉，交給主管處理。</p>
+                <form asp-action="ReportPost" asp-route-id="@post.PostId" method="post">
+                    <div class="mb-2">
+                        <label class="form-label">檢舉類別</label>
+                        <select name="reasonCategory" class="form-select form-select-sm">
+                            @foreach (var category in Enum.GetValues<ReportReasonCategory>())
+                            {
+                                <option value="@category">@category.ToDisplayName()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">檢舉原因<span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control form-control-sm" rows="3" maxlength="200" required
+                              placeholder="請說明這篇文章有什麼問題"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-warning w-100">送出檢舉</button>
+                </form>
+            </div>
+        }
+
+        @* ---------- 審核資訊：檢舉次數/狀態/最後審核結果 ---------- *@
+        <div class="admin-table-card p-3 p-lg-4 mb-3">
+            <h2 class="h6 form-section-title mb-3"><i class="bi bi-shield-check"></i> 審核資訊</h2>
+            <dl class="row small mb-0">
+                <dt class="col-5 text-muted">目前狀態</dt>
+                <dd class="col-7">@Model.ReviewStatus</dd>
+                <dt class="col-5 text-muted">檢舉次數</dt>
+                <dd class="col-7">@Model.ReportCount 次</dd>
+                <dt class="col-5 text-muted">最後審核人</dt>
+                <dd class="col-7">@(Model.LastReviewer ?? "—")</dd>
+                <dt class="col-5 text-muted">最後處理時間</dt>
+                <dd class="col-7">@(Model.LastReviewedAt is DateTime lastReviewedAt ? lastReviewedAt.ToString("yyyy/MM/dd HH:mm") : "—")</dd>
+                <dt class="col-5 text-muted">處理備註</dt>
+                <dd class="col-7">@(Model.LastReviewNote ?? "—")</dd>
+            </dl>
+        </div>
+
+        @* ---------- 判斷是否有任何主管操作按鈕 ---------- *@
+        @{
+            bool hasSupervisorActions = Model.Permissions.CanRestore ||
+            Model.Permissions.CanViewReport ||
+            Model.Permissions.CanDismissReport ||
+            Model.Permissions.CanApprove ||
+            Model.Permissions.CanReturnToDraft ||
+            Model.Permissions.CanDelete;
+        }
+
+        @if (hasSupervisorActions)
+        {
+            @* 有權限才顯示主管操作的白色卡片 *@
+            <div class="admin-table-card p-3 p-lg-4">
+                <h2 class="h6 form-section-title mb-3">主管操作</h2>
+                <div class="d-flex flex-wrap justify-content-center gap-2 supervisor-actions">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-primary">返回列表</a>
+
+                    @if (Model.Permissions.CanRestore)
+                    {
+                        <form asp-action="Restore" asp-route-id="@post.PostId" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">還原文章</button>
+                        </form>
+                    }
+
+                    @if (Model.Permissions.CanViewReport)
+                    {
+                        <a asp-controller="Reports" asp-action="Index" asp-route-postId="@post.PostId" class="btn btn-sm btn-outline-warning">查看檢舉</a>
+                    }
+
+                    @if (Model.Permissions.CanDismissReport)
+                    {
+                        <form asp-action="DismissReport" asp-route-id="@post.PostId" method="post" class="d-inline"
+                              onsubmit="return confirm('確定要把「@post.Title」的檢舉判定為不成立嗎？');">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">檢舉不成立</button>
+                        </form>
+                    }
+
+                    @if (Model.Permissions.CanApprove)
+                    {
+                        <form asp-action="ToggleStatus" asp-route-id="@post.PostId" method="post" class="d-inline"
+                              onsubmit="return confirm('確定要通過「@post.Title」的審核，讓文章正式發布嗎？');">
+                            <input type="hidden" name="to" value="@VlogPostStatus.Published" />
+                            <input type="hidden" name="fromDetails" value="true" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">審核通過</button>
+                        </form>
+                    }
+
+                    @if (Model.Permissions.CanReturnToDraft)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#returnToDraftModal">
+                            退回草稿
+                        </button>
+                    }
+
+                    @if (Model.Permissions.CanDelete)
+                    {
+                        <form asp-action="Delete" asp-route-id="@post.PostId" method="post" class="d-inline"
+                              onsubmit="return confirm('確定要刪除「@post.Title」嗎？');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">刪除文章</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            @* 如果沒有任何主管權限 (例如小編)，只顯示一個乾淨的返回列表按鈕 *@
+            <div class="text-center mt-4">
+                <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-5 py-2">返回列表</a>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Permissions.CanReturnToDraft)
+{
+    @* ---------- 退回草稿彈窗：一定要填原因，小編才知道要改哪裡 ---------- *@
+    <div class="modal fade" id="returnToDraftModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" style="font-family:var(--font-display); color:var(--sea-800);">退回草稿</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <form asp-action="ToggleStatus" asp-route-id="@post.PostId" method="post">
+                    <div class="modal-body">
+                        <p class="small text-secondary mb-2">
+                            @(post.Status == VlogPostStatus.Published
+                                                    ? $"退回後讀者將看不到這篇文章「{post.Title}」，小編可以重新編輯後再送審一次。"
+                                                    : $"此文章「{post.Title}」將退回草稿狀態。")
+                    </p>
+                    <label class="form-label">退回原因<span class="text-danger">*</span></label>
+                    <textarea name="note" class="form-control" rows="3" maxlength="300" required
+                              placeholder="請說明需要修改的地方"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="to" value="@VlogPostStatus.Draft" />
+                        <input type="hidden" name="fromDetails" value="true" />
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">確認退回</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // 每一天的行程可以個別展開/收合，預設只展開第一天
+        document.querySelectorAll('.day-toggle').forEach(function (toggle) {
+            toggle.addEventListener('click', function () {
+                var day = toggle.getAttribute('data-day-toggle');
+                var panel = document.querySelector('.day-stops[data-day-stops="' + day + '"]');
+                if (!panel) { return; }
+
+                var expanded = panel.classList.toggle('expanded');
+                var icon = toggle.querySelector('i');
+                icon.className = expanded ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+            });
+        });
+    </script>
+}
