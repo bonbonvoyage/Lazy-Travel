@@ -1,0 +1,16 @@
+@{ Layout = null; ViewData["Title"] = "建立帳號"; }
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>建立帳號 - LazyTravel</title>
+<link rel="stylesheet" href="~/css/account-flow.css" asp-append-version="true" />
+</head>
+<body class="lt-account-page" data-register-page>
+<header class="lt-topbar"><a class="lt-brand" href="/"><img src="/img/logo.png" alt="" />LazyTravel</a><a class="lt-back" href="/">← 返回首頁</a></header>
+<main class="lt-welcome">
+<div><span class="lt-eyebrow">YOUR NEXT CHAPTER</span><h1>旅行不趕，<br />步伐剛剛好。</h1><p>慢一點，讓沿途的風景<br />與相遇的人，都成為你的故事。</p><button class="lt-primary" type="button" data-auth-open="register">開啟註冊面板 <span aria-hidden="true">→</span></button></div>
+<div class="lt-landscape" aria-hidden="true"><span class="lt-sun"></span><div class="lt-mountain lt-far"></div><div class="lt-mountain lt-near"></div><div class="lt-lake"></div><span class="lt-landscape-note">Collect moments,<br />not things.</span></div>
+</main>
+@await Html.PartialAsync("_AccountPanel")
+</body></html>

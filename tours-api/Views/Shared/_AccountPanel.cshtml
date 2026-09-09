@@ -1,0 +1,39 @@
+<link rel="stylesheet" href="~/css/account-flow.css" asp-append-version="true" />
+<dialog class="lt-auth-dialog" id="ltAuthDialog" aria-labelledby="ltAuthTitle">
+<div class="lt-drawer">
+<button type="button" class="lt-icon-button lt-close" data-auth-close aria-label="關閉帳號面板">×</button>
+<a class="lt-brand" href="/"><img src="/img/logo.png" alt="" />LazyTravel</a>
+<section data-auth-pane="register">
+<span class="lt-eyebrow">LET THE JOURNEY BEGIN</span><h2 id="ltAuthTitle">建立帳號</h2>
+<p class="lt-muted">加入 LazyTravel，開啟屬於你的旅程。</p>
+<p class="lt-preview-note">介面預覽：目前不會建立帳號，請勿輸入真實密碼。</p>
+<form id="ltRegisterForm">
+<label class="lt-field">電子信箱<input type="email" name="email" autocomplete="email" placeholder="name@example.com" required maxlength="254" /></label>
+<label class="lt-field">密碼<span class="lt-password"><input id="ltRegisterPassword" type="password" autocomplete="new-password" placeholder="至少 8 個字元（預覽規則）" required minlength="8" maxlength="128" /><button type="button" data-toggle-password="ltRegisterPassword" aria-label="顯示密碼">顯示</button></span></label>
+<label class="lt-field">確認密碼<span class="lt-password"><input id="ltConfirmPassword" type="password" autocomplete="new-password" placeholder="再次輸入密碼" required maxlength="128" /><button type="button" data-toggle-password="ltConfirmPassword" aria-label="顯示確認密碼">顯示</button></span></label>
+<label class="lt-checkbox"><input id="ltConsent" type="checkbox" required /><span>我同意服務條款與隱私政策<span class="lt-small">條款內容將於正式註冊上線前提供。</span></span></label>
+<p class="lt-error" id="ltRegisterError" role="alert"></p>
+<button class="lt-primary lt-full" type="submit">預覽資料設定 <span aria-hidden="true">→</span></button>
+</form>
+<p class="lt-switch">已經有帳號？ <button type="button" data-auth-switch="login">登入</button></p>
+</section>
+<section data-auth-pane="login" hidden>
+<span class="lt-eyebrow">GOOD TO SEE YOU AGAIN</span><h2>歡迎回來</h2><p class="lt-muted">登入，繼續你的下一段旅程。</p>
+<form id="ltLoginForm" action="/Auth/Login" method="post">
+@Html.AntiForgeryToken()
+<label class="lt-field">電子信箱<input name="Email" type="email" autocomplete="username" placeholder="name@example.com" required /></label>
+<label class="lt-field">密碼<span class="lt-password"><input id="ltLoginPassword" name="Password" type="password" autocomplete="current-password" required /><button type="button" data-toggle-password="ltLoginPassword" aria-label="顯示密碼">顯示</button></span></label>
+<label class="lt-checkbox"><input type="checkbox" name="RememberMe" value="true" />記住我</label>
+<p class="lt-error" id="ltLoginError" role="alert"></p><button class="lt-primary lt-full" type="submit">登入</button>
+</form>
+<p class="lt-switch">還沒有帳號？ <button type="button" data-auth-switch="register">建立帳號</button></p>
+</section>
+<section data-auth-pane="member" hidden>
+<h2>我的帳號</h2><p class="lt-muted">@User.Identity?.Name</p>
+<a class="lt-primary lt-full" href="/Members/Profile">前往個人中心 →</a>
+<p class="lt-muted">在個人中心編輯你的資料與旅行技能。</p>
+</section>
+<div class="lt-drawer-footer"><span aria-hidden="true">⌁</span> 慢慢走，遇見同路的人。</div>
+</div>
+</dialog>
+<script src="~/js/account-panel.js" asp-append-version="true" defer></script>
