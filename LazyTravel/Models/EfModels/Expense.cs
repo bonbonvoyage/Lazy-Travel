@@ -2,49 +2,32 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class Expense
 {
-    [Key]
-    [Column("ExpenseID")]
     public int ExpenseId { get; set; }
 
-    [Column("GroupID")]
     public int GroupId { get; set; }
 
-    [Column("PayerID")]
     public int PayerId { get; set; }
 
-    [Required]
-    [StringLength(100)]
     public string Title { get; set; }
 
-    [Column(TypeName = "decimal(18, 2)")]
     public decimal Amount { get; set; }
 
     public DateOnly ExpenseDate { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime? UpdatedAt { get; set; }
 
     public bool IsDelete { get; set; }
 
-    [InverseProperty("Expense")]
     public virtual ICollection<ExpenseSplit> ExpenseSplits { get; set; } = new List<ExpenseSplit>();
 
-    [ForeignKey("GroupId")]
-    [InverseProperty("Expenses")]
     public virtual TravelGroup Group { get; set; }
 
-    [ForeignKey("PayerId")]
-    [InverseProperty("Expenses")]
     public virtual Member Payer { get; set; }
 }

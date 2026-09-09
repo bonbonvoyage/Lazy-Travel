@@ -41,8 +41,10 @@
 }
 
 .groups-filter {
+    position: relative;
+    z-index: 2;
     display: grid;
-    grid-template-columns: repeat(3, minmax(160px, 1fr)) 52px;
+    grid-template-columns: repeat(2, minmax(160px, 1fr)) 52px;
     gap: 14px;
     align-items: center;
     margin-bottom: 22px;
@@ -95,6 +97,31 @@
     font: inherit;
     cursor: pointer;
 }
+
+#groupCountry { cursor: text; }
+
+.filter-country { position: relative; }
+.filter-country > label { font-size: 12px; white-space: nowrap; }
+.country-combobox { display: flex; align-items: center; min-width: 0; }
+.country-toggle {
+    display: grid; place-items: center; flex: 0 0 28px; height: 32px;
+    padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--accent);
+}
+.country-toggle:hover { background: var(--accent-soft); }
+.country-options {
+    position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 10;
+    max-height: 260px; overflow-y: auto; padding: 6px;
+    border: 1px solid var(--line); border-radius: 16px;
+    background: #fff; box-shadow: 0 12px 30px rgba(76, 101, 94, .16);
+    color: var(--ink); font-size: 14px;
+}
+.country-options [role="option"] { padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+.country-options [role="option"]:hover,
+.country-options .is-active,
+.country-options [aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+.country-empty { padding: 12px; color: var(--muted); }
+.country-error { position: absolute; top: 100%; left: 0; color: #a33b32; font-size: 12px; }
+.filter-country:has(.country-error:not([hidden])) { margin-bottom: 20px; }
 
 .filter-control-date .flatpickr-input[readonly] {
     cursor: pointer;
@@ -510,7 +537,7 @@
     }
 
     .groups-filter {
-        grid-template-columns: repeat(3, minmax(130px, 1fr)) 48px;
+        grid-template-columns: repeat(2, minmax(130px, 1fr)) 48px;
         gap: 8px;
         padding: 12px;
     }
@@ -521,6 +548,10 @@
 
     .filter-control span {
         display: none;
+    }
+    .filter-country > label {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip-path: inset(50%); white-space: nowrap;
     }
 }
 

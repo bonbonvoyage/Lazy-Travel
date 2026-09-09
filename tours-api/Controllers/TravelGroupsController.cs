@@ -168,7 +168,7 @@ namespace LazyTravel.Controllers
         }
 
         // GET /TravelGroups —— 公開揪團列表，篩選與分頁都在資料庫端完成。
-        public async Task<IActionResult> Index(string? country, string? region, string? startDate, string? endDate, string scope = "all", int page = 1)
+        public async Task<IActionResult> Index(string? country, string? startDate, string? endDate, string scope = "all", int page = 1)
         {
             const int pageSize = 6;
             page = Math.Max(page, 1);
@@ -184,9 +184,8 @@ namespace LazyTravel.Controllers
                 .OrderBy(x => x)
                 .ToListAsync();
 
-            region = NormalizeRegion(region);
-            var countriesByRegion = BuildCountryOptionsByRegion(allCountries);
-            var countries = GetCountryOptions(region, allCountries, countriesByRegion);
+            country = country?.Trim();
+            var countries = allCountries;
 
             if (!string.IsNullOrWhiteSpace(country) && !countries.Contains(country))
             {
@@ -197,11 +196,6 @@ namespace LazyTravel.Controllers
                 .Include(g => g.OwnerMember)
                 .Include(g => g.TravelGroupImages)
                 .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(region) && RegionCountryMap.TryGetValue(region, out var allowedCountries))
-            {
-                query = query.Where(g => g.Country != null && allowedCountries.Contains(g.Country));
-            }
 
             if (!string.IsNullOrWhiteSpace(country))
             {
@@ -283,10 +277,7 @@ namespace LazyTravel.Controllers
                 Groups = cards,
                 Countries = countries,
                 AllCountries = allCountries,
-                Regions = RegionCountryMap.Keys.ToList(),
-                CountriesByRegion = countriesByRegion,
                 Country = country,
-                Region = region,
                 StartDate = startDate,
                 EndDate = endDate,
                 Scope = scope,
@@ -700,6 +691,62 @@ namespace LazyTravel.Controllers
             _ => "未知狀態",
         };
 
+        // Room export is an independent draft snapshot; exporting again opens the same article.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExportArticle(int id)
+        {
+            var memberId = await GetOrCreateVisitorMemberIdAsync();
+            var group = await _context.TravelGroups.Include(g => g.TravelGroupImages)
+                .Include(g => g.TravelGroupItineraryItems).FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
+            if (group is null) return NotFound();
+            if (group.OwnerMemberId != memberId) return StatusCode(403, "只有團主可以匯出文章。");
+            if (group.ReviewStatus != TravelGroupReviewStatus.Normal) return BadRequest("此房間目前無法匯出。");
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            var existing = await _context.VlogPostRoomExports.FirstOrDefaultAsync(e => e.GroupId == id);
+            if (existing is not null)
+                return Json(new { redirectUrl = Url.Action("Edit", "Explore", new { id = existing.PostId }) });
+
+            var now = DateTime.Now;
+            var images = group.TravelGroupImages.Where(i => !i.IsDeleted && i.ImageType == 0)
+                .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).ToList();
+            var post = new VlogPost
+            {
+                MemberId = group.OwnerMemberId, Title = group.GroupTitle,
+                Destination = group.Country ?? "", Content = System.Net.WebUtility.HtmlEncode(group.Description ?? ""),
+                TravelDate = group.StartDate?.ToDateTime(TimeOnly.MinValue),
+                TravelDays = group.StartDate.HasValue && group.EndDate.HasValue
+                    ? Math.Max(1, group.EndDate.Value.DayNumber - group.StartDate.Value.DayNumber + 1) : 1,
+                TravelPeople = group.CurrentPeople <= 1 ? TravelGroupSize.Solo : group.CurrentPeople <= 4 ? TravelGroupSize.Small : TravelGroupSize.Large,
+                MediaUrl = images.FirstOrDefault()?.ImageUrl ?? "", MediaType = VlogMediaType.Photo,
+                Status = VlogPostStatus.Draft, CreatedAt = now, UpdatedAt = now,
+                ItineraryNodes = group.TravelGroupItineraryItems.OrderBy(i => i.DayNumber).ThenBy(i => i.SortOrder)
+                    .Select(i => new ItineraryNode
+                    {
+                        DayNumber = i.DayNumber,
+                        LocationName = (i.LocationName ?? i.Title ?? "")[..Math.Min(100, (i.LocationName ?? i.Title ?? "").Length)],
+                        ArrivalTime = i.StartTime, DepartureTime = i.EndTime,
+                        Description = (i.LocationName?.Length > 100 ? i.LocationName + "\n" : "") + (i.Description ?? ""),
+                        Remarks = i.Title ?? "", MediaUrl = "", MediaType = VlogMediaType.Photo
+                    }).ToList(),
+                VlogPostImages = images.Select((i, index) => new VlogPostImage
+                {
+                    ImageUrl = i.ImageUrl, ImageType = i.ImageType, AltText = i.AltText ?? "",
+                    IsCover = index == 0, SortOrder = index, CreatedAt = now, UpdatedAt = now,
+                    UploadedByMemberId = group.OwnerMemberId
+                }).ToList()
+            };
+            _context.VlogPosts.Add(post);
+            _context.VlogPostRoomExports.Add(new VlogPostRoomExport
+            {
+                Post = post, GroupId = group.GroupId, Country = group.Country ?? "", Region = group.Region ?? "",
+                People = group.CurrentPeople, ExportedAt = now
+            });
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return Json(new { redirectUrl = Url.Action("Edit", "Explore", new { id = post.PostId }) });
+        }
         // POST /TravelGroups/Join/5
         [HttpPost]
         [ValidateAntiForgeryToken]

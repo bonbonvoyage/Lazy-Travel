@@ -7,6 +7,15 @@ function escapeHtml(s) {
 
 const root = document.getElementById('tg-root');
 const groupId = root.dataset.groupId;
+document.querySelectorAll('[data-back-fallback]').forEach(button => {
+  button.addEventListener('click', () => {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.assign(button.dataset.backFallback || '/TravelGroups');
+  });
+});
 
 function getAntiForgeryToken() {
   return document.querySelector('#tg-antiforgery input[name="__RequestVerificationToken"]').value;
@@ -107,7 +116,7 @@ function renderActions(vm) {
   const messageBtn = `<button class="tg-btn tg-btn-ghost" disabled title="還沒有站內訊息功能">${chatIconSvg()}<span>私訊團主</span></button>`;
   const favoriteBtn = `<button class="tg-btn tg-btn-ghost" disabled title="還沒有收藏功能">${heartIconSvg()}<span>收藏房間</span></button>`;
   const reportBtn = `<button class="tg-btn tg-btn-ghost" disabled title="檢舉表單串接中">${flagIconSvg()}<span>檢舉房間</span></button>`;
-  const exportBtn = `<button class="tg-btn tg-btn-ghost" disabled title="匯出文章功能開發中">${photoIconSvg()}<span>匯出文章</span></button>`;
+  const exportBtn = `<button class="tg-btn tg-btn-ghost" id="tg-export-btn" type="button" title="將房間資訊匯出為文章草稿">${photoIconSvg()}<span>匯出文章</span></button>`;
 
   if (vm.viewerIsOwner) {
     return `<button class="tg-btn tg-btn-ghost" disabled>解散揪團</button><button class="tg-btn tg-btn-ghost" disabled>編輯揪團</button>${favoriteBtn}${reportBtn}${exportBtn}`;
@@ -138,7 +147,6 @@ function render(vm) {
     <div class="tg-gallery">${renderGallery(vm.galleryImageUrls)}</div>
 
     <div class="tg-grid">
-      <div>
         <section class="tg-heading-block">
           <div class="tg-title-row">
             <h1>${escapeHtml(vm.groupTitle)}</h1>
@@ -146,8 +154,9 @@ function render(vm) {
           </div>
           <div class="tg-desc">${escapeHtml(vm.description)}</div>
         </section>
+        <div class="tg-actions" id="tg-actions">${renderActions(vm)}</div>
 
-        <div class="tg-card">
+        <div class="tg-card tg-room-details">
           <h3>房間詳細</h3>
           <div class="tg-info-row"><span class="tg-label">國家</span><span class="tg-value">${escapeHtml(vm.country)}</span></div>
           <div class="tg-info-row"><span class="tg-label">地區</span><span class="tg-value">${escapeHtml(vm.region)}</span></div>
@@ -156,9 +165,7 @@ function render(vm) {
           <div class="tg-info-row"><span class="tg-label">最少成行</span><span class="tg-value">${vm.minPeople} 人</span></div>
           <div class="tg-info-row"><span class="tg-label">目前參加</span><span class="tg-value">${vm.currentPeople}/${vm.maxPeople} 人</span></div>
         </div>
-      </div>
-      <div>
-        <div class="tg-actions" id="tg-actions">${renderActions(vm)}</div>
+      <div class="tg-room-sidebar">
         <div class="tg-card">
           <h3>已加入的旅伴（${vm.members.length}/${vm.maxPeople}）</h3>
           <div class="tg-members">${renderMembers(vm.members)}</div>
@@ -187,6 +194,21 @@ function render(vm) {
     });
   });
 
+  document.getElementById('tg-export-btn')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const response = await fetch('/TravelGroups/ExportArticle/' + groupId, {
+        method: 'POST', headers: { RequestVerificationToken: getAntiForgeryToken() }
+      });
+      if (!response.ok) throw new Error(await response.text() || '匯出失敗，請稍後再試。');
+      const data = await response.json();
+      window.location.assign(data.redirectUrl);
+    } catch (error) {
+      alert(error.message);
+      button.disabled = false;
+    }
+  });
   document.getElementById('tg-join-btn')?.addEventListener('click', async (e) => {
     e.target.disabled = true;
     if (await postAction('Join')) {

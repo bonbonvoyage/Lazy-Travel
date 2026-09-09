@@ -21,6 +21,7 @@
 
         <main class="main">
             <form id="tg-antiforgery">@Html.AntiForgeryToken()</form>
+            <button class="page-back-button tg-back" type="button" data-back-fallback="@Url.Action("Index", "TravelGroups")" aria-label="返回上一頁">＜</button>
             <div class="content-wrap" id="tg-root" data-group-id="@groupId">
                 <div class="tg-loading" id="tg-loading">載入中…</div>
             </div>

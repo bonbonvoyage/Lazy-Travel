@@ -1,0 +1,160 @@
+@model LazyTravel.ViewModels.ExploreEditorViewModel
+@{
+    Layout = null;
+    var post = Model.Post;
+    var country = Model.Source?.Country ?? post.Destination;
+    var region = Model.Source?.Region ?? "";
+    var people = Model.Source is null ? post.TravelPeople.ToLabel() : $"{Model.Source.People} 人";
+    var days = Model.Nodes
+        .GroupBy(n => n.DayNumber)
+        .OrderBy(g => g.Key)
+        .Select(g => new
+        {
+            Day = g.Key,
+            Title = string.Join("、", g.Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
+            Route = string.Join(" → ", g.Select(n => string.IsNullOrWhiteSpace(n.Description) ? n.LocationName : n.Description).Where(n => !string.IsNullOrWhiteSpace(n))),
+            Note = string.Join("\n", g.Select(n => n.Remarks).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
+        })
+        .ToList();
+    var visibleDays = Math.Max(4, Math.Max(post.TravelDays, days.Count));
+    var cover = Model.Images.FirstOrDefault();
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>新增揪團文章 - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/explore-edit.css" asp-append-version="true" />
+</head>
+<body class="home-app article-editor-page">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "Explore")
+    <main class="main editor-main">
+        <form id="article-antiforgery">@Html.AntiForgeryToken()</form>
+        <button class="editor-link-back" type="button" aria-label="返回上一頁" data-back-fallback="@(Model.Source is null ? Url.Action("Index", "Explore") : Url.Action("Details", "TravelGroups", new { id = Model.Source.GroupId }))">＜</button>
+        <div class="editor-shell" data-post-id="@post.PostId">
+            <header class="editor-heading">
+                <h1>新增揪團文章</h1>
+            </header>
+
+            <section class="editor-top-grid">
+                <div class="editor-card basic-card">
+                    <h2>文章基本資訊</h2>
+                    <label class="editor-field full">
+                        <span>行程主題</span>
+                        <input id="articleTitle" type="text" value="@(post.Title == "未命名文章" ? "" : post.Title)" placeholder="輸入文章標題" maxlength="100" />
+                    </label>
+                    <label class="editor-field full intro-field">
+                        <span>旅程前言</span>
+                        <textarea id="articleIntro" rows="3" placeholder="寫下這趟旅程的前言、亮點或想分享給旅伴的心情...">@Model.PlainContent</textarea>
+                    </label>
+                    <label class="editor-field full highlight-field">
+                        <span>一句話亮點</span>
+                        <input id="articleHighlight" type="text" value="@Model.Highlight" placeholder="例如：慢下來，才看見關西春天真正的溫柔。" maxlength="180" />
+                    </label>
+                    <div class="editor-info-layout">
+                        <div class="trip-info">
+                            <h3>行程資訊</h3>
+                            <div><span>◎ 國家</span><strong>@(string.IsNullOrWhiteSpace(country) ? "未提供" : country)</strong></div>
+                            <div><span>⌖ 地區</span><strong>@(string.IsNullOrWhiteSpace(region) ? "未提供" : region)</strong></div>
+                            <div><span>▦ 旅遊日期</span><strong>@Model.DateRangeText</strong></div>
+                            <div><span>♙ 總人數</span><strong>@people</strong></div>
+                        </div>
+                        <div class="article-settings">
+                            <div class="setting-block">
+                                <span>文章狀態</span>
+                                <div class="status-toggle" role="group" aria-label="文章狀態" data-status-toggle>
+                                    <button class="active" type="button" data-status-value="draft">草稿</button>
+                                    <button type="button" data-status-value="submit">發布</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-card upload-card">
+                    <h2>圖片上傳</h2>
+                    <div class="photo-upload-grid">
+                        <div>
+                            <h3>封面圖片</h3>
+                            <input id="coverImageInput" class="upload-input" type="file" accept="image/*" />
+                            <button class="cover-preview upload-picker" type="button" data-file-target="coverImageInput">
+                                @if (!string.IsNullOrWhiteSpace(cover))
+                                {
+                                    <img src="@cover" alt="封面圖片" data-cover-preview />
+                                    <span class="upload-hint">點擊更換封面</span>
+                                }
+                                else
+                                {
+                                    <span class="empty-upload" data-cover-empty>＋<small>選擇封面圖片</small></span>
+                                }
+                            </button>
+                            <button class="remove-cover" type="button" aria-label="移除封面">×</button>
+                        </div>
+                        <div>
+                            <h3>補充照片</h3>
+                            <input id="supportImagesInput" class="upload-input" type="file" accept="image/*" multiple />
+                            <button class="support-upload upload-picker" type="button" data-file-target="supportImagesInput">
+                                <span>＋</span>
+                                <strong>新增圖片</strong>
+                                <small>最多可上傳 8 張</small>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="support-preview-area">
+                        <div class="support-large-preview" data-support-large>
+                            @if (Model.Images.Skip(1).FirstOrDefault() is { } firstSupport)
+                            {
+                                <img src="@firstSupport" alt="補充照片預覽" />
+                            }
+                            else
+                            {
+                                <span>尚未選擇補充照片</span>
+                            }
+                        </div>
+                        <div class="support-strip" aria-label="補充照片縮圖預覽" data-support-strip>
+                            @foreach (var image in Model.Images.Skip(1).Take(8))
+                            {
+                                <button type="button" class="support-thumb"><img src="@image" alt="補充照片" /></button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="itinerary-editor" aria-labelledby="itinerary-title">
+                <div class="section-title-row">
+                    <h2 id="itinerary-title">行程內容</h2>
+                    <button class="add-day" type="button" aria-label="新增一天">＋</button>
+                </div>
+                <div id="dayList">
+                    @for (var i = 1; i <= visibleDays; i++)
+                    {
+                        var day = days.FirstOrDefault(d => d.Day == i);
+                        <article class="day-edit-card" data-day>
+                            <strong>DAY @i</strong>
+                            <div class="day-fields">
+                                <input class="day-title" type="text" value="@day?.Title" placeholder="輸入每日標題（例如：大阪城公園、心齋橋逛街）" />
+                                <textarea class="day-route" rows="2" placeholder="描述當天的行程安排、美食、住宿或心得...">@day?.Route</textarea>
+                                <label class="note-row"><span>心得筆記</span><textarea class="day-note-input" rows="1" placeholder="寫下今天的旅行心得...">@day?.Note</textarea></label>
+                            </div>
+                            <button class="remove-day" type="button" aria-label="移除這一天">×</button>
+                        </article>
+                    }
+                </div>
+            </section>
+        </div>
+        <div class="editor-actions">
+            <button class="submit-article" type="button" data-action="save">▣ 儲存</button>
+        </div>
+    </main>
+</div>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/explore-edit.js" asp-append-version="true"></script>
+</body>
+</html>

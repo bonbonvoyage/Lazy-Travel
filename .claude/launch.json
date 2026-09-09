@@ -6,6 +6,12 @@
       "runtimeExecutable": "dotnet",
       "runtimeArgs": ["run", "--project", "LazyTravel", "--launch-profile", "http"],
       "port": 5180
+    },
+    {
+      "name": "tours-api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "tours-api", "--launch-profile", "http"],
+      "port": 5000
     }
   ]
 }

@@ -2,31 +2,18 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
-[PrimaryKey("BlockerId", "BlockedId")]
 public partial class Block
 {
-    [Key]
-    [Column("BlockerID")]
     public int BlockerId { get; set; }
 
-    [Key]
-    [Column("BlockedID")]
     public int BlockedId { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [ForeignKey("BlockedId")]
-    [InverseProperty("BlockBlockeds")]
     public virtual Member Blocked { get; set; }
 
-    [ForeignKey("BlockerId")]
-    [InverseProperty("BlockBlockers")]
     public virtual Member Blocker { get; set; }
 }

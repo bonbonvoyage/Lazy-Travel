@@ -2,26 +2,17 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class TravelGroup
 {
-    [Key]
-    [Column("GroupID")]
     public int GroupId { get; set; }
 
-    [Column("OwnerMemberID")]
     public int OwnerMemberId { get; set; }
 
-    [Required]
-    [StringLength(100)]
     public string GroupTitle { get; set; }
 
-    [StringLength(1000)]
     public string Description { get; set; }
 
     public DateOnly? StartDate { get; set; }
@@ -40,39 +31,39 @@ public partial class TravelGroup
 
     public bool IsPublic { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime UpdatedAt { get; set; }
 
     public bool IsDelete { get; set; }
 
-    [Required]
-    [StringLength(30)]
-    public string ReviewStatus { get; set; }
+    public TravelGroupReviewStatus ReviewStatus { get; set; }
 
-    [Required]
-    [StringLength(50)]
     public string Country { get; set; }
 
-    [Required]
-    [StringLength(100)]
     public string Region { get; set; }
 
-    [InverseProperty("Group")]
+    public string AccommType { get; set; }
+
+    public bool? CanShareRoom { get; set; }
+
+    public string AccommNote { get; set; }
+
     public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 
-    [InverseProperty("Group")]
-    public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
-
-    [InverseProperty("Group")]
     public virtual ICollection<GroupMember> GroupMembers { get; set; } = new List<GroupMember>();
 
-    [InverseProperty("Group")]
     public virtual ICollection<JoinRequest> JoinRequests { get; set; } = new List<JoinRequest>();
 
-    [ForeignKey("OwnerMemberId")]
-    [InverseProperty("TravelGroups")]
     public virtual Member OwnerMember { get; set; }
+
+    public virtual ICollection<TravelGroupBudget> TravelGroupBudgets { get; set; } = new List<TravelGroupBudget>();
+
+    public virtual ICollection<TravelGroupImage> TravelGroupImages { get; set; } = new List<TravelGroupImage>();
+
+    public virtual ICollection<TravelGroupItineraryItem> TravelGroupItineraryItems { get; set; } = new List<TravelGroupItineraryItem>();
+
+    public virtual ICollection<TravelGroupTag> TravelGroupTags { get; set; } = new List<TravelGroupTag>();
+
+    public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
 }

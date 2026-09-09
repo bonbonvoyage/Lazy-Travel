@@ -1,9 +1,42 @@
 /* 揪團找旅伴：行程詳情頁 */
+.main {
+  position: relative;
+}
+
+.page-back-button {
+  position: sticky;
+  top: 16px;
+  z-index: 6;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 12px 0 0 22px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: none;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.page-back-button:hover {
+  transform: translateX(-2px);
+  border-color: rgba(230, 238, 234, .3);
+  background: rgba(255, 255, 255, .3);
+  color: #111;
+  box-shadow: 0 8px 22px rgba(40, 63, 55, .08);
+}
 
 .content-wrap {
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: 24px 22px 28px;
+  padding: 12px 22px 28px;
 }
 
 .tg-loading,
@@ -81,8 +114,33 @@
   align-items: stretch;
 }
 
-.tg-card,
-.tg-actions {
+.tg-grid > .tg-heading-block,
+.tg-grid > .tg-actions {
+  align-self: start;
+  margin-bottom: 0;
+}
+
+.tg-grid > .tg-room-details {
+  margin-bottom: 0;
+}
+
+.tg-room-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tg-room-sidebar > .tg-card {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.tg-grid {
+  margin-bottom: 12px;
+}
+
+.tg-card {
   border: 1px solid rgba(255, 255, 255, .72);
   border-radius: 14px;
   background: rgba(255, 255, 255, .74);
@@ -165,7 +223,7 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
-  padding: 10px;
+  padding: 0;
   margin-bottom: 12px;
 }
 
@@ -412,6 +470,10 @@
 }
 
 @media (max-width: 760px) {
+  .page-back-button {
+    margin-left: 8px;
+  }
+
   .content-wrap {
     padding: 14px 8px 22px;
   }

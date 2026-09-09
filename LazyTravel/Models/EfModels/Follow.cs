@@ -2,37 +2,24 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class Follow
 {
-    [Key]
-    [Column("FollowID")]
     public int FollowId { get; set; }
 
-    [Column("FollowerID")]
     public int FollowerId { get; set; }
 
-    [Column("FolloweeID")]
     public int FolloweeId { get; set; }
 
     public byte Status { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime UpdatedAt { get; set; }
 
-    [ForeignKey("FolloweeId")]
-    [InverseProperty("FollowFollowees")]
     public virtual Member Followee { get; set; }
 
-    [ForeignKey("FollowerId")]
-    [InverseProperty("FollowFollowers")]
     public virtual Member Follower { get; set; }
 }

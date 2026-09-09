@@ -2,39 +2,20 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class MemberToken
 {
-    [Key]
-    [Column("TokenID")]
-    public int TokenId { get; set; }
+    public int UserId { get; set; }
 
-    [Column("MemberID")]
-    public int MemberId { get; set; }
-
-    [Required]
-    [StringLength(50)]
     public string LoginProvider { get; set; }
 
-    [Required]
-    [StringLength(50)]
     public string Name { get; set; }
 
-    [Required]
     public string Value { get; set; }
 
-    [Column(TypeName = "datetime")]
-    public DateTime? ExpiryTime { get; set; }
+    public DateTime ExpiresAt { get; set; }
 
-    [Column(TypeName = "datetime")]
-    public DateTime CreatedAt { get; set; }
-
-    [ForeignKey("MemberId")]
-    [InverseProperty("MemberTokens")]
-    public virtual Member Member { get; set; }
+    public virtual Member User { get; set; }
 }
