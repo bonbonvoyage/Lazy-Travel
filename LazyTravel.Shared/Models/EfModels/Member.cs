@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 
+Member · CS
+using Microsoft.AspNetCore.Identity;
+ 
 namespace LazyTravel.Shared.Models.EfModels;
-
+ 
 public partial class Member : IdentityUser<int>
 {
 	public string? City { get; set; }
@@ -22,7 +25,7 @@ public partial class Member : IdentityUser<int>
 	public DateTime? LastLoginAt { get; set; }
 	public string? LastLoginIp { get; set; }
 	public bool IsDelete { get; set; }
-
+ 
 	public virtual ICollection<Block> BlockBlockeds { get; set; } = new List<Block>();
 	public virtual ICollection<Block> BlockBlockers { get; set; } = new List<Block>();
 	public virtual ICollection<ExpenseSplit> ExpenseSplits { get; set; } = new List<ExpenseSplit>();

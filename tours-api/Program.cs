@@ -22,6 +22,9 @@ builder.Services.AddScoped<LazyTravel.Shared.Services.IMemberService, LazyTravel
 builder.Services.AddScoped<LazyTravel.Shared.Services.IMemberModerationService, LazyTravel.Shared.Services.MemberModerationService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IReportService, LazyTravel.Shared.Services.ReportService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IReportLookupService, LazyTravel.Shared.Services.ReportLookupService>();
+builder.Services.AddScoped<LazyTravel.Shared.Services.ICurrentMemberAccessor, LazyTravel.Shared.Services.CurrentMemberAccessor>();
+builder.Services.AddScoped<LazyTravel.Shared.Services.IMemberProfileService, LazyTravel.Shared.Services.MemberProfileService>();
+builder.Services.AddScoped<LazyTravel.Shared.Services.IContactBookService, LazyTravel.Shared.Services.ContactBookService>();
 
 // 圖床 (Cloudflare R2)
 builder.Services.AddSingleton<IAmazonS3>(sp =>

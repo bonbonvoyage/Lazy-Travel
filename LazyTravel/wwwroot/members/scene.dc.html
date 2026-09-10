@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="./image-slot.js"></script>
+<style>
+  body { margin: 0; background: #14100d; font-family: "Noto Sans TC", system-ui, sans-serif; }
+  a { color: #b4622f; text-decoration: none; }
+  a:hover { color: #8f4a20; }
+  input, textarea, button { font-family: inherit; }
+  input:focus, textarea:focus { outline: 1px solid #b4622f; }
+  @keyframes sealDrop {
+    0%   { transform: translateY(-300px) scale(2.5) rotate(-26deg); opacity: 0; }
+    38%  { opacity: 1; }
+    58%  { transform: translateY(0) scale(1.1) rotate(-7deg); opacity: 1; }
+    68%  { transform: translateY(-6px) scale(.93) rotate(-7deg); }
+    80%  { transform: translateY(0) scale(1.04) rotate(-7deg); }
+    100% { transform: translateY(0) scale(1) rotate(-7deg); opacity: 1; }
+  }
+  @keyframes mqLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes mqRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  @keyframes sealRing {
+    0%, 54% { opacity: 0; transform: scale(.35); }
+    60%     { opacity: .7; transform: scale(.8); }
+    100%    { opacity: 0; transform: scale(2.1); }
+  }
+  @keyframes sealDropB {
+    0%   { transform: translateY(-300px) scale(2.5) rotate(-26deg); opacity: 0; }
+    38%  { opacity: 1; }
+    58%  { transform: translateY(0) scale(1.1) rotate(-7deg); opacity: 1; }
+    68%  { transform: translateY(-6px) scale(.93) rotate(-7deg); }
+    80%  { transform: translateY(0) scale(1.04) rotate(-7deg); }
+    100% { transform: translateY(0) scale(1) rotate(-7deg); opacity: 1; }
+  }
+  @keyframes sealRingB {
+    0%, 54% { opacity: 0; transform: scale(.35); }
+    60%     { opacity: .7; transform: scale(.8); }
+    100%    { opacity: 0; transform: scale(2.1); }
+  }
+  @keyframes cloudDrift { from { transform: translateX(-70px); } to { transform: translateX(340px); } }
+  @keyframes planeFly { 0% { transform: translate(-90px,18px); } 100% { transform: translate(360px,-26px); } }
+  @keyframes twinkle { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+  @keyframes shootStar {
+    0%, 68% { opacity: 0; transform: translate(0,0) scale(.7); }
+    72%     { opacity: 1; }
+    100%    { opacity: 0; transform: translate(180px,120px) scale(1); }
+  }
+</style>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#b7a795"/><rect x="30" y="30" width="40" height="40" rx="3" fill="#fffdf7"/><text x="50" y="58" font-size="22" text-anchor="middle" fill="#b4622f" font-family="serif">旅</text></svg></template>
+</helmet>
+
+<div style="position:relative;width:1440px;height:900px;overflow:hidden;background:#0f0c09;perspective:1500px;perspective-origin:50% 40%;font-family:'Noto Sans TC',sans-serif;color:#2f2a24;user-select:none">
+
+  <!-- 鏡頭（左右轉視角） -->
+  <div style="position:absolute;inset:0;perspective:1500px;perspective-origin:50% 40%">
+
+  <!-- 牆（薄荷青） -->
+  <div style="position:absolute;left:-820px;top:0;width:2260px;height:272px;background:linear-gradient(180deg,#bcdadc 0%,#cfe8e7 44%,#a6c6c7 100%)"></div>
+  <div style="position:absolute;left:-820px;top:0;width:2260px;height:272px;background-image:repeating-linear-gradient(92deg,rgba(0,0,0,0.035) 0 1px,rgba(255,255,255,0.02) 1px 4px);opacity:.7"></div>
+  <div style="position:absolute;left:-820px;top:0;width:2260px;height:272px;pointer-events:none;background:{{ wallBloom }}"></div>
+
+  <!-- 窗（視角只看見下半部） -->
+  <div style="position:absolute;left:352px;top:-206px;width:702px;height:412px">
+    <div style="position:absolute;inset:0;border-radius:6px 6px 3px 3px;background:#4b3524;box-shadow:0 16px 34px rgba(24,15,8,0.42),inset 0 2px 0 rgba(255,255,255,0.12)"></div>
+    <div style="position:absolute;left:16px;top:16px;right:16px;bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;background:#3d2a1c">
+      <div style="position:relative;overflow:hidden;background:{{ glassStyle }}">
+        <sc-if value="{{ isDay }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:30px;top:188px;width:62px;height:62px;border-radius:50%;background:radial-gradient(circle,#fffaea 26%,#ffdf85 58%,rgba(255,214,110,0) 72%);box-shadow:0 0 46px rgba(255,222,146,.9)"></div>
+            <div style="position:absolute;left:0;top:236px;width:100%;height:40px;animation:cloudDrift 46s linear infinite">
+              <div style="position:absolute;left:0;top:14px;width:78px;height:16px;border-radius:12px;background:rgba(255,255,255,.82)"></div>
+              <div style="position:absolute;left:16px;top:4px;width:30px;height:24px;border-radius:50%;background:rgba(255,255,255,.86)"></div>
+              <div style="position:absolute;left:42px;top:8px;width:22px;height:20px;border-radius:50%;background:rgba(255,255,255,.8)"></div>
+            </div>
+            <div style="position:absolute;left:0;top:300px;width:100%;height:30px;animation:cloudDrift 72s linear infinite;animation-delay:-24s">
+              <div style="position:absolute;left:0;top:10px;width:56px;height:12px;border-radius:9px;background:rgba(255,255,255,.6)"></div>
+              <div style="position:absolute;left:12px;top:2px;width:22px;height:18px;border-radius:50%;background:rgba(255,255,255,.64)"></div>
+            </div>
+            <div style="position:absolute;left:120px;top:206px;width:150px;height:36px;animation:planeFly 26s linear infinite">
+              <div style="position:absolute;left:0;top:9px;width:52px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.75))"></div>
+              <div style="position:absolute;left:50px;top:1px;font-size:14px;line-height:1;color:#4b4033;transform:rotate(-30deg)">✈</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isNight }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:44px;top:198px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 3.2s ease-in-out infinite"></div>
+            <div style="position:absolute;left:110px;top:186px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 2.4s ease-in-out infinite;animation-delay:-.8s"></div>
+            <div style="position:absolute;left:180px;top:214px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 4s ease-in-out infinite;animation-delay:-1.6s"></div>
+            <div style="position:absolute;left:78px;top:262px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 2.8s ease-in-out infinite;animation-delay:-2.2s"></div>
+            <div style="position:absolute;left:236px;top:288px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3.6s ease-in-out infinite;animation-delay:-1.1s"></div>
+            <div style="position:absolute;left:150px;top:322px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 3s ease-in-out infinite;animation-delay:-.4s"></div>
+            <div style="position:absolute;left:34px;top:196px;width:64px;height:2px;transform:rotate(34deg);transform-origin:0 50%;animation:shootStar 9s linear infinite;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95))"></div>
+            <div style="position:absolute;left:120px;top:210px;width:150px;height:36px;animation:planeFly 30s linear infinite">
+              <div style="position:absolute;left:50px;top:1px;font-size:13px;line-height:1;color:#d9cdbb;transform:rotate(-30deg)">✈</div>
+              <div style="position:absolute;left:47px;top:13px;width:5px;height:5px;border-radius:50%;background:#ff5a4a;animation:twinkle 1.4s steps(1,end) infinite"></div>
+            </div>
+          </div>
+        </sc-if>
+        <div style="position:absolute;left:0;right:0;top:56%;height:1px;background:rgba(255,255,255,0.16)"></div>
+      </div>
+      <div style="position:relative;overflow:hidden;background:{{ glassStyle }}">
+        <sc-if value="{{ isDay }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:52px;top:196px;width:262px;height:140px;opacity:.34;filter:blur(1.6px);transform:rotate(9deg);mask-image:linear-gradient(78deg,rgba(0,0,0,.5) 8%,#000 38%,rgba(0,0,0,.55) 74%,rgba(0,0,0,0) 96%);-webkit-mask-image:linear-gradient(78deg,rgba(0,0,0,.5) 8%,#000 38%,rgba(0,0,0,.55) 74%,rgba(0,0,0,0) 96%);background:radial-gradient(circle at 50% 100%,rgba(0,0,0,0) 80px,#a86fd0 80px 85px,#6a8fe0 85px 90px,#5fc0b2 90px 95px,#f0dd78 95px 100px,#eda247 100px 105px,#df6357 105px 110px,rgba(0,0,0,0) 110px)"></div>
+            <div style="position:absolute;left:0;top:262px;width:100%;height:40px;animation:cloudDrift 58s linear infinite;animation-delay:-14s">
+              <div style="position:absolute;left:0;top:12px;width:92px;height:18px;border-radius:12px;background:rgba(255,255,255,.8)"></div>
+              <div style="position:absolute;left:20px;top:0;width:34px;height:28px;border-radius:50%;background:rgba(255,255,255,.86)"></div>
+              <div style="position:absolute;left:52px;top:6px;width:26px;height:22px;border-radius:50%;background:rgba(255,255,255,.78)"></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isNight }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:60px;top:224px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3.4s ease-in-out infinite"></div>
+            <div style="position:absolute;left:128px;top:196px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 2.6s ease-in-out infinite;animation-delay:-1.3s"></div>
+            <div style="position:absolute;left:96px;top:300px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3.8s ease-in-out infinite;animation-delay:-2.4s"></div>
+            <div style="position:absolute;left:212px;top:318px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3s ease-in-out infinite;animation-delay:-.6s"></div>
+          </div>
+        </sc-if>
+        <div style="position:absolute;left:0;right:0;top:56%;height:1px;background:rgba(255,255,255,0.16)"></div>
+        <div style="position:absolute;right:40px;top:192px;width:52px;height:52px;border-radius:50%;background:{{ moonStyle }}"></div>
+      </div>
+    </div>
+    <div style="position:absolute;left:-22px;right:-22px;bottom:-16px;height:22px;border-radius:3px;background:linear-gradient(180deg,#e0cdb4,#a98d6e);box-shadow:0 12px 22px rgba(28,17,8,0.45)"></div>
+  </div>
+
+  <!-- 布告欄（窗左側牆面）：便利貼 = 站內頁籤 -->
+  <div style="position:absolute;left:74px;top:26px;width:252px;height:222px;z-index:3">
+    <div style="position:absolute;inset:0;border-radius:4px;background:linear-gradient(180deg,#6b4a2e,#4d331e);box-shadow:0 14px 28px rgba(24,15,8,0.44),inset 0 1px 0 rgba(255,255,255,0.14)"></div>
+    <div style="position:absolute;left:13px;top:13px;right:13px;bottom:13px;border-radius:2px;background:#c39a63;background-image:radial-gradient(rgba(90,58,26,0.26) 1px,transparent 1.4px),radial-gradient(rgba(255,236,200,0.22) 1px,transparent 1.4px);background-size:7px 7px,11px 11px;background-position:0 0,4px 5px;box-shadow:inset 0 3px 10px rgba(70,42,16,0.4)"></div>
+    <div style="position:absolute;left:20px;top:19px;font-size:11px;letter-spacing:3px;color:rgba(74,46,20,0.6);font-family:'Noto Serif TC',serif">去哪裡</div>
+    <sc-for list="{{ boardNotes }}" as="n" hint-placeholder-count="3">
+      <div onClick="{{ n.onClick }}" title="{{ n.title }}" style="position:absolute;left:{{ n.x }};top:{{ n.y }};width:78px;height:80px;cursor:pointer;transform:rotate({{ n.rot }});transition:transform .24s cubic-bezier(.34,1.3,.5,1)" style-hover="transform:rotate(0deg) translateY(-5px) scale(1.07)">
+        <div style="position:absolute;left:2px;right:0;top:3px;bottom:-2px;background:rgba(52,30,8,0.3);filter:blur(5px);clip-path:polygon(1% 2%,99% 0,100% 98%,2% 100%)"></div>
+        <div style="position:absolute;inset:0;background:{{ n.bg }};clip-path:polygon(0.8% 1.8%,99.2% 0,100% 98.2%,1.6% 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,0.5)">
+          <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(96deg,rgba(255,255,255,0.14) 0 1px,rgba(0,0,0,0.012) 1px 3px),repeating-linear-gradient(4deg,rgba(0,0,0,0.02) 0 1px,rgba(255,255,255,0.05) 1px 4px);opacity:.9"></div>
+          <div style="position:absolute;left:0;right:0;top:0;height:15px;background:linear-gradient(180deg,rgba(255,255,255,0.5),rgba(255,255,255,0))"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:22px;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(90,58,18,0.14))"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:7px;font-size:17px;letter-spacing:2px;color:{{ n.fg }};font-family:'Noto Serif TC',serif;transform:rotate(-1.2deg);text-shadow:0 1px 0 rgba(255,255,255,0.45)">{{ n.label }}</div>
+        </div>
+        <div style="position:absolute;right:0;bottom:0;width:20px;height:20px;clip-path:polygon(100% 0,100% 100%,0 100%);background:linear-gradient(315deg,#fffdf6 42%,rgba(120,88,40,0.28) 46%,rgba(120,88,40,0.06));box-shadow:-2px -2px 5px rgba(70,44,14,0.22)"></div>
+        <div style="position:absolute;left:50%;top:2px;margin-left:-5px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff6f2,#c0402f 58%,#6d1f16);box-shadow:0 3px 4px rgba(40,20,6,0.45),inset 0 -1px 1px rgba(0,0,0,0.3)"></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- 窗右側牆面：掛牌（攤平閱讀 / 登入登出） -->
+  <div style="position:absolute;left:1146px;top:58px;width:224px;height:206px;z-index:3">
+    <div style="position:absolute;left:0;top:0;width:224px;height:15px;border-radius:3px;background:linear-gradient(180deg,#7a5636,#4e3520);box-shadow:0 6px 14px rgba(24,15,8,0.4),inset 0 1px 0 rgba(255,255,255,0.16)"></div>
+    <sc-for list="{{ wallTags }}" as="t" hint-placeholder-count="2">
+      <div onClick="{{ t.onClick }}" style="position:absolute;left:{{ t.x }};top:15px;width:96px;cursor:pointer;transform-origin:50% 0;transform:rotate({{ t.rot }});transition:transform .28s" style-hover="transform:rotate(0deg)">
+        <div style="width:2px;height:{{ t.rope }};margin:0 auto;background:linear-gradient(180deg,#8d7350,#b39a72)"></div>
+        <div style="position:relative;padding:11px 8px 12px;border-radius:5px;text-align:center;background:linear-gradient(160deg,#fdf6e6,#e6d6ba);box-shadow:0 8px 16px rgba(30,18,8,0.34),inset 0 1px 0 rgba(255,255,255,0.7)">
+          <div style="position:absolute;left:50%;top:5px;margin-left:-5px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#fff0c8,#b8903f 60%,#6f5320)"></div>
+          <div style="margin-top:9px;font-size:10px;letter-spacing:2px;color:#a08a68">{{ t.hint }}</div>
+          <div style="margin-top:4px;font-size:14px;letter-spacing:2px;color:#6a4a2a;font-family:'Noto Serif TC',serif">{{ t.label }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- 桌面 -->
+  <div style="position:absolute;left:-460px;top:262px;width:2360px;height:1500px;transform-origin:50% 0%;transform:rotateX(64deg);background:#eae4db;background-image:repeating-linear-gradient(89.4deg,rgba(96,63,33,0.13) 0 2px,rgba(255,240,214,0.09) 2px 6px,rgba(96,63,33,0.07) 6px 11px,rgba(255,240,214,0.045) 11px 19px,rgba(96,63,33,0.10) 19px 23px,rgba(255,240,214,0.03) 23px 34px),repeating-linear-gradient(90.7deg,rgba(80,50,24,0.07) 0 5px,rgba(255,244,222,0.05) 5px 14px,rgba(80,50,24,0.05) 14px 27px),repeating-linear-gradient(90deg,rgba(0,0,0,0) 0 268px,rgba(84,54,26,0.34) 268px 273px),linear-gradient(180deg,#d7cfc3 0%,#efe9e0 38%,#f7f3ed 100%)"></div>
+  <div style="position:absolute;left:-820px;top:250px;width:2260px;height:70px;background:linear-gradient(180deg,rgba(64,58,48,0.34),rgba(64,58,48,0))"></div>
+  <div style="position:absolute;left:-820px;top:262px;width:2260px;height:638px;pointer-events:none;background:{{ lightPool }}"></div>
+
+  <!-- 旅遊手帳 -->
+  <div style="position:absolute;left:132px;top:266px;width:900px;height:600px;z-index:6;transform-origin:50% 100%;transition:transform .55s cubic-bezier(.3,.85,.2,1);transform:{{ journalXf }};filter:drop-shadow(0 34px 40px rgba(18,10,4,0.55))">
+    <div style="position:absolute;left:-12px;top:-10px;right:-12px;bottom:-14px;border-radius:8px;background:linear-gradient(160deg,#8d5a33,#6b4022)"></div>
+    <div style="position:absolute;inset:0;display:flex;background:#f4ecdd;border-radius:4px;overflow:hidden;box-shadow:inset 0 0 60px rgba(120,92,55,0.22)">
+
+      <!-- 左頁 -->
+      <div style="position:relative;width:450px;height:600px;padding:26px 24px;box-sizing:border-box;background:linear-gradient(90deg,#f7f1e4,#efe6d4)">
+        <sc-if value="{{ isSpreadOne }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:20px">
+            <div style="width:132px;flex:none">
+              <div style="width:132px;height:173px;box-sizing:border-box;border:1px solid #cdbfa6;padding:9px 9px 22px;background:#fffdf7;box-shadow:0 3px 8px rgba(90,66,36,0.18)">
+                <image-slot id="member-avatar" shape="rect" placeholder="點一下上傳大頭貼" style="width:112px;height:142px"></image-slot>
+              </div>
+              <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+                <div style="margin-top:6px;font-size:11px;line-height:1.6;color:#a2917a;text-align:center">點圖框選檔，或直接拖圖進來</div>
+              </sc-if>
+              <sc-if value="{{ showRelationBtns }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+                  <sc-if value="{{ notBlocked }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <div onClick="{{ toggleFollow }}" style="cursor:pointer;text-align:center;font-size:12.5px;padding:8px 10px;border:1px solid #b4622f;color:#b4622f;background:#fdf6e9" style-hover="background:#b4622f;color:#fff">{{ followLabel }}</div>
+                      <div onClick="{{ requestFriend }}" style="cursor:pointer;text-align:center;font-size:12.5px;padding:8px 10px;border:1px solid #6b5a45;color:#4b4033;background:#fdf6e9" style-hover="background:#4b4033;color:#fdf6e9">{{ friendLabel }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;justify-content:center;align-items:center;gap:7px;font-size:11px;color:#8d7c64">
+                    <div onClick="{{ toggleBlock }}" style="cursor:pointer;text-decoration:underline" style-hover="color:#a33227">{{ blockLabel }}</div>
+                    <div style="color:#cdbda2">|</div>
+                    <div onClick="{{ openReport }}" style="cursor:pointer;text-decoration:underline" style-hover="color:#a33227">檢舉</div>
+                  </div>
+                  <sc-if value="{{ reportSent }}" hint-placeholder-val="{{ false }}">
+                    <div style="text-align:center;font-size:11px;color:#2f7d6b">檢舉已送出</div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px">
+                <div style="font-family:'Noto Serif TC',serif;font-size:30px;font-weight:600;letter-spacing:.5px">{{ profile.nickname }}</div>
+                <div style="font-size:12px;padding:3px 9px;border-radius:3px;color:#fff;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;background:{{ mbtiColor }}">{{ profile.mbti }}</div>
+                <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ false }}">
+                  <div onClick="{{ openEdit }}" title="編輯基本資料" style="cursor:pointer;font-size:14px;color:#a08d72;padding:2px 5px;border:1px solid #d8c9ae;border-radius:3px;line-height:1" style-hover="color:#b4622f;border-color:#b4622f">✎</div>
+                </sc-if>
+              </div>
+              <div style="margin-top:5px;font-size:11px;color:#9b8a71;letter-spacing:1px">{{ mbtiGroup }}</div>
+              <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:11px 14px">
+                <sc-for list="{{ fieldRows }}" as="f" hint-placeholder-count="6">
+                  <div style="border-bottom:1px dotted #cdbda2;padding-bottom:5px">
+                    <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">{{ f.label }}</div>
+                    <div style="margin-top:2px;font-size:15px;color:#453c31">{{ f.value }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;border-top:1px solid #2f2a24;border-bottom:1px solid #2f2a24;padding:11px 0;display:grid;grid-template-columns:1fr 1fr 1fr">
+            <div style="text-align:center">
+              <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">信用評分</div>
+              <div style="margin-top:4px;font-size:18px;color:#2f7d6b;font-family:'IBM Plex Mono',monospace">{{ stats.credit }}</div>
+            </div>
+            <div style="text-align:center;border-left:1px dotted #cdbda2;border-right:1px dotted #cdbda2">
+              <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">揪團次數</div>
+              <div style="margin-top:4px;font-size:18px;color:#453c31;font-family:'IBM Plex Mono',monospace">{{ stats.groups }}</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">旅遊次數</div>
+              <div style="margin-top:4px;font-size:18px;color:#453c31;font-family:'IBM Plex Mono',monospace">{{ stats.trips }}</div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">自我介紹</div>
+              <sc-if value="{{ bioEditable }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ editBio }}" title="修改自介" style="cursor:pointer;font-size:12px;color:#b0a08a;padding:1px 4px;border:1px solid #d8c9ae;border-radius:3px;line-height:1.3" style-hover="color:#b4622f;border-color:#b4622f">✎</div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ bioEditing }}" hint-placeholder-val="{{ false }}">
+              <textarea value="{{ profile.bio }}" onChange="{{ changeBio }}" onBlur="{{ saveBio }}" style="width:100%;height:104px;margin-top:8px;font-size:14.5px;line-height:1.85;border:1px solid #b4622f;background:#fff8e9;padding:8px;box-sizing:border-box;resize:none;color:#453c31"></textarea>
+            </sc-if>
+            <sc-if value="{{ bioReading }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:8px;font-size:14.5px;line-height:1.9;color:#4e4437;text-wrap:pretty">{{ profile.bio }}</div>
+            </sc-if>
+          </div>
+
+        </sc-if>
+
+        <sc-if value="{{ isSpreadTwo }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:6px;border-bottom:1px solid #d8c9ae;padding-bottom:10px">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+              <div onClick="{{ t.onClick }}" style="cursor:pointer;font-size:13px;padding:6px 11px;border-radius:12px 12px 3px 3px;border:1px solid #cbb99a;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}<span style="font-family:'IBM Plex Mono',monospace;opacity:.6;margin-left:5px">{{ t.count }}</span></div>
+            </sc-for>
+          </div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;height:462px;overflow:auto">
+            <sc-for list="{{ leftList }}" as="p" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 11px;background:#fffaee;border:1px solid #e3d6bd">
+                <div style="width:42px;height:42px;flex:none;border-radius:2px;background:#d8c2a4;color:#5b4630;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-size:19px">{{ p.initial }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:15px;font-weight:500">{{ p.name }}</div>
+                  <div style="margin-top:2px;font-size:11.5px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">{{ p.meta }}</div>
+                </div>
+                <sc-for list="{{ p.actions }}" as="a" hint-placeholder-count="1">
+                  <div onClick="{{ a.onClick }}" style="cursor:pointer;font-size:12px;padding:5px 11px;border:1px solid #b09a78;color:#5b4c39;background:#f6eddb" style-hover="border-color:#b4622f;color:#b4622f">{{ a.label }}</div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;color:#a2917a;padding:24px 4px;text-align:center">沒有符合的名單</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSpreadTwo }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ prevPage }}" title="上一頁" style="position:absolute;left:0;bottom:0;width:74px;height:74px;cursor:pointer;background:linear-gradient(45deg,#e5d8bf 48%,rgba(0,0,0,0) 50%)" style-hover="background:linear-gradient(45deg,#cbb99a 48%,rgba(0,0,0,0) 50%)">
+            <div style="position:absolute;left:11px;bottom:10px;font-size:11px;color:#6b5b45;font-family:'IBM Plex Mono',monospace">‹ 1</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- 書溝 -->
+      <div style="width:0;position:relative"><div style="position:absolute;left:-13px;top:0;width:26px;height:600px;background:linear-gradient(90deg,rgba(102,74,38,0),rgba(102,74,38,0.28) 46%,rgba(102,74,38,0.3) 54%,rgba(102,74,38,0))"></div></div>
+
+      <!-- 右頁 -->
+      <div style="position:relative;width:450px;height:600px;padding:26px 24px;box-sizing:border-box;background:linear-gradient(90deg,#ece2ce,#f7f1e4)">
+        <sc-if value="{{ isSpreadOne }}" hint-placeholder-val="{{ true }}">
+          <div style="position:relative;height:40px">
+            <div onClick="{{ stampSeal }}" title="信任徽章 · 已驗證旅伴（點擊重新蓋章）" style="position:absolute;right:2px;top:-6px;width:78px;height:78px;cursor:pointer;transform:rotate(-7deg);animation:{{ sealAnim }};z-index:7">
+              <div style="position:absolute;inset:-12px;border-radius:50%;border:2px solid #8e2b26;opacity:0;animation:{{ sealRingAnim }}"></div>
+              <div style="position:absolute;inset:0;border-radius:48% 52% 51% 49%/53% 47% 53% 47%;background:radial-gradient(circle at 33% 26%,#c4483c,#8f2620 54%,#5c1511);box-shadow:0 4px 9px rgba(52,12,8,.48),inset 0 0 14px rgba(255,196,176,.3),inset 0 -4px 7px rgba(0,0,0,.4)">
+                <div style="position:absolute;inset:8px;border-radius:50%;border:1px dashed rgba(255,214,196,.42)"></div>
+                <div style="position:absolute;inset:14px;border-radius:50%;border:1px solid rgba(90,18,14,.55);display:flex;align-items:center;justify-content:center">
+                  <div style="font-family:'Noto Serif TC',serif;font-size:23px;font-weight:700;color:#f0c3ae;text-shadow:0 1px 0 rgba(70,14,10,.85),0 -1px 0 rgba(255,205,185,.35)">旅</div>
+                </div>
+              </div>
+              <div style="position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);white-space:nowrap;font-size:9px;letter-spacing:2px;color:#8f7a5e;font-family:'IBM Plex Mono',monospace">VERIFIED</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;align-items:center;gap:8px">
+            <div style="font-size:12px;color:#9b8a71;letter-spacing:2px">旅行技能標籤</div>
+            <div style="font-size:11px;color:#bbab92;font-family:'IBM Plex Mono',monospace">{{ tagCountText }}</div>
+            <div onClick="{{ openSkills }}" title="{{ skillBtnTitle }}" style="cursor:pointer;font-size:12px;color:#b0a08a;padding:1px 4px;border:1px solid #d8c9ae;border-radius:3px;line-height:1.3" style-hover="color:#b4622f;border-color:#b4622f">{{ skillBtnIcon }}</div>
+          </div>
+          <div onClick="{{ openSkills }}" onMouseEnter="{{ pauseMarquee }}" onMouseLeave="{{ resumeMarquee }}" title="點擊查看全部技能標籤" style="margin-top:11px;cursor:pointer;display:flex;flex-direction:column;gap:8px;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)">
+            <div style="display:flex;width:max-content;gap:8px;animation:mqLeft 30s linear infinite;animation-play-state:{{ mqPlay }}">
+              <sc-for list="{{ marqueeA }}" as="t" hint-placeholder-count="10">
+                <div title="{{ t.note }}" style="flex:none;font-size:13.5px;padding:5px 12px;border-radius:14px;background:#e6dcc6;color:#4d4132;border:1px solid #d3c3a4;white-space:nowrap">{{ t.label }}</div>
+              </sc-for>
+            </div>
+            <div style="display:flex;width:max-content;gap:8px;animation:mqRight 36s linear infinite;animation-play-state:{{ mqPlay }}">
+              <sc-for list="{{ marqueeB }}" as="t" hint-placeholder-count="10">
+                <div title="{{ t.note }}" style="flex:none;font-size:13.5px;padding:5px 12px;border-radius:14px;background:#efe7d6;color:#5b4c39;border:1px solid #ded0b3;white-space:nowrap">{{ t.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top:22px;height:1px;background:#2f2a24;opacity:.75"></div>
+          <div style="margin-top:15px;display:flex;align-items:center;gap:8px">
+            <div style="font-size:12px;color:#9b8a71;letter-spacing:2px">旅遊 DNA</div>
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ toggleDnaEdit }}" title="修改旅遊 DNA" style="cursor:pointer;font-size:12px;color:#b0a08a;padding:1px 4px;border:1px solid #d8c9ae;border-radius:3px;line-height:1.3" style-hover="color:#b4622f;border-color:#b4622f">✎</div>
+            </sc-if>
+          </div>
+          <div style="margin-top:11px">
+            <div style="font-size:10px;letter-spacing:1.5px;color:#b7a78e;font-family:'IBM Plex Mono',monospace">CORE · 核心取向</div>
+            <div style="margin-top:9px;display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ dnaCore }}" as="d" hint-placeholder-count="4">
+                <div style="border:1px solid #e0d4ba;background:#fdf9ef;padding:9px 12px">
+                  <div onClick="{{ d.onToggle }}" style="cursor:pointer;display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;font-size:14px;color:#4e4437">{{ d.label }}</div>
+                    <div style="font-size:13px;color:#b4622f;white-space:nowrap">{{ d.tier }}</div>
+                    <div style="font-size:12px;color:#b4622f;font-family:'IBM Plex Mono',monospace">{{ d.pctText }}</div>
+                    <div style="font-size:10px;color:#c0b096;font-family:'IBM Plex Mono',monospace">{{ d.caret }}</div>
+                  </div>
+                  <div style="margin-top:7px;height:5px;background:#ddd0b6;position:relative">
+                    <div style="position:absolute;left:0;top:0;height:5px;background:#b4622f;width:{{ d.width }}"></div>
+                  </div>
+                  <sc-if value="{{ d.open }}" hint-placeholder-val="{{ false }}">
+                    <div>
+                      <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:#a2917a;font-family:'IBM Plex Mono',monospace">
+                        <span>{{ d.poleLeft }}</span><span>{{ d.poleRight }}</span>
+                      </div>
+                      <sc-if value="{{ d.editing }}" hint-placeholder-val="{{ false }}">
+                        <input type="range" min="0" max="100" value="{{ d.pct }}" onChange="{{ d.onChange }}" style="width:100%;margin-top:5px;accent-color:#b4622f" />
+                      </sc-if>
+                      <div style="margin-top:6px;font-size:13px;line-height:1.8;color:#6d5e49;text-wrap:pretty">{{ d.note }}</div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <sc-if value="{{ canFlip }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ nextPage }}" title="下一頁" style="position:absolute;right:0;bottom:0;width:74px;height:74px;cursor:pointer;background:linear-gradient(-45deg,#dfd2b8 48%,rgba(0,0,0,0) 50%)" style-hover="background:linear-gradient(-45deg,#cbb99a 48%,rgba(0,0,0,0) 50%)">
+              <div style="position:absolute;right:11px;bottom:10px;font-size:11px;color:#6b5b45;font-family:'IBM Plex Mono',monospace">2 ›</div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ isSpreadTwo }}" hint-placeholder-val="{{ false }}">
+          <div style="padding-top:2px">
+            <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">搜尋 · {{ tabTitle }}</div>
+            <input value="{{ query }}" onChange="{{ changeQuery }}" placeholder="輸入暱稱搜尋…" style="margin-top:10px;width:100%;box-sizing:border-box;font-size:14.5px;padding:9px 11px;border:1px solid #cbb99a;background:#fffaee" />
+            <div style="margin-top:20px;font-size:13.5px;line-height:2;color:#7b6a53;border-top:1px dotted #cdbda2;padding-top:14px">
+              <div>好友 {{ counts.friends }} 人 · 追蹤 {{ counts.following }} 人 · 黑名單 {{ counts.blocked }} 人</div>
+              <div>待處理好友申請 <span style="color:#b4622f">{{ counts.requests }}</span> 件</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{ flipping }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ flipSheet }}"></div>
+    </sc-if>
+  </div>
+
+  <!-- 機票（夾在手帳右頁，露出一截） -->
+  <div onClick="{{ openTicket }}" style="position:absolute;left:740px;top:148px;width:216px;height:190px;z-index:4;cursor:pointer;transform-origin:50% 100%;transition:transform .55s cubic-bezier(.3,.85,.2,1);transform:{{ ticketXf }};filter:drop-shadow(0 10px 16px rgba(20,12,4,0.4))">
+    <div style="position:absolute;inset:0;transition:transform .32s cubic-bezier(.2,.7,.2,1)" style-hover="transform:translateY(-34px)">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,#fdfaf3,#f2e9d8);border:1px solid #d9c9a9;border-radius:3px 3px 0 0;padding:13px 12px;box-sizing:border-box;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:10px;letter-spacing:2px;color:#b4622f;font-family:'IBM Plex Mono',monospace">BOARDING</div>
+        <div style="font-size:12px;color:#b4622f">✈</div>
+      </div>
+      <div style="margin-top:9px;height:1px;background:#dccdae"></div>
+      <div style="margin-top:11px;font-family:'Noto Serif TC',serif;font-size:16px;font-weight:600">{{ profile.nickname }}</div>
+      <div style="margin-top:4px;font-size:10.5px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">{{ ticketMeta }}</div>
+      <div style="margin-top:12px;font-size:10px;color:#a2917a;letter-spacing:1px">點擊查看登機證</div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:34px;background:linear-gradient(180deg,rgba(90,66,36,0),rgba(90,66,36,0.28))"></div>
+    </div>
+    </div>
+  </div>
+
+  <!-- 行李吊牌 -->
+  <div onClick="{{ openTag }}" style="position:absolute;left:1112px;top:404px;width:212px;height:296px;z-index:5;cursor:pointer;transform-origin:50% 100%;transform:rotateX(24deg) rotateZ(11deg);filter:drop-shadow(0 20px 24px rgba(18,10,4,0.5));transition:transform .3s ease" style-hover="transform:rotateX(24deg) rotateZ(11deg) translateY(-10px)">
+    <div style="position:absolute;inset:0;border-radius:18px;background:linear-gradient(150deg,rgba(255,255,255,0.62),rgba(255,255,255,0.28));border:1px solid rgba(255,255,255,0.6);backdrop-filter:blur(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),inset 0 -2px 6px rgba(120,110,96,0.16)"></div>
+    <div style="position:absolute;left:50%;top:9px;margin-left:-13px;width:26px;height:26px;border-radius:50%;background:rgba(90,84,74,0.5);box-shadow:inset 0 0 0 3px rgba(255,255,255,0.85)"></div>
+    <div style="position:absolute;left:14px;top:44px;right:14px;bottom:14px;border-radius:11px;background:linear-gradient(120deg,#f7f1e4,#efe6d4);padding:14px 13px 36px;box-sizing:border-box;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 1px 3px rgba(120,100,70,0.18);filter:{{ tagBlur }}">
+      <div style="font-size:11px;letter-spacing:2px;color:{{ tagStateColor }};font-family:'IBM Plex Mono',monospace">{{ tagStateLabel }}</div>
+      <div style="margin-top:8px;height:1px;background:#e5d9c2"></div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden">
+        <sc-for list="{{ contactPreview }}" as="c" hint-placeholder-count="3">
+          <div>
+            <div style="font-size:9.5px;color:#9b8a71;letter-spacing:1px">{{ c.label }}</div>
+            <div style="font-size:12.5px;color:#3d342a;font-family:'IBM Plex Mono',monospace">{{ c.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position:absolute;left:13px;right:13px;bottom:9px;display:flex;align-items:center;gap:5px;font-size:10px;color:#a2917a"><img src="./assets/fish-logo.png" alt="" style="width:18px;height:18px;object-fit:contain;image-rendering:pixelated" />通訊錄 · 點擊放大</div>
+    </div>
+    <sc-if value="{{ tagLocked }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:14px;top:44px;right:14px;bottom:14px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(247,241,228,0.4);opacity:0;transition:opacity .25s" style-hover="opacity:1">
+        <div style="font-size:12px;padding:7px 12px;background:#3d342a;color:#f6eddb;border-radius:3px">成為好友解鎖通訊錄</div>
+      </div>
+    </sc-if>
+  </div>
+
+  </div>
+
+  <!-- 教學導覽 -->
+  <sc-if value="{{ tourOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60">
+      <div style="position:absolute;left:0;top:0;width:1440px;height:900px;perspective:1500px;perspective-origin:50% 40%">
+        <div onClick="{{ tourNext }}" style="position:absolute;left:{{ tour.x }};top:{{ tour.y }};width:{{ tour.w }};height:{{ tour.h }};border-radius:{{ tour.r }};cursor:pointer;transform-origin:{{ tour.o }};transform:{{ tour.xf }};box-shadow:0 0 0 9999px rgba(18,22,22,0.62),inset 0 0 0 2px rgba(255,253,240,0.9);transition:left .38s cubic-bezier(.4,0,.2,1),top .38s cubic-bezier(.4,0,.2,1),width .38s,height .38s,transform .38s"></div>
+      </div>
+      <div style="position:absolute;left:{{ tour.bx }};top:{{ tour.by }};width:276px;transform:rotate(-0.8deg);transition:left .38s cubic-bezier(.4,0,.2,1),top .38s cubic-bezier(.4,0,.2,1)">
+        <div style="position:relative;padding:17px 18px 15px;background:linear-gradient(150deg,#fdf8ea,#f0e7d2);clip-path:polygon(0.6% 1.4%,99.4% 0,100% 98.6%,1.2% 100%);box-shadow:0 16px 30px rgba(16,20,20,0.45)">
+          <div style="position:absolute;left:0;right:0;top:0;height:14px;background:linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0))"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+            <div style="font-size:14.5px;letter-spacing:1.5px;color:#3f6f6b;font-family:'Noto Serif TC',serif">{{ tour.title }}</div>
+            <div style="font-size:10.5px;color:#a2957c;font-family:'IBM Plex Mono',monospace">{{ tourCount }}</div>
+          </div>
+          <div style="margin-top:9px;font-size:12.5px;line-height:1.8;color:#5b5140;text-wrap:pretty">{{ tour.text }}</div>
+          <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div onClick="{{ tourSkip }}" style="cursor:pointer;font-size:11px;letter-spacing:1px;color:#a2957c" style-hover="color:#7a6f58">略過導覽</div>
+            <div style="display:flex;gap:8px">
+              <div onClick="{{ tourPrev }}" style="cursor:pointer;font-size:11.5px;padding:6px 12px;border-radius:3px;color:#6b6250;background:rgba(255,255,255,0.6);box-shadow:inset 0 0 0 1px rgba(150,138,114,0.4);opacity:{{ tourPrevOpacity }};pointer-events:{{ tourPrevEvents }}" style-hover="background:#fffdf4">上一步</div>
+              <div onClick="{{ tourNext }}" style="cursor:pointer;font-size:11.5px;padding:6px 13px;border-radius:3px;color:#fdf8ea;background:#4a7d78;box-shadow:0 2px 5px rgba(30,60,58,0.35)" style-hover="background:#3d6b67">{{ tourNextLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 重看導覽 -->
+  <sc-if value="{{ tourReplayable }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ tourStart }}" title="重看操作導覽" style="position:absolute;right:26px;bottom:22px;z-index:44;cursor:pointer;padding:8px 14px;font-size:11.5px;letter-spacing:1.5px;color:#5b5140;background:linear-gradient(150deg,#fdf8ea,#eee4cf);clip-path:polygon(0.8% 2%,99.2% 0,100% 98%,1.6% 100%);box-shadow:0 6px 14px rgba(20,26,26,0.35);transform:rotate(-1.2deg);transition:transform .2s" style-hover="transform:rotate(0deg) translateY(-2px)">操作導覽</div>
+  </sc-if>
+
+  <!-- 視角控制 -->
+  <div style="position:absolute;right:22px;top:20px;display:flex;flex-direction:column;gap:9px;align-items:flex-end;z-index:40">
+    <div style="display:flex;gap:5px;padding:5px;border-radius:4px;background:rgba(20,14,8,0.5);backdrop-filter:blur(6px)">
+      <sc-for list="{{ viewerOptions }}" as="v" hint-placeholder-count="5">
+        <div onClick="{{ v.onClick }}" style="cursor:pointer;font-size:11px;padding:5px 9px;border-radius:2px;background:{{ v.bg }};color:{{ v.fg }}">{{ v.label }}</div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- 電子鐘（桌面右上角）：點擊切換日夜 -->
+  <div onClick="{{ toggleLight }}" title="{{ lightLabel }}" style="position:absolute;left:1158px;top:272px;width:196px;height:100px;z-index:{{ deskPropZ }};opacity:{{ deskPropOpacity }};pointer-events:{{ deskPropEvents }};cursor:pointer;perspective:620px;transition:filter .25s,opacity .5s" style-hover="filter:brightness(1.08)">
+    <div style="position:absolute;left:-10px;bottom:-6px;width:216px;height:30px;border-radius:50%;filter:blur(10px);background:radial-gradient(50% 50% at 50% 50%,rgba(14,8,2,0.6),rgba(14,8,2,0))"></div>
+    <div style="position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(11deg)">
+      <div style="position:absolute;left:5px;right:5px;bottom:-9px;height:20px;border-radius:4px 4px 8px 8px;transform:rotateX(74deg);transform-origin:50% 0;background:linear-gradient(180deg,{{ clockEdge }},rgba(0,0,0,0.5))"></div>
+      <div style="position:absolute;inset:0;border-radius:18px;padding:9px;box-sizing:border-box;background:{{ clockBody }};box-shadow:0 14px 24px rgba(20,12,4,0.5),0 3px 0 {{ clockEdge }},inset 0 2px 1px rgba(255,255,255,0.85),inset 0 -3px 6px rgba(90,72,50,0.35)">
+        <div style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;background:{{ clockFace }};box-shadow:inset 0 3px 9px rgba(0,0,0,0.62),inset 0 -1px 0 rgba(255,255,255,0.14)">
+        <div style="position:absolute;inset:0;background:linear-gradient(126deg,rgba(255,255,255,0.16) 0 26%,rgba(255,255,255,0.02) 42%,rgba(255,255,255,0.1) 70%,rgba(255,255,255,0) 86%)"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DS-Digital','Courier New',monospace;font-size:47px;font-weight:700;letter-spacing:3px;color:{{ clockInk }};text-shadow:{{ clockGlow }}">{{ clockTime }}</div>
+        <div style="position:absolute;left:9px;top:8px;font-size:9px;color:{{ clockInk }};opacity:.55">⏰</div>
+        <div style="position:absolute;left:9px;bottom:8px;font-size:9px;color:{{ clockInk }};opacity:.4">{{ clockMode }}</div>
+      </div>
+    </div>
+    <div style="position:absolute;left:34px;top:-4px;width:22px;height:5px;border-radius:3px;background:rgba(60,44,26,0.5)"></div>
+    <div style="position:absolute;left:64px;top:-4px;width:22px;height:5px;border-radius:3px;background:rgba(60,44,26,0.5)"></div>
+    <div style="position:absolute;left:94px;top:-4px;width:22px;height:5px;border-radius:3px;background:rgba(60,44,26,0.5)"></div>
+    </div>
+  </div>
+
+  <!-- 機票放大 -->
+  <sc-if value="{{ ticketOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;background:rgba(14,9,4,0.6);display:flex;align-items:center;justify-content:center">
+      <div style="width:1010px;height:396px;display:flex;background:#fdfaf3;border-radius:6px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5)">
+        <div style="width:600px;padding:26px 30px;box-sizing:border-box;position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div style="font-size:15px;color:#b4622f">✈</div>
+              <div style="font-size:12px;letter-spacing:3px;color:#b4622f;font-family:'IBM Plex Mono',monospace">BOARDING PASS · 入團申請</div>
+            </div>
+            <div style="font-size:11px;color:#9b8a71;font-family:'IBM Plex Mono',monospace">唯讀 · 同步旅遊手帳（於手帳修改）</div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:20px">
+            <div onClick="{{ askNavigate }}" title="查看個人頁面" style="width:96px;height:120px;flex:none;border:1px solid #cdbfa6;padding:4px;background:#fff;cursor:pointer;box-shadow:0 3px 8px rgba(90,66,36,0.16)">
+              <image-slot id="ticket-avatar" shape="rect" placeholder="大頭貼" style="width:86px;height:110px"></image-slot>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px">
+                <div style="font-family:'Noto Serif TC',serif;font-size:25px;font-weight:600">{{ profile.nickname }}</div>
+                <div style="font-size:11px;padding:3px 8px;border-radius:3px;color:#fff;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;background:{{ mbtiColor }}">{{ profile.mbti }}</div>
+              </div>
+              <div style="margin-top:7px;font-size:12px;color:#7b6a53;font-family:'IBM Plex Mono',monospace">{{ ticketMeta }}</div>
+              <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ tags }}" as="t" hint-placeholder-count="5">
+                  <div style="font-size:11px;padding:3px 9px;border-radius:12px;background:#efe6d5;color:#4d4132">{{ t }}</div>
+                </sc-for>
+              </div>
+              <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">
+                <sc-for list="{{ dnaRows }}" as="d" hint-placeholder-count="4">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:#7b6a53;font-family:'IBM Plex Mono',monospace"><span>{{ d.label }}</span><span style="color:#b4622f">{{ d.pctText }}</span></div>
+                    <div style="margin-top:4px;height:4px;background:#e2d6bd;position:relative"><div style="position:absolute;left:0;top:0;height:4px;background:#b4622f;width:{{ d.width }}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="position:absolute;left:30px;bottom:20px;display:flex;gap:3px">
+            <sc-for list="{{ barcode }}" as="b" hint-placeholder-count="14">
+              <div style="width:{{ b.w }};height:30px;background:#3a3128"></div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="width:0;position:relative"><div style="position:absolute;left:-1px;top:0;height:396px;border-left:2px dashed #d6c6a6"></div></div>
+
+        <div style="flex:1;padding:26px 28px;box-sizing:border-box;background:linear-gradient(180deg,#f8f1e2,#f2e8d5);display:flex;flex-direction:column">
+          <div style="font-size:12px;letter-spacing:2px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">給團長的話</div>
+          <textarea value="{{ message }}" onChange="{{ changeMessage }}" placeholder="想對團長說的話、可配合的行程時間…" style="margin-top:10px;flex:1;font-size:13px;line-height:1.8;padding:11px;border:1px solid #d6c6a6;background:#fffdf7;resize:none;box-sizing:border-box;color:#3d342a"></textarea>
+          <div style="margin-top:10px;font-size:11px;line-height:1.7;color:#a2917a">預先編輯，申請入團時會帶入這段話</div>
+          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:11px;color:#a2917a">{{ msgCount }}</div>
+            <div style="display:flex;gap:8px">
+              <div onClick="{{ closeTicket }}" style="cursor:pointer;font-size:12px;padding:8px 14px;border:1px solid #b09a78;color:#5b4c39" style-hover="border-color:#3d342a">關閉</div>
+              <div onClick="{{ saveDraft }}" style="cursor:pointer;font-size:12px;padding:8px 16px;background:#b4622f;color:#fff8ec" style-hover="background:#95491d">{{ draftLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 大頭貼導覽確認 -->
+  <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:80;background:rgba(14,9,4,0.55);display:flex;align-items:center;justify-content:center">
+      <div style="width:380px;padding:24px;background:#fdfaf3;border-radius:5px;box-shadow:0 30px 60px rgba(0,0,0,0.45)">
+        <div style="font-size:14px;line-height:1.8">{{ confirmText }}</div>
+        <div style="margin-top:18px;display:flex;justify-content:flex-end;gap:8px">
+          <div onClick="{{ cancelNavigate }}" style="cursor:pointer;font-size:12px;padding:7px 14px;border:1px solid #b09a78;color:#5b4c39">取消</div>
+          <div onClick="{{ cancelNavigate }}" style="cursor:pointer;font-size:12px;padding:7px 14px;background:#b4622f;color:#fff8ec">前往</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 吊牌放大 -->
+  <sc-if value="{{ tagOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;background:rgba(14,9,4,0.6);display:flex;align-items:center;justify-content:center">
+      <div style="position:relative;width:400px;height:560px;padding:26px;box-sizing:border-box;border-radius:26px;background:linear-gradient(150deg,rgba(255,255,255,0.7),rgba(255,255,255,0.34));border:1px solid rgba(255,255,255,0.66);backdrop-filter:blur(6px);box-shadow:0 30px 60px rgba(14,9,4,0.5),inset 0 1px 0 rgba(255,255,255,0.9)">
+        <div style="position:absolute;left:50%;top:12px;margin-left:-15px;width:30px;height:30px;border-radius:50%;background:rgba(90,84,74,0.42);box-shadow:inset 0 0 0 3px rgba(255,255,255,0.85)"></div>
+
+
+
+
+
+        <!-- 魚肚：通訊錄 -->
+        <div style="margin-top:44px;height:346px;box-sizing:border-box;border-radius:14px;background:linear-gradient(120deg,#f7f1e4,#efe6d4);padding:20px 22px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.75),0 2px 5px rgba(120,100,70,0.16);filter:{{ tagBlur }}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="font-size:11.5px;letter-spacing:2px;color:{{ tagStateColor }};font-family:'IBM Plex Mono',monospace">{{ tagStateLabel }}</div>
+            </div>
+            <div onClick="{{ closeTag }}" style="cursor:pointer;font-size:14px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+          </div>
+          <div style="margin-top:9px;height:1px;background:#e5d9c2"></div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:16px">
+            <sc-for list="{{ contactFull }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:10px;color:#9b8a71;letter-spacing:2px">{{ c.label }}</div>
+                <div style="font-size:14px;color:#3d342a;font-family:'IBM Plex Mono',monospace">{{ c.value }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ togglePublic }}" style="margin-top:14px;border-radius:12px;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.7)" style-hover="background:rgba(255,255,255,0.72)">
+            <div style="font-size:11.5px;line-height:1.5;color:#5b4c39">{{ publicLabel }}</div>
+            <div style="width:42px;height:22px;border-radius:11px;flex:none;position:relative;background:{{ toggleBg }};transition:background .2s">
+              <div style="position:absolute;top:3px;left:{{ knobLeft }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s"></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tagLocked }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:22px;right:22px;top:54px;bottom:22px;border-radius:12px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;background:rgba(247,241,228,0.82)">
+            <div style="font-size:13px;padding:10px 16px;background:#3d342a;color:#f6eddb">成為好友解鎖通訊錄</div>
+            <div onClick="{{ closeTag }}" style="cursor:pointer;font-size:12px;color:#5b4c39;text-decoration:underline">關閉</div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 基本資料修改畫面 -->
+  <sc-if value="{{ editOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:70;background:rgba(14,9,4,0.62);display:flex;align-items:center;justify-content:center">
+      <div style="width:720px;background:#fdfaf3;border-radius:6px;box-shadow:0 40px 80px rgba(0,0,0,0.5);overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 26px;border-bottom:1px solid #e6dbc4;background:linear-gradient(180deg,#f8f1e2,#f3ead7)">
+          <div style="font-family:'Noto Serif TC',serif;font-size:19px;font-weight:600">修改基本資料</div>
+          <div onClick="{{ cancelEdit }}" style="cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+        </div>
+        <div style="padding:24px 26px;display:flex;gap:24px">
+          <div style="width:140px;flex:none">
+            <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">大頭照</div>
+            <div style="margin-top:8px;width:140px;height:174px;border:1px solid #cdbfa6;padding:5px;background:#fff">
+              <image-slot id="member-avatar-edit" shape="rect" placeholder="點一下選擇照片" style="width:128px;height:162px"></image-slot>
+            </div>
+            <div style="margin-top:8px;font-size:11px;line-height:1.6;color:#a2917a">點圖框選擇檔案，或將圖片拖進框内；已上傳後滑進圖框可按 Replace 更換。建議 3:4</div>
+          </div>
+          <div style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:16px 18px">
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">會員姓名 / 暱稱</div>
+              <input value="{{ draft.nickname }}" onChange="{{ setNickname }}" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7" />
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">生日</div>
+              <input type="date" value="{{ draft.birth }}" onChange="{{ setBirth }}" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:7px 10px;border:1px solid #cbb99a;background:#fffdf7;font-family:'IBM Plex Mono',monospace" />
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">年齡（自動計算）</div>
+              <div style="margin-top:6px;font-size:15px;padding:8px 10px;border:1px dashed #d8c9ae;background:#f4eddd;color:#8d7c64;font-family:'IBM Plex Mono',monospace">{{ draftAge }}</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">性別</div>
+              <div style="margin-top:6px;display:flex;gap:6px">
+                <sc-for list="{{ genderOptions }}" as="g" hint-placeholder-count="3">
+                  <div onClick="{{ g.onClick }}" style="cursor:pointer;font-size:13px;padding:7px 13px;border:1px solid #cbb99a;background:{{ g.bg }};color:{{ g.fg }}">{{ g.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">職業</div>
+              <input value="{{ draft.job }}" onChange="{{ setJob }}" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7" />
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">居住地</div>
+              <input value="{{ draft.city }}" onChange="{{ setCity }}" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7" />
+            </div>
+            <div style="grid-column:1 / span 2">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">MBTI</div>
+                <div style="font-size:11px;padding:3px 8px;border-radius:3px;color:#fff;font-family:'IBM Plex Mono',monospace;background:{{ draftMbtiColor }}">{{ draft.mbti }} · {{ draftMbtiGroup }}</div>
+              </div>
+              <div style="margin-top:9px;display:flex;flex-direction:column;gap:7px">
+                <sc-for list="{{ mbtiGroups }}" as="g" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <div style="width:74px;flex:none;font-size:11px;color:{{ g.color }};letter-spacing:1px">{{ g.name }}</div>
+                    <div style="flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px">
+                      <sc-for list="{{ g.types }}" as="t" hint-placeholder-count="4">
+                        <div onClick="{{ t.onClick }}" style="cursor:pointer;text-align:center;font-size:11.5px;padding:5px 4px;border-radius:3px;font-family:'IBM Plex Mono',monospace;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:9px;padding:16px 26px;border-top:1px solid #e6dbc4;background:#f7f0e1">
+          <div onClick="{{ cancelEdit }}" style="cursor:pointer;font-size:13px;padding:9px 16px;border:1px solid #b09a78;color:#5b4c39" style-hover="border-color:#3d342a">取消</div>
+          <div onClick="{{ saveEdit }}" style="cursor:pointer;font-size:13px;padding:9px 20px;background:#b4622f;color:#fff8ec" style-hover="background:#95491d">儲存</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 技能標籤總覽 -->
+  <sc-if value="{{ skillsOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:86;background:rgba(14,9,4,0.58);display:flex;align-items:center;justify-content:center">
+      <div style="width:660px;max-height:80%;display:flex;flex-direction:column;background:#fdfaf3;box-shadow:0 30px 60px rgba(0,0,0,0.45)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid #e6dbc4;background:linear-gradient(180deg,#f8f1e2,#f3ead7)">
+          <div style="display:flex;align-items:baseline;gap:10px">
+            <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:600">旅行技能標籤</div>
+            <div style="font-size:11px;color:#9b8a71">{{ skillsHint }}</div>
+          </div>
+          <div onClick="{{ closeSkills }}" style="cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+        </div>
+        <div style="padding:18px 22px;overflow:auto;display:flex;flex-direction:column;gap:18px">
+          <sc-for list="{{ skillGroups }}" as="g" hint-placeholder-count="4">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#3d342a">{{ g.name }}</div>
+                <div style="font-size:10px;color:#b0a08a;font-family:'IBM Plex Mono',monospace">{{ g.en }}</div>
+                <div style="flex:1;height:1px;background:#e6dbc4"></div>
+                <div style="font-size:10px;color:#b4622f;font-family:'IBM Plex Mono',monospace">{{ g.picked }}</div>
+              </div>
+              <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:7px">
+                <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="8">
+                  <div onClick="{{ t.onClick }}" title="{{ t.note }}" style="cursor:{{ t.cursor }};font-size:12.5px;padding:5px 12px;border-radius:14px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};opacity:{{ t.opacity }}">{{ t.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:9px;padding:13px 22px;border-top:1px solid #e6dbc4;background:#f7f0e1">
+          <div style="font-size:11px;color:#a2917a">已選 {{ tagCount }} 項 · 標籤會同步顯示在機票上</div>
+          <div onClick="{{ closeSkills }}" style="cursor:pointer;font-size:12.5px;padding:9px 18px;background:#b4622f;color:#fff8ec">完成</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 檢舉 -->
+  <sc-if value="{{ reportOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:85;background:rgba(14,9,4,0.58);display:flex;align-items:center;justify-content:center">
+      <div style="width:420px;background:#fdfaf3;box-shadow:0 30px 60px rgba(0,0,0,0.45);overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid #e6dbc4;background:linear-gradient(180deg,#f8f1e2,#f3ead7)">
+          <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:600">檢舉 {{ profile.nickname }}</div>
+          <div onClick="{{ closeReport }}" style="cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+        </div>
+        <div style="padding:20px 22px">
+          <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">檢舉原因</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ reportReasons }}" as="r" hint-placeholder-count="4">
+              <div onClick="{{ r.onClick }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid {{ r.border }};background:{{ r.bg }};font-size:13.5px;color:#453c31">
+                <div style="width:11px;height:11px;flex:none;border-radius:50%;border:1px solid #b09a78;background:{{ r.dot }}"></div>{{ r.label }}
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:14px;font-size:11px;line-height:1.7;color:#a2917a">送出後將同時進入審核，不會通知對方。可一併將對方加入黑名單。</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:9px;padding:14px 22px;border-top:1px solid #e6dbc4;background:#f7f0e1">
+          <div onClick="{{ closeReport }}" style="cursor:pointer;font-size:12.5px;padding:9px 16px;border:1px solid #b09a78;color:#5b4c39" style-hover="border-color:#3d342a">取消</div>
+          <div onClick="{{ submitReport }}" style="cursor:pointer;font-size:12.5px;padding:9px 18px;background:{{ reportBtnBg }};color:#fff8ec">送出檢舉</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute;inset:0;pointer-events:none;background:{{ vignette }}"></div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;sealIntro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;homeHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;groupHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Tours&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;articleHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Articles&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;loginHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;logoutHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;}}">
+const PEOPLE = {
+  friends: [
+    { name: "林知夏", meta: "台北 · 同團 2 次" },
+    { name: "Kai Chen", meta: "高雄 · 同團 1 次" },
+    { name: "阿諾", meta: "台中 · 好友 8 個月" },
+    { name: "Mei", meta: "花蓮 · 好友 3 個月" },
+    { name: "宥蓁", meta: "新竹 · 同團 4 次" },
+    { name: "Tomo", meta: "東京 · 好友 1 年" }
+  ],
+  following: [
+    { name: "旅人小柯", meta: "單向追蹤 · 看不到通訊錄" },
+    { name: "山系女子 Ann", meta: "單向追蹤" },
+    { name: "背包客阿翔", meta: "單向追蹤" },
+    { name: "Nina 拍照旅行", meta: "單向追蹤" },
+    { name: "老王環島", meta: "單向追蹤" }
+  ],
+  blocked: [
+    { name: "匿名使用者 #4821", meta: "已封鎖 · 2026/03" },
+    { name: "廣告帳號 travel_bot", meta: "已封鎖 · 2026/07" }
+  ],
+  requests: [
+    { name: "郁婷", meta: "留言：想約十月京都" },
+    { name: "Leo", meta: "留言：同團認識的，加個好友" },
+    { name: "小雨", meta: "留言：一起爬合歡山" }
+  ]
+};
+
+const REPORT_REASONS = ["不實資訊或假帳號", "騷擾、不當言詞", "詐騙或商業廣告", "冒用他人身分或照片"];
+
+const SKILL_GROUPS = [
+  {
+    name: "語言天賦", en: "LANGUAGE",
+    items: [
+      ["中文", "母語或精通"], ["英文", "可與當地人日常溝通"], ["日文", "可處理訂房、點餐、問路"],
+      ["韓文", "可處理日常溝通"], ["粵語", "香港、廣東區域溝通"], ["西語", "西語系國家溝通"],
+      ["法語", "法語區溝通"], ["德語", "德語區溝通"], ["手語", "可以手語溝通"],
+      ["泰語", "泰國旅行可溝通"], ["越語", "越南旅行可溝通"], ["印尼語", "印尼、馬來區域溝通"]
+    ]
+  },
+  {
+    name: "行程推進", en: "EXECUTION",
+    items: [
+      ["行程總召", "負責排定整體路線"], ["攻略達人", "負責查秘境、查資料"], ["人肉導航", "方向感極佳，找路擔當"],
+      ["訂房/機票好手", "擅長比價、搶票"], ["票務達人", "處理各類當地通票、景點票"], ["網卡處理器", "出國前負責搞定全團網路"],
+      ["外語溝通", "負責跟當地人、飯店、店家交涉"], ["危機處理", "遇到班機取消、弄丟護照時能冷靜解決"]
+    ]
+  },
+  {
+    name: "團隊角色", en: "TEAM ROLE",
+    items: [
+      ["首席攝影師", "很會抓角度，不嫌煩"], ["Vlog 大師", "負責記錄旅途並剪輯"], ["扛行李硬漢", "搬行李上樓梯不抱怨"],
+      ["無情晨喚機", "負責準時叫大家起床"], ["氣氛製造機", "不怕冷場，超會接話"], ["財務大臣", "負責管公費、分帳"],
+      ["美食探測器", "找餐廳絕不踩雷"], ["隨和綠葉", "去哪都說好，隨和不挑剔"]
+    ]
+  },
+  {
+    name: "交通駕駛", en: "TRANSPORT",
+    items: [
+      ["左駕老司機", "習慣台灣/美國等左駕模式"], ["右駕老司機", "習慣日本/英國等右駕模式"],
+      ["機車騎士", "擅長在東南亞或離島騎機車"], ["國際駕照持有者", "已經準備好可以出國租車"],
+      ["副駕 DJ", "不會開車但會幫忙看路、播音樂、餵食司機"]
+    ]
+  }
+];
+
+const DNA_DEFS = [
+  {
+    label: "行程規劃", short: "規劃", left: "隨機應變", right: "按照計畫",
+    tiers: [
+      [25, "佛系盲遊", "走到哪算到哪，不做功課不查地圖，相信一切都是最好的安排。"],
+      [50, "大綱走起", "只定好大方向（如機票、住宿），每天要去哪看當天起床的心情決定。"],
+      [75, "按圖索驥", "有明確的每日行程規劃，但允許行程根據體力或天氣微調。"],
+      [100, "表格魔人", "行程精確到分鐘，Excel 表格排好排滿，任何延誤都會讓他焦慮。"]
+    ]
+  },
+  {
+    label: "消費價值觀", short: "消費", left: "精打細算", right: "奢華享受",
+    tiers: [
+      [25, "極致窮遊", "青年旅館、廉價航空、走路代步，最高指導原則是「能省則省」。"],
+      [50, "CP 精算師", "該花花該省省，擅長比價找優惠，追求每一塊錢都花在刀口上。"],
+      [75, "質感微奢", "願意花錢住幾晚好飯店或吃頓大餐，認為出來玩就是要對自己好一點。"],
+      [100, "財富自由", "五星級飯店、商務艙、高級包車，旅行的目的是極致的享受與服務。"]
+    ]
+  },
+  {
+    label: "景點偏好", short: "景點", left: "擁抱山海", right: "都會霓虹",
+    tiers: [
+      [25, "野外探險", "熱愛爬山、潛水、遠離塵囂的秘境，比起人潮更愛看風景。"],
+      [50, "踏青放空", "喜歡好山好水，但不用太累，搭車能到的風景區最棒。"],
+      [75, "走跳街區", "喜歡穿梭城市巷弄、逛街買東西、感受都市特有的文化氛圍。"],
+      [100, "不夜城迷", "只愛大都會，高樓大廈、百貨商場、繁華便利是旅行的唯一選擇。"]
+    ]
+  },
+  {
+    label: "飲食追求", short: "飲食", left: "巷弄尋寶", right: "指標名店",
+    tiers: [
+      [25, "在地老饕", "專挑沒有招牌的路邊攤或傳統菜市場，越是在地人吃的越愛。"],
+      [50, "隨機盲測", "肚子餓了看順眼就走進去吃，不依賴網路評價，隨遇而安。"],
+      [75, "評星指南", "吃飯前一定要先查 Google Maps 星星數，4 顆星以上的才吃，不吃雷店。"],
+      [100, "名店執著", "為了吃米其林或網紅名店，排隊兩三個小時也在所不惜，絕不妥協。"]
+    ]
+  }
+];
+const dnaTier = (i, pct) => (DNA_DEFS[i].tiers.find((t) => pct <= t[0]) || DNA_DEFS[i].tiers[3]);
+
+const MBTI_GROUPS = [
+  { name: "分析家 NT", color: "#7a5cbf", types: ["INTJ", "INTP", "ENTJ", "ENTP"] },
+  { name: "外交官 NF", color: "#3f8f6b", types: ["INFJ", "INFP", "ENFJ", "ENFP"] },
+  { name: "守護者 SJ", color: "#3b6ea8", types: ["ISTJ", "ISFJ", "ESTJ", "ESFJ"] },
+  { name: "探險家 SP", color: "#c08a1c", types: ["ISTP", "ISFP", "ESTP", "ESFP"] }
+];
+const mbtiInfo = (t) => MBTI_GROUPS.find((g) => g.types.includes(t)) || MBTI_GROUPS[0];
+const ageOf = (iso) => {
+  const b = new Date(iso), n = new Date();
+  let a = n.getFullYear() - b.getFullYear();
+  const m = n.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && n.getDate() < b.getDate())) a -= 1;
+  return a;
+};
+const fmtBirth = (iso) => iso.split("-").join(" / ");
+
+const JXF = "rotateX(21deg) rotateZ(-2deg)";
+const TOUR = [
+  { title: "攤平閱讀", text: "牆上這張木牌會把手帳放平，字更好讀；再點一次回到案頭視角。", x: "1158px", y: "69px", w: "104px", h: "105px", r: "8px", xf: "none", o: "50% 100%", bx: "848px", by: "72px" },
+  { title: "編輯你的資料", text: "左頁是你的名片。點照片框可以換照片，點姓名、生日、MBTI 或技能標籤就能直接改。", x: "132px", y: "266px", w: "450px", h: "600px", r: "6px", xf: JXF, o: "450px 600px", bx: "628px", by: "300px" },
+  { title: "旅遊 DNA", text: "右頁是你的旅遊 DNA 和技能標籤。四個面向都能點開看細節，右上角的修改圖示可以調整比重。", x: "582px", y: "266px", w: "450px", h: "600px", r: "6px", xf: JXF, o: "0px 600px", bx: "180px", by: "300px" },
+  { title: "翻到第二頁", text: "手帳右下角的翻頁角可以翻到好友、追蹤、黑名單和好友申請。這一頁只有你自己看得到。", x: "958px", y: "792px", w: "74px", h: "74px", r: "4px", xf: JXF, o: "-376px 74px", bx: "620px", by: "700px" },
+  { title: "機票", text: "機票記著你的旅程，點開可以放大查看與編輯。申請加入揪團時，這張機票就會寄給團長。", x: "740px", y: "148px", w: "216px", h: "190px", r: "6px", xf: "rotateX(21deg) rotateZ(2.4deg)", o: "50% 100%", bx: "440px", by: "160px" },
+  { title: "通訊錄吊牌", text: "右下角的行李吊牌是你的通訊錄，點一下展開，裡面收著五種聯絡方式。上方的公開切換是整份一起設定 —— 設為私人時，只有好友和同團友人看得到，其他人只會看到模糊的紙面。", x: "1112px", y: "404px", w: "212px", h: "296px", r: "18px", xf: "rotateX(24deg) rotateZ(11deg)", o: "50% 100%", bx: "790px", by: "430px" },
+  { title: "電子鐘", text: "桌上的鐘顯示 09:00 是白天、20:00 是夜晚。點一下切換，窗外的光線也會跟著變。", x: "1154px", y: "268px", w: "204px", h: "108px", r: "16px", xf: "none", o: "50% 100%", bx: "846px", by: "272px" },
+  { title: "布告欄便利貼", text: "三張便利貼通往站內其他頁面：首頁、揪團、文章。點一下就跳過去。", x: "72px", y: "24px", w: "256px", h: "226px", r: "6px", xf: "none", o: "50% 100%", bx: "352px", by: "36px" },
+  { title: "登入與登出", text: "最後這張木牌處理帳號。要離開時點一下登出，下次回來還在這張桌子前。", x: "1268px", y: "69px", w: "104px", h: "123px", r: "8px", xf: "none", o: "50% 100%", bx: "952px", by: "108px" },
+];
+
+class Component extends DCLogic {
+  state = {
+    viewer: "本人",
+    light: "day",
+    spread: 0,
+    flipping: null,
+    tab: "friends",
+    query: "",
+    editing: null,
+    tagEditing: false,
+    dnaEditing: false,
+    newTag: "",
+    ticketOpen: false,
+    tagOpen: false,
+    confirmOpen: false,
+    sent: false,
+    following: false,
+    friendRequested: false,
+    contactPublic: false,
+    message: "",
+    editOpen: false,
+    blocked: false,
+    reportOpen: false,
+    reportReason: null,
+    reportSent: false,
+    stampRun: 0,
+    draft: null,
+    profile: {
+      nickname: "林昀希",
+      mbti: "ENFP",
+      gender: "女",
+      birth: "1999-11-04",
+      city: "台北 · 大安",
+      job: "UI 設計師",
+      bio: "喜歡把行程排一半，另一半留給當天的天氣和心情。長途火車、清晨市場、深夜便利商店都是我的行程重點。"
+    },
+    tags: ["日文", "英文", "行程總召", "攻略達人", "訂房/機票好手", "首席攝影師", "美食探測器", "無情晨喚機", "右駕老司機", "國際駕照持有者"],
+    dna: [58, 42, 30, 55],
+    skillsOpen: false,
+    flat: false,
+    loggedIn: true,
+    tour: -1,
+    mqPaused: false,
+    dnaOpen: 0,
+    contacts: [ // 計畫 ↔ 隨性",    contacts: [
+      { label: "電子信箱", value: "yunxi.lin@mail.com" },
+      { label: "手機電話", value: "0912-345-678" },
+      { label: "LINE ID", value: "yunxi_trip" },
+      { label: "Instagram", value: "@yunxi.walks" },
+      { label: "Facebook", value: "Yunxi Lin" }
+    ]
+  };
+
+  set(k, v) { this.setState({ [k]: v }); }
+
+  endTour() {
+    try { localStorage.setItem("trip-member-tour-seen", "1"); } catch (e) {}
+    this.setState({ tour: -1 });
+  }
+
+  componentDidMount() {
+    let tourSeen = false;
+    try { tourSeen = !!localStorage.getItem("trip-member-tour-seen"); } catch (e) {}
+    if (!tourSeen && this.state.viewer === "本人") this.setState({ tour: 0 });
+
+    let seen = false;
+    try { seen = !!localStorage.getItem("trip-member-seal-stamped"); } catch (e) {}
+    if (this.props.sealIntro === false && seen) return;
+    try { localStorage.setItem("trip-member-seal-stamped", "1"); } catch (e) {}
+    this.stamp();
+  }
+
+  stamp() {
+    this.setState({ stampRun: (this.state.stampRun || 0) + 1 });
+  }
+
+  flip(dir) {
+    if (this.state.flipping) return;
+    // 第二頁（好友／追蹤／黑名單／好友申請）只有本人能翻到
+    if (dir === "next" && this.state.viewer !== "本人") return;
+    this.setState({ flipping: dir });
+    setTimeout(() => this.setState({ spread: dir === "next" ? 1 : 0 }), 300);
+    setTimeout(() => this.setState({ flipping: null }), 660);
+  }
+
+  renderVals() {
+    const s = this.state, p = s.profile;
+    const own = s.viewer === "本人";
+    // 站內導頁：被 iframe 嵌入時（整合進專題）跳最外層視窗
+    const go = (href) => {
+      try { (window.top || window).location.href = href; }
+      catch (e) { window.location.href = href; }
+    };
+    const day = s.light === "day";
+    const contactVisible = own || s.contactPublic || s.viewer === "好友（雙向）" || s.viewer === "同團成員";
+    const locked = !contactVisible;
+
+    const age = ageOf(p.birth);
+    const fieldRows = [
+      { label: "年齡", value: age + " 歲" },
+      { label: "性別", value: p.gender },
+      { label: "生日", value: fmtBirth(p.birth) },
+      { label: "居住地", value: p.city },
+      { label: "職業", value: p.job }
+    ];
+    const info = mbtiInfo(p.mbti);
+    const d = s.draft || p;
+    const dInfo = mbtiInfo(d.mbti);
+    const setDraft = (k) => (e) => this.setState({ draft: { ...(this.state.draft || this.state.profile), [k]: e.target.value } });
+
+    const lists = {
+      friends: PEOPLE.friends, following: PEOPLE.following,
+      blocked: PEOPLE.blocked, requests: PEOPLE.requests
+    };
+    const tabDefs = [
+      ["friends", "好友列表"], ["following", "追蹤名單"],
+      ["blocked", "黑名單"], ["requests", "好友申請"]
+    ];
+    const tabs = tabDefs.map(([key, label]) => ({
+      label, count: lists[key].length,
+      bg: s.tab === key ? "#e0d0ae" : "#f8f2e4",
+      fg: s.tab === key ? "#3d342a" : "#8d7c64",
+      onClick: () => this.setState({ tab: key, query: "" })
+    }));
+    const q = s.query.trim();
+    const leftList = lists[s.tab]
+      .filter((x) => !q || x.name.toLowerCase().includes(q.toLowerCase()))
+      .map((x) => ({
+        name: x.name, meta: x.meta, initial: x.name.slice(0, 1),
+        actions: s.tab === "requests"
+          ? [{ label: "接受", onClick: () => {} }, { label: "拒絕", onClick: () => {} }]
+          : s.tab === "blocked"
+            ? [{ label: "解除", onClick: () => {} }]
+            : [{ label: "查看", onClick: () => {} }]
+      }));
+
+    const setPct = (i) => (e) => {
+      const dna = this.state.dna.slice();
+      dna[i] = Number(e.target.value);
+      this.setState({ dna });
+    };
+    const dnaEditing = own && s.dnaEditing;
+    const dnaCore = [0, 1, 2, 3].map((i) => {
+      const def = DNA_DEFS[i], pct = s.dna[i], tier = dnaTier(i, pct);
+      const open = s.dnaOpen === i;
+      return {
+        label: def.label, poleLeft: def.left, poleRight: def.right,
+        pct, pctText: pct + "%", width: pct + "%",
+        tier: tier[1], note: tier[2],
+        open, caret: open ? "−" : "+",
+        editing: dnaEditing,
+        onToggle: () => this.set("dnaOpen", open ? null : i),
+        onChange: setPct(i)
+      };
+    });
+
+    const dnaRows = DNA_DEFS.map((def, i) => ({
+      label: def.short, pct: s.dna[i], pctText: s.dna[i] + "%", width: s.dna[i] + "%"
+    }));
+
+    const skillNote = (label) => {
+      for (const g of SKILL_GROUPS) {
+        const f = g.items.find((it) => it[0] === label);
+        if (f) return g.name + " · " + f[1];
+      }
+      return "";
+    };
+    const dupTrack = (arr) => [...arr, ...arr].map((t) => ({ label: t, note: skillNote(t) }));
+    const marqueeA = dupTrack(s.tags.filter((_, i) => i % 2 === 0));
+    const marqueeB = dupTrack(s.tags.filter((_, i) => i % 2 === 1));
+    const toggleTag = (label) => () => {
+      const cur = this.state.tags;
+      this.setState({ tags: cur.includes(label) ? cur.filter((t) => t !== label) : [...cur, label] });
+    };
+    const skillGroups = SKILL_GROUPS.map((g) => ({
+      name: g.name, en: g.en,
+      picked: g.items.filter((it) => s.tags.includes(it[0])).length + " / " + g.items.length,
+      items: g.items.map((it) => {
+        const label = it[0], on = s.tags.includes(label);
+        return {
+          label, note: it[1],
+          cursor: own ? "pointer" : "default",
+          bg: on ? "#b4622f" : "#fdf9ef",
+          fg: on ? "#fff8ec" : "#5b4c39",
+          border: on ? "#b4622f" : "#ded0b3",
+          opacity: on || own ? "1" : "0.4",
+          onClick: own ? toggleTag(label) : () => {}
+        };
+      })
+    }));
+
+    const flipNext = s.flipping === "next";
+    const flipSheet = "position:absolute;top:0;width:450px;height:600px;z-index:20;background:linear-gradient(90deg,#f2e9d7,#fbf5e8);box-shadow:0 0 40px rgba(80,55,25,0.4);backface-visibility:hidden;transition:transform .62s cubic-bezier(.4,.1,.3,1);"
+      + (flipNext
+        ? "left:450px;transform-origin:left center;transform:rotateY(-172deg);"
+        : "left:0;transform-origin:right center;transform:rotateY(172deg);");
+
+    return {
+      profile: p, tags: s.tags, fieldRows, dnaRows, dnaCore,
+      marqueeA, marqueeB, skillGroups,
+      mqPlay: s.mqPaused ? "paused" : "running",
+      pauseMarquee: () => { if (!this.state.mqPaused) this.set("mqPaused", true); },
+      resumeMarquee: () => { if (this.state.mqPaused) this.set("mqPaused", false); },
+      skillsOpen: s.skillsOpen,
+      openSkills: () => this.set("skillsOpen", true),
+      closeSkills: () => this.set("skillsOpen", false),
+      skillBtnIcon: own ? "✎" : "⋯",
+      skillBtnTitle: own ? "選擇技能標籤" : "查看全部技能標籤",
+      skillsHint: own ? "點選標籤加入或移除" : "以下為對方已選取的技能",
+      tagCount: s.tags.length,
+      tagCountText: s.tags.length + " / " + SKILL_GROUPS.reduce((n, g) => n + g.items.length, 0),
+      tabs, leftList,
+      listEmpty: leftList.length === 0,
+      tabTitle: (tabDefs.find((t) => t[0] === s.tab) || [null, ""])[1],
+      counts: { friends: PEOPLE.friends.length, following: PEOPLE.following.length, blocked: PEOPLE.blocked.length, requests: PEOPLE.requests.length },
+      stats: { credit: "4.8 / 5.0", groups: "12", trips: "27" },
+      canEdit: own,
+      isDay: day,
+      isNight: !day,
+      isSpreadOne: s.spread === 0, isSpreadTwo: s.spread === 1,
+      flipping: !!s.flipping, flipSheet,
+      nextPage: () => this.flip("next"), prevPage: () => this.flip("prev"),
+      mbtiColor: info.color, mbtiGroup: info.name,
+      editOpen: s.editOpen, draft: d, draftAge: ageOf(d.birth) + " 歲",
+      draftMbtiColor: dInfo.color, draftMbtiGroup: dInfo.name,
+      openEdit: () => this.setState({ editOpen: true, draft: { ...this.state.profile } }),
+      cancelEdit: () => this.setState({ editOpen: false, draft: null }),
+      saveEdit: () => this.setState({ profile: { ...this.state.profile, ...this.state.draft }, editOpen: false, draft: null }),
+      setNickname: setDraft("nickname"), setBirth: setDraft("birth"),
+      setJob: setDraft("job"), setCity: setDraft("city"),
+      genderOptions: ["女", "男", "不透露"].map((label) => ({
+        label,
+        bg: d.gender === label ? "#b4622f" : "#fffdf7",
+        fg: d.gender === label ? "#fff8ec" : "#5b4c39",
+        onClick: () => this.setState({ draft: { ...(this.state.draft || this.state.profile), gender: label } })
+      })),
+      mbtiGroups: MBTI_GROUPS.map((g) => ({
+        name: g.name, color: g.color,
+        types: g.types.map((t) => ({
+          label: t,
+          bg: d.mbti === t ? g.color : "#fffdf7",
+          fg: d.mbti === t ? "#fff" : g.color,
+          border: d.mbti === t ? g.color : "#d8c9ae",
+          onClick: () => this.setState({ draft: { ...(this.state.draft || this.state.profile), mbti: t } })
+        }))
+      })),
+      bioEditable: own, bioEditing: own && s.editing === "bio", bioReading: !(own && s.editing === "bio"),
+      editBio: () => this.set("editing", "bio"),
+      changeBio: (e) => this.setState({ profile: { ...this.state.profile, bio: e.target.value } }),
+      saveBio: () => this.set("editing", null),
+      toggleDnaEdit: () => this.set("dnaEditing", !s.dnaEditing),
+      showRelationBtns: !own,
+      notBlocked: !s.blocked,
+      blockLabel: s.blocked ? "解除黑名單" : "加入黑名單",
+      toggleBlock: () => this.setState({ blocked: !s.blocked, following: false, friendRequested: false }),
+      reportSent: s.reportSent,
+      reportOpen: s.reportOpen,
+      openReport: () => this.setState({ reportOpen: true, reportReason: null }),
+      closeReport: () => this.set("reportOpen", false),
+      reportBtnBg: s.reportReason ? "#a33227" : "#c8a89c",
+      submitReport: () => {
+        if (!s.reportReason) return;
+        this.setState({ reportOpen: false, reportSent: true, blocked: true, following: false, friendRequested: false });
+      },
+      reportReasons: REPORT_REASONS.map((r) => ({
+        label: r,
+        border: s.reportReason === r ? "#a33227" : "#ded1b6",
+        bg: s.reportReason === r ? "#fbeee9" : "#fffdf7",
+        dot: s.reportReason === r ? "#a33227" : "transparent",
+        onClick: () => this.set("reportReason", r)
+      })),
+      followLabel: s.following ? "追蹤中" : "追蹤",
+      friendLabel: s.friendRequested ? "已送出申請" : "申請好友",
+      toggleFollow: () => this.set("following", !s.following),
+      requestFriend: () => this.set("friendRequested", true),
+      query: s.query, changeQuery: (e) => this.set("query", e.target.value),
+
+      ticketMeta: age + " 歲 · " + p.gender + " · " + p.city,
+      barcode: [3, 1, 2, 1, 4, 1, 2, 3, 1, 2, 1, 3, 2, 1].map((w) => ({ w: w + "px" })),
+      ticketOpen: s.ticketOpen,
+      openTicket: () => this.set("ticketOpen", true),
+      closeTicket: () => this.set("ticketOpen", false),
+      message: s.message,
+      changeMessage: (e) => this.set("message", e.target.value),
+      msgCount: s.message.length + " / 300 字",
+      draftLabel: s.sent ? "已儲存" : "確認",
+      saveDraft: () => this.set("sent", true),
+      askNavigate: () => this.set("confirmOpen", true),
+      confirmOpen: s.confirmOpen,
+      confirmText: "是否進入「" + p.nickname + "」的個人頁面？",
+      cancelNavigate: () => this.set("confirmOpen", false),
+
+      tagOpen: s.tagOpen,
+      openTag: () => { if (!locked) this.set("tagOpen", true); },
+      closeTag: () => this.set("tagOpen", false),
+      tagBlur: locked ? "blur(5px)" : "none",
+      tagLocked: locked,
+      tagStateLabel: locked ? "LOCKED · 私人" : (own ? (s.contactPublic ? "PUBLIC · 公開" : "PRIVATE · 僅限好友與同團") : "UNLOCKED · 已解鎖"),
+      tagStateColor: locked ? "#a06333" : "#2f7d6b",
+      contactPreview: s.contacts.slice(0, 3).map((c) => ({
+        label: c.label,
+        value: "*".repeat(Math.max(6, Math.min(14, String(c.value).length)))
+      })),
+      contactFull: s.contacts,
+      stampSeal: () => this.stamp(),
+      sealAnim: s.stampRun ? (s.stampRun % 2 ? "sealDrop" : "sealDropB") + " 1.15s cubic-bezier(.3,.9,.3,1) both" : "none",
+      sealRingAnim: s.stampRun ? (s.stampRun % 2 ? "sealRing" : "sealRingB") + " 1.15s ease-out both" : "none",
+      togglePublic: () => this.set("contactPublic", !s.contactPublic),
+      publicLabel: s.contactPublic ? "公開通訊錄（所有人可見）" : "僅限好友與同團成員可見",
+      toggleBg: s.contactPublic ? "#2f7d6b" : "#c9b795",
+      knobLeft: s.contactPublic ? "23px" : "3px",
+
+      viewerOptions: ["本人", "陌生人", "追蹤中（單向）", "好友（雙向）", "同團成員"].map((label) => ({
+        label,
+        bg: s.viewer === label ? "#b4622f" : "rgba(255,255,255,0.06)",
+        fg: s.viewer === label ? "#fff8ec" : "#cbbda6",
+        onClick: () => this.setState({ viewer: label, spread: label === "本人" ? this.state.spread : 0, editing: null, tagEditing: false, dnaEditing: false, skillsOpen: false })
+      })),
+      wallBloom: day
+        ? "radial-gradient(680px 320px at 67% 26%,rgba(255,250,226,0.5),rgba(255,250,226,0.12) 52%,rgba(0,0,0,0) 76%)"
+        : "radial-gradient(620px 300px at 67% 24%,rgba(150,180,220,0.16),rgba(0,0,0,0.18) 62%,rgba(0,0,0,0.3) 100%)",
+      canFlip: own,
+      tourOn: own && s.tour >= 0,
+      tourReplayable: own && s.tour < 0,
+      tour: TOUR[Math.max(0, Math.min(s.tour, TOUR.length - 1))],
+      tourCount: (Math.max(0, s.tour) + 1) + " / " + TOUR.length,
+      tourNextLabel: s.tour >= TOUR.length - 1 ? "開始使用" : "下一步",
+      tourPrevOpacity: s.tour <= 0 ? "0.35" : "1",
+      tourPrevEvents: s.tour <= 0 ? "none" : "auto",
+      tourStart: () => this.setState({ tour: 0, spread: 0, flat: false }),
+      tourPrev: () => this.setState({ tour: Math.max(0, s.tour - 1) }),
+      tourNext: () => {
+        if (s.tour >= TOUR.length - 1) { this.endTour(); return; }
+        this.setState({ tour: s.tour + 1 });
+      },
+      tourSkip: () => this.endTour(),
+      toggleLight: () => this.set("light", day ? "night" : "day"),
+      deskPropZ: s.flat ? 2 : 6,
+      deskPropOpacity: s.flat ? "0" : "1",
+      deskPropEvents: s.flat ? "none" : "auto",
+      clockTime: day ? "09:00" : "20:00",
+      clockMode: day ? "AM" : "PM",
+      clockBody: day
+        ? "linear-gradient(160deg,#fdfdfb,#d9d4cb)"
+        : "linear-gradient(160deg,#3b3630,#221e1a)",
+      clockFace: day
+        ? "linear-gradient(150deg,#4a4740,#2b2926)"
+        : "linear-gradient(150deg,#1b1917,#0d0c0b)",
+      clockEdge: day ? "#a9a19a" : "#15120f",
+      clockInk: day ? "#f6f4ee" : "#eaf4ff",
+      clockGlow: day
+        ? "0 0 10px rgba(255,255,255,0.5)"
+        : "0 0 14px rgba(170,205,255,0.75)",
+      boardNotes: [
+        { label: "首頁", title: "前往專題首頁", x: "28px", y: "48px", rot: "-3.2deg", bg: "linear-gradient(160deg,#f7e07f,#e7c85a)", fg: "#6a5410", onClick: () => go(this.props.homeHref || "/") },
+        { label: "揪團", title: "前往揪團頁面", x: "112px", y: "62px", rot: "2.6deg", bg: "linear-gradient(160deg,#f3ab93,#e08d72)", fg: "#6f3323", onClick: () => go(this.props.groupHref || "/Tours") },
+        { label: "文章", title: "前往文章頁面", x: "66px", y: "138px", rot: "-1.4deg", bg: "linear-gradient(160deg,#a8d3bb,#88bda3)", fg: "#28503c", onClick: () => go(this.props.articleHref || "/Articles") },
+      ],
+      wallTags: [
+        { label: s.flat ? "案頭視角" : "攤平閱讀", hint: s.flat ? "回到桌面" : "手帳放平", x: "16px", rot: "-2.4deg", rope: "26px", onClick: () => this.set("flat", !s.flat) },
+        { label: s.loggedIn ? "登出" : "登入", hint: s.loggedIn ? "結束這趟" : "回到帳號", x: "126px", rot: "2.2deg", rope: "44px", onClick: () => {
+          const href = s.loggedIn ? (this.props.logoutHref || "") : (this.props.loginHref || "");
+          if (href) { go(href); return; }
+          this.set("loggedIn", !s.loggedIn);
+        } },
+      ],
+      journalXf: s.flat ? "translate3d(174px,-74px,0)" : "rotateX(21deg) rotateZ(-2deg)",
+      ticketXf: s.flat ? "translate3d(174px,6px,0)" : "rotateX(21deg) rotateZ(2.4deg)",
+      flatLabel: s.flat ? "▣ 閱讀模式（點擊回到案頭視角）" : "△ 案頭視角（點擊攤平閱讀）",
+      toggleFlat: () => this.set("flat", !s.flat),
+      lightLabel: day ? "☀ 日光（點擊切換月光）" : "☾ 月光（點擊切換日光）",
+      glassStyle: day
+        ? "linear-gradient(180deg,#9fd8de 0%,#bce4e2 46%,#e6f2e4 78%,#f4f4e2 100%)"
+        : "linear-gradient(180deg,#16233c 0%,#22314b 60%,#2c3550 100%)",
+      moonStyle: day ? "transparent" : "radial-gradient(circle,#f4ecd6,#c8bda0 62%,rgba(200,189,160,0) 70%)",
+      lightPool: day
+        ? "radial-gradient(760px 420px at 69% 4%,rgba(255,238,198,0.5),rgba(255,238,198,0.12) 46%,rgba(0,0,0,0.24) 78%,rgba(0,0,0,0.5) 100%)"
+        : "radial-gradient(700px 400px at 69% 2%,rgba(178,203,255,0.26),rgba(120,150,210,0.07) 44%,rgba(0,0,0,0.5) 74%,rgba(0,0,0,0.74) 100%)",
+      vignette: day
+        ? "radial-gradient(1200px 760px at 50% 42%,rgba(0,0,0,0) 52%,rgba(12,7,3,0.42) 100%)"
+        : "radial-gradient(1100px 700px at 50% 40%,rgba(0,0,0,0) 40%,rgba(6,8,16,0.66) 100%)"
+    };
+  }
+}
+
+</script>
+</body>
+</html>
