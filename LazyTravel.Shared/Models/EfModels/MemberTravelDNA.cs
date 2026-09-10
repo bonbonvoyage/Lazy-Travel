@@ -5,17 +5,17 @@ using System.Collections.Generic;
 
 namespace LazyTravel.Shared.Models.EfModels;
 
-public partial class ForumInteract
+public partial class MemberTravelDNA
 {
-    public int ForumPostId { get; set; }
-
     public int MemberId { get; set; }
 
-    public byte ActionType { get; set; }
+    public byte DimensionId { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public byte Score { get; set; }
 
-    public virtual ForumPost ForumPost { get; set; }
+    public DateTime UpdatedAt { get; set; }
+
+    public virtual TravelDNADimension Dimension { get; set; }
 
     public virtual Member Member { get; set; }
 }

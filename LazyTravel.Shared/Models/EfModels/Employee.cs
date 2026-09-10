@@ -31,7 +31,5 @@ public partial class Employee
 
     public virtual ICollection<EmployeeRole> EmployeeRoles { get; set; } = new List<EmployeeRole>();
 
-    // 🌟 手動補上：TravelGroupsLog.ChangeByMemberID 的外鍵改指回 Employees 後，
-    // 這個反向巡覽集合就從 Member 搬到這裡（詳見 TravelGroupsLog.cs 的說明）。
     public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
 }

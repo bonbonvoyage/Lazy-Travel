@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -1162,7 +1162,7 @@ const MBTI_GROUPS = [
   { name: "守護者 SJ", color: "#3b6ea8", types: ["ISTJ", "ISFJ", "ESTJ", "ESFJ"] },
   { name: "探險家 SP", color: "#c08a1c", types: ["ISTP", "ISFP", "ESTP", "ESFP"] }
 ];
-const mbtiInfo = (t) => MBTI_GROUPS.find((g) => g.types.includes(t)) || MBTI_GROUPS[0];
+const mbtiInfo = (t) => MBTI_GROUPS.find((g) => g.types.includes(t)) || {color:"#9b927f", name:"尚未設定"};
 const ageOf = (iso) => {
   if (!iso) return null; // 資料庫還沒填生日
   const b = new Date(iso), n = new Date();
@@ -1288,7 +1288,7 @@ class Component extends DCLogic {
 
     let seen = false;
     try { seen = !!localStorage.getItem("trip-member-seal-stamped"); } catch (e) {}
-    if (this.props.sealIntro === false && seen) return;
+    if (this.props.sealIntro === false && seen) { this.loadProfile(); return; }
     try { localStorage.setItem("trip-member-seal-stamped", "1"); } catch (e) {}
     this.stamp();
 
@@ -1314,6 +1314,7 @@ class Component extends DCLogic {
 
   async loadProfile() {
     try {
+      this.csrf = (await (await fetch("/Members/CsrfToken")).json()).token;
       const res = await fetch(apiUrl("/Members/ProfileData"), { headers: { Accept: "application/json" } });
       if (res.status === 401) {
         // 尚未登入（組長的登入還沒接上，或沒帶 ?devMemberId=）：
@@ -1383,7 +1384,7 @@ class Component extends DCLogic {
       skillCatalog: data.skillCatalog || [],
       avatarUrl: data.avatarUrl || null,
       contactPublic: !!data.contactBookPublic,
-      contacts: contacts.length ? contacts : this.state.contacts,
+      contacts: contacts,
       groupsOwnedCount: data.groupsOwnedCount ?? this.state.groupsOwnedCount,
       tripsJoinedCount: data.tripsJoinedCount ?? this.state.tripsJoinedCount,
       people,
@@ -1400,7 +1401,7 @@ class Component extends DCLogic {
       profile: {
         ...this.state.profile,
         nickname: data.name || this.state.profile.nickname,
-        mbti: data.mbti || this.state.profile.mbti,
+        mbti: data.mbti || "",
         gender: GENDER_BYTE_TO_LABEL[data.gender] ?? this.state.profile.gender,
         birth: data.birthDate || null,
         // 居住地欄位（Members.City）已經補上去了，跟其他欄位一樣正常讀寫。
@@ -1414,7 +1415,7 @@ class Component extends DCLogic {
       },
       // 技能標籤名稱本來就跟 SKILL_GROUPS 用同一份中文名稱，可以直接替換。
       tags: data.skillNames || [],
-      dna: [1, 2, 3, 4].map((dimId) => (dnaByDim[dimId] != null ? dnaByDim[dimId] : 50)),
+      dna: [1, 2, 3, 4].map((dimId) => (dnaByDim[dimId] != null ? dnaByDim[dimId] : null)),
     });
   }
 
@@ -1427,7 +1428,7 @@ class Component extends DCLogic {
     try {
       const res = await fetch(apiUrl(accept ? "/Members/AcceptFriendRequest" : "/Members/DeclineFriendRequest"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({ targetMemberId: requesterId }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1445,7 +1446,7 @@ class Component extends DCLogic {
     try {
       const res = await fetch(apiUrl("/Members/Unblock"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({ targetMemberId: blockedId }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1463,7 +1464,7 @@ class Component extends DCLogic {
     try {
       const res = await fetch(apiUrl("/Members/RemoveFriend"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({ targetMemberId: friendId }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1481,7 +1482,7 @@ class Component extends DCLogic {
     try {
       const res = await fetch(apiUrl("/Members/Unfollow"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({ targetMemberId: followeeId }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1506,7 +1507,7 @@ class Component extends DCLogic {
       const url = this.state.viewerIsFollowing ? "/Members/Unfollow" : "/Members/Follow";
       const res = await fetch(apiUrl(url), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({ targetMemberId: targetId }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1527,7 +1528,7 @@ class Component extends DCLogic {
     try {
       const res = await fetch(apiUrl("/Members/SendFriendRequest"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({ targetMemberId: targetId, message: null }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1547,7 +1548,7 @@ class Component extends DCLogic {
       const url = this.state.viewerHasBlocked ? "/Members/Unblock" : "/Members/Block";
       const res = await fetch(apiUrl(url), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({ targetMemberId: targetId }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1572,7 +1573,7 @@ class Component extends DCLogic {
       form.append("targetMemberId", targetId);
       form.append("reason", reasonLabel);
       if (this._reportEvidenceFile) form.append("evidence", this._reportEvidenceFile);
-      const res = await fetch(apiUrl("/Members/ReportMember"), { method: "POST", body: form });
+      const res = await fetch(apiUrl("/Members/ReportMember"), { method: "POST", body: form, headers: { "RequestVerificationToken": this.csrf } });
       if (!res.ok) throw new Error("HTTP " + res.status);
       this._reportEvidenceFile = null;
       this.setState({ reportOpen: false, reportSent: true, reportEvidenceName: null });
@@ -1645,7 +1646,7 @@ class Component extends DCLogic {
     try {
       const res = await fetch(apiUrl("/Members/UpdateProfile"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify(this.buildEditDto(overrides)),
       });
       if (!res.ok) {
@@ -1670,9 +1671,9 @@ class Component extends DCLogic {
     try {
       await fetch(apiUrl("/Members/UpdateTravelDna"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
         body: JSON.stringify({
-          scores: dna.map((score, idx) => ({ dimensionId: idx + 1, score })),
+          scores: dna.map((score, idx) => ({ dimensionId: idx + 1, score })).filter(x => x.score != null),
         }),
       });
     } catch (err) {
@@ -1685,7 +1686,7 @@ class Component extends DCLogic {
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch(apiUrl("/Members/UploadAvatar"), { method: "POST", body: form });
+      const res = await fetch(apiUrl("/Members/UploadAvatar"), { method: "POST", body: form, headers: { "RequestVerificationToken": this.csrf } });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         console.warn("大頭貼上傳失敗：", data.message || res.status);
@@ -1840,8 +1841,8 @@ class Component extends DCLogic {
       const open = s.dnaOpen === i;
       return {
         label: def.label, poleLeft: def.left, poleRight: def.right,
-        pct, pctText: pct + "%", width: pct + "%",
-        tier: tier[1], note: tier[2],
+        pct: pct ?? 50, pctText: pct == null ? "尚未設定" : pct + "%", width: (pct ?? 0) + "%",
+        tier: pct == null ? "尚未設定" : tier[1], note: pct == null ? "可以稍後依照自己的旅行習慣調整。" : tier[2],
         open, caret: open ? "−" : "+",
         editing: dnaEditing,
         onToggle: () => this.set("dnaOpen", open ? null : i),
@@ -1850,7 +1851,7 @@ class Component extends DCLogic {
     });
 
     const dnaRows = DNA_DEFS.map((def, i) => ({
-      label: def.short, pct: s.dna[i], pctText: s.dna[i] + "%", width: s.dna[i] + "%"
+      label: def.short, pct: s.dna[i], pctText: s.dna[i] == null ? "尚未設定" : s.dna[i] + "%", width: (s.dna[i] ?? 0) + "%"
     }));
 
     const skillNote = (label) => {
@@ -2187,9 +2188,7 @@ class Component extends DCLogic {
       wallTags: [
         { label: s.flat ? "案頭視角" : "攤平閱讀", hint: s.flat ? "回到桌面" : "手帳放平", x: "16px", rot: "-2.4deg", rope: "26px", onClick: () => this.set("flat", !s.flat) },
         { label: s.loggedIn ? "登出" : "登入", hint: s.loggedIn ? "結束這趟" : "回到帳號", x: "126px", rot: "2.2deg", rope: "44px", onClick: () => {
-          const href = s.loggedIn ? (this.props.logoutHref || "") : (this.props.loginHref || "");
-          if (href) { go(href); return; }
-          this.set("loggedIn", !s.loggedIn);
+          fetch("/Auth/Logout", {method:"POST", headers:{"RequestVerificationToken":this.csrf}}).then(r=>{if(r.ok)go("/");});
         } },
       ],
       journalXf: s.flat ? "translate3d(174px,-74px,0)" : "rotateX(21deg) rotateZ(-2deg)",

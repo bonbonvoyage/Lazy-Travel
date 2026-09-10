@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 namespace LazyTravel.Controllers;
-// UI-only onboarding: no account or member data is written by these routes.
+// Optional profile details are edited in the existing personal center.
 public class AccountController : Controller
 {
     [HttpGet] public IActionResult Register() => View();
-    [HttpGet] public IActionResult Setup() => View();
+    [HttpGet] public IActionResult Setup() => RedirectToAction("Profile", "Members");
 }

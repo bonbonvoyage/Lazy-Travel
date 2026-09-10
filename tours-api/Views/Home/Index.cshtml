@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>首頁 - LazyTravel</title>
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home-entry.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <style>
         .home-content { max-width: 1440px; margin: 30px auto; padding: 0 36px; }
@@ -25,6 +26,17 @@
     <div class="sidebar-scrim" id="sidebarScrim"></div>
     <main class="main">
         <div class="home-content">
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <nav class="home-account-actions" aria-label="帳號入口">
+                    <button type="button" class="home-login" data-auth-open="login" aria-haspopup="dialog">登入</button>
+                    <button type="button" class="home-register" data-auth-open="register" aria-haspopup="dialog">免費註冊</button>
+                </nav>
+                <section class="home-welcome" aria-label="加入 LazyTravel">
+                    <p>找到合拍旅伴，從這裡開始。</p>
+                    <button type="button" data-auth-open="register" aria-haspopup="dialog">建立帳號 <span aria-hidden="true">→</span></button>
+                </section>
+            }
             <form class="search-bar home-search" asp-controller="TravelGroups" asp-action="Index" method="get">
                 <label class="search-field"><i class="bi bi-geo-alt" aria-hidden="true"></i>
                     <select name="region" aria-label="區域"><option value="">所有區域</option>

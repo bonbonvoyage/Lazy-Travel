@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -21,16 +21,11 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 
 	public virtual DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 	public virtual DbSet<Block> Blocks { get; set; }
-	public virtual DbSet<Category> Categories { get; set; }
 	public virtual DbSet<Employee> Employees { get; set; }
 	public virtual DbSet<EmployeeRole> EmployeeRoles { get; set; }
 	public virtual DbSet<Expense> Expenses { get; set; }
 	public virtual DbSet<ExpenseSplit> ExpenseSplits { get; set; }
 	public virtual DbSet<Follow> Follows { get; set; }
-	public virtual DbSet<ForumComment> ForumComments { get; set; }
-	public virtual DbSet<ForumImage> ForumImages { get; set; }
-	public virtual DbSet<ForumInteract> ForumInteracts { get; set; }
-	public virtual DbSet<ForumPost> ForumPosts { get; set; }
 	public virtual DbSet<FriendRequest> FriendRequests { get; set; }
 	public virtual DbSet<Friendship> Friendships { get; set; }
 	public virtual DbSet<GroupMember> GroupMembers { get; set; }
@@ -39,6 +34,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 	public virtual DbSet<LoginHistory> LoginHistories { get; set; }
 	public virtual DbSet<MemberSkill> MemberSkills { get; set; }
 	public virtual DbSet<MemberSubscription> MemberSubscriptions { get; set; }
+	public virtual DbSet<MemberTravelDNA> MemberTravelDnas { get; set; }
 	public virtual DbSet<Notification> Notifications { get; set; }
 	public virtual DbSet<Permission> Permissions { get; set; }
 	public virtual DbSet<PostInteraction> PostInteractions { get; set; }
@@ -48,14 +44,18 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 	public virtual DbSet<ReportTargetTypeLookup> ReportTargetTypeLookups { get; set; }
 	public virtual DbSet<Role> StaffRoles { get; set; }
 	public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+	public virtual DbSet<TravelDNADimension> TravelDnaDimensions { get; set; }
+	public virtual DbSet<TravelDNAOption> TravelDnaOptions { get; set; }
 	public virtual DbSet<TravelGroup> TravelGroups { get; set; }
 	public virtual DbSet<TravelGroupBudget> TravelGroupBudgets { get; set; }
 	public virtual DbSet<TravelGroupImage> TravelGroupImages { get; set; }
 	public virtual DbSet<TravelGroupItineraryItem> TravelGroupItineraryItems { get; set; }
 	public virtual DbSet<TravelGroupsLog> TravelGroupsLogs { get; set; }
+	public virtual DbSet<TravelGroupTag> TravelGroupTags { get; set; }
 	public virtual DbSet<TravelSkill> TravelSkills { get; set; }
 	public virtual DbSet<VlogPost> VlogPosts { get; set; }
 	public virtual DbSet<VlogPostImage> VlogPostImages { get; set; }
+	public virtual DbSet<VlogPostTag> VlogPostTags { get; set; }
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -72,7 +72,40 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 		modelBuilder.Entity<IdentityRoleClaim<int>>().ToTable("MemberRoleClaims");
 
 		// ---------- 以下保留非 Identity 資料表的實體屬性設定 ----------
-		modelBuilder.Entity<AdminAuditLog>(entity =>
+		        modelBuilder.Entity<Member>(entity =>
+        {
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
+            entity.Property(e => e.Bio).HasMaxLength(500);
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.FacebookUrl).HasMaxLength(255);
+            entity.Property(e => e.InstagramUrl).HasMaxLength(255);
+            entity.Property(e => e.LastLoginAt).HasColumnType("datetime");
+            entity.Property(e => e.LastLoginIp)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.LineId).HasMaxLength(50);
+            entity.Property(e => e.LockoutEnabled).HasDefaultValue(true);
+            entity.Property(e => e.Mbti)
+                .HasMaxLength(4)
+                .IsUnicode(false)
+                .HasColumnName("MBTI");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
+            entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
+            entity.Property(e => e.Occupation).HasMaxLength(50);
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
+            entity.Property(e => e.UserName).HasMaxLength(256);
+
+            entity.Property(e => e.BirthDate).HasColumnType("date");
+        });
+
+        modelBuilder.Entity<AdminAuditLog>(entity =>
 		{
 			entity.HasKey(e => e.LogId);
 			entity.Property(e => e.LogId).HasColumnName("LogID");
@@ -105,15 +138,6 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasForeignKey(d => d.BlockerId)
 				.OnDelete(DeleteBehavior.ClientSetNull)
 				.HasConstraintName("FK_Blocks_Blocker");
-		});
-
-		modelBuilder.Entity<Category>(entity =>
-		{
-			entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-			entity.Property(e => e.CategoryName).IsRequired().HasMaxLength(50);
-			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
-			entity.Property(e => e.IsActive).HasDefaultValue(true);
-			entity.Property(e => e.ModuleType).HasDefaultValue((byte)1);
 		});
 
 		modelBuilder.Entity<Employee>(entity =>
@@ -205,76 +229,6 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasConstraintName("FK_Follows_Follower");
 		});
 
-		modelBuilder.Entity<ForumComment>(entity =>
-		{
-			entity.HasKey(e => e.CommentId);
-			entity.Property(e => e.CommentId).HasColumnName("CommentID");
-			entity.Property(e => e.Content).IsRequired().HasMaxLength(500);
-			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
-			entity.Property(e => e.ForumPostId).HasColumnName("ForumPostID");
-			entity.Property(e => e.MemberId).HasColumnName("MemberID");
-			entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-
-			entity.HasOne(d => d.ForumPost).WithMany(p => p.ForumComments)
-				.HasForeignKey(d => d.ForumPostId)
-				.HasConstraintName("FK_ForumComments_Post");
-
-			entity.HasOne(d => d.Member).WithMany(p => p.ForumComments)
-				.HasForeignKey(d => d.MemberId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK_ForumComments_Member");
-		});
-
-		modelBuilder.Entity<ForumImage>(entity =>
-		{
-			entity.HasKey(e => e.ImageId);
-			entity.Property(e => e.ImageId).HasColumnName("ImageID");
-			entity.Property(e => e.ForumPostId).HasColumnName("ForumPostID");
-			entity.Property(e => e.ImageUrl).IsRequired().HasMaxLength(500);
-
-			entity.HasOne(d => d.ForumPost).WithMany(p => p.ForumImages)
-				.HasForeignKey(d => d.ForumPostId)
-				.HasConstraintName("FK_ForumImages_Post");
-		});
-
-		modelBuilder.Entity<ForumInteract>(entity =>
-		{
-			entity.HasKey(e => new { e.ForumPostId, e.MemberId, e.ActionType });
-			entity.Property(e => e.ForumPostId).HasColumnName("ForumPostID");
-			entity.Property(e => e.MemberId).HasColumnName("MemberID");
-			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
-
-			entity.HasOne(d => d.ForumPost).WithMany(p => p.ForumInteracts)
-				.HasForeignKey(d => d.ForumPostId)
-				.HasConstraintName("FK_ForumInteracts_Post");
-
-			entity.HasOne(d => d.Member).WithMany(p => p.ForumInteracts)
-				.HasForeignKey(d => d.MemberId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK_ForumInteracts_Member");
-		});
-
-		modelBuilder.Entity<ForumPost>(entity =>
-		{
-			entity.HasIndex(e => e.IsDelete, "IX_ForumPosts_IsDelete");
-			entity.Property(e => e.ForumPostId).HasColumnName("ForumPostID");
-			entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-			entity.Property(e => e.Content).IsRequired();
-			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
-			entity.Property(e => e.MemberId).HasColumnName("MemberID");
-			entity.Property(e => e.Title).IsRequired().HasMaxLength(150);
-			entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-
-			entity.HasOne(d => d.Category).WithMany(p => p.ForumPosts)
-				.HasForeignKey(d => d.CategoryId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK_ForumPosts_Category");
-
-			entity.HasOne(d => d.Member).WithMany(p => p.ForumPosts)
-				.HasForeignKey(d => d.MemberId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK_ForumPosts_Member");
-		});
 
 		modelBuilder.Entity<FriendRequest>(entity =>
 		{
@@ -431,6 +385,29 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasConstraintName("FK_MemberSubscriptions_Plan");
 		});
 
+		// 🐛 修正（來自浚翔 PR #23）：這裡本來沒有明確指定表名，EF 預設會拿 DbSet 屬性名稱
+		// 「MemberTravelDnas」當表名去查，但資料庫裡實際的表名是單數的「MemberTravelDNA」，
+		// 兩個字串不一樣（不是只有大小寫差異），所以每次查詢都會噴
+		// SqlException: 無效的物件名稱 'MemberTravelDnas'。以浚翔本機實際建置的資料庫結構為準。
+		modelBuilder.Entity<MemberTravelDNA>(entity =>
+		{
+			entity.HasKey(e => new { e.MemberId, e.DimensionId });
+			entity.ToTable("MemberTravelDNA", tb => tb.HasCheckConstraint("CK_MemberTravelDNA_Score", "[Score] >= 0 AND [Score] <= 100"));
+			entity.Property(e => e.MemberId).HasColumnName("MemberID");
+			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+			entity.Property(e => e.Score).HasDefaultValue((byte)50);
+			entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
+
+			entity.HasOne(d => d.Member).WithMany(p => p.MemberTravelDnas)
+				.HasForeignKey(d => d.MemberId)
+				.OnDelete(DeleteBehavior.Cascade)
+				.HasConstraintName("FK_MemberTravelDNA_Member");
+
+			entity.HasOne(d => d.Dimension).WithMany(p => p.MemberTravelDnas)
+				.HasForeignKey(d => d.DimensionId)
+				.HasConstraintName("FK_MemberTravelDNA_Dimension");
+		});
+
 		modelBuilder.Entity<Notification>(entity =>
 		{
 			entity.HasIndex(e => new { e.MemberId, e.IsRead, e.CreatedAt }, "IX_Notifications_Member_Read_Time");
@@ -575,9 +552,39 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
 		});
 
+		modelBuilder.Entity<TravelDNADimension>(entity =>
+		{
+			// 資料表實際名稱是 TravelDNADimensions；只有大小寫不同，SQL Server 預設
+			// 不分大小寫比對表名，本來就能動，但明確寫出來比較保險（浚翔 PR #23 建議）。
+			entity.ToTable("TravelDNADimensions");
+			entity.HasKey(e => e.DimensionId);
+			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+			entity.Property(e => e.DimensionName).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.LeftLabel).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.RightLabel).IsRequired().HasMaxLength(50);
+		});
+
+		modelBuilder.Entity<TravelDNAOption>(entity =>
+		{
+			entity.HasKey(e => e.OptionId);
+			entity.ToTable("TravelDNAOptions", tb => tb.HasCheckConstraint("CK_TravelDNAOptions_ScoreRange",
+				"[MinScore] >= 0 AND [MinScore] <= 100 AND [MaxScore] >= 0 AND [MaxScore] <= 100 AND [MinScore] <= [MaxScore]"));
+			entity.Property(e => e.OptionId).HasColumnName("OptionID");
+			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+			entity.Property(e => e.OptionName).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.Description).IsRequired().HasMaxLength(200);
+
+			entity.HasOne(d => d.Dimension).WithMany(p => p.TravelDnaOptions)
+				.HasForeignKey(d => d.DimensionId)
+				.HasConstraintName("FK_TravelDNAOptions_Dimension");
+		});
+
 		modelBuilder.Entity<TravelGroup>(entity =>
 		{
 			entity.HasKey(e => e.GroupId);
+			entity.Ignore(e => e.AccommType);
+			entity.Ignore(e => e.CanShareRoom);
+			entity.Ignore(e => e.AccommNote);
 			entity.HasIndex(e => e.IsDelete, "IX_TravelGroups_IsDelete");
 			entity.HasIndex(e => e.StartDate, "IX_TravelGroups_StartDate");
 			entity.HasIndex(e => e.GroupStatus, "IX_TravelGroups_Status");
@@ -588,7 +595,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.CurrentPeople).HasDefaultValue(1);
 			entity.Property(e => e.Description).HasMaxLength(1000);
 			entity.Property(e => e.GroupTitle).IsRequired().HasMaxLength(100);
-			entity.Property(e => e.IsPublic).HasDefaultValue(true);
+			entity.Property(e => e.IsPublic).HasDefaultValue(true).ValueGeneratedNever();
 			entity.Property(e => e.JoinRule).HasDefaultValue((byte)1);
 			entity.Property(e => e.MaxPeople).HasDefaultValue(10);
 			entity.Property(e => e.MinPeople).HasDefaultValue(2);
@@ -612,7 +619,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
 			entity.Property(e => e.CurrencyCode).IsRequired().HasMaxLength(3).IsUnicode(false).HasDefaultValue("TWD").IsFixedLength();
 			entity.Property(e => e.GroupId).HasColumnName("GroupID");
-			entity.Property(e => e.IsRequired).HasDefaultValue(true);
+			entity.Property(e => e.IsRequired).HasDefaultValue(true).ValueGeneratedNever();
 			entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
 
 			entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupBudgets)
@@ -682,6 +689,22 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasConstraintName("FK_TravelGroupsLog_Group");
 		});
 
+		modelBuilder.Entity<TravelGroupTag>(entity =>
+		{
+			entity.HasKey(e => e.TagId);
+			entity.HasIndex(e => e.GroupId, "IX_TravelGroupTags_GroupID");
+			entity.HasIndex(e => e.IsDelete, "IX_TravelGroupTags_IsDelete");
+			entity.Property(e => e.TagId).HasColumnName("TagID");
+			entity.Property(e => e.GroupId).HasColumnName("GroupID");
+			entity.Property(e => e.TagName).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.TagCategory).HasMaxLength(20);
+			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
+
+			entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupTags)
+				.HasForeignKey(d => d.GroupId)
+				.HasConstraintName("FK_TravelGroupTags_Group");
+		});
+
 		modelBuilder.Entity<TravelSkill>(entity =>
 		{
 			entity.HasKey(e => e.SkillId);
@@ -735,6 +758,22 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.HasOne(d => d.VlogPost).WithMany(p => p.VlogPostImages)
 				.HasForeignKey(d => d.VlogPostId)
 				.HasConstraintName("FK_VlogPostImages_Post");
+		});
+
+		modelBuilder.Entity<VlogPostTag>(entity =>
+		{
+			entity.HasKey(e => e.TagId);
+			entity.HasIndex(e => e.PostId, "IX_VlogPostTags_PostID");
+			entity.HasIndex(e => e.IsDelete, "IX_VlogPostTags_IsDelete");
+			entity.Property(e => e.TagId).HasColumnName("TagID");
+			entity.Property(e => e.PostId).HasColumnName("PostID");
+			entity.Property(e => e.TagName).IsRequired().HasMaxLength(50);
+			entity.Property(e => e.TagCategory).HasMaxLength(20);
+			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
+
+			entity.HasOne(d => d.Post).WithMany(p => p.VlogPostTags)
+				.HasForeignKey(d => d.PostId)
+				.HasConstraintName("FK_VlogPostTags_Post");
 		});
 
 		OnModelCreatingPartial(modelBuilder);

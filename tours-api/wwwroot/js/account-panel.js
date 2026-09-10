@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
 'use strict';
 const dialog = document.getElementById('ltAuthDialog');
 if (!dialog || dialog.dataset.ready) return;
@@ -36,10 +36,19 @@ const register=document.getElementById('ltRegisterForm');
 const password=document.getElementById('ltRegisterPassword'),confirm=document.getElementById('ltConfirmPassword');
 function validateMatch(){confirm.setCustomValidity(confirm.value&&confirm.value!==password.value?'兩次輸入的密碼不一致。':'');}
 password.addEventListener('input',validateMatch);confirm.addEventListener('input',validateMatch);
-register.addEventListener('submit',e=>{
+register.addEventListener('submit',async e=>{
  e.preventDefault();validateMatch();if(!register.reportValidity())return;
- resetSecrets();window.location.assign('/Account/Setup');
+ const button=register.querySelector('[type=submit]'),error=document.getElementById('ltRegisterError');
+ if(button.disabled)return;button.disabled=true;button.textContent='建立中…';error.textContent='';
+ try {
+  const response=await fetch(register.action,{method:'POST',body:new FormData(register),credentials:'same-origin'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){error.textContent=data.message||'目前無法建立帳號，請稍後再試。';return;}
+  resetSecrets();window.location.assign(data.redirectUrl||'/Members/Profile');
+ }catch{error.textContent='連線中斷。若帳號已建立，請嘗試登入；不用重新填寫個人資料。';}
+ finally{button.disabled=false;button.textContent='建立帳號';}
 });
+
 document.getElementById('ltLoginForm').addEventListener('submit',async e=>{
  e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]'),error=document.getElementById('ltLoginError');
  if(!form.reportValidity())return;

@@ -32,7 +32,7 @@
         <button class="bell-btn" aria-label="通知"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="label">通知</span><span class="bell-dot"></span></button>
         <button type="button" class="me lt-auth-trigger" data-auth-open="@(User.Identity?.IsAuthenticated == true ? "member" : "login")" aria-haspopup="dialog">
             <div class="me-avatar"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div>
-            <span class="me-name">@(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "訪客")</span>
+            <span class="me-name">@(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "登入／註冊")</span>
             <svg class="me-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
     </div>
