@@ -1,0 +1,13 @@
+.home-account-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-bottom:18px}
+.home-account-actions button,.home-welcome button{font:inherit;cursor:pointer;min-height:44px;border:0}
+.home-login{background:transparent;color:#253b36;padding:10px 18px;border-radius:24px}
+.home-register{background:#13845f;color:white;border-radius:24px;padding:10px 24px;box-shadow:0 4px 12px #146a4920}
+.home-register:hover{background:#0c6c4d}.home-login:hover{background:#ffffffa8}
+.home-welcome{position:relative;isolation:isolate;overflow:hidden;display:flex;justify-content:center;align-items:center;gap:24px;padding:16px 28px;border:1px solid #ffffffb0;border-radius:16px;background:linear-gradient(110deg,#d9ece5,#fffaf3 60%,#f5e3e1);margin-bottom:24px}
+.home-welcome:before,.home-welcome:after{content:"";position:absolute;z-index:-1;pointer-events:none;bottom:-2px;width:30%;height:70%;background:#a1c6b844;clip-path:polygon(0 100%,0 64%,20% 35%,34% 62%,57% 12%,77% 56%,100% 100%)}
+.home-welcome:before{left:0}.home-welcome:after{right:0;transform:scaleX(-1);background:#bbc5c344}
+.home-welcome p{margin:0;color:#234b40;font-size:clamp(17px,1.5vw,22px);letter-spacing:.06em;line-height:1.6}
+.home-welcome button{background:transparent;color:#126c50;border-radius:8px;padding:8px 12px;white-space:nowrap;font-weight:600}
+.home-welcome button:hover{background:#ffffff99}
+.home-account-actions button:focus-visible,.home-welcome button:focus-visible{outline:3px solid #146d50;outline-offset:3px}
+@media(max-width:760px){.home-account-actions{gap:4px;margin-bottom:14px}.home-welcome{padding:16px;gap:4px;flex-direction:column;text-align:center}.home-register{padding:10px 18px}}

@@ -1,5 +1,3 @@
-
-Lazytraveldbcontext · CS
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
@@ -58,7 +56,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 	public virtual DbSet<VlogPost> VlogPosts { get; set; }
 	public virtual DbSet<VlogPostImage> VlogPostImages { get; set; }
 	public virtual DbSet<VlogPostTag> VlogPostTags { get; set; }
- 
+
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		// 呼叫底層 Identity 設定
@@ -74,7 +72,40 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 		modelBuilder.Entity<IdentityRoleClaim<int>>().ToTable("MemberRoleClaims");
  
 		// ---------- 以下保留非 Identity 資料表的實體屬性設定 ----------
-		modelBuilder.Entity<AdminAuditLog>(entity =>
+		        modelBuilder.Entity<Member>(entity =>
+        {
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
+            entity.Property(e => e.Bio).HasMaxLength(500);
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.FacebookUrl).HasMaxLength(255);
+            entity.Property(e => e.InstagramUrl).HasMaxLength(255);
+            entity.Property(e => e.LastLoginAt).HasColumnType("datetime");
+            entity.Property(e => e.LastLoginIp)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.LineId).HasMaxLength(50);
+            entity.Property(e => e.LockoutEnabled).HasDefaultValue(true);
+            entity.Property(e => e.Mbti)
+                .HasMaxLength(4)
+                .IsUnicode(false)
+                .HasColumnName("MBTI");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
+            entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
+            entity.Property(e => e.Occupation).HasMaxLength(50);
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
+            entity.Property(e => e.UserName).HasMaxLength(256);
+
+            entity.Property(e => e.BirthDate).HasColumnType("date");
+        });
+
+        modelBuilder.Entity<AdminAuditLog>(entity =>
 		{
 			entity.HasKey(e => e.LogId);
 			entity.Property(e => e.LogId).HasColumnName("LogID");
@@ -108,7 +139,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.OnDelete(DeleteBehavior.ClientSetNull)
 				.HasConstraintName("FK_Blocks_Blocker");
 		});
- 
+
 		modelBuilder.Entity<Employee>(entity =>
 		{
 			entity.HasIndex(e => e.Email, "UQ_Employees_Email").IsUnique().HasFilter("([IsDelete]=(0))");
@@ -197,8 +228,8 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.OnDelete(DeleteBehavior.ClientSetNull)
 				.HasConstraintName("FK_Follows_Follower");
 		});
- 
- 
+
+
 		modelBuilder.Entity<FriendRequest>(entity =>
 		{
 			entity.HasKey(e => e.RequestId);
@@ -353,7 +384,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasForeignKey(d => d.PlanId)
 				.HasConstraintName("FK_MemberSubscriptions_Plan");
 		});
- 
+
 		// 🐛 修正（來自浚翔 PR #23）：這裡本來沒有明確指定表名，EF 預設會拿 DbSet 屬性名稱
 		// 「MemberTravelDnas」當表名去查，但資料庫裡實際的表名是單數的「MemberTravelDNA」，
 		// 兩個字串不一樣（不是只有大小寫差異），所以每次查詢都會噴
@@ -366,17 +397,17 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
 			entity.Property(e => e.Score).HasDefaultValue((byte)50);
 			entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
- 
+
 			entity.HasOne(d => d.Member).WithMany(p => p.MemberTravelDnas)
 				.HasForeignKey(d => d.MemberId)
 				.OnDelete(DeleteBehavior.Cascade)
 				.HasConstraintName("FK_MemberTravelDNA_Member");
- 
+
 			entity.HasOne(d => d.Dimension).WithMany(p => p.MemberTravelDnas)
 				.HasForeignKey(d => d.DimensionId)
 				.HasConstraintName("FK_MemberTravelDNA_Dimension");
 		});
- 
+
 		modelBuilder.Entity<Notification>(entity =>
 		{
 			entity.HasIndex(e => new { e.MemberId, e.IsRead, e.CreatedAt }, "IX_Notifications_Member_Read_Time");
@@ -520,7 +551,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.PlanName).IsRequired().HasMaxLength(50);
 			entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
 		});
- 
+
 		modelBuilder.Entity<TravelDNADimension>(entity =>
 		{
 			// 資料表實際名稱是 TravelDNADimensions；只有大小寫不同，SQL Server 預設
@@ -532,7 +563,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.LeftLabel).IsRequired().HasMaxLength(50);
 			entity.Property(e => e.RightLabel).IsRequired().HasMaxLength(50);
 		});
- 
+
 		modelBuilder.Entity<TravelDNAOption>(entity =>
 		{
 			entity.HasKey(e => e.OptionId);
@@ -542,12 +573,12 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
 			entity.Property(e => e.OptionName).IsRequired().HasMaxLength(50);
 			entity.Property(e => e.Description).IsRequired().HasMaxLength(200);
- 
+
 			entity.HasOne(d => d.Dimension).WithMany(p => p.TravelDnaOptions)
 				.HasForeignKey(d => d.DimensionId)
 				.HasConstraintName("FK_TravelDNAOptions_Dimension");
 		});
- 
+
 		modelBuilder.Entity<TravelGroup>(entity =>
 		{
 			entity.HasKey(e => e.GroupId);
@@ -657,7 +688,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasForeignKey(d => d.GroupId)
 				.HasConstraintName("FK_TravelGroupsLog_Group");
 		});
- 
+
 		modelBuilder.Entity<TravelGroupTag>(entity =>
 		{
 			entity.HasKey(e => e.TagId);
@@ -668,12 +699,12 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.TagName).IsRequired().HasMaxLength(50);
 			entity.Property(e => e.TagCategory).HasMaxLength(20);
 			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
- 
+
 			entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupTags)
 				.HasForeignKey(d => d.GroupId)
 				.HasConstraintName("FK_TravelGroupTags_Group");
 		});
- 
+
 		modelBuilder.Entity<TravelSkill>(entity =>
 		{
 			entity.HasKey(e => e.SkillId);
@@ -728,7 +759,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 				.HasForeignKey(d => d.VlogPostId)
 				.HasConstraintName("FK_VlogPostImages_Post");
 		});
- 
+
 		modelBuilder.Entity<VlogPostTag>(entity =>
 		{
 			entity.HasKey(e => e.TagId);
@@ -739,16 +770,14 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.Property(e => e.TagName).IsRequired().HasMaxLength(50);
 			entity.Property(e => e.TagCategory).HasMaxLength(20);
 			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
- 
+
 			entity.HasOne(d => d.Post).WithMany(p => p.VlogPostTags)
 				.HasForeignKey(d => d.PostId)
 				.HasConstraintName("FK_VlogPostTags_Post");
 		});
- 
+
 		OnModelCreatingPartial(modelBuilder);
 	}
  
 	partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
- 
-

@@ -19,7 +19,10 @@
         <a class="nav-item @(active == "TravelGroups" ? "active" : "")" asp-controller="TravelGroups" asp-action="Index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M2 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/><circle cx="18" cy="8" r="2.4"/><path d="M22 21c0-2.9-1.7-4.8-4-5.6"/></svg><span class="label">揪團找旅伴</span></a>
         <a class="nav-item @(active == "Explore" ? "active" : "")" asp-controller="Explore" asp-action="Index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-2.4V4.4L9 6.8l6-2.4 6 2.4v13.2L15 22l-6-2.4z"/><path d="M9 6.8v13.2M15 4.4v15.2"/></svg><span class="label">揪團行程分享</span></a>
         <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.1 2.4 4.5 6 4a5 5 0 016 2.4A5 5 0 0118 4c3.6.5 5.6 4.1 4 7.7C19.5 16.4 12 21 12 21z"/></svg><span class="label">收藏行程</span></a>
-        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="label">個人中心</span></a>
+        <a class="nav-item"
+           asp-controller="Members"
+           asp-action="Profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg><span class="label">個人中心</span></a>
         <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 8v.01"/></svg><span class="label">關於我們</span></a>
     </nav>
 
@@ -27,13 +30,14 @@
 
     <div class="sb-bottom">
         <button class="bell-btn" aria-label="通知"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="label">通知</span><span class="bell-dot"></span></button>
-        <div class="me">
+        <button type="button" class="me lt-auth-trigger" data-auth-open="@(User.Identity?.IsAuthenticated == true ? "member" : "login")" aria-haspopup="dialog">
             <div class="me-avatar"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div>
-            <span class="me-name">訪客</span>
+            <span class="me-name">@(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "登入／註冊")</span>
             <svg class="me-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
+        </button>
     </div>
 </aside>
+@await Html.PartialAsync("_AccountPanel")
 
 <script>
     // Liquid Glass 鏡面光斑：滑鼠移到側欄上時，把座標百分比寫進 --mx/--my，

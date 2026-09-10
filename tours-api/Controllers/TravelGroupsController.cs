@@ -168,7 +168,7 @@ namespace LazyTravel.Controllers
         }
 
         // GET /TravelGroups —— 公開揪團列表，篩選與分頁都在資料庫端完成。
-        public async Task<IActionResult> Index(string? country, string? region, string? startDate, string? endDate, string scope = "all", int page = 1)
+        public async Task<IActionResult> Index(string? country, string? region, string? startDate, string? endDate, string scope = "all", int page = 1, int? maxDays = null)
         {
             const int pageSize = 6;
             page = Math.Max(page, 1);
@@ -193,6 +193,7 @@ namespace LazyTravel.Controllers
                 country = null;
             }
 
+            if (maxDays is > 0) publicGroups = publicGroups.Where(g => g.StartDate.HasValue && g.EndDate.HasValue && EF.Functions.DateDiffDay(g.StartDate, g.EndDate) >= 0 && EF.Functions.DateDiffDay(g.StartDate, g.EndDate) < maxDays.Value);
             var query = publicGroups
                 .Include(g => g.OwnerMember)
                 .Include(g => g.TravelGroupImages)
@@ -290,6 +291,7 @@ namespace LazyTravel.Controllers
                 StartDate = startDate,
                 EndDate = endDate,
                 Scope = scope,
+                MaxDays = maxDays is > 0 ? maxDays : null,
                 Page = page,
                 TotalPages = totalPages,
                 TotalCount = totalCount,

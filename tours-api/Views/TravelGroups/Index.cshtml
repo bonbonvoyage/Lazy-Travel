@@ -29,6 +29,7 @@
 
             <form class="groups-filter" method="get" asp-action="Index">
                 <input type="hidden" name="scope" value="@Model.Scope" />
+                <input type="hidden" name="maxDays" value="@Model.MaxDays" />
                 <input type="hidden" id="groupStartDate" name="startDate" value="@Model.StartDate" />
                 <input type="hidden" id="groupEndDate" name="endDate" value="@Model.EndDate" />
 
@@ -70,9 +71,9 @@
             <section class="groups-board" aria-labelledby="board-title">
                 <div class="board-toolbar">
                     <nav class="groups-tabs" aria-label="揪團分類">
-                        <a class="@(Model.Scope == "all" ? "active" : "")" asp-action="Index" asp-route-scope="all" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" id="board-title">所有揪團</a>
+                        <a class="@(Model.Scope == "all" ? "active" : "")" asp-action="Index" asp-route-scope="all" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" id="board-title">所有揪團</a>
                         <button type="button" disabled title="登入後即可查看">我的行程</button>
-                        <a class="@(Model.Scope == "recommended" ? "active" : "")" asp-action="Index" asp-route-scope="recommended" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">揪團推薦</a>
+                        <a class="@(Model.Scope == "recommended" ? "active" : "")" asp-action="Index" asp-route-scope="recommended" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">揪團推薦</a>
                     </nav>
                     <a class="create-group" asp-action="Create"><span>＋</span> 新增揪團</a>
                 </div>
@@ -142,12 +143,12 @@
                 @if (Model.TotalPages > 1)
                 {
                     <nav class="groups-pagination" aria-label="揪團分頁">
-                        <a class="@(Model.Page == 1 ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="上一頁">‹</a>
+                        <a class="@(Model.Page == 1 ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="上一頁">‹</a>
                         @for (var i = 1; i <= Model.TotalPages; i++)
                         {
-                            <a class="@(i == Model.Page ? "active" : "")" asp-action="Index" asp-route-page="@i" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope">@i</a>
+                            <a class="@(i == Model.Page ? "active" : "")" asp-action="Index" asp-route-page="@i" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope">@i</a>
                         }
-                        <a class="@(Model.Page == Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="下一頁">›</a>
+                        <a class="@(Model.Page == Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-country="@Model.Country" asp-route-region="@Model.Region" asp-route-maxDays="@Model.MaxDays" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="下一頁">›</a>
                     </nav>
                 }
             </section>

@@ -22,4 +22,4 @@ public partial class VlogPostTag
     public bool IsDelete { get; set; }
 
     public virtual VlogPost Post { get; set; }
-
+}

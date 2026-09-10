@@ -20,4 +20,4 @@ public partial class TravelGroupTag
     public bool IsDelete { get; set; }
 
     public virtual TravelGroup Group { get; set; }
-
+}

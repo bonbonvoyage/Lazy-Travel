@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 
 Member · CS
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +7,7 @@ namespace LazyTravel.Shared.Models.EfModels;
  
 public partial class Member : IdentityUser<int>
 {
+	public string? City { get; set; }
 	public string Name { get; set; } = null!;
 	public string? LineId { get; set; }
 	public string? InstagramUrl { get; set; }
@@ -52,4 +54,3 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<VlogPostImage> VlogPostImages { get; set; } = new List<VlogPostImage>();
 	public virtual ICollection<VlogPost> VlogPosts { get; set; } = new List<VlogPost>();
 }
-

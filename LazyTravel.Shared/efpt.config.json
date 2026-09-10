@@ -1,230 +1,230 @@
-﻿{
-   "CodeGenerationMode": 4,
-   "ContextClassName": "LazyTravelDBContext",
-   "ContextNamespace": null,
-   "FilterSchemas": false,
-   "IncludeConnectionString": false,
-   "IrregularWords": null,
-   "MinimumProductVersion": "2.6.1604",
-   "ModelNamespace": null,
-   "OutputContextPath": null,
-   "OutputPath": "Models\\EfModels",
-   "PluralRules": null,
-   "PreserveCasingWithRegex": true,
-   "ProjectRootNamespace": "LazyTravel.Shared",
-   "Schemas": null,
-   "SelectedHandlebarsLanguage": 2,
-   "SelectedToBeGenerated": 0,
-   "SingularRules": null,
-   "T4TemplatePath": null,
-   "Tables": [
-      {
-         "Name": "[dbo].[AdminAuditLogs]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Blocks]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[EmployeeRoles]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Employees]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Expenses]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ExpenseSplits]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Follows]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[FriendRequests]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Friendships]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[GroupMembers]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ItineraryNodes]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[JoinRequests]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[LoginHistories]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberClaims]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberLogins]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberRoleClaims]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberRoles]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Members]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberSkills]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberSubscriptions]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberTokens]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberTravelDNA]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[MemberUserRoles]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Notifications]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Permissions]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[PostInteractions]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ReportReasonCategories]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Reports]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ReportStatuses]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[ReportTargetTypes]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[RolePermissions]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Roles]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[SubscriptionPlans]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelDNADimensions]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelDNAOptions]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelGroupBudgets]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelGroupImages]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelGroupItineraryItems]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelGroups]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelGroupsLog]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelGroupTags]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TravelSkills]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[VlogPostImages]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[VlogPosts]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[VlogPostTags]",
-         "ObjectType": 0
-      }
-   ],
-   "UiHint": null,
-   "UncountableWords": null,
-   "UseAsyncStoredProcedureCalls": true,
-   "UseBoolPropertiesWithoutDefaultSql": false,
-   "UseDatabaseNames": false,
-   "UseDatabaseNamesForRoutines": true,
-   "UseDateOnlyTimeOnly": true,
-   "UseDbContextSplitting": false,
-   "UseDecimalDataAnnotationForSprocResult": true,
-   "UseFluentApiOnly": true,
-   "UseHandleBars": false,
-   "UseHierarchyId": false,
-   "UseInflector": true,
-   "UseInternalAccessModifiersForSprocsAndFunctions": false,
-   "UseLegacyPluralizer": false,
-   "UseManyToManyEntity": false,
-   "UseNoDefaultConstructor": false,
-   "UseNoNavigations": false,
-   "UseNoObjectFilter": false,
-   "UseNodaTime": false,
-   "UseNullableReferences": false,
-   "UsePrefixNavigationNaming": false,
-   "UseSchemaFolders": false,
-   "UseSchemaNamespaces": false,
-   "UseSpatial": false,
-   "UseT4": false,
-   "UseT4Split": false,
-   "UseTypedTvpParameters": true
+{
+  "CodeGenerationMode": 4,
+  "ContextClassName": "LazyTravelDBContext",
+  "ContextNamespace": null,
+  "FilterSchemas": false,
+  "IncludeConnectionString": false,
+  "IrregularWords": null,
+  "MinimumProductVersion": "2.6.1604",
+  "ModelNamespace": null,
+  "OutputContextPath": null,
+  "OutputPath": "Models\\EfModels",
+  "PluralRules": null,
+  "PreserveCasingWithRegex": true,
+  "ProjectRootNamespace": "LazyTravel.Shared",
+  "Schemas": null,
+  "SelectedHandlebarsLanguage": 2,
+  "SelectedToBeGenerated": 0,
+  "SingularRules": null,
+  "T4TemplatePath": null,
+  "Tables": [
+    {
+      "Name": "[dbo].[AdminAuditLogs]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Blocks]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[EmployeeRoles]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Employees]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Expenses]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[ExpenseSplits]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Follows]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[FriendRequests]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Friendships]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[GroupMembers]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[ItineraryNodes]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[JoinRequests]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[LoginHistories]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberClaims]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberLogins]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberRoleClaims]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberRoles]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Members]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberSkills]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberSubscriptions]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberTokens]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberUserRoles]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Notifications]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Permissions]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[PostInteractions]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[ReportReasonCategories]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Reports]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[ReportStatuses]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[ReportTargetTypes]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[RolePermissions]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[Roles]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[SubscriptionPlans]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelGroupBudgets]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelGroupImages]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelGroupItineraryItems]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelGroups]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelGroupsLog]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelSkills]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[VlogPostImages]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[VlogPosts]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[MemberTravelDNA]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelDNADimensions]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelDNAOptions]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[TravelGroupTags]",
+      "ObjectType": 0
+    },
+    {
+      "Name": "[dbo].[VlogPostTags]",
+      "ObjectType": 0
+    }
+  ],
+  "UiHint": null,
+  "UncountableWords": null,
+  "UseAsyncStoredProcedureCalls": true,
+  "UseBoolPropertiesWithoutDefaultSql": false,
+  "UseDatabaseNames": false,
+  "UseDatabaseNamesForRoutines": true,
+  "UseDateOnlyTimeOnly": true,
+  "UseDbContextSplitting": false,
+  "UseDecimalDataAnnotationForSprocResult": true,
+  "UseFluentApiOnly": true,
+  "UseHandleBars": false,
+  "UseHierarchyId": false,
+  "UseInflector": true,
+  "UseInternalAccessModifiersForSprocsAndFunctions": false,
+  "UseLegacyPluralizer": false,
+  "UseManyToManyEntity": false,
+  "UseNoDefaultConstructor": false,
+  "UseNoNavigations": false,
+  "UseNoObjectFilter": false,
+  "UseNodaTime": false,
+  "UseNullableReferences": false,
+  "UsePrefixNavigationNaming": false,
+  "UseSchemaFolders": false,
+  "UseSchemaNamespaces": false,
+  "UseSpatial": false,
+  "UseT4": false,
+  "UseT4Split": false,
+  "UseTypedTvpParameters": true
 }

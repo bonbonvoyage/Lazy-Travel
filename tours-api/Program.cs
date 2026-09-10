@@ -41,17 +41,38 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 builder.Services.AddScoped<LazyTravel.Shared.Services.VlogPostImageUploadService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IImageStorageService, LazyTravel.Shared.Services.R2ImageStorageService>();
 
-// 會員大頭貼上傳：R2 帳號金鑰還沒建好之前，先用本機 wwwroot/uploads/avatars/ 代替。
-// 用 Keyed Service 註冊，只有 MemberProfileService 會拿到這個 "avatar" 版本，
-// 不會影響上面 VlogPost 用的那個（沒有 key，還是走 R2）。
-// LocalImageStorageService 建構子要吃 webRootPath 字串（不是 IWebHostEnvironment——
-// LazyTravel.Shared 這個類別庫沒有參考 ASP.NET Core 的 Hosting 套件），這裡用
-// builder.Environment.WebRootPath 帶進去。
-// 等組長把正式的 R2 帳號、appsettings 的 CloudflareR2 設定都填好之後，
-// 把下面這個 factory 換成回傳 new R2ImageStorageService(...) 就好，
-// 其他程式碼完全不用動。
-builder.Services.AddKeyedScoped<LazyTravel.Shared.Services.IImageStorageService>("avatar", (sp, key) =>
-	new LazyTravel.Shared.Services.LocalImageStorageService(builder.Environment.WebRootPath));
+// 前台登入驗證服務
+builder.Services.AddScoped<IMemberAuthService, MemberAuthService>();
+
+// 前台會員 Cookie 認證
+builder.Services.AddAuthentication("MemberAuth")
+	.AddCookie("MemberAuth", options =>
+	{
+		options.Cookie.Name = "LazyTravel.Member.Session";
+		// 🌟 Vue 是獨立網域/Port 呼叫這支 API,Cookie 要能跨站帶過去,一定要 None + Secure
+		options.Cookie.SameSite = SameSiteMode.None;
+		options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+		options.Events.OnRedirectToLogin = context =>
+		{
+			context.Response.StatusCode = 401;
+			return Task.CompletedTask;
+		};
+	});
+builder.Services.AddAuthorization();
+
+// 🌟 CORS:給 Vue 前端呼叫用。允許的網址從 appsettings.json 的 Cors:AllowedOrigins 讀,
+// 之後 Vue 那邊確定實際開發網址後,只要改設定檔,不用改程式碼。
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("FrontendPolicy", policy =>
+	{
+		policy.WithOrigins(allowedOrigins)
+			  .AllowAnyHeader()
+			  .AllowAnyMethod()
+			  .AllowCredentials(); // 因為要帶 Cookie,不能用 AllowAnyOrigin
+	});
+});
 
 var app = builder.Build();
 
@@ -81,6 +102,9 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("FrontendPolicy");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
 	name: "default",
