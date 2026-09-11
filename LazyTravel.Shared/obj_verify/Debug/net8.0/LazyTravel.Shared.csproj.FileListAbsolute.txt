@@ -1,0 +1,5 @@
+D:\期中專題\LazyTravel-project\LazyTravel.Shared\obj_verify\Debug\net8.0\LazyTravel.Shared.csproj.AssemblyReference.cache
+D:\期中專題\LazyTravel-project\LazyTravel.Shared\obj_verify\Debug\net8.0\LazyTravel.Shared.GeneratedMSBuildEditorConfig.editorconfig
+D:\期中專題\LazyTravel-project\LazyTravel.Shared\obj_verify\Debug\net8.0\LazyTravel.Shared.AssemblyInfoInputs.cache
+D:\期中專題\LazyTravel-project\LazyTravel.Shared\obj_verify\Debug\net8.0\LazyTravel.Shared.AssemblyInfo.cs
+D:\期中專題\LazyTravel-project\LazyTravel.Shared\obj_verify\Debug\net8.0\LazyTravel.Shared.csproj.CoreCompileInputs.cache

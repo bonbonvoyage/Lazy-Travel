@@ -30,16 +30,7 @@
                     <h1>建立一趟新的旅行</h1>
                     <p id="stepSubtitle">先把旅程輪廓整理好，下一步再設定旅伴條件。</p>
                 </div>
-                <div class="header-actions">
-                    <button class="glass-btn" type="button" data-save-draft>
-                        <span class="btn-icon">▣</span>
-                        儲存草稿
-                    </button>
-                    <button class="primary-btn" type="button" data-next>
-                        下一步
-                        <span>→</span>
-                    </button>
-                </div>
+
             </header>
 
             <nav class="stepper" aria-label="新增揪團流程">
@@ -99,12 +90,9 @@
                             <em class="file-name" id="coverFileName"></em>
                         </div>
                         <div class="support-images">
-                            <span>補充圖片（選填，最多 4 張）</span>
-                            <div>
-                                <button type="button" class="support-upload">＋</button>
-                                <button type="button" class="support-upload">＋</button>
-                                <button type="button" class="support-upload">＋</button>
-                                <button type="button" class="support-upload">＋</button>
+                            <span>補充圖片（選填）</span>
+                            <div id="supportImageList">
+                                <button type="button" class="support-upload support-upload-add" aria-label="新增補充圖片">＋</button>
                             </div>
                         </div>
                     </section>
@@ -234,7 +222,7 @@
 
             <footer class="create-footer">
                 <a class="glass-btn cancel-btn" asp-action="Index" data-cancel>取消</a>
-                <button class="glass-btn" type="button" data-prev>← 上一步</button>
+                <button class="glass-btn" type="button" data-prev hidden>← 上一步</button>
                 <button class="primary-btn" type="button" data-next>下一步 <span>→</span></button>
             </footer>
         </form>

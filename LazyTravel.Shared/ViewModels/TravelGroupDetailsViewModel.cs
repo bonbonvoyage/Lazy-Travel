@@ -20,6 +20,7 @@ public class TravelGroupDetailsViewModel
     public List<string> GalleryImageUrls { get; set; } = new();
 
     public List<TravelGroupMemberVm> Members { get; set; } = new();
+    public TravelGroupApplicationsVm Applications { get; set; } = new();
     public List<TravelGroupItineraryDayVm> ItineraryDays { get; set; } = new();
     public List<TravelGroupBudgetItemVm> BudgetItems { get; set; } = new();
     public decimal BudgetTotalPerPerson { get; set; }
@@ -29,6 +30,9 @@ public class TravelGroupDetailsViewModel
     public bool ViewerIsOwner { get; set; }
     public bool ViewerIsMember { get; set; }
     public bool ViewerHasPendingRequest { get; set; }
+    public bool ViewerHasFavorited { get; set; }
+    public int FavoriteCount { get; set; }
+    public string ViewerMode { get; set; } = "guest";
 }
 
 public class TravelGroupMemberVm
@@ -39,6 +43,24 @@ public class TravelGroupMemberVm
     public bool IsOwner { get; set; }
 }
 
+
+public class TravelGroupApplicationsVm
+{
+    public List<TravelGroupApplicationMemberVm> Joined { get; set; } = new();
+    public List<TravelGroupApplicationMemberVm> Pending { get; set; } = new();
+    public List<TravelGroupApplicationMemberVm> Rejected { get; set; } = new();
+}
+
+public class TravelGroupApplicationMemberVm
+{
+    public int MemberId { get; set; }
+    public int? RequestId { get; set; }
+    public string Name { get; set; } = "";
+    public string? AvatarUrl { get; set; }
+    public string? Message { get; set; }
+    public string ProfileUrl { get; set; } = "";
+    public DateTime? AppliedAt { get; set; }
+}
 public class TravelGroupItineraryDayVm
 {
     public int DayNumber { get; set; }
@@ -67,3 +89,4 @@ public class TravelGroupActivityVm
     public DateTime When { get; set; }
     public string Text { get; set; } = "";
 }
+

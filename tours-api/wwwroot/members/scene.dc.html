@@ -515,7 +515,7 @@
 
   <!-- 機票放大 -->
   <sc-if value="{{ ticketOpen }}" hint-placeholder-val="{{ false }}">
-    <div style="position:absolute;inset:0;z-index:60;background:rgba(14,9,4,0.6);display:flex;align-items:center;justify-content:center">
+    <div style="position:absolute;inset:0;z-index:60;background:{{ ticketBackdropBg }};display:flex;align-items:center;justify-content:center">
       <div style="width:{{ ticketWidth }};height:396px;display:flex;background:#fdfaf3;border-radius:6px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5)">
         <div style="width:600px;padding:26px 30px;box-sizing:border-box;position:relative">
           <div style="display:flex;justify-content:space-between;align-items:center">
@@ -528,7 +528,7 @@
               <!-- 看別人的機票時右邊那塊「給團長的話」編輯框整個不顯示（見下方 canEdit
                    判斷），原本唯一的關閉按鈕就在那塊裡面，所以這裡另外放一個 ✕，
                    不管是不是本人都能關掉這張機票。 -->
-              <div onClick="{{ closeTicket }}" title="關閉" style="cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+              <div onClick="{{ closeTicket }}" title="關閉" style="display:{{ ticketInnerCloseDisplay }};cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
             </div>
           </div>
           <div style="margin-top:16px;display:flex;gap:20px">
@@ -1225,7 +1225,8 @@ class Component extends DCLogic {
     tagEditing: false,
     dnaEditing: false,
     newTag: "",
-    ticketOpen: false,
+    ticketOpen: QUERY_PARAMS.get("openTicket") === "1" || QUERY_PARAMS.get("ticketOnly") === "1",
+    ticketOnly: QUERY_PARAMS.get("ticketOnly") === "1",
     tagOpen: false,
     confirmOpen: false,
     sent: false,
@@ -2079,9 +2080,11 @@ class Component extends DCLogic {
       // canEdit 換成「僅本人可以編輯」的提示，見下方模板），所以機票寬度固定，
       // 不再依 own 縮小。
       ticketWidth: "1010px",
+      ticketBackdropBg: s.ticketOnly ? "transparent" : "rgba(14,9,4,0.6)",
+      ticketInnerCloseDisplay: s.ticketOnly ? "none" : "block",
       ticketOpen: s.ticketOpen,
       openTicket: () => this.set("ticketOpen", true),
-      closeTicket: () => this.set("ticketOpen", false),
+      closeTicket: () => { if (s.ticketOnly) { (window.top || window.parent)?.postMessage({ type: "lazytravel:close-ticket-preview" }, window.location.origin); return; } this.set("ticketOpen", false); },
 
       // 🚧 「給團長的話」這段草稿刻意先不接資料庫（已跟負責會員主頁的組員確認）：
       // JoinRequests.GroupID 是必填欄位，一定要對應到一個真的揪團，但這個機票頁面

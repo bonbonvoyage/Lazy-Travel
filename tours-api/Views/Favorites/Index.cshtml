@@ -1,0 +1,46 @@
+@model LazyTravel.ViewModels.FavoriteTripsViewModel
+@{
+    ViewData["Title"] = "收藏行程";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/favorites.css" asp-append-version="true" />
+</head>
+<body class="home-app favorites-page">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "Favorites")
+    <main class="main favorites-main">
+        <div class="favorites-shell">
+            <header class="favorites-hero">
+                <div class="favorites-sky" aria-hidden="true"><span class="sky-cloud sky-cloud-left"></span><span class="sky-cloud sky-cloud-mid"></span><span class="sky-cloud sky-cloud-right"></span></div>
+                <div class="favorites-hero-copy">
+                    <p class="favorites-eyebrow">My Favorites</p>
+                    <h1>收藏行程</h1>
+                    <p>把喜歡的行程與文章收起來，隨時回來看看，開啟下一段旅程！</p>
+                </div>
+            </header>
+
+            @await Html.PartialAsync("_FavoritesContent", Model)
+        </div>
+        <div class="favorites-toast" data-favorites-toast hidden>
+            <span data-toast-message>已取消收藏</span>
+            <button type="button" data-toast-undo>復原</button>
+        </div>
+    </main>
+</div>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/favorites.js" asp-append-version="true"></script>
+</body>
+</html>
+
+
+

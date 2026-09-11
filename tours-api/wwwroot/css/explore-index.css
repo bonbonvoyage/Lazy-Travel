@@ -1,0 +1,38 @@
+.explore-page .groups-heading { margin: 2px 12px 22px; }
+.explore-page .groups-heading h1 { font-size: clamp(29px, 3vw, 42px); }
+.explore-page .groups-board { background: transparent; }
+.explore-page .groups-grid { gap: 20px; }
+.explore-page .group-card { padding: 5px; border-color: rgba(255,255,255,.85); border-radius: 16px; }
+.explore-page .card-cover { height: 190px; border-radius: 12px 12px 0 0; }
+.explore-page .card-content { padding: 13px 10px 11px; }
+.explore-page .card-title { font-size: 18px; }
+.explore-page .card-meta { margin: 7px 0; }
+.explore-page .card-meta svg,
+.explore-page .card-progress svg {
+    flex: 0 0 17px; width: 17px; height: 17px; fill: none;
+    stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
+.explore-page .card-meta .article-date { width: auto; color: var(--muted); font-size: 12px; text-align: left; }
+.explore-page .card-progress { margin-top: 14px; }
+.explore-page .card-progress strong { font-weight: 500; }
+.explore-page .favorite-button { border: 0; background: rgba(30,50,47,.24); }
+.explore-page .favorite-button svg { width: 26px; }
+.explore-page .create-group {
+    background: rgba(255,255,255,.88); color: var(--accent);
+    box-shadow: 0 3px 12px rgba(62,87,80,.08);
+}
+.explore-page .create-group:disabled { cursor: not-allowed; opacity: .65; }
+.explore-page .groups-pagination { margin-top: 28px; }
+@media (max-width: 760px) {
+    .explore-page .card-cover { height: 210px; }
+}
+.explore-page .article-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0 2px;
+}
+
+.explore-page .article-card-stats form {
+    margin: 0;
+}

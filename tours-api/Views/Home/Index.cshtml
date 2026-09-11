@@ -1,350 +1,98 @@
-@model LazyTravel.ViewModels.HomeIndexViewModel
-@{ ViewData["Title"] = "首頁"; Layout = null; }
+@model LazyTravel.ViewModels.TravelGroupIndexViewModel
+@{
+    ViewData["Title"] = "首頁";
+    Layout = null;
+}
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>首頁 - LazyTravel</title>
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/home-entry.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
-    <style>
-        .home-content { max-width: 1440px; margin: 30px auto; padding: 0 36px; }
-        .home-search { margin: 28px 0 36px; min-height: 72px; }
-        .home-search button { border: 0; background: transparent; color: var(--accent); padding: 12px 18px; }
-        .home-search .bi { color: var(--text-muted); }
-        .home-search input { width: 100%; border: 0; background: transparent; color: var(--text-muted); font: inherit; }
-        .home-content .row-section { margin-bottom: 42px; }
-        .article-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--text-muted); font-size: .8rem; }
-        @@media (max-width: 760px) { .home-content { margin: 16px auto; padding: 0; } .home-search { flex-wrap: wrap; } .home-search .search-field { flex: 1 1 100%; min-width: 0; } .home-search button { width: 100%; } .row-empty { white-space: normal; overflow-wrap: anywhere; } }
-    </style>
+    <link rel="stylesheet" href="~/css/travelgroups-index.css" asp-append-version="true" />
 </head>
-<body class="home-app">
+<body class="home-app home-page groups-page">
 <div class="app">
     @await Html.PartialAsync("_HomeSidebar", "Home")
-    <div class="sidebar-scrim" id="sidebarScrim"></div>
+    <div class="sidebar-scrim" aria-hidden="true"></div>
+
     <main class="main">
-        <div class="home-content">
-            @if (User.Identity?.IsAuthenticated != true)
-            {
-                <nav class="home-account-actions" aria-label="帳號入口">
-                    <button type="button" class="home-login" data-auth-open="login" aria-haspopup="dialog">登入</button>
-                    <button type="button" class="home-register" data-auth-open="register" aria-haspopup="dialog">免費註冊</button>
-                </nav>
-                <section class="home-welcome" aria-label="加入 LazyTravel">
-                    <p>找到合拍旅伴，從這裡開始。</p>
-                    <button type="button" data-auth-open="register" aria-haspopup="dialog">建立帳號 <span aria-hidden="true">→</span></button>
-                </section>
-            }
-            <form class="search-bar home-search" asp-controller="TravelGroups" asp-action="Index" method="get">
-                <label class="search-field"><i class="bi bi-geo-alt" aria-hidden="true"></i>
-                    <select name="region" aria-label="區域"><option value="">所有區域</option>
-                        @foreach (var region in new[] { "亞洲", "歐洲", "北美洲", "南美洲", "非洲", "大洋洲", "南極洲" }) { <option>@region</option> }
-                    </select>
+        <div class="content-wrap">
+            <section class="hero-wrap" aria-label="LazyTravel 特色輪播">
+                <div class="hero-row home-hero-full">
+                    <div class="hero" id="hero" aria-live="polite"></div>
+                </div>
+                <div class="hero-dots" id="hero-dots" aria-label="輪播切換"></div>
+            </section>
+
+            <form class="groups-filter home-groups-filter" method="get" asp-controller="TravelGroups" asp-action="Index">
+                <input type="hidden" name="scope" value="all" />
+                <input type="hidden" id="groupStartDate" name="startDate" value="" />
+                <input type="hidden" id="groupEndDate" name="endDate" value="" />
+
+                <div class="filter-control filter-country">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9Z"/></svg>
+                    <label for="groupCountry">國家</label>
+                    <div class="country-combobox">
+                        <input id="groupCountry" name="country" type="text" value="" placeholder="輸入或選擇國家" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="groupCountryOptions" aria-describedby="countryError" />
+                        <button class="country-toggle" type="button" aria-label="展開國家選單" tabindex="-1"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+                    </div>
+                    <div id="groupCountryOptions" class="country-options" role="listbox" aria-label="國家" hidden>
+                        <div role="option" data-value="" aria-selected="false">所有國家</div>
+                        @foreach (var item in Model.AllCountries)
+                        {
+                            <div role="option" data-value="@item" aria-selected="false">@item</div>
+                        }
+                        <div class="country-empty" role="status" hidden>沒有符合的國家</div>
+                    </div>
+                    <div id="countryError" class="country-error" role="status" hidden>請選擇清單中的國家，或清空欄位。</div>
+                </div>
+
+                <label class="filter-control filter-control-date" for="groupDateRange">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                    <span>行程區間</span>
+                    <input id="groupDateRange" type="text" value="" placeholder="選擇起訖日期" autocomplete="off" readonly />
                 </label>
-                <label class="search-field"><i class="bi bi-globe" aria-hidden="true"></i>
-                    <select name="country" aria-label="國家"><option value="">所有國家</option>
-                        @foreach (var country in Model.Countries) { <option>@country</option> }
-                    </select>
-                </label>
-                <label class="search-field"><i class="bi bi-calendar" aria-hidden="true"></i>
-                    <select name="maxDays" aria-label="行程天數"><option value="">不限天數</option><option value="3">3 天以內</option><option value="7">7 天以內</option><option value="14">14 天以內</option></select>
-                </label>
-                <button type="submit" aria-label="搜尋行程"><i class="bi bi-search" aria-hidden="true"></i> 搜尋</button>
+
+                <button class="filter-submit" type="submit" aria-label="搜尋揪團">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                </button>
             </form>
-            <section class="row-section" aria-labelledby="trips-heading">
-                <header class="row-head"><h3 id="trips-heading">熱門行程</h3><a class="row-more" asp-controller="TravelGroups" asp-action="Index">查看全部 ›</a></header>
-                <div class="row-track">
-                @foreach (var trip in Model.Trips)
-                {
-                    <a class="trip-card" asp-controller="TravelGroups" asp-action="Details" asp-route-id="@trip.Id">
-                        <div class="art">@if (!string.IsNullOrWhiteSpace(trip.Image)) { <img src="@trip.Image" alt="@trip.Title" loading="lazy" /> }</div>
-                        <div class="body"><div class="title">@trip.Title</div><div class="trip-meta">
-                            @if (trip.Start.HasValue && trip.End.HasValue) { var days = Math.Max(1, trip.End.Value.DayNumber - trip.Start.Value.DayNumber + 1); <span>@(days)天@(Math.Max(0, days - 1))夜</span> }
-                            else { <span>日期待定</span> }
-                            <span>·</span><span><i class="bi bi-person" aria-hidden="true"></i> @trip.People/@trip.MaxPeople 人</span>
-                        </div></div>
-                    </a>
-                }
-                @if (Model.Trips.Count == 0) { <p class="row-empty">目前還沒有公開行程。<a asp-controller="TravelGroups" asp-action="Create">建立第一趟旅行</a></p> }
+
+            <section class="row-section">
+                <div class="row-head">
+                    <h3>熱門行程</h3>
+                    <a href="/TravelGroups" class="row-more">查看全部<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+                </div>
+                <div class="row-scroller">
+                    <button class="row-nav prev" type="button" data-row="trip-row" data-dir="-1" aria-label="上一批熱門行程"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+                    <div class="row-track" id="trip-row"></div>
+                    <button class="row-nav next" type="button" data-row="trip-row" data-dir="1" aria-label="下一批熱門行程"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
                 </div>
             </section>
-            <section class="row-section" aria-labelledby="articles-heading">
-                <header class="row-head"><h3 id="articles-heading">熱門文章</h3><a class="row-more" asp-controller="Explore" asp-action="Index">查看全部 ›</a></header>
-                <div class="row-track">
-                @foreach (var article in Model.Articles)
-                {
-                    <a class="article-card" asp-controller="Explore" asp-action="Details" asp-route-id="@article.Id">
-                        <div class="art">@if (!string.IsNullOrWhiteSpace(article.Image)) { <img src="@article.Image" alt="@article.Title" loading="lazy" /> }</div>
-                        <div class="body"><div class="title">@article.Title</div><div class="article-meta"><span><i class="bi bi-person" aria-hidden="true"></i> @article.Author</span><time datetime="@article.CreatedAt.ToString("yyyy-MM-dd")">@article.CreatedAt.ToString("yyyy/MM/dd")</time></div></div>
-                    </a>
-                }
-                @if (Model.Articles.Count == 0) { <p class="row-empty">目前還沒有公開文章。</p> }
+
+            <section class="row-section">
+                <div class="row-head">
+                    <h3>熱門文章</h3>
+                    <a href="/Explore" class="row-more">查看全部<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+                </div>
+                <div class="row-scroller">
+                    <button class="row-nav prev" type="button" data-row="article-row" data-dir="-1" aria-label="上一批熱門文章"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+                    <div class="row-track" id="article-row"></div>
+                    <button class="row-nav next" type="button" data-row="article-row" data-dir="1" aria-label="下一批熱門文章"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
                 </div>
             </section>
         </div>
     </main>
 </div>
+<script src="~/lib/flatpickr/flatpickr.min.js" asp-append-version="true"></script>
 <script src="~/js/sidebar.js" asp-append-version="true"></script>
-
-        .hs-home {
-            top: 4.10%;
-            left: 12.11%;
-            width: 5.66%;
-            height: 5.08%;
-        }
-        /* x 198-261, y 54-88（含底線） */
-        .hs-about {
-            top: 3.91%;
-            left: 20.70%;
-            width: 5.99%;
-            height: 4.30%;
-        }
-        /* x 330-398 */
-        .hs-contact {
-            top: 3.91%;
-            left: 29.49%;
-            width: 7.55%;
-            height: 4.30%;
-        }
-        /* x 465-557 */
-        .hs-logo {
-            top: 3.91%;
-            left: 3.91%;
-            width: 4.04%;
-            height: 8.11%;
-        }
-        /* x 60-121, y 40-122 */
-        .hs-search {
-            top: 3.52%;
-            left: 94.08%;
-            width: 3.26%;
-            height: 4.88%;
-        }
-        /* x 1453-1487 */
-        .hs-readmore {
-            top: 64.65%;
-            left: 5.40%;
-            width: 17.97%;
-            height: 8.11%;
-        }
-        /* x 83-358, y 662-744 */
-
-        .hs-fb {
-            top: 91.99%;
-            left: 3.52%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 60-91   */
-        .hs-ig {
-            top: 91.99%;
-            left: 8.27%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 134-164 */
-        .hs-tw {
-            top: 91.99%;
-            left: 13.15%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 208-239 */
-        .hs-yt {
-            top: 91.99%;
-            left: 18.29%;
-            width: 2.86%;
-            height: 4.30%;
-        }
-        /* x 283-324 */
-        .hs-help {
-            top: 91.99%;
-            left: 27.15%;
-            width: 7.03%;
-            height: 4.30%;
-        }
-        /* x 425-517 */
-
-        /* ============================================================
-                   個人主頁入口
-                   ------------------------------------------------------------
-                   設計圖上沒有這顆按鈕（圖是先畫好的），所以用真的 <a> 疊在
-                   右上角搜尋圖示左邊。之後重畫首頁圖時可以改成熱區。
-                   ============================================================ */
-        .btn-profile {
-            position: absolute;
-            z-index: 3;
-            top: 3.4%;
-            right: 9%;
-            display: inline-flex;
-            align-items: center;
-            padding: .62em 1.25em;
-            border-radius: 999px;
-            background: #F5822B;
-            color: #fff;
-            font: 600 clamp(11px, 1.05vw, 15px)/1 "Noto Sans TC", system-ui, sans-serif;
-            letter-spacing: .08em;
-            text-decoration: none;
-            box-shadow: 0 3px 0 rgba(0,0,0,.18), 0 6px 14px rgba(245,130,43,.32);
-            transition: transform .15s ease, background .15s ease;
-        }
-
-            .btn-profile:hover {
-                background: #E0701C;
-                transform: translateY(-1px);
-            }
-
-            .btn-profile:focus-visible {
-                outline: 3px solid #1D63C4;
-                outline-offset: 3px;
-            }
-
-        /* ---------- 除錯模式 ----------
-                   網址加 ?debug，或在頁面上按鍵盤 D，會顯示所有熱區的紅框與名稱 */
-        body.debug .hotspot {
-            background-color: rgba(255, 0, 0, 0.4);
-            outline: 1px solid #C00;
-        }
-
-            body.debug .hotspot::after {
-                content: attr(data-label);
-                position: absolute;
-                left: 0;
-                top: 100%;
-                font: 11px/1.4 monospace;
-                color: #C00;
-                background: #fff;
-                padding: 1px 4px;
-                white-space: nowrap;
-            }
-
-        /* ============================================================
-                   手機：圖片縮小後熱區會小到點不到（CMS 在 375px 寬只剩約 18px），
-                   所以窄螢幕改在圖片下方補一排真的文字選單。
-                   ============================================================ */
-        .mobile-nav {
-            display: none;
-        }
-
-        @@media (max-width: 767.98px) {
-            body {
-                justify-content: flex-start;
-            }
-
-            .stage img {
-                max-height: none;
-            }
-
-            .hotspot {
-                pointer-events: none;
-            }
-            /* 手機停用熱區，避免誤觸 */
-
-            .btn-profile {
-                position: static;
-                margin: 1rem auto 0;
-                padding: .9em 1.7em;
-                font-size: 14px;
-            }
-
-            .mobile-nav {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: .25rem 1.5rem;
-                padding: 1rem 1rem 1.5rem;
-                font: 500 .82rem/1 system-ui, "Noto Sans TC", sans-serif;
-                letter-spacing: .1em;
-            }
-
-                .mobile-nav a {
-                    display: block;
-                    padding: 1rem .5rem; /* 撐到 44px 以上的觸控高度 */
-                    color: #55565A;
-                    text-decoration: none;
-                }
-
-                    .mobile-nav a.on {
-                        color: #1D63C4;
-                    }
-        }
-
-        /* 螢幕閱讀器專用（整頁只有一張圖對 SEO 和無障礙不利，補一份純文字導覽） */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0,0,0,0);
-            white-space: nowrap;
-            border: 0;
-        }
-    </style>
-</head>
-<body>
-
-    @* 純文字導覽：畫面上看不到，但螢幕閱讀器與搜尋引擎讀得到 *@
-    <nav class="sr-only" aria-label="主選單">
-        <ul>
-            <li><a asp-controller="Home" asp-action="Index">首頁</a></li>
-            <li><a asp-controller="Explore" asp-action="Index">找行程</a></li>
-            <li><a asp-controller="Members" asp-action="Profile">個人主頁</a></li>
-            <li><a asp-area="Admin" asp-controller="Auth" asp-action="Login">CMS 後台管理系統</a></li>
-        </ul>
-    </nav>
-
-    <div class="stage">
-
-        <img src="~/img/pic.png" asp-append-version="true"
-             width="1536" height="1024"
-             alt="Lazy Travel 首頁：背包客站在海岸懸崖上眺望遠方，左側是 Lazy Travel 標題與 READ MORE 按鈕" />
-
-        @* ★ CMS → 後台管理系統。未登入會被 Admin 的 Cookie 認證導去 Admin/Auth/Login *@
-        <a class="hotspot hs-cms" data-label="CMS" aria-label="CMS 後台管理系統"
-           asp-area="Admin" asp-controller="Dashboard" asp-action="Index"></a>
-
-        <a class="hotspot hs-logo" data-label="LOGO" aria-label="回首頁"
-           asp-controller="Home" asp-action="Index"></a>
-        <a class="hotspot hs-home" data-label="HOME" aria-label="首頁"
-           asp-controller="Home" asp-action="Index"></a>
-        <a class="hotspot hs-about" data-label="ABOUT" aria-label="關於我們" href="#"></a>
-        <a class="hotspot hs-contact" data-label="CONTACT" aria-label="聯絡我們" href="#"></a>
-        @* ★ 個人主頁（第一人稱案頭場景）。設計圖上沒有這顆，所以放一顆真的按鈕 *@
-        <a class="btn-profile" aria-label="個人主頁"
-           asp-controller="Members" asp-action="Profile">個人主頁</a>
-
-        <a class="hotspot hs-search" data-label="SEARCH" aria-label="搜尋"
-           asp-controller="Explore" asp-action="Index"></a>
-        <a class="hotspot hs-readmore" data-label="READ MORE" aria-label="了解更多"
-           asp-controller="Explore" asp-action="Index"></a>
-
-        <a class="hotspot hs-fb" data-label="FB" aria-label="Facebook" href="#"></a>
-        <a class="hotspot hs-ig" data-label="IG" aria-label="Instagram" href="#"></a>
-        <a class="hotspot hs-tw" data-label="TW" aria-label="Twitter" href="#"></a>
-        <a class="hotspot hs-yt" data-label="YT" aria-label="YouTube" href="#"></a>
-        <a class="hotspot hs-help" data-label="HELP" aria-label="說明" href="#"></a>
-
-    </div>
-
-    @* 手機用的真文字選單 *@
-    <nav class="mobile-nav" aria-label="主選單（行動版）">
-        <a class="on" asp-controller="Home" asp-action="Index">HOME</a>
-        <a href="#">ABOUT</a>
-        <a href="#">CONTACT</a>
-        <a asp-controller="Members" asp-action="Profile">個人主頁</a>
-        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">CMS</a>
-    </nav>
-
-    <script>
-        // ?debug 或按 D 鍵切換紅框
-        if (location.search.indexOf('debug') > -1) document.body.classList.add('debug');
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'd' || e.key === 'D') document.body.classList.toggle('debug');
-        });
-    </script>
+<script src="~/js/home.js" asp-append-version="true"></script>
+<script src="~/js/travelgroups-index.js" asp-append-version="true"></script>
 </body>
 </html>

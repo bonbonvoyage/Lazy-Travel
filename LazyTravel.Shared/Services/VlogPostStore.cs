@@ -257,25 +257,6 @@ public static class VlogPostStore
     {
         var i = 0; // 只用來輪流挑封面/節點圖片
 
-        yield return new SeedPost(1, "花蓮三天兩夜，慢慢晃海岸線", Photo(i++, "花蓮三天兩夜，慢慢晃海岸線"), VlogMediaType.Photo,
-            "沿著台11線一路往南，行程排得很鬆，只想好好曬太陽看海。",
-            "花蓮", 3, new DateOnly(2026, 5, 2), VlogPostStatus.Published, TravelGroupSize.Small,
-            new[]
-            {
-                new SeedStop(1, "七星潭", new TimeOnly(9, 0), 120, new TimeOnly(11, 0), Photo(i++, "七星潭"),
-                    Description: "撿石頭、聽海浪聲，很適合放空。"),
-                new SeedStop(1, "花蓮市區小吃", new TimeOnly(18, 0), 90, new TimeOnly(19, 30), Photo(i++, "花蓮市區小吃"),
-                    Description: "公正包子、液香扁食都在附近。"),
-                new SeedStop(2, "清水斷崖", new TimeOnly(10, 0), 60, new TimeOnly(11, 0), Photo(i++, "清水斷崖"),
-                    Remarks: "建議在退潮時段拍照。"),
-                new SeedStop(2, "太魯閣布洛灣", new TimeOnly(13, 0), 90, new TimeOnly(14, 30), Photo(i++, "太魯閣布洛灣"),
-                    Description: "台地上的原住民文化園區，視野遼闊。"),
-                new SeedStop(3, "太魯閣峽谷步道", new TimeOnly(9, 0), 120, new TimeOnly(11, 0), Photo(i++, "太魯閣峽谷步道"),
-                    Description: "砂卡礑步道跟燕子口都值得走一趟。"),
-                new SeedStop(3, "鯉魚潭", new TimeOnly(14, 0), 90, new TimeOnly(15, 30), Photo(i++, "鯉魚潭"),
-                    Description: "回程順路踩天鵝船，適合悠閒收尾。"),
-            });
-
         yield return new SeedPost(2, "京都秋日散策：巷弄裡的老靈魂", Photo(i++, "京都秋日散策：巷弄裡的老靈魂"), VlogMediaType.Photo,
             "避開觀光熱點，用五天走完自己排的私房巷弄地圖。",
             "京都", 5, new DateOnly(2025, 11, 20), VlogPostStatus.Published, TravelGroupSize.Solo,

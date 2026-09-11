@@ -2,34 +2,22 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class ExpenseSplit
 {
-    [Key]
-    [Column("SplitID")]
     public int SplitId { get; set; }
 
-    [Column("ExpenseID")]
     public int ExpenseId { get; set; }
 
-    [Column("MemberID")]
     public int MemberId { get; set; }
 
-    [Column(TypeName = "decimal(18, 2)")]
     public decimal OweAmount { get; set; }
 
     public bool IsPaid { get; set; }
 
-    [ForeignKey("ExpenseId")]
-    [InverseProperty("ExpenseSplits")]
     public virtual Expense Expense { get; set; }
 
-    [ForeignKey("MemberId")]
-    [InverseProperty("ExpenseSplits")]
     public virtual Member Member { get; set; }
 }
