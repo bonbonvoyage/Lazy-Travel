@@ -1,0 +1,77 @@
+<div class="ai-match-entry" aria-label="AI 旅程媒合入口">
+    <div class="ai-match-entry__copy">
+        <strong>還不確定要選哪個旅團？交給ai助理</strong>
+    </div>
+    <button class="ai-match-launch" type="button" data-ai-match-open>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.2 4.1L17 9l-3.8 1.9L12 15l-1.2-4.1L7 9l3.8-1.9L12 3ZM19 15l.7 2.3L22 18.5l-2.3 1.2L19 22l-.7-2.3-2.3-1.2 2.3-1.2L19 15ZM5 13l.8 2.7L8.5 17l-2.7 1.3L5 21l-.8-2.7L1.5 17l2.7-1.3L5 13Z"/></svg>
+        AI  幫我找旅程
+    </button>
+</div>
+
+<dialog class="ai-match-dialog" data-ai-match-dialog aria-labelledby="aiMatchTitle">
+    <div class="ai-match-dialog__surface">
+        <header class="ai-match-dialog__header">
+            <div>
+                <p>LazyTravel</p>
+            </div>
+            <button class="ai-match-close" type="button" data-ai-match-close aria-label="關閉 AI 旅程媒合">×</button>
+        </header>
+
+        <ol class="ai-match-steps" aria-label="AI 旅程媒合步驟">
+            <li class="is-active" data-ai-step-indicator="1"><span>1</span>輸入需求</li>
+            <li data-ai-step-indicator="2"><span>2</span>確認條件</li>
+            <li data-ai-step-indicator="3"><span>3</span>查看推薦</li>
+        </ol>
+
+        <section class="ai-match-panel is-active" data-ai-match-step="1">
+            <div class="ai-match-intro">
+                <h3>說說你期待的旅行</h3>
+                <p>國家、天數、興趣與旅伴偏好都可以一起描述。</p>
+            </div>
+            <form data-ai-match-form action="@Url.Action("Match", "AiTravelMatch")" method="post">
+                @Html.AntiForgeryToken()
+                <label for="aiTravelPrompt">旅行需求</label>
+                <textarea id="aiTravelPrompt" name="prompt" maxlength="500" required>我喜歡海，想去三天兩夜，希望旅伴是 20～25 歲女生。</textarea>
+                <div class="ai-match-textarea-meta"><span data-ai-match-count>29</span> / 500</div>
+                <div class="ai-match-suggestions" aria-label="常用需求">
+                    <span>快速加入：</span>
+                    <button type="button" data-ai-suggestion="我想看海">看海</button>
+                    <button type="button" data-ai-suggestion="三天兩夜">三天兩夜</button>
+                    <button type="button" data-ai-suggestion="小資旅行">小資旅行</button>
+                    <button type="button" data-ai-suggestion="喜歡美食">美食</button>
+                    <button type="button" data-ai-suggestion="喜歡自然景點">自然景點</button>
+                </div>
+                <p class="ai-match-error" data-ai-match-error role="alert" hidden></p>
+                <div class="ai-match-actions ai-match-actions--end">
+                    <button class="ai-match-button ai-match-button--primary" type="submit" data-ai-match-submit>
+                        <span>下一步</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section class="ai-match-panel" data-ai-match-step="2" hidden>
+            <div class="ai-match-intro">
+                <h3>AI 理解了以下需求</h3>
+                <p>確認條件是否正確，再查看符合的公開旅團。</p>
+            </div>
+            <div class="ai-match-criteria" data-ai-match-criteria></div>
+            <div class="ai-match-actions">
+                <button class="ai-match-button ai-match-button--secondary" type="button" data-ai-match-edit>修改需求</button>
+                <button class="ai-match-button ai-match-button--primary" type="button" data-ai-match-confirm>確認並搜尋</button>
+            </div>
+        </section>
+
+        <section class="ai-match-panel" data-ai-match-step="3" hidden>
+            <div class="ai-match-results-heading">
+                <div>
+                    <h3 data-ai-match-result-title>推薦結果</h3>
+                    <p>推薦內容來自 LazyTravel 現有公開旅團資料。</p>
+                </div>
+                <button class="ai-match-button ai-match-button--secondary" type="button" data-ai-match-restart>重新輸入</button>
+            </div>
+            <div class="ai-match-results" data-ai-match-results></div>
+        </section>
+    </div>
+</dialog>

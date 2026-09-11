@@ -8,6 +8,7 @@
     var facebookUrl = Url.Action("ExternalLogin", "Auth", new { provider = "Facebook", returnUrl = currentUrl });
 }
 <link rel="stylesheet" href="~/css/account-flow.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/sidebar-login-adjustments.css" asp-append-version="true" />
 <dialog class="lt-auth-dialog" id="ltAuthDialog" aria-labelledby="ltAuthTitle">
 <div class="lt-drawer">
 <button type="button" class="lt-icon-button lt-close" data-auth-close aria-label="關閉帳號面板">×</button>
@@ -72,3 +73,4 @@
 </div>
 </dialog>
 <script src="~/js/account-panel.js" asp-append-version="true" defer></script>
+<script src="~/js/member-action-auth.js" asp-append-version="true" defer></script>
