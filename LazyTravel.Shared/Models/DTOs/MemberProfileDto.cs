@@ -66,6 +66,23 @@ namespace LazyTravel.Shared.Models.DTOs
         public ContactBookDto? ContactBook { get; set; }
     }
 
+    // 手帳第二頁「搜尋陌生人」用的單筆搜尋結果（見 MemberProfileService.SearchMembers）。
+    // RelationshipStatus 只有四種值，前端 scene.dc.html 的 strangerList 靠這個決定
+    // 每一列要顯示「加好友」「已送出申請」「已是好友」還是「接受好友申請」：
+    //   Stranger        - 彼此還沒有任何好友關聯，可以送出好友申請
+    //   PendingSent     - 我已經送出申請、對方還沒審核
+    //   PendingReceived - 對方已經送申請給我、我還沒審核
+    //   Friend          - 雙方已經是好友
+    public class MemberSearchResultDto
+    {
+        public int MemberId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? AvatarUrl { get; set; }
+        public string? City { get; set; }
+        public string? Mbti { get; set; }
+        public string RelationshipStatus { get; set; } = "Stranger";
+    }
+
     public class TravelDnaDto
     {
         public byte DimensionId { get; set; }

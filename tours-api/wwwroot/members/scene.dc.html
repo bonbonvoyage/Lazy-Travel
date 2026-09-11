@@ -139,7 +139,7 @@
     <div style="position:absolute;inset:0;border-radius:4px;background:linear-gradient(180deg,#6b4a2e,#4d331e);box-shadow:0 14px 28px rgba(24,15,8,0.44),inset 0 1px 0 rgba(255,255,255,0.14)"></div>
     <div style="position:absolute;left:13px;top:13px;right:13px;bottom:13px;border-radius:2px;background:#c39a63;background-image:radial-gradient(rgba(90,58,26,0.26) 1px,transparent 1.4px),radial-gradient(rgba(255,236,200,0.22) 1px,transparent 1.4px);background-size:7px 7px,11px 11px;background-position:0 0,4px 5px;box-shadow:inset 0 3px 10px rgba(70,42,16,0.4)"></div>
     <div style="position:absolute;left:20px;top:19px;font-size:11px;letter-spacing:3px;color:rgba(74,46,20,0.6);font-family:'Noto Serif TC',serif">去哪裡</div>
-    <sc-for list="{{ boardNotes }}" as="n" hint-placeholder-count="3">
+    <sc-for list="{{ boardNotes }}" as="n" hint-placeholder-count="4">
       <div onClick="{{ n.onClick }}" title="{{ n.title }}" style="position:absolute;left:{{ n.x }};top:{{ n.y }};width:78px;height:80px;cursor:pointer;transform:rotate({{ n.rot }});transition:transform .24s cubic-bezier(.34,1.3,.5,1)" style-hover="transform:rotate(0deg) translateY(-5px) scale(1.07)">
         <div style="position:absolute;left:2px;right:0;top:3px;bottom:-2px;background:rgba(52,30,8,0.3);filter:blur(5px);clip-path:polygon(1% 2%,99% 0,100% 98%,2% 100%)"></div>
         <div style="position:absolute;inset:0;background:{{ n.bg }};clip-path:polygon(0.8% 1.8%,99.2% 0,100% 98.2%,1.6% 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,0.5)">
@@ -187,9 +187,6 @@
               <div style="width:132px;height:173px;box-sizing:border-box;border:1px solid #cdbfa6;padding:9px 9px 22px;background:#fffdf7;box-shadow:0 3px 8px rgba(90,66,36,0.18)">
                 <image-slot id="member-avatar" src="{{ avatarSrc }}" shape="rect" placeholder="點一下上傳大頭貼" style="width:112px;height:142px"></image-slot>
               </div>
-              <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
-                <div style="margin-top:6px;font-size:11px;line-height:1.6;color:#a2917a;text-align:center">點圖框選檔，或直接拖圖進來</div>
-              </sc-if>
               <sc-if value="{{ showRelationBtns }}" hint-placeholder-val="{{ false }}">
                 <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
                   <sc-if value="{{ notBlocked }}" hint-placeholder-val="{{ true }}">
@@ -229,12 +226,8 @@
             </div>
           </div>
 
-          <div style="margin-top:18px;border-top:1px solid #2f2a24;border-bottom:1px solid #2f2a24;padding:11px 0;display:grid;grid-template-columns:1fr 1fr 1fr">
-            <div style="text-align:center">
-              <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">信用評分</div>
-              <div style="margin-top:4px;font-size:18px;color:#2f7d6b;font-family:'IBM Plex Mono',monospace">{{ stats.credit }}</div>
-            </div>
-            <div style="text-align:center;border-left:1px dotted #cdbda2;border-right:1px dotted #cdbda2">
+          <div style="margin-top:18px;border-top:1px solid #2f2a24;border-bottom:1px solid #2f2a24;padding:11px 0;display:grid;grid-template-columns:1fr 1fr">
+            <div style="text-align:center;border-right:1px dotted #cdbda2">
               <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">揪團次數</div>
               <div style="margin-top:4px;font-size:18px;color:#453c31;font-family:'IBM Plex Mono',monospace">{{ stats.groups }}</div>
             </div>
@@ -319,13 +312,13 @@
             <div style="font-size:11px;color:#bbab92;font-family:'IBM Plex Mono',monospace">{{ tagCountText }}</div>
             <div onClick="{{ openSkills }}" title="{{ skillBtnTitle }}" style="cursor:pointer;font-size:12px;color:#b0a08a;padding:1px 4px;border:1px solid #d8c9ae;border-radius:3px;line-height:1.3" style-hover="color:#b4622f;border-color:#b4622f">{{ skillBtnIcon }}</div>
           </div>
-          <div onClick="{{ openSkills }}" onMouseEnter="{{ pauseMarquee }}" onMouseLeave="{{ resumeMarquee }}" title="點擊查看全部技能標籤" style="margin-top:11px;cursor:pointer;display:flex;flex-direction:column;gap:8px;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)">
-            <div style="display:flex;width:max-content;gap:8px;animation:mqLeft 30s linear infinite;animation-play-state:{{ mqPlay }}">
+          <div onClick="{{ openSkills }}" onMouseEnter="{{ pauseMarquee }}" onMouseLeave="{{ resumeMarquee }}" title="點擊查看全部技能標籤" style="{{ mqWrapStyle }}">
+            <div style="{{ mqRowAStyle }}">
               <sc-for list="{{ marqueeA }}" as="t" hint-placeholder-count="10">
                 <div title="{{ t.note }}" style="flex:none;font-size:13.5px;padding:5px 12px;border-radius:14px;background:#e6dcc6;color:#4d4132;border:1px solid #d3c3a4;white-space:nowrap">{{ t.label }}</div>
               </sc-for>
             </div>
-            <div style="display:flex;width:max-content;gap:8px;animation:mqRight 36s linear infinite;animation-play-state:{{ mqPlay }}">
+            <div style="{{ mqRowBStyle }}">
               <sc-for list="{{ marqueeB }}" as="t" hint-placeholder-count="10">
                 <div title="{{ t.note }}" style="flex:none;font-size:13.5px;padding:5px 12px;border-radius:14px;background:#efe7d6;color:#5b4c39;border:1px solid #ded0b3;white-space:nowrap">{{ t.label }}</div>
               </sc-for>
@@ -377,7 +370,7 @@
 
         <sc-if value="{{ isSpreadTwo }}" hint-placeholder-val="{{ false }}">
           <div style="padding-top:2px">
-            <!-- 看自己：完整的搜尋框＋好友/追蹤/黑名單/好友申請統計，跟原本一樣 -->
+            <!-- 看自己：原本的好友/追蹤/黑名單/好友申請搜尋＋統計，跟原本一樣不變 -->
             <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
               <div>
                 <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">搜尋 · {{ tabTitle }}</div>
@@ -385,6 +378,29 @@
                 <div style="margin-top:20px;font-size:13.5px;line-height:2;color:#7b6a53;border-top:1px dotted #cdbda2;padding-top:14px">
                   <div>好友 {{ counts.friends }} 人 · 追蹤 {{ counts.following }} 人 · 黑名單 {{ counts.blocked }} 人</div>
                   <div>待處理好友申請 <span style="color:#b4622f">{{ counts.requests }}</span> 件</div>
+                </div>
+              </div>
+              <!-- 額外加的「搜尋陌生人」：跟上面左側清單無關，是搜全站會員用來加好友，
+                   結果直接顯示在這裡（右頁），不會動到左邊的好友/追蹤/黑名單/申請清單。 -->
+              <div style="margin-top:22px;padding-top:18px;border-top:1px solid #d8c9ae">
+                <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">搜尋陌生人</div>
+                <input value="{{ strangerQuery }}" onChange="{{ changeStrangerQuery }}" placeholder="輸入暱稱搜尋想加的旅伴…" style="margin-top:10px;width:100%;box-sizing:border-box;font-size:14.5px;padding:9px 11px;border:1px solid #cbb99a;background:#fffaee" />
+                <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto">
+                  <sc-for list="{{ strangerList }}" as="p" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fffaee;border:1px solid #e3d6bd">
+                      <div style="width:34px;height:34px;flex:none;border-radius:2px;background:#d8c2a4;color:#5b4630;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-size:15px">{{ p.initial }}</div>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:13.5px;font-weight:500">{{ p.name }}</div>
+                        <div style="margin-top:1px;font-size:10.5px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">{{ p.meta }}</div>
+                      </div>
+                      <sc-for list="{{ p.actions }}" as="a" hint-placeholder-count="1">
+                        <div onClick="{{ a.onClick }}" style="cursor:pointer;font-size:11px;padding:4px 9px;border:1px solid #b09a78;color:#5b4c39;background:#f6eddb;white-space:nowrap" style-hover="border-color:#b4622f;color:#b4622f">{{ a.label }}</div>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ strangerListEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12.5px;color:#a2917a;padding:14px 4px;text-align:center">{{ strangerHint }}</div>
+                  </sc-if>
                 </div>
               </div>
             </sc-if>
@@ -484,15 +500,6 @@
   <sc-if value="{{ tourReplayable }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ tourStart }}" title="重看操作導覽" style="position:absolute;right:26px;bottom:22px;z-index:44;cursor:pointer;padding:8px 14px;font-size:11.5px;letter-spacing:1.5px;color:#5b5140;background:linear-gradient(150deg,#fdf8ea,#eee4cf);clip-path:polygon(0.8% 2%,99.2% 0,100% 98%,1.6% 100%);box-shadow:0 6px 14px rgba(20,26,26,0.35);transform:rotate(-1.2deg);transition:transform .2s" style-hover="transform:rotate(0deg) translateY(-2px)">操作導覽</div>
   </sc-if>
-
-  <!-- 視角控制 -->
-  <div style="position:absolute;right:22px;top:20px;display:flex;flex-direction:column;gap:9px;align-items:flex-end;z-index:40">
-    <div style="display:flex;gap:5px;padding:5px;border-radius:4px;background:rgba(20,14,8,0.5);backdrop-filter:blur(6px)">
-      <sc-for list="{{ viewerOptions }}" as="v" hint-placeholder-count="5">
-        <div onClick="{{ v.onClick }}" style="cursor:pointer;font-size:11px;padding:5px 9px;border-radius:2px;background:{{ v.bg }};color:{{ v.fg }}">{{ v.label }}</div>
-      </sc-for>
-    </div>
-  </div>
 
   <!-- 電子鐘（桌面右上角）：點擊切換日夜 -->
   <div onClick="{{ toggleLight }}" title="{{ lightLabel }}" style="position:absolute;left:1158px;top:272px;width:196px;height:100px;z-index:{{ deskPropZ }};opacity:{{ deskPropOpacity }};pointer-events:{{ deskPropEvents }};cursor:pointer;perspective:620px;transition:filter .25s,opacity .5s" style-hover="filter:brightness(1.08)">
@@ -743,16 +750,20 @@
                 </sc-for>
               </div>
             </div>
-            <!-- 聯絡方式：手機需要簡訊驗證，這裡先不開放直接改；LINE ID／Instagram／
-                 Facebook 是使用者自己貼的文字，存檔前後端都會驗證格式（見
-                 SocialLinkValidator 的註解），只接受 instagram.com／facebook.com
+            <!-- 聯絡方式：手機不用簡訊驗證了（產品規則已確認），開放自己改，格式限定
+                 台灣手機（09 開頭 10 碼），跟 LINE ID／Instagram／Facebook 是同一種
+                 「使用者自己填、前後端都驗證格式」欄位，存檔前後端都會驗證格式（見
+                 SocialLinkValidator 的註解），IG／FB 只接受 instagram.com／facebook.com
                  開頭的網址，避免被冒充成別的網站。 -->
             <div style="grid-column:1 / span 2;border-top:1px dashed #e2d5b8;padding-top:14px;margin-top:2px">
               <div style="font-size:11px;color:#9b8a71;letter-spacing:1px;margin-bottom:9px">聯絡方式</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 18px">
                 <div>
                   <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">手機電話</div>
-                  <div style="margin-top:6px;font-size:13px;padding:8px 10px;border:1px dashed #d8c9ae;background:#f4eddd;color:#8d7c64">需簡訊驗證，暫時無法在這裡修改</div>
+                  <input value="{{ draft.phone }}" onChange="{{ setPhone }}" placeholder="例如 0912345678" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7;font-family:'IBM Plex Mono',monospace" />
+                  <sc-if value="{{ hasPhoneError }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:4px;font-size:11px;color:#b4622f">{{ phoneError }}</div>
+                  </sc-if>
                 </div>
                 <div>
                   <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">LINE ID</div>
@@ -873,7 +884,7 @@
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;sealIntro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;homeHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;groupHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Tours&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;articleHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Articles&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;loginHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;logoutHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;sealIntro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;homeHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;groupHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/TravelGroups&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;articleHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Explore&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;favoritesHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Favorites&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;loginHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;logoutHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;}}">
 const PEOPLE = {
   friends: [
     { name: "林知夏", meta: "台北 · 同團 2 次" },
@@ -1011,6 +1022,19 @@ function validateSocialUrl(rawValue, kind) {
 
 // LINE 官方 ID 規則大致是 4~20 個半形英數字/底線/句點/連字號，這裡做同樣寬鬆的
 // 檢查，不用做到跟 LINE 一模一樣（畢竟這欄位只是拿來顯示，不是真的去驗證帳號存在）。
+// 手機不用簡訊驗證了（產品規則已確認），開放會員自己在個人頁改手機號碼，改成
+// 跟 LINE ID 一樣的「即時前端提示＋後端 SocialLinkValidator.TryNormalizePhone
+// 再驗一次」模式。台灣手機規則：09 開頭、共 10 碼數字，允許使用者打
+// 「0912-345-678」這種排版，這裡只是先做寬鬆的即時提示，真正擋得住的是後端。
+function validatePhone(rawValue) {
+  if (!rawValue || !String(rawValue).trim()) return null; // 選填，留空不擋
+  const digits = String(rawValue).trim().replace(/[-\s]/g, "");
+  if (!/^09\d{8}$/.test(digits)) {
+    return "手機號碼格式不正確（需為 09 開頭的 10 碼數字，例如 0912345678）。";
+  }
+  return null;
+}
+
 function validateLineId(rawValue) {
   if (!rawValue || !String(rawValue).trim()) return null;
   const raw = String(rawValue).trim();
@@ -1183,7 +1207,7 @@ const TOUR = [
   { title: "機票", text: "機票記著你的旅程，點開可以放大查看與編輯。申請加入揪團時，這張機票就會寄給團長。", x: "740px", y: "148px", w: "216px", h: "190px", r: "6px", xf: "rotateX(21deg) rotateZ(2.4deg)", o: "50% 100%", bx: "440px", by: "160px" },
   { title: "通訊錄吊牌", text: "右下角的行李吊牌是你的通訊錄，點一下展開，裡面收著五種聯絡方式。上方的公開切換是整份一起設定 —— 設為私人時，只有好友和同團友人看得到，其他人只會看到模糊的紙面。", x: "1112px", y: "404px", w: "212px", h: "296px", r: "18px", xf: "rotateX(24deg) rotateZ(11deg)", o: "50% 100%", bx: "790px", by: "430px" },
   { title: "電子鐘", text: "桌上的鐘顯示 09:00 是白天、20:00 是夜晚。點一下切換，窗外的光線也會跟著變。", x: "1154px", y: "268px", w: "204px", h: "108px", r: "16px", xf: "none", o: "50% 100%", bx: "846px", by: "272px" },
-  { title: "布告欄便利貼", text: "三張便利貼通往站內其他頁面：首頁、揪團、文章。點一下就跳過去。", x: "72px", y: "24px", w: "256px", h: "226px", r: "6px", xf: "none", o: "50% 100%", bx: "352px", by: "36px" },
+  { title: "布告欄便利貼", text: "四張便利貼通往站內其他頁面：首頁、揪團、行程、收藏。點一下就跳過去。", x: "72px", y: "24px", w: "256px", h: "226px", r: "6px", xf: "none", o: "50% 100%", bx: "352px", by: "36px" },
   { title: "登入與登出", text: "最後這張木牌處理帳號。要離開時點一下登出，下次回來還在這張桌子前。", x: "1268px", y: "69px", w: "104px", h: "123px", r: "8px", xf: "none", o: "50% 100%", bx: "952px", by: "108px" },
 ];
 
@@ -1205,22 +1229,27 @@ class Component extends DCLogic {
 
     // 查看「別人」頁面時追蹤／申請好友／封鎖要用的真實狀態，null/false 是還沒讀到
     // 真實資料前的預設值，applyProfileData() 讀到 ProfileData 之後會覆蓋成真的。
-    realIsSelf: null,               // null 代表還沒讀到真實資料，畫面上會 fallback 回 viewer 那個設計預覽切換鈕
+    realIsSelf: null,               // null 代表還沒讀到真實資料（登入/讀取還沒完成前，畫面先當成不是本人）
     realContactVisible: null,       // 後端算好的「看不看得到對方通訊錄／聯絡方式」（null＝還沒讀到真實資料，
                                      // 見 MemberProfileDto.ContactVisible 的註解），跟聯絡方式鎖定卡、
                                      // 手帳第二頁看得到 Friends／Following 與否共用同一個判斷。
+    relationshipToViewer: "Stranger", // Self/Friend/GroupMate/Following/Stranger，見 MemberProfileDto 註解
     viewerIsFollowing: false,       // 我是不是已經在追蹤這個人
     viewerHasPendingFriendRequest: false, // 我是不是已經送出好友申請、對方還沒審核
     viewerHasBlocked: false,        // 我是不是已經封鎖這個人
     viewerIsBlockedByTarget: false, // 對方是不是封鎖了我
     relationActionBusy: false,      // 追蹤/申請好友/封鎖其中一個動作正在送出中，避免連點
 
-    viewer: "本人",
     light: "day",
     spread: 0,
     flipping: null,
     tab: "friends",
     query: "",
+    // 搜尋陌生人（手帳第二頁，看自己時用，取代原本的「好友/追蹤/黑名單/好友申請」
+    // 分頁籤，見 searchStrangers／sendFriendRequestTo）。
+    strangerQuery: "",
+    strangerResults: [],
+    strangerSearching: false,
     editing: null,
     tagEditing: false,
     dnaEditing: false,
@@ -1283,9 +1312,9 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
-    let tourSeen = false;
-    try { tourSeen = !!localStorage.getItem("trip-member-tour-seen"); } catch (e) {}
-    if (!tourSeen && this.state.viewer === "本人") this.setState({ tour: 0 });
+    // 導覽只給看自己主頁的人看，但這裡還沒讀到真實資料（還不知道是不是本人），
+    // 先記著使用者有沒有看過導覽，等 applyProfileData() 確認 isSelf 之後才決定要不要開。
+    try { this._tourSeenAtMount = !!localStorage.getItem("trip-member-tour-seen"); } catch (e) { this._tourSeenAtMount = false; }
 
     let seen = false;
     try { seen = !!localStorage.getItem("trip-member-seal-stamped"); } catch (e) {}
@@ -1395,6 +1424,10 @@ class Component extends DCLogic {
       // ViewerIsBlockedByTarget 那幾個欄位的註解）。
       realIsSelf: !!data.isSelf,
       realContactVisible: !!data.contactVisible,
+      // 之前漏接：後端 GetProfile 明明有算好 RelationshipToViewer（Self/Friend/
+      // GroupMate/Following/Stranger，見 MemberProfileDto 註解），前端卻完全沒存、
+      // 也沒拿來判斷，所以就算已經是好友，「申請好友」鈕還是照樣顯示可以點。
+      relationshipToViewer: data.relationshipToViewer || "Stranger",
       viewerIsFollowing: !!data.viewerIsFollowing,
       viewerHasPendingFriendRequest: !!data.viewerHasPendingFriendRequest,
       viewerHasBlocked: !!data.viewerHasBlocked,
@@ -1409,7 +1442,9 @@ class Component extends DCLogic {
         city: data.city || "",
         job: data.occupation || "",
         bio: data.bio || "",
-        // 原始值（不是美化過的顯示文字），編輯 Modal 直接讀寫這幾格。
+        // 原始值（不是美化過的顯示文字），編輯 Modal 直接讀寫這幾格。手機不用簡訊
+        // 驗證了（產品規則已確認），一樣開放自己改，跟 lineId 是同一種欄位。
+        phone: data.phone || "",
         lineId: data.lineId || "",
         instagramUrl: data.instagramUrl || "",
         facebookUrl: data.facebookUrl || "",
@@ -1418,6 +1453,9 @@ class Component extends DCLogic {
       tags: data.skillNames || [],
       dna: [1, 2, 3, 4].map((dimId) => (dnaByDim[dimId] != null ? dnaByDim[dimId] : null)),
     });
+
+    // 操作導覽只給看自己主頁的人看，現在才知道 isSelf，補開在這裡。
+    if (!this._tourSeenAtMount && data.isSelf) this.setState({ tour: 0 });
   }
 
   // ---- 手帳第二頁的動作：接受/拒絕好友申請、解除黑名單、解除好友、取消追蹤 ----
@@ -1523,8 +1561,10 @@ class Component extends DCLogic {
   async sendFriendRequestAction() {
     const targetId = this.state.memberId;
     if (!targetId || this.state.relationActionBusy) return;
-    // 已經送出過、還在等審核的時候按鈕會顯示「已送出申請」，這裡就不用再送一次。
+    // 已經送出過、還在等審核的時候按鈕會顯示「已送出申請」，這裡就不用再送一次；
+    // 已經是好友的話也不用再送（按鈕本身也已經不會觸發到這裡，這裡是多一層保險）。
     if (this.state.viewerHasPendingFriendRequest) return;
+    if (this.state.relationshipToViewer === "Friend") return;
     this.setState({ relationActionBusy: true });
     try {
       const res = await fetch(apiUrl("/Members/SendFriendRequest"), {
@@ -1538,6 +1578,71 @@ class Component extends DCLogic {
       console.warn("送出好友申請失敗：", err);
     } finally {
       this.setState({ relationActionBusy: false });
+    }
+  }
+
+  // 手帳第二頁（看自己）搜尋陌生人：打 /Members/SearchMembers，依暱稱模糊搜尋，
+  // 後端已經排除自己、已刪除帳號、跟自己有封鎖關係的人，並且把每個人跟我的
+  // 關係狀態（Stranger／Friend／PendingSent／PendingReceived）一起算好回傳，
+  // 這裡只負責顯示跟按鈕要長怎樣。打字時做一個簡單的 debounce，避免每敲一個
+  // 字就打一次 API。
+  changeStrangerQuery(e) {
+    const q = e.target.value;
+    this.setState({ strangerQuery: q });
+    clearTimeout(this._strangerSearchTimer);
+    this._strangerSearchTimer = setTimeout(() => this.searchStrangers(q), 300);
+  }
+
+  async searchStrangers(keyword) {
+    const q = (keyword ?? "").trim();
+    if (!q) { this.setState({ strangerResults: [], strangerSearching: false }); return; }
+    // 🐛 之前寫成 `++this._strangerSearchGen`：這個元件沒有自訂 constructor 幫
+    // this._strangerSearchGen 設初始值，第一次用到時是 undefined，++undefined 會
+    // 變成 NaN，之後每次都是 NaN !== NaN（恆為 true），導致下面「這次請求是不是
+    // 還是最新的」判斷永遠判定為「已過期」而提早 return、也連帶讓 finally 裡重設
+    // strangerSearching 的那行判斷式也恆為 false──搜尋框卡在「搜尋中…」永遠不會
+    // 結束，結果也永遠不會被套用，即使後端有正確查到資料。改成不依賴預先初始化
+    // 的寫法直接修掉。
+    this._strangerSearchGen = (this._strangerSearchGen || 0) + 1;
+    const myGen = this._strangerSearchGen;
+    this.setState({ strangerSearching: true });
+    try {
+      const base = apiUrl("/Members/SearchMembers");
+      const url = base + (base.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(q);
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      const data = await res.json().catch(() => []);
+      // 使用者可能打字打很快，連續發出好幾次請求——只採用「最後一次」發出的
+      // 那次請求的結果，避免慢的那次請求晚回來把新的結果蓋掉。
+      if (myGen !== this._strangerSearchGen) return;
+      if (res.ok) this.setState({ strangerResults: Array.isArray(data) ? data : [] });
+    } catch (err) {
+      console.warn("搜尋會員失敗：", err);
+    } finally {
+      if (myGen === this._strangerSearchGen) this.setState({ strangerSearching: false });
+    }
+  }
+
+  // 從搜尋結果列表直接加好友（不像 sendFriendRequestAction 是針對「目前這整頁
+  // 顯示的那個人」，這裡要送給搜尋結果裡任一筆指定的 memberId）。成功後直接把
+  // 那一筆結果的狀態改成 PendingSent，不用整個重新搜尋一次。
+  async sendFriendRequestTo(targetId) {
+    if (this._strangerActionBusy) return;
+    this._strangerActionBusy = true;
+    try {
+      const res = await fetch(apiUrl("/Members/SendFriendRequest"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
+        body: JSON.stringify({ targetMemberId: targetId, message: null }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const results = this.state.strangerResults.map((r) =>
+        r.memberId === targetId ? { ...r, relationshipStatus: "PendingSent" } : r
+      );
+      this.setState({ strangerResults: results });
+    } catch (err) {
+      console.warn("送出好友申請失敗：", err);
+    } finally {
+      this._strangerActionBusy = false;
     }
   }
 
@@ -1625,6 +1730,9 @@ class Component extends DCLogic {
       // saveEdit 已經用 validateSocialUrl／validateLineId 驗證過一次，後端
       // MemberProfileService.UpdateProfile 也會用 SocialLinkValidator 再驗證
       // 一次——前端這關只是即時提示，真正擋得住的是後端那關。
+      // 手機不用簡訊驗證了，一樣讀原始值，存檔前 saveEdit 已經用 validatePhone
+      // 驗證過一次，後端 MemberProfileService.UpdateProfile 再驗一次。
+      phone: (p.phone || "").trim() || null,
       lineId: (p.lineId || "").trim() || null,
       instagramUrl: (p.instagramUrl || "").trim() || null,
       facebookUrl: (p.facebookUrl || "").trim() || null,
@@ -1701,57 +1809,101 @@ class Component extends DCLogic {
     }
   }
 
-  // <image-slot id="member-avatar-edit"> 是設計稿自帶的元件（image-slot.js），
-  // 點一下會直接打開檔案選取視窗、本機裁切預覽——這部分是設計稿原本就做好的，
-  // 不用動。但它只把選好的圖存在瀏覽器本機（給設計稿預覽用），不會送去後端，
-  // 所以這裡另外掛一個「change」監聽，file 選好的當下順便把同一個檔案上傳到
-  // /Members/UploadAvatar。這個 Modal 是點「編輯基本資料」才會出現，所以要等
-  // Modal 真的畫出來之後才找得到這個元件，openEdit 呼叫這裡時稍微延遲一下。
+  // <image-slot id="member-avatar-edit"> 是設計稿自帶的元件（image-slot.js）。
+  // 原本以為「點一下開檔案選取視窗」這部分設計稿就做好了、不用管，但實測發現
+  // 只有「框裡還沒有照片」時直接點才有用（image-slot.js 的 _empty 點擊監聽沒
+  // 擋）；一旦框裡已經有照片（例如會員本來就有大頭貼），點下去其實是要走它的
+  // 「Replace」按鈕，而那個按鈕在 image-slot.js 第 1088 行寫死用
+  // `window.omelette && window.omelette.writeFile` 判斷是不是在 Claude 的設計
+  // 畫布編輯器裡——正式站台一律沒有這個全域變數，所以 Replace/Edit 完全點不動、
+  // 使用者會覺得「怎麼點都沒反應」。
+  // 解法是自己在 <image-slot> 外層掛一個 capture 階段的 click 監聽，不管框裡
+  // 空的還是已經有照片，攔下事件後直接呼叫隱藏的 <input type=file> 的
+  // .click()，繞過 image-slot 內建那套「有沒有照片」「是不是設計畫布」的判斷。
+  // 選好檔案後靠下面這個監聽把同一個檔案上傳到 /Members/UploadAvatar——這裡故
+  // 意接「input」事件、不是「change」：image-slot.js 自己在 constructor 裡也
+  // 綁了一個「change」監聽（用來做本機裁切預覽），選完檔案會同步立刻把
+  // input.value 清空（見 image-slot.js 第 595 行）。兩個監聽都掛在同一個
+  // <input>，同一個事件的監聽器是照「掛上去的先後順序」依序執行、跟有沒有
+  // capture 無關——image-slot 的那個先掛（元件一建立就綁好了），我們的這個
+  // 是等 Modal 畫出來後才晚掛上去，所以如果也接「change」，輪到我們執行時
+  // input.value 已經被清空、input.files 是空的，upload 永遠不會真的發生（畫面
+  // 上看起來換照片了，其實只是 image-slot 自己的本機預覽，沒有真的存到後端，
+  // 手帳、機票那幾個用同一個大頭貼網址的地方當然也不會一起變）。改接「input」
+  // 事件就沒有這個問題：選檔案時瀏覽器一定先發「input」、才發「change」，我們
+  // 在「input」這個時間點讀 input.files 一定還沒被清掉。
+  // 這個 Modal 是點「編輯基本資料」才會出現，所以要等 Modal 真的畫出來之後才
+  // 找得到這個元件，openEdit 呼叫這裡時稍微延遲一下。
   wireAvatarUpload() {
     const el = document.getElementById("member-avatar-edit");
     const input = el && el.shadowRoot && el.shadowRoot.querySelector('input[type="file"]');
-    if (!input || input.__ltBound) return;
-    input.__ltBound = true;
-    input.addEventListener("change", () => {
-      const f = input.files && input.files[0];
-      if (f) this.uploadAvatar(f);
-    });
+    if (!input) return;
+    if (!input.__ltBound) {
+      input.__ltBound = true;
+      input.addEventListener("input", () => {
+        const f = input.files && input.files[0];
+        if (f) this.uploadAvatar(f);
+      });
+    }
+    if (!el.__ltClickBound) {
+      el.__ltClickBound = true;
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        input.click();
+      }, true);
+    }
   }
 
   // 檢舉截圖佐證跟大頭照不一樣的地方：選好檔案不用馬上傳，先存在 this._reportEvidenceFile，
   // 等真的按「送出檢舉」時才跟 targetMemberId／reason 一起包進同一個 FormData 送出
   // （見 submitReportAction）。同樣要等 Modal（openReport）畫出來後才找得到這個元件，
   // 所以呼叫端也要延遲一下。
+  // 跟大頭照那邊（wireAvatarUpload）一樣踩過兩個坑，這裡照同樣的方式修：
+  //   1. Replace／Edit 按鈕在 image-slot.js 裡是用 window.omelette 判斷是不是在
+  //      Claude 的設計畫布編輯器裡，正式站台一定沒有，按鈕點了沒反應——所以自
+  //      己在外層掛 capture 階段的 click，直接開檔案選取窗，不管框裡本來空的
+  //      還是已經附過一次截圖。
+  //   2. 接的是「input」事件、不是「change」：image-slot.js 自己的「change」監
+  //      聽會在同一輪同步把 input.value 清空（見 image-slot.js 第 595 行），
+  //      它掛得比我們早，輪到我們的「change」監聽執行時 input.files 已經被清
+  //      空，_reportEvidenceFile 永遠存不到東西。改用「input」事件就沒有這個
+  //      先後順序的問題。
   wireReportEvidenceUpload() {
     const el = document.getElementById("report-evidence");
     const input = el && el.shadowRoot && el.shadowRoot.querySelector('input[type="file"]');
-    if (!input || input.__ltBound) return;
-    input.__ltBound = true;
-    input.addEventListener("change", () => {
-      const f = input.files && input.files[0];
-      this._reportEvidenceFile = f || null;
-      this.set("reportEvidenceName", f ? f.name : null);
-    });
+    if (!input) return;
+    if (!input.__ltBound) {
+      input.__ltBound = true;
+      input.addEventListener("input", () => {
+        const f = input.files && input.files[0];
+        this._reportEvidenceFile = f || null;
+        this.set("reportEvidenceName", f ? f.name : null);
+      });
+    }
+    if (!el.__ltClickBound) {
+      el.__ltClickBound = true;
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        input.click();
+      }, true);
+    }
   }
 
   renderVals() {
     const s = this.state, p = s.profile;
-    // 「是不是在看自己」優先用後端真的算出來的 IsSelf（realIsSelf，null 代表還沒讀到
-    // 真實資料），沒有真實資料時（例如設計稿獨立預覽、還沒登入）才 fallback 回
-    // viewerOptions 那個設計預覽用的本人／陌生人／…／同團成員切換鈕。
-    const own = s.realIsSelf != null ? s.realIsSelf : s.viewer === "本人";
+    // 「是不是在看自己」看後端真的算出來的 IsSelf（realIsSelf）；還沒讀到真實資料
+    // （例如還沒登入、或 API 還在讀取中）時 realIsSelf 是 null，先當成不是本人。
+    const own = !!s.realIsSelf;
     // 站內導頁：被 iframe 嵌入時（整合進專題）跳最外層視窗
     const go = (href) => {
       try { (window.top || window).location.href = href; }
       catch (e) { window.location.href = href; }
     };
     const day = s.light === "day";
-    // 通訊錄/聯絡方式看不看得到，優先用後端真的算出來的 ContactVisible（realContactVisible，
-    // null 代表還沒讀到真實資料），沒有真實資料時才 fallback 回設計預覽用的 viewer 切換鈕，
-    // 邏輯跟上面 own／realIsSelf 是同一組模式。
-    const contactVisible = s.realContactVisible != null
-      ? s.realContactVisible
-      : (own || s.contactPublic || s.viewer === "好友（雙向）" || s.viewer === "同團成員");
+    // 通訊錄/聯絡方式看不看得到：自己一定看得到、公開通訊錄大家都看得到，
+    // 其餘（好友／同團成員與否）看後端真的算出來的 ContactVisible（realContactVisible），
+    // 還沒讀到真實資料前先當成看不到（比較安全的預設值）。
+    const contactVisible = own || s.contactPublic || !!s.realContactVisible;
     const locked = !contactVisible;
     // 查看別人的手帳第二頁：黑名單／好友申請／搜尋這幾個本人專屬的功能要隱藏，
     // 而且要不要看得到 Friends／Following 還要另外看 contactVisible（跟聯絡方式共用
@@ -1830,6 +1982,38 @@ class Component extends DCLogic {
                   ]
       }));
 
+    // 手帳第二頁「搜尋陌生人」（只有看自己的頁面才會用到，own/canEdit 才會顯示）。
+    // 依 relationshipStatus 決定每一列要顯示哪個按鈕：
+    //   Friend          → 已是好友（不能點）
+    //   PendingSent     → 已送出申請（不能點）
+    //   PendingReceived → 接受好友申請（直接呼叫既有的 respondFriendRequest）
+    //   Stranger        → 加好友（呼叫 sendFriendRequestTo）
+    const strangerList = (s.strangerResults || []).map((r) => {
+      const status = r.relationshipStatus;
+      const statusAction =
+        status === "Friend" ? { label: "已是好友", onClick: () => {} }
+        : status === "PendingSent" ? { label: "已送出申請", onClick: () => {} }
+        : status === "PendingReceived" ? { label: "接受好友申請", onClick: () => this.respondFriendRequest(r.memberId, true) }
+        : { label: "加好友", onClick: () => this.sendFriendRequestTo(r.memberId) };
+      const metaBits = [r.city, r.mbti].filter(Boolean);
+      return {
+        name: r.name,
+        meta: metaBits.length ? metaBits.join(" · ") : "旅人",
+        initial: (r.name || "?").slice(0, 1),
+        actions: [
+          { label: "查看", onClick: () => this.viewMember(r.memberId) },
+          statusAction,
+        ],
+      };
+    });
+    const strangerQueryTrimmed = (s.strangerQuery || "").trim();
+    const strangerListEmpty = strangerList.length === 0;
+    const strangerHint = !strangerQueryTrimmed
+      ? "輸入暱稱開始搜尋"
+      : s.strangerSearching
+        ? "搜尋中…"
+        : "沒有找到符合的會員";
+
     const setPct = (i) => (e) => {
       const dna = this.state.dna.slice();
       dna[i] = Number(e.target.value);
@@ -1863,8 +2047,28 @@ class Component extends DCLogic {
       return "";
     };
     const dupTrack = (arr) => [...arr, ...arr].map((t) => ({ label: t, note: skillNote(t) }));
-    const marqueeA = dupTrack(s.tags.filter((_, i) => i % 2 === 0));
-    const marqueeB = dupTrack(s.tags.filter((_, i) => i % 2 === 1));
+    // 跑馬燈是把同一批標籤複製一份接在後面（dupTrack），靠 CSS animation 往左/
+    // 右平移「整條軌道寬度的一半」來做無縫循環——這個技巧的前提是原本那份內容
+    // 就已經寬到會溢出容器，複製的那份才會被推到看不見的地方。標籤選得太少
+    // 時（例如只有 2 個），兩份加起來還是塞得進容器，使用者就會直接看到「同一
+    // 個標籤重複兩次」排在一起，而不是預期中的跑馬燈效果。
+    // 所以只有標籤數夠多（塞不下才需要跑馬燈）才複製＋跑動畫；標籤少的時候就
+    // 全部放同一行、不複製、不跑動畫，讓它自然換行就好。
+    const MARQUEE_MIN_TAGS = 7;
+    const useMarquee = s.tags.length >= MARQUEE_MIN_TAGS;
+    const marqueeA = useMarquee
+      ? dupTrack(s.tags.filter((_, i) => i % 2 === 0))
+      : s.tags.map((t) => ({ label: t, note: skillNote(t) }));
+    const marqueeB = useMarquee ? dupTrack(s.tags.filter((_, i) => i % 2 === 1)) : [];
+    const mqWrapStyle = useMarquee
+      ? "margin-top:11px;cursor:pointer;display:flex;flex-direction:column;gap:8px;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)"
+      : "margin-top:11px;cursor:pointer;display:flex;flex-direction:column;gap:8px";
+    const mqRowAStyle = useMarquee
+      ? "display:flex;width:max-content;gap:8px;animation:mqLeft 30s linear infinite;animation-play-state:" + (s.mqPaused ? "paused" : "running")
+      : "display:flex;flex-wrap:wrap;gap:8px";
+    const mqRowBStyle = useMarquee
+      ? "display:flex;width:max-content;gap:8px;animation:mqRight 36s linear infinite;animation-play-state:" + (s.mqPaused ? "paused" : "running")
+      : "display:none";
     const toggleTag = (label) => () => {
       const cur = this.state.tags;
       const next = cur.includes(label) ? cur.filter((t) => t !== label) : [...cur, label];
@@ -1897,7 +2101,7 @@ class Component extends DCLogic {
     return {
       profile: p, tags: s.tags, fieldRows, dnaRows, dnaCore,
       marqueeA, marqueeB, skillGroups,
-      mqPlay: s.mqPaused ? "paused" : "running",
+      mqWrapStyle, mqRowAStyle, mqRowBStyle,
       pauseMarquee: () => { if (!this.state.mqPaused) this.set("mqPaused", true); },
       resumeMarquee: () => { if (this.state.mqPaused) this.set("mqPaused", false); },
       skillsOpen: s.skillsOpen,
@@ -1911,10 +2115,12 @@ class Component extends DCLogic {
       tabs, leftList,
       listEmpty: leftList.length === 0,
       listEmptyText: contactBookLocked ? "對方的通訊錄未公開，看不到好友與追蹤名單。" : "沒有符合的名單",
+      strangerList, strangerListEmpty, strangerHint,
+      strangerQuery: s.strangerQuery, changeStrangerQuery: (e) => this.changeStrangerQuery(e),
       tabTitle: tabDefs.length ? (tabDefs.find((t) => t[0] === s.tab) || [null, ""])[1] : "通訊錄",
       viewingOther, contactBookLocked, contactBookOpenOther,
       counts: { friends: peopleData.friends.length, following: peopleData.following.length, blocked: peopleData.blocked.length, requests: peopleData.requests.length },
-      stats: { credit: "4.8 / 5.0", groups: String(s.groupsOwnedCount), trips: String(s.tripsJoinedCount) },
+      stats: { groups: String(s.groupsOwnedCount), trips: String(s.tripsJoinedCount) },
       avatarSrc: s.avatarUrl || "",
       canEdit: own,
       isDay: day,
@@ -1948,6 +2154,8 @@ class Component extends DCLogic {
       saveEdit: async () => {
         const draft = this.state.draft || this.state.profile;
         const errors = {};
+        const phoneErr = validatePhone(draft.phone);
+        if (phoneErr) errors.phone = phoneErr;
         const lineIdErr = validateLineId(draft.lineId);
         if (lineIdErr) errors.lineId = lineIdErr;
         const igErr = validateSocialUrl(draft.instagramUrl, "instagram");
@@ -1993,6 +2201,9 @@ class Component extends DCLogic {
         const current = this.state.draft || this.state.profile;
         this.setState({ draft: { ...current, districtName, city: formatCityDistrict(current.cityName, districtName) } });
       },
+      setPhone: setDraft("phone"),
+      phoneError: (s.editErrors && s.editErrors.phone) || "",
+      hasPhoneError: !!(s.editErrors && s.editErrors.phone),
       setLineId: setDraft("lineId"), setInstagramUrl: setDraft("instagramUrl"), setFacebookUrl: setDraft("facebookUrl"),
       lineIdError: (s.editErrors && s.editErrors.lineId) || "",
       hasLineIdError: !!(s.editErrors && s.editErrors.lineId),
@@ -2067,9 +2278,11 @@ class Component extends DCLogic {
         onClick: () => this.set("reportReason", r)
       })),
       followLabel: s.viewerIsFollowing ? "追蹤中" : "追蹤",
-      friendLabel: s.viewerHasPendingFriendRequest ? "已送出申請" : "申請好友",
+      // 已經是好友的話要顯示「已是好友」、不能再點（之前漏判斷 relationshipToViewer，
+      // 就算已經是好友也一直顯示「申請好友」，見上面 applyProfileData 的註解）。
+      friendLabel: s.relationshipToViewer === "Friend" ? "已是好友" : (s.viewerHasPendingFriendRequest ? "已送出申請" : "申請好友"),
       toggleFollow: () => this.toggleFollowAction(),
-      requestFriend: () => this.sendFriendRequestAction(),
+      requestFriend: () => { if (s.relationshipToViewer !== "Friend") this.sendFriendRequestAction(); },
       query: s.query, changeQuery: (e) => this.set("query", e.target.value),
 
       // 機票（登機證）上顯示的資料——照片/暱稱/MBTI/年齡/性別/居住地/技能標籤/旅遊 DNA，
@@ -2138,12 +2351,6 @@ class Component extends DCLogic {
       toggleBg: s.contactPublic ? "#2f7d6b" : "#c9b795",
       knobLeft: s.contactPublic ? "23px" : "3px",
 
-      viewerOptions: ["本人", "陌生人", "追蹤中（單向）", "好友（雙向）", "同團成員"].map((label) => ({
-        label,
-        bg: s.viewer === label ? "#b4622f" : "rgba(255,255,255,0.06)",
-        fg: s.viewer === label ? "#fff8ec" : "#cbbda6",
-        onClick: () => this.setState({ viewer: label, spread: label === "本人" ? this.state.spread : 0, editing: null, tagEditing: false, dnaEditing: false, skillsOpen: false })
-      })),
       wallBloom: day
         ? "radial-gradient(680px 320px at 67% 26%,rgba(255,250,226,0.5),rgba(255,250,226,0.12) 52%,rgba(0,0,0,0) 76%)"
         : "radial-gradient(620px 300px at 67% 24%,rgba(150,180,220,0.16),rgba(0,0,0,0.18) 62%,rgba(0,0,0,0.3) 100%)",
@@ -2185,8 +2392,9 @@ class Component extends DCLogic {
         : "0 0 14px rgba(170,205,255,0.75)",
       boardNotes: [
         { label: "首頁", title: "前往專題首頁", x: "28px", y: "48px", rot: "-3.2deg", bg: "linear-gradient(160deg,#f7e07f,#e7c85a)", fg: "#6a5410", onClick: () => go(this.props.homeHref || "/") },
-        { label: "揪團", title: "前往揪團頁面", x: "112px", y: "62px", rot: "2.6deg", bg: "linear-gradient(160deg,#f3ab93,#e08d72)", fg: "#6f3323", onClick: () => go(this.props.groupHref || "/Tours") },
-        { label: "文章", title: "前往文章頁面", x: "66px", y: "138px", rot: "-1.4deg", bg: "linear-gradient(160deg,#a8d3bb,#88bda3)", fg: "#28503c", onClick: () => go(this.props.articleHref || "/Articles") },
+        { label: "揪團", title: "前往揪團找旅伴", x: "112px", y: "62px", rot: "2.6deg", bg: "linear-gradient(160deg,#f3ab93,#e08d72)", fg: "#6f3323", onClick: () => go(this.props.groupHref || "/TravelGroups") },
+        { label: "行程", title: "前往揪團行程分享", x: "66px", y: "138px", rot: "-1.4deg", bg: "linear-gradient(160deg,#a8d3bb,#88bda3)", fg: "#28503c", onClick: () => go(this.props.articleHref || "/Explore") },
+        { label: "收藏", title: "前往收藏行程", x: "150px", y: "148px", rot: "3.4deg", bg: "linear-gradient(160deg,#a7c7e8,#7fa8d1)", fg: "#1f3d5c", onClick: () => go(this.props.favoritesHref || "/Favorites") },
       ],
       wallTags: [
         { label: s.flat ? "案頭視角" : "攤平閱讀", hint: s.flat ? "回到桌面" : "手帳放平", x: "16px", rot: "-2.4deg", rope: "26px", onClick: () => this.set("flat", !s.flat) },
