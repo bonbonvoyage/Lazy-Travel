@@ -257,8 +257,6 @@ namespace LazyTravel.Controllers
             {
                 country = null;
             }
-
-            if (maxDays is > 0) publicGroups = publicGroups.Where(g => g.StartDate.HasValue && g.EndDate.HasValue && EF.Functions.DateDiffDay(g.StartDate, g.EndDate) >= 0 && EF.Functions.DateDiffDay(g.StartDate, g.EndDate) < maxDays.Value);
             var query = publicGroups
                 .Include(g => g.OwnerMember)
                 .Include(g => g.TravelGroupImages)
@@ -1289,6 +1287,7 @@ namespace LazyTravel.Controllers
         }
     }
 }
+
 
 
 

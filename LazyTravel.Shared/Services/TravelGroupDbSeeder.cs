@@ -344,7 +344,7 @@ public static class TravelGroupDbSeeder
                 ContactBookVisibility = 0,
                 IsPrivateAccount = false,
                 AvatarUrl = avatarUrl,
-                BirthDate = birthDate,
+                BirthDate = DateOnly.FromDateTime(birthDate),
                 Gender = gender,
                 Occupation = occupation,
                 Mbti = mbti,
@@ -371,7 +371,7 @@ public static class TravelGroupDbSeeder
         member.ContactBookVisibility = 0;
         member.IsPrivateAccount = false;
         member.AvatarUrl = avatarUrl;
-        member.BirthDate = birthDate;
+        member.BirthDate = DateOnly.FromDateTime(birthDate);
         member.Gender = gender;
         member.Occupation = occupation;
         member.Mbti = mbti;
@@ -416,6 +416,7 @@ public static class TravelGroupDbSeeder
         await context.SaveChangesAsync();
     }
 }
+
 
 
 

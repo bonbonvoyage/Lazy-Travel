@@ -63,6 +63,7 @@ builder.Services.AddAuthentication("MemberAuth")
 		};
 	});
 builder.Services.AddAuthorization();
+builder.Services.AddKeyedScoped<IImageStorageService, R2ImageStorageService>("avatar");
 
 // 🌟 CORS:給 Vue 前端呼叫用。允許的網址從 appsettings.json 的 Cors:AllowedOrigins 讀,
 // 之後 Vue 那邊確定實際開發網址後,只要改設定檔,不用改程式碼。

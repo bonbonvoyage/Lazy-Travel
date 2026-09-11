@@ -5,9 +5,8 @@ using System.Collections.Generic;
 
 namespace LazyTravel.Shared.Models.EfModels;
  
-public partial class Member : IdentityUser<int>
+public partial class TravelGroup
 {
-    public virtual ICollection<TravelGroupTag> TravelGroupTags { get; set; } = new List<TravelGroupTag>();
     public int GroupId { get; set; }
 
     public int OwnerMemberId { get; set; }
@@ -67,4 +66,8 @@ public partial class Member : IdentityUser<int>
     public virtual ICollection<TravelGroupItineraryItem> TravelGroupItineraryItems { get; set; } = new List<TravelGroupItineraryItem>();
 
     public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
+
+    public virtual ICollection<TravelGroupTag> TravelGroupTags { get; set; } = new List<TravelGroupTag>();
 }
+
+

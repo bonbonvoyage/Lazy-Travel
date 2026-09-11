@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 
-Member · CS
-using Microsoft.AspNetCore.Identity;
  
 namespace LazyTravel.Shared.Models.EfModels;
  
@@ -15,7 +13,7 @@ public partial class Member : IdentityUser<int>
 	public byte ContactBookVisibility { get; set; }
 	public bool IsPrivateAccount { get; set; }
 	public string? AvatarUrl { get; set; }
-	public DateTime? BirthDate { get; set; }
+	public DateOnly? BirthDate { get; set; }
 	public byte Gender { get; set; }
 	public string? Occupation { get; set; }
 	public string? Mbti { get; set; }
@@ -58,3 +56,4 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<VlogPostImage> VlogPostImages { get; set; } = new List<VlogPostImage>();
 	public virtual ICollection<VlogPost> VlogPosts { get; set; } = new List<VlogPost>();
 }
+

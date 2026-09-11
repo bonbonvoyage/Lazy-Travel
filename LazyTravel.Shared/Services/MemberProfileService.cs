@@ -119,7 +119,7 @@ namespace LazyTravel.Shared.Services
                 Name = member.Name,
                 AvatarUrl = member.AvatarUrl,
                 BirthDate = member.BirthDate,
-                Age = member.BirthDate.HasValue ? CalcAge(member.BirthDate.Value.ToDateTime(TimeOnly.MinValue)) : null,
+                Age = member.BirthDate.HasValue ? CalcAge(member.BirthDate.Value) : null,
                 Gender = member.Gender,
                 Occupation = member.Occupation,
                 Mbti = member.Mbti,
@@ -263,11 +263,11 @@ namespace LazyTravel.Shared.Services
             return url;
         }
 
-        private static int CalcAge(DateTime birthDate)
+        private static int CalcAge(DateOnly birthDate)
         {
-            var today = DateTime.Today;
+            var today = DateOnly.FromDateTime(DateTime.Today);
             int age = today.Year - birthDate.Year;
-            if (birthDate.Date > today.AddYears(-age)) age--;
+            if (birthDate > today.AddYears(-age)) age--;
             return age;
         }
 
@@ -327,3 +327,5 @@ namespace LazyTravel.Shared.Services
         }
     }
 }
+
+

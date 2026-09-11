@@ -6,112 +6,101 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Controllers;
 
-public class HomeController(LazyTravelDBContext context) : Controller
+public class HomeController : Controller
 {
+    private readonly LazyTravelDBContext _context;
+
+    public HomeController(LazyTravelDBContext context)
+    {
+        _context = context;
+    }
+
     public async Task<IActionResult> Index()
     {
-        private readonly LazyTravelDBContext _context;
+        ViewData["Title"] = "é¦–é ";
+        var countries = await _context.TravelGroups.AsNoTracking()
+            .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal && g.Country != null && g.Country != "")
+            .Select(g => g.Country!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
 
-        public HomeController(LazyTravelDBContext context)
+        return View(new LazyTravel.ViewModels.TravelGroupIndexViewModel
         {
-            _context = context;
-        }
-
-        // GET /Home/Index ¡X¡X ¥u­t³d¦^¶Ç­¶­±¥~´ß(°¼Äæ¡BHero¡B¥d¤ù°ÏªºªÅ®e¾¹)¡A
-        // ª©­±¤W¬Ý¨ìªº¦æµ{/¤å³¹¸ê®Æ¤@«ß¥Ñ wwwroot/js/home.js ©I¥s¤U­±ªº Data() ®³¯u¹ê¸ê®Æ¡C
-        public async Task<IActionResult> Index()
-        {
-            ViewData["Title"] = "­º­¶";
-            var countries = await _context.TravelGroups.AsNoTracking()
-                .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal && g.Country != null && g.Country != "")
-                .Select(g => g.Country!)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToListAsync();
-
-            return View(new LazyTravel.ViewModels.TravelGroupIndexViewModel
-            {
-                AllCountries = countries,
-                Countries = countries,
-            });
-        }
-
-        // GET /Home/Data ¡X¡X ­º­¶¥d¤ù°Ïªº¯u¹ê¸ê®Æ¡A«eºÝ fetch ³o¤ä®³ JSON¡C
-        // ¨Ì FRONTEND_BACKEND_SPLIT.md ºD¨Ò¡Gª½±µ Ok(vm)¡A¤£¥] {success,data} ¥~¼h¡C
-        public async Task<IActionResult> Data()
-        {
-            var trips = await _context.TravelGroups.AsNoTracking()
-                .Include(g => g.TravelGroupImages)
-                .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal)
-                .OrderByDescending(g => g.CurrentPeople)
-                .Take(8)
-                .ToListAsync();
-
-            var popularTrips = trips.Select(g =>
-            {
-                var cover = g.TravelGroupImages
-                    .Where(i => !i.IsDeleted)
-                    .OrderByDescending(i => i.IsCover)
-                    .ThenBy(i => i.SortOrder)
-                    .FirstOrDefault();
-
-                var days = g.StartDate.HasValue && g.EndDate.HasValue
-                    ? g.EndDate.Value.DayNumber - g.StartDate.Value.DayNumber + 1
-                    : (int?)null;
-
-                return new HomeTripCardVm
-                {
-                    GroupId = g.GroupId,
-                    Country = g.Country,
-                    GroupTitle = g.GroupTitle,
-                    CoverImageUrl = cover?.ImageUrl ?? "",
-                    DaysText = days.HasValue ? $"{days}¤Ñ{days - 1}©]" : "",
-                    CurrentPeople = g.CurrentPeople,
-                    MaxPeople = g.MaxPeople,
-                };
-            }).ToList();
-
-            var posts = await _context.VlogPosts.AsNoTracking()
-                .Include(p => p.Member)
-                .Where(p => !p.IsDelete && p.Status == VlogPostStatus.Published)
-                .ToListAsync();
-
-            var postIds = posts.Select(p => p.PostId).ToList();
-            var likeCounts = await _context.PostInteractions
-                .Where(i => postIds.Contains(i.PostId) && i.ActionType == PostInteractionType.Like)
-                .GroupBy(i => i.PostId)
-                .Select(g => new { PostId = g.Key, Count = g.Count() })
-                .ToListAsync();
-            int LikeCount(int postId) => likeCounts.FirstOrDefault(c => c.PostId == postId)?.Count ?? 0;
-
-            var popularArticles = posts
-                .OrderByDescending(p => LikeCount(p.PostId))
-                .ThenByDescending(p => p.UpdatedAt ?? p.CreatedAt)
-                .Take(8)
-                .Select(p => new HomeArticleCardVm
-                {
-                    PostId = p.PostId,
-                    Title = p.Title,
-                    MediaUrl = p.MediaUrl,
-                    AuthorName = p.Member.Name,
-                    DateText = (p.UpdatedAt ?? p.CreatedAt).ToString("yyyy/MM/dd"),
-                    LikeCount = LikeCount(p.PostId),
-                })
-                .ToList();
-
-            var vm = new HomeIndexViewModel
-            {
-                PopularTrips = popularTrips,
-                PopularArticles = popularArticles,
-            };
-
-            return Ok(vm);
-        }
-
-        public IActionResult Error()
-        {
-            return View();
-        }
+            AllCountries = countries,
+            Countries = countries,
+        });
     }
+
+    public async Task<IActionResult> Data()
+    {
+        var trips = await _context.TravelGroups.AsNoTracking()
+            .Include(g => g.TravelGroupImages)
+            .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal)
+            .OrderByDescending(g => g.CurrentPeople)
+            .Take(8)
+            .ToListAsync();
+
+        var popularTrips = trips.Select(g =>
+        {
+            var cover = g.TravelGroupImages
+                .Where(i => !i.IsDeleted)
+                .OrderByDescending(i => i.IsCover)
+                .ThenBy(i => i.SortOrder)
+                .FirstOrDefault();
+
+            var days = g.StartDate.HasValue && g.EndDate.HasValue
+                ? g.EndDate.Value.DayNumber - g.StartDate.Value.DayNumber + 1
+                : (int?)null;
+
+            return new HomeTripCardVm
+            {
+                GroupId = g.GroupId,
+                Country = g.Country,
+                GroupTitle = g.GroupTitle,
+                CoverImageUrl = cover?.ImageUrl ?? "",
+                DaysText = days.HasValue ? $"{days}å¤©{Math.Max(0, days.Value - 1)}å¤œ" : "",
+                CurrentPeople = g.CurrentPeople,
+                MaxPeople = g.MaxPeople,
+            };
+        }).ToList();
+
+        var posts = await _context.VlogPosts.AsNoTracking()
+            .Include(p => p.Member)
+            .Where(p => !p.IsDelete && p.Status == VlogPostStatus.Published)
+            .ToListAsync();
+
+        var postIds = posts.Select(p => p.PostId).ToList();
+        var likeCounts = await _context.PostInteractions
+            .Where(i => postIds.Contains(i.PostId) && i.ActionType == PostInteractionType.Like)
+            .GroupBy(i => i.PostId)
+            .Select(g => new { PostId = g.Key, Count = g.Count() })
+            .ToListAsync();
+        int LikeCount(int postId) => likeCounts.FirstOrDefault(c => c.PostId == postId)?.Count ?? 0;
+
+        var popularArticles = posts
+            .OrderByDescending(p => LikeCount(p.PostId))
+            .ThenByDescending(p => p.UpdatedAt ?? p.CreatedAt)
+            .Take(8)
+            .Select(p => new HomeArticleCardVm
+            {
+                PostId = p.PostId,
+                Title = p.Title,
+                MediaUrl = p.MediaUrl,
+                AuthorName = p.Member.Name,
+                DateText = (p.UpdatedAt ?? p.CreatedAt).ToString("yyyy/MM/dd"),
+                LikeCount = LikeCount(p.PostId),
+            })
+            .ToList();
+
+        var vm = new HomeIndexViewModel
+        {
+            PopularTrips = popularTrips,
+            PopularArticles = popularArticles,
+        };
+
+        return Ok(vm);
+    }
+
     public IActionResult Error() => View();
 }
