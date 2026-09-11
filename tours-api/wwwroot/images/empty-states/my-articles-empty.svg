@@ -1,0 +1,17 @@
+<svg width="360" height="220" viewBox="0 0 360 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">尚未發表文章</title>
+  <desc id="desc">簡單粗線條的筆記本、照片與鉛筆圖示</desc>
+  <rect x="24" y="24" width="312" height="172" rx="28" fill="#F7FBF9"/>
+  <rect x="82" y="50" width="148" height="122" rx="18" fill="#FFFFFF" stroke="#2F5F4A" stroke-width="7"/>
+  <path d="M111 82H196" stroke="#93B5A2" stroke-width="7" stroke-linecap="round"/>
+  <path d="M111 106H184" stroke="#93B5A2" stroke-width="7" stroke-linecap="round"/>
+  <path d="M111 130H168" stroke="#93B5A2" stroke-width="7" stroke-linecap="round"/>
+  <rect x="202" y="92" width="62" height="52" rx="12" fill="#FFFFFF" stroke="#2F5F4A" stroke-width="7"/>
+  <path d="M211 133L226 118L237 128L247 113L256 133" stroke="#F2A68D" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="248" cy="105" r="6" fill="#F2C7B8"/>
+  <path d="M249 54L286 91" stroke="#2F5F4A" stroke-width="8" stroke-linecap="round"/>
+  <path d="M287 91L274 97L280 84L287 91Z" fill="#F2A68D" stroke="#2F5F4A" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M76 176H284" stroke="#CFE3DA" stroke-width="7" stroke-linecap="round"/>
+  <path d="M70 54L58 66" stroke="#F2C7B8" stroke-width="7" stroke-linecap="round"/>
+  <path d="M58 54L70 66" stroke="#F2C7B8" stroke-width="7" stroke-linecap="round"/>
+</svg>

@@ -787,3 +787,20 @@ button.stat-pill:hover {
     fill: currentColor;
 }
 
+
+.groups-empty.mine-empty {
+    min-height: 380px;
+    padding-top: 28px;
+}
+
+.empty-illustration {
+    width: min(360px, 82vw);
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 18px;
+    filter: drop-shadow(0 18px 34px rgba(75, 99, 86, .12));
+}
+.groups-load-more a.is-loading {
+    pointer-events: none;
+    opacity: .68;
+}

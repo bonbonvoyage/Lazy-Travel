@@ -97,19 +97,6 @@ document.querySelector('[data-detail-like-form]')?.addEventListener('submit', as
 });
 
 
-const articleRoleButtons = document.querySelectorAll('[data-article-role]');
-const articleRoleItems = document.querySelectorAll('[data-action-role]');
-const setArticleTestRole = role => {
-    const isAuthor = role === 'author';
-    articleRoleButtons.forEach(button => button.classList.toggle('active', button.dataset.articleRole === role));
-    articleRoleItems.forEach(item => {
-        const allowed = (item.dataset.actionRole || '').split(/\s+/);
-        const visible = isAuthor ? allowed.includes('author') : allowed.includes('reader');
-        item.classList.toggle('article-action-hidden', !visible);
-    });
-};
-articleRoleButtons.forEach(button => button.addEventListener('click', () => setArticleTestRole(button.dataset.articleRole || 'visitor')));
-setArticleTestRole(document.querySelector('[data-article-role].active')?.dataset.articleRole || 'visitor');
 
 const openArticleDeleteModal = form => {
     document.getElementById('article-delete-modal')?.remove();

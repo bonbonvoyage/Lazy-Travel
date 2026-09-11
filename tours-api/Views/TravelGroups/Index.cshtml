@@ -69,19 +69,29 @@
                 <div class="board-toolbar">
                     <nav class="groups-tabs" aria-label="揪團分類">
                         <a class="@(Model.Scope == "all" ? "active" : "")" asp-action="Index" asp-route-scope="all" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" id="board-title">所有揪團</a>
-                        <button type="button" disabled title="登入後即可查看">我的行程</button>
-                        <a class="@(Model.Scope == "recommended" ? "active" : "")" asp-action="Index" asp-route-scope="recommended" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">揪團推薦</a>
+                        <a class="@(Model.Scope == "mine" ? "active" : "")" asp-action="Index" asp-route-scope="mine" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">我的揪團</a>
+
                     </nav>
                     <a class="create-group" asp-action="Create"><span>＋</span> 新增揪團</a>
                 </div>
 
                 @if (Model.Groups.Count == 0)
                 {
-                    <div class="groups-empty">
-                        <div class="empty-icon">⌁</div>
-                        <h2>目前沒有符合條件的揪團</h2>
-                        <p>換個國家或日期看看，也可以清除條件瀏覽全部。</p>
-                        <a asp-action="Index">清除篩選</a>
+                    <div class="groups-empty @(Model.Scope == "mine" ? "mine-empty" : "")">
+                        @if (Model.Scope == "mine")
+                        {
+                            <img class="empty-illustration" src="~/images/empty-states/my-groups-empty.svg" alt="尚未建立揪團" asp-append-version="true" />
+                            <h2>目前還沒有自己的揪團</h2>
+                            <p>建立一個揪團，邀請旅伴一起出發。</p>
+                            <a asp-action="Create">新增揪團</a>
+                        }
+                        else
+                        {
+                            <div class="empty-icon">⌁</div>
+                            <h2>目前沒有符合條件的揪團</h2>
+                            <p>換個國家或日期看看，也可以清除條件瀏覽全部。</p>
+                            <a asp-action="Index">清除篩選</a>
+                        }
                     </div>
                 }
                 else

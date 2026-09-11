@@ -31,6 +31,7 @@ public class TravelGroupDetailsViewModel
     public List<TravelGroupActivityVm> ActivityLog { get; set; } = new();
 
     // 目前這個匿名訪客(visitor cookie)跟這個揪團的關係，前端用來決定按鈕要顯示「申請加入」還是「退出揪團」
+    public bool ViewerIsAuthenticated { get; set; }
     public bool ViewerIsOwner { get; set; }
     public bool ViewerIsMember { get; set; }
     public bool ViewerHasPendingRequest { get; set; }

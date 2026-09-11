@@ -49,106 +49,124 @@ document.querySelector('[data-groups-toast] [data-toast-undo]')?.addEventListene
     if (toast) toast.hidden = true;
 });
 
-document.querySelectorAll('.favorite-button[data-group-id]').forEach((button) => {
-    const groupId = Number(button.dataset.groupId);
-    const stat = document.querySelector('[data-group-favorite-stat][data-group-id="' + groupId + '"]');
-    const countNode = stat?.querySelector('[data-group-favorite-count]');
-    button.addEventListener('click', async () => {
-        const previous = button.getAttribute('aria-pressed') === 'true';
-        const previousCount = Number(countNode?.textContent ?? '0');
-        button.disabled = true;
-        try {
-            const response = await fetch('/TravelGroups/ToggleFavorite/' + groupId, {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                redirect: 'manual'
-            });
-            if (!response.ok && response.type !== 'opaqueredirect') throw new Error('favorite failed');
-            const result = await response.json();
-            const next = result.active === true;
-            setFavoriteButtonState(button, next, '取消收藏', '收藏揪團');
-            setStatState(stat, next);
-            if (countNode) countNode.textContent = String(result.count ?? Math.max(0, previousCount + (next ? 1 : -1)));
-            showGroupsToast(next ? '已加入收藏' : '已取消收藏', async () => {
-                const undoResponse = await fetch('/TravelGroups/ToggleFavorite/' + groupId, {
+function bindGroupFavoriteButtons(root = document) {
+    root.querySelectorAll('.favorite-button[data-group-id]:not([data-index-bound])').forEach((button) => {
+        button.dataset.indexBound = 'true';
+        const groupId = Number(button.dataset.groupId);
+        const card = button.closest('.group-card') || document;
+        const stat = card.querySelector('[data-group-favorite-stat][data-group-id="' + groupId + '"]') || document.querySelector('[data-group-favorite-stat][data-group-id="' + groupId + '"]');
+        const countNode = stat?.querySelector('[data-group-favorite-count]');
+        button.addEventListener('click', async () => {
+            const previous = button.getAttribute('aria-pressed') === 'true';
+            const previousCount = Number(countNode?.textContent ?? '0');
+            button.disabled = true;
+            try {
+                const response = await fetch('/TravelGroups/ToggleFavorite/' + groupId, {
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     redirect: 'manual'
                 });
-                if (!undoResponse.ok && undoResponse.type !== 'opaqueredirect') throw new Error('favorite undo failed');
-                const undoResult = await undoResponse.json();
-                setFavoriteButtonState(button, undoResult.active === true, '取消收藏', '收藏揪團');
-                setStatState(stat, undoResult.active === true);
-                if (countNode) countNode.textContent = String(undoResult.count ?? previousCount);
-            });
-        } catch {
-            setFavoriteButtonState(button, previous, '取消收藏', '收藏揪團');
-            setStatState(stat, previous);
-            if (countNode) countNode.textContent = String(previousCount);
-            showGroupsToast('收藏更新失敗，請再試一次');
-        } finally {
-            button.disabled = false;
-        }
-    });
-});
-
-document.querySelectorAll('.favorite-article-form').forEach((form) => {
-    const button = form.querySelector('[data-article-favorite]');
-    if (!button) return;
-    const card = form.closest('.group-card');
-    const countNode = card?.querySelector('[data-favorite-count]');
-    const statNode = card?.querySelector('[data-stat-favorite]');
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const previous = button.getAttribute('aria-pressed') === 'true';
-        const previousCount = Number(countNode?.textContent ?? '0');
-        const next = !previous;
-        button.disabled = true;
-        try {
-            await requestToggle(form);
-            setFavoriteButtonState(button, next, '取消收藏', '收藏文章');
-            setStatState(statNode, next);
-            if (countNode) countNode.textContent = String(Math.max(0, previousCount + (next ? 1 : -1)));
-            showGroupsToast(next ? '已加入收藏' : '已取消收藏', async () => {
-                await requestToggle(form);
-                setFavoriteButtonState(button, previous, '取消收藏', '收藏文章');
-                setStatState(statNode, previous);
+                if (!response.ok && response.type !== 'opaqueredirect') throw new Error('favorite failed');
+                const result = await response.json();
+                const next = result.active === true;
+                setFavoriteButtonState(button, next, '取消收藏', '收藏揪團');
+                setStatState(stat, next);
+                if (countNode) countNode.textContent = String(result.count ?? Math.max(0, previousCount + (next ? 1 : -1)));
+                showGroupsToast(next ? '已加入收藏' : '已取消收藏', async () => {
+                    const undoResponse = await fetch('/TravelGroups/ToggleFavorite/' + groupId, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        redirect: 'manual'
+                    });
+                    if (!undoResponse.ok && undoResponse.type !== 'opaqueredirect') throw new Error('favorite undo failed');
+                    const undoResult = await undoResponse.json();
+                    setFavoriteButtonState(button, undoResult.active === true, '取消收藏', '收藏揪團');
+                    setStatState(stat, undoResult.active === true);
+                    if (countNode) countNode.textContent = String(undoResult.count ?? previousCount);
+                });
+            } catch {
+                setFavoriteButtonState(button, previous, '取消收藏', '收藏揪團');
+                setStatState(stat, previous);
                 if (countNode) countNode.textContent = String(previousCount);
-            });
-        } catch {
-            showGroupsToast('收藏更新失敗，請再試一次');
-        } finally {
-            button.disabled = false;
-        }
+                showGroupsToast('收藏更新失敗，請再試一次');
+            } finally {
+                button.disabled = false;
+            }
+        });
     });
-});
+}
 
-document.querySelectorAll('.like-article-form').forEach((form) => {
-    const button = form.querySelector('[data-article-like]');
-    const countNode = form.querySelector('[data-like-count]');
-    if (!button || !countNode) return;
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const previous = button.getAttribute('aria-pressed') === 'true';
-        const previousCount = Number(countNode.textContent || '0');
-        const next = !previous;
-        button.disabled = true;
-        try {
-            await requestToggle(form);
-            setStatState(button, next);
-            countNode.textContent = String(Math.max(0, previousCount + (next ? 1 : -1)));
-            showGroupsToast(next ? '已按讚' : '已取消按讚', async () => {
+function bindArticleFavoriteForms(root = document) {
+    root.querySelectorAll('.favorite-article-form:not([data-index-bound])').forEach((form) => {
+        form.dataset.indexBound = 'true';
+        const button = form.querySelector('[data-article-favorite]');
+        if (!button) return;
+        const card = form.closest('.group-card');
+        const countNode = card?.querySelector('[data-favorite-count]');
+        const statNode = card?.querySelector('[data-stat-favorite]');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const previous = button.getAttribute('aria-pressed') === 'true';
+            const previousCount = Number(countNode?.textContent ?? '0');
+            const next = !previous;
+            button.disabled = true;
+            try {
                 await requestToggle(form);
-                setStatState(button, previous);
-                countNode.textContent = String(previousCount);
-            });
-        } catch {
-            showGroupsToast('按讚更新失敗，請再試一次');
-        } finally {
-            button.disabled = false;
-        }
+                setFavoriteButtonState(button, next, '取消收藏', '收藏文章');
+                setStatState(statNode, next);
+                if (countNode) countNode.textContent = String(Math.max(0, previousCount + (next ? 1 : -1)));
+                showGroupsToast(next ? '已加入收藏' : '已取消收藏', async () => {
+                    await requestToggle(form);
+                    setFavoriteButtonState(button, previous, '取消收藏', '收藏文章');
+                    setStatState(statNode, previous);
+                    if (countNode) countNode.textContent = String(previousCount);
+                });
+            } catch {
+                showGroupsToast('收藏更新失敗，請再試一次');
+            } finally {
+                button.disabled = false;
+            }
+        });
     });
-});
+}
+
+function bindArticleLikeForms(root = document) {
+    root.querySelectorAll('.like-article-form:not([data-index-bound])').forEach((form) => {
+        form.dataset.indexBound = 'true';
+        const button = form.querySelector('[data-article-like]');
+        const countNode = form.querySelector('[data-like-count]');
+        if (!button || !countNode) return;
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const previous = button.getAttribute('aria-pressed') === 'true';
+            const previousCount = Number(countNode.textContent || '0');
+            const next = !previous;
+            button.disabled = true;
+            try {
+                await requestToggle(form);
+                setStatState(button, next);
+                countNode.textContent = String(Math.max(0, previousCount + (next ? 1 : -1)));
+                showGroupsToast(next ? '已按讚' : '已取消按讚', async () => {
+                    await requestToggle(form);
+                    setStatState(button, previous);
+                    countNode.textContent = String(previousCount);
+                });
+            } catch {
+                showGroupsToast('按讚更新失敗，請再試一次');
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+}
+
+function bindCardInteractions(root = document) {
+    bindGroupFavoriteButtons(root);
+    bindArticleFavoriteForms(root);
+    bindArticleLikeForms(root);
+}
+
+bindCardInteractions();
 const countryInput = document.getElementById('groupCountry');
 const countryOptions = document.getElementById('groupCountryOptions');
 
@@ -287,3 +305,62 @@ function formatDate(date) {
 
 
 
+
+
+function bindLoadMore() {
+    const board = document.querySelector('.groups-board');
+    if (!board || board.dataset.loadMoreBound === 'true') return;
+    board.dataset.loadMoreBound = 'true';
+
+    board.addEventListener('click', async (event) => {
+        const link = event.target.closest('.groups-load-more a');
+        if (!link || !board.contains(link)) return;
+        event.preventDefault();
+
+        const currentGrid = board.querySelector('.groups-grid');
+        const currentCount = currentGrid?.querySelectorAll('.group-card').length ?? 0;
+        const wrapper = link.closest('.groups-load-more');
+        const originalText = link.textContent;
+        link.textContent = '載入中…';
+        link.setAttribute('aria-busy', 'true');
+        link.classList.add('is-loading');
+
+        try {
+            const response = await fetch(link.href, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!response.ok) throw new Error('load more failed');
+
+            const html = await response.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const nextGrid = doc.querySelector('.groups-board .groups-grid');
+            const nextCards = Array.from(nextGrid?.querySelectorAll('.group-card') ?? []);
+            const cardsToAppend = nextCards.slice(currentCount);
+            if (!currentGrid || cardsToAppend.length === 0) {
+                wrapper?.remove();
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            cardsToAppend.forEach((card) => fragment.appendChild(document.importNode(card, true)));
+            currentGrid.appendChild(fragment);
+            bindCardInteractions(currentGrid);
+
+            const nextLoadMore = doc.querySelector('.groups-board .groups-load-more');
+            if (nextLoadMore && wrapper) {
+                wrapper.replaceWith(document.importNode(nextLoadMore, true));
+            } else {
+                wrapper?.remove();
+            }
+
+            window.history.replaceState({}, '', link.href);
+        } catch {
+            link.textContent = originalText || '載入更多';
+            link.removeAttribute('aria-busy');
+            link.classList.remove('is-loading');
+            showGroupsToast('載入失敗，請再試一次');
+        }
+    });
+}
+
+bindLoadMore();

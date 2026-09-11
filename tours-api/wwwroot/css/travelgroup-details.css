@@ -1205,3 +1205,10 @@
   transform: translateY(-1px);
   box-shadow: 0 12px 24px rgba(56, 73, 63, .16);
 }
+.tg-confirm-card {
+  width: min(420px, calc(100vw - 48px));
+}
+
+.tg-confirm-actions {
+  grid-template-columns: 1fr 1fr;
+}
