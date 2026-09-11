@@ -45,23 +45,61 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 builder.Services.AddScoped<LazyTravel.Shared.Services.VlogPostImageUploadService>();
 builder.Services.AddScoped<LazyTravel.Shared.Services.IImageStorageService, LazyTravel.Shared.Services.R2ImageStorageService>();
 
+// Member avatars use the local web root storage registered by the member feature.
+builder.Services.AddKeyedScoped<LazyTravel.Shared.Services.IImageStorageService>("avatar", (sp, key) =>
+    new LazyTravel.Shared.Services.LocalImageStorageService(builder.Environment.WebRootPath));
+
 // 前台登入驗證服務
 builder.Services.AddScoped<IMemberAuthService, MemberAuthService>();
 
 // 前台會員 Cookie 認證
-builder.Services.AddAuthentication("MemberAuth")
-	.AddCookie("MemberAuth", options =>
-	{
-		options.Cookie.Name = "LazyTravel.Member.Session";
-		// 🌟 Vue 是獨立網域/Port 呼叫這支 API,Cookie 要能跨站帶過去,一定要 None + Secure
-		options.Cookie.SameSite = SameSiteMode.None;
-		options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-		options.Events.OnRedirectToLogin = context =>
-		{
-			context.Response.StatusCode = 401;
-			return Task.CompletedTask;
-		};
-	});
+var authenticationBuilder = builder.Services
+    .AddAuthentication("MemberAuth")
+    .AddCookie("MemberAuth", options =>
+    {
+        options.Cookie.Name = "LazyTravel.Member.Session";
+        // Vue uses a separate origin/port, so its API cookie must support cross-site requests.
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        };
+    });
+
+authenticationBuilder.AddCookie("ExternalAuth", options =>
+{
+    options.Cookie.Name = "LazyTravel.External.Login";
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+});
+
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authenticationBuilder.AddGoogle(options =>
+    {
+        options.SignInScheme = "ExternalAuth";
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+    });
+}
+
+var facebookAppId = builder.Configuration["Authentication:Facebook:AppId"];
+var facebookAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+if (!string.IsNullOrWhiteSpace(facebookAppId) && !string.IsNullOrWhiteSpace(facebookAppSecret))
+{
+    authenticationBuilder.AddFacebook(options =>
+    {
+        options.SignInScheme = "ExternalAuth";
+        options.AppId = facebookAppId;
+        options.AppSecret = facebookAppSecret;
+        options.Scope.Add("email");
+    });
+}
 builder.Services.AddAuthorization();
 builder.Services.AddKeyedScoped<IImageStorageService, R2ImageStorageService>("avatar");
 

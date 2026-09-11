@@ -28,16 +28,11 @@
                         <li class="nav-item"><a class="nav-link" asp-controller="Explore" asp-action="Index">找行程</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">找旅伴</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">揪團行程</a></li>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item"><a class="nav-link" href="#">@User.Identity.Name</a></li>
-                        }
-                        else
-                        {
-                            <li class="nav-item ms-lg-2">
-                                <a class="btn btn-primary btn-sm" href="#">登入 / 註冊</a>
-                            </li>
-                        }
+                        <li class="nav-item ms-lg-2">
+                            <button type="button" class="btn btn-primary btn-sm" data-auth-open="@(User.Identity?.IsAuthenticated == true ? "member" : "login")" aria-haspopup="dialog">
+                                @(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "登入 / 註冊")
+                            </button>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -55,6 +50,7 @@
         </div>
     </footer>
 
+    @await Html.PartialAsync("_AccountPanel")
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)

@@ -1,4 +1,13 @@
-﻿<link rel="stylesheet" href="~/css/account-flow.css" asp-append-version="true" />
+@using Microsoft.AspNetCore.Authentication
+@inject IAuthenticationSchemeProvider AuthenticationSchemes
+@{
+    var googleEnabled = await AuthenticationSchemes.GetSchemeAsync("Google") is not null;
+    var facebookEnabled = await AuthenticationSchemes.GetSchemeAsync("Facebook") is not null;
+    var currentUrl = Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString;
+    var googleUrl = Url.Action("ExternalLogin", "Auth", new { provider = "Google", returnUrl = currentUrl });
+    var facebookUrl = Url.Action("ExternalLogin", "Auth", new { provider = "Facebook", returnUrl = currentUrl });
+}
+<link rel="stylesheet" href="~/css/account-flow.css" asp-append-version="true" />
 <dialog class="lt-auth-dialog" id="ltAuthDialog" aria-labelledby="ltAuthTitle">
 <div class="lt-drawer">
 <button type="button" class="lt-icon-button lt-close" data-auth-close aria-label="關閉帳號面板">×</button>
@@ -6,32 +15,59 @@
 <section data-auth-pane="register">
 <h2 id="ltAuthTitle">建立帳號</h2>
 <p class="lt-muted">加入 LazyTravel，輕鬆找旅伴。</p>
+<p class="lt-social-heading">使用其他帳號建立</p>
+<div class="lt-social-stack" aria-label="使用第三方帳號註冊">
+    @if (facebookEnabled) { <a class="lt-social-button lt-facebook" href="@facebookUrl" aria-label="使用 Facebook 建立帳號" title="使用 Facebook 建立帳號">@await Html.PartialAsync("_FacebookIcon")</a> }
+    else { <button class="lt-social-button lt-facebook" type="button" disabled aria-label="Facebook 尚未設定" title="請先設定 Facebook OAuth 金鑰">@await Html.PartialAsync("_FacebookIcon")</button> }
+    @if (googleEnabled) { <a class="lt-social-button lt-google" href="@googleUrl" aria-label="使用 Google 建立帳號" title="使用 Google 建立帳號">@await Html.PartialAsync("_GoogleIcon")</a> }
+    else { <button class="lt-social-button lt-google" type="button" disabled aria-label="Google 尚未設定" title="請先設定 Google OAuth 金鑰">@await Html.PartialAsync("_GoogleIcon")</button> }
+</div>
+<div class="lt-divider"><span>或使用電子信箱</span></div>
 <form id="ltRegisterForm" action="/Auth/Register" method="post">
 @Html.AntiForgeryToken()
 <label class="lt-field">個人名稱<input name="Name" autocomplete="nickname" placeholder="小陳" required maxlength="50" /></label>
 <label class="lt-field">電子信箱<input type="email" name="email" autocomplete="email" placeholder="name@example.com" required maxlength="254" /></label>
 <label class="lt-field">密碼<span class="lt-password"><input id="ltRegisterPassword" name="Password" type="password" autocomplete="new-password" placeholder="至少 8 個字元" required minlength="8" maxlength="128" /><button type="button" data-toggle-password="ltRegisterPassword" aria-label="顯示密碼">顯示</button></span></label>
 <label class="lt-field">確認密碼<span class="lt-password"><input id="ltConfirmPassword" name="ConfirmPassword" type="password" autocomplete="new-password" placeholder="再次輸入密碼" required maxlength="128" /><button type="button" data-toggle-password="ltConfirmPassword" aria-label="顯示確認密碼">顯示</button></span></label>
-
 <p class="lt-error" id="ltRegisterError" role="alert"></p>
 <button class="lt-primary lt-full" type="submit">建立帳號 <span aria-hidden="true">→</span></button>
 </form>
 <p class="lt-switch">已經有帳號？ <button type="button" data-auth-switch="login">登入</button></p>
 </section>
 <section data-auth-pane="login" hidden>
+<h2>歡迎回來</h2>
+<p class="lt-muted">選擇常用方式登入，繼續你的旅程。</p>
+<p class="lt-social-heading">使用其他帳號登入</p>
+<div class="lt-social-stack" aria-label="使用第三方帳號登入">
+    @if (facebookEnabled) { <a class="lt-social-button lt-facebook" href="@facebookUrl" aria-label="使用 Facebook 登入" title="使用 Facebook 登入">@await Html.PartialAsync("_FacebookIcon")</a> }
+    else { <button class="lt-social-button lt-facebook" type="button" disabled aria-label="Facebook 尚未設定" title="請先設定 Facebook OAuth 金鑰">@await Html.PartialAsync("_FacebookIcon")</button> }
+    @if (googleEnabled) { <a class="lt-social-button lt-google" href="@googleUrl" aria-label="使用 Google 登入" title="使用 Google 登入">@await Html.PartialAsync("_GoogleIcon")</a> }
+    else { <button class="lt-social-button lt-google" type="button" disabled aria-label="Google 尚未設定" title="請先設定 Google OAuth 金鑰">@await Html.PartialAsync("_GoogleIcon")</button> }
+</div>
+<div class="lt-divider"><span>或使用電子信箱</span></div>
 <form id="ltLoginForm" action="/Auth/Login" method="post">
 @Html.AntiForgeryToken()
 <label class="lt-field">電子信箱<input name="Email" type="email" autocomplete="username" placeholder="name@example.com" required /></label>
 <label class="lt-field">密碼<span class="lt-password"><input id="ltLoginPassword" name="Password" type="password" autocomplete="current-password" required /><button type="button" data-toggle-password="ltLoginPassword" aria-label="顯示密碼">顯示</button></span></label>
 <label class="lt-checkbox"><input type="checkbox" name="RememberMe" value="true" />記住我</label>
-<p class="lt-error" id="ltLoginError" role="alert"></p><button class="lt-primary lt-full" type="submit">登入</button>
+<p class="lt-error" id="ltLoginError" role="alert"></p>
+<button class="lt-primary lt-full" type="submit">登入</button>
 </form>
 <p class="lt-switch">還沒有帳號？ <button type="button" data-auth-switch="register">建立帳號</button></p>
 </section>
 <section data-auth-pane="member" hidden>
-<h2>我的帳號</h2><p class="lt-muted">@User.Identity?.Name</p>
-<a class="lt-primary lt-full" href="/Members/Profile">前往個人中心 →</a>
-<p class="lt-muted">在個人中心編輯你的資料與旅行技能。</p>
+<span class="lt-eyebrow">已登入</span>
+<h2>我的帳號</h2>
+<div class="lt-member-summary">
+    <span class="lt-member-avatar" aria-hidden="true">@(User.Identity?.Name?.FirstOrDefault().ToString().ToUpperInvariant() ?? "L")</span>
+    <strong>@User.Identity?.Name</strong>
+</div>
+<a class="lt-primary lt-full" href="/Members/Profile">前往個人中心 <span aria-hidden="true">→</span></a>
+<form id="ltLogoutForm" action="/Auth/Logout" method="post">
+@Html.AntiForgeryToken()
+<p class="lt-error" id="ltLogoutError" role="alert"></p>
+<button class="lt-logout lt-full" type="submit">登出此帳號</button>
+</form>
 </section>
 </div>
 </dialog>

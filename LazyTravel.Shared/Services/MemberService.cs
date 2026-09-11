@@ -101,7 +101,7 @@ namespace LazyTravel.Shared.Services
 				FacebookUrl = m.FacebookUrl,
 				IsEmailConfirmed = m.EmailConfirmed,
 				AvatarUrl = m.AvatarUrl,
-				BirthDate = m.BirthDate,
+				BirthDate = m.BirthDate.HasValue ? DateOnly.FromDateTime(m.BirthDate.Value) : null,
 				Gender = m.Gender,
 				Occupation = m.Occupation,
 				MBTI = m.Mbti,

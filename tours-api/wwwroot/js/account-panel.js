@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
 'use strict';
 const dialog = document.getElementById('ltAuthDialog');
 if (!dialog || dialog.dataset.ready) return;
@@ -35,8 +35,8 @@ dialog.querySelectorAll('[data-toggle-password]').forEach(b=>b.addEventListener(
 const register=document.getElementById('ltRegisterForm');
 const password=document.getElementById('ltRegisterPassword'),confirm=document.getElementById('ltConfirmPassword');
 function validateMatch(){confirm.setCustomValidity(confirm.value&&confirm.value!==password.value?'兩次輸入的密碼不一致。':'');}
-password.addEventListener('input',validateMatch);confirm.addEventListener('input',validateMatch);
-register.addEventListener('submit',async e=>{
+password?.addEventListener('input',validateMatch);confirm?.addEventListener('input',validateMatch);
+register?.addEventListener('submit',async e=>{
  e.preventDefault();validateMatch();if(!register.reportValidity())return;
  const button=register.querySelector('[type=submit]'),error=document.getElementById('ltRegisterError');
  if(button.disabled)return;button.disabled=true;button.textContent='建立中…';error.textContent='';
@@ -48,19 +48,30 @@ register.addEventListener('submit',async e=>{
  }catch{error.textContent='連線中斷。若帳號已建立，請嘗試登入；不用重新填寫個人資料。';}
  finally{button.disabled=false;button.textContent='建立帳號';}
 });
-
-document.getElementById('ltLoginForm').addEventListener('submit',async e=>{
+document.getElementById('ltLoginForm')?.addEventListener('submit',async e=>{
  e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]'),error=document.getElementById('ltLoginError');
  if(!form.reportValidity())return;
  button.disabled=true;button.textContent='登入中…';error.textContent='';
  try{
- const response=await fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin',headers:{Accept:'application/json'}});
- const body=await response.text();let data;try{data=JSON.parse(body);}catch{data=null;}
- if(!response.ok){error.textContent=typeof data==='string'?data:'登入失敗，請確認帳號密碼，或重新整理後再試。';return;}
- resetSecrets();
- if(document.body.hasAttribute('data-register-page'))location.assign('/');else location.reload();
+  const response=await fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin',headers:{Accept:'application/json'}});
+  const body=await response.text();let data;try{data=JSON.parse(body);}catch{data=null;}
+  if(!response.ok){error.textContent=typeof data==='string'?data:'登入失敗，請確認帳號密碼，或重新整理後再試。';return;}
+  resetSecrets();
+  if(document.body.hasAttribute('data-register-page'))location.assign('/');else location.reload();
  }catch{error.textContent='目前無法連線，請稍後再試。';}
  finally{button.disabled=false;button.textContent='登入';}
 });
+document.getElementById('ltLogoutForm')?.addEventListener('submit',async e=>{
+ e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]'),error=document.getElementById('ltLogoutError');
+ if(button.disabled)return;button.disabled=true;button.textContent='正在登出…';error.textContent='';
+ try{
+  const response=await fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin',headers:{Accept:'application/json'}});
+  if(!response.ok){error.textContent='登出失敗，請重新整理後再試。';return;}
+  location.assign('/');
+ }catch{error.textContent='目前無法連線，請稍後再試。';}
+ finally{button.disabled=false;button.textContent='登出此帳號';}
+});
+const query=new URLSearchParams(location.search);const authError=query.get('authError');
+if(authError){open('login');document.getElementById('ltLoginError').textContent=authError;history.replaceState({},'',location.pathname+location.hash);}
 if(document.body.hasAttribute('data-register-page'))open('register');
 })();

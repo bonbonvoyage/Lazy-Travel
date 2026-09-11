@@ -1,6 +1,6 @@
 
 /* Scoped account UI; existing scene.dc.html and its skill editor are untouched. */
-.lt-account-page,.lt-auth-dialog,.lt-complete{--lt-green:#197956;--lt-green-dark:#125c42;--lt-ink:#253b36;--lt-muted:#65776f;--lt-line:#dce5df;--lt-paper:#f7f2e7;--lt-rose:#bf8176;color:var(--lt-ink);font:16px/1.6 "Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif}
+.lt-account-page,.lt-auth-dialog,.lt-complete{--lt-green:#197956;--lt-green-dark:#125c42;--lt-ink:#253b36;--lt-muted:#65776f;--lt-line:#dce5df;--lt-paper:#f7f2e7;--lt-rose:#bf8176;--lt-font-ui:"Noto Sans TC","Microsoft JhengHei UI","Microsoft JhengHei",system-ui,sans-serif;color:var(--lt-ink);font:16px/1.6 var(--lt-font-ui)}
 .lt-account-page *, .lt-auth-dialog *, .lt-complete *{box-sizing:border-box}
 .lt-account-page{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 6% 15%,#cde8df,transparent 53%),radial-gradient(ellipse at 90% 38%,#f5e6e3,transparent 54%),#f6f8f3}
 .lt-account-page [hidden],.lt-auth-dialog [hidden]{display:none!important}
@@ -11,10 +11,10 @@
 .lt-brand img{width:44px;height:44px;object-fit:contain}
 .lt-back{color:#50685e;text-decoration:none;font-size:14px;padding:12px 0}
 .lt-eyebrow{display:block;color:var(--lt-green);font-size:11px;font-weight:700;letter-spacing:.18em;margin-bottom:10px}
-.lt-account-page h1,.lt-auth-dialog h2,.lt-complete h2{font-family:"Noto Serif TC","PMingLiU",serif;line-height:1.3;letter-spacing:.035em}
+.lt-account-page h1,.lt-auth-dialog h2,.lt-complete h2{font-family:var(--lt-font-ui);font-weight:500;line-height:1.3;letter-spacing:.02em}
 .lt-account-page h1{font-size:34px;margin:0 0 14px}
 .lt-muted{color:var(--lt-muted);font-size:14px;margin:0 0 28px;line-height:1.8}
-.lt-primary,.lt-secondary,.lt-text-button{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:18px;border-radius:9px;padding:11px 23px;transition:background .18s,box-shadow .18s;color:var(--lt-green);text-decoration:none;font-weight:600;font-size:14px;white-space:normal}
+.lt-primary,.lt-secondary,.lt-text-button{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:18px;border-radius:9px;padding:11px 23px;transition:background .18s,box-shadow .18s;color:var(--lt-green);text-decoration:none;font-weight:500;font-size:14px;white-space:normal}
 .lt-primary{background:var(--lt-green);border:1px solid var(--lt-green);color:white}
 .lt-primary:hover{background:var(--lt-green-dark);box-shadow:0 4px 15px #19795620}
 .lt-secondary{border:1px solid #9ebcb0;background:#ffffffb8;color:var(--lt-green)}
@@ -22,8 +22,8 @@
 .lt-text-button{border:0;background:transparent;padding-inline:8px}
 .lt-text-button:hover{text-decoration:underline}
 .lt-full{width:100%}
-.lt-field{display:block;font-size:14px;font-weight:600;margin:18px 0 0}
-.lt-field input,.lt-field select,.lt-field textarea{display:block;width:100%;margin-top:7px;border:1px solid #d0dcd5;border-radius:7px;background:#ffffffce;color:var(--lt-ink);padding:12px 13px;font:400 16px/1.45 "Microsoft JhengHei",system-ui,sans-serif;min-height:46px}
+.lt-field{display:block;font-size:14px;font-weight:500;margin:18px 0 0}
+.lt-field input,.lt-field select,.lt-field textarea{display:block;width:100%;margin-top:7px;border:1px solid #d0dcd5;border-radius:7px;background:#ffffffce;color:var(--lt-ink);padding:12px 13px;font:400 16px/1.45 var(--lt-font-ui);min-height:46px}
 .lt-field textarea{resize:vertical;min-height:95px}
 .lt-field input::placeholder,.lt-field textarea::placeholder{color:#7e8a85;font-size:14px}
 .lt-field input:focus,.lt-field textarea:focus,.lt-field select:focus{border-color:var(--lt-green)}
@@ -58,7 +58,7 @@
 .lt-icon-button{min-width:44px;min-height:44px;border:0;background:transparent;color:#415950;font-size:28px;border-radius:50%}
 .lt-icon-button:hover{background:#eaf1eb}
 .lt-switch{font-size:13px;text-align:center;margin:22px 0}
-.lt-switch button{border:0;background:transparent;color:var(--lt-green);font-weight:600;padding:10px}
+.lt-switch button{border:0;background:transparent;color:var(--lt-green);font-weight:500;padding:10px}
 .lt-drawer-footer{margin-top:auto;padding-top:35px;color:#668272;text-align:center;font-size:13px}
 .lt-drawer-footer span{display:block;font-size:38px}
 .lt-auth-trigger{border:0;width:100%;background:transparent;text-align:left;cursor:pointer;font:inherit}
@@ -132,3 +132,30 @@
 @media(max-width:900px){.lt-setup-card{grid-template-columns:260px minmax(0,1fr)}.lt-setup-content{padding:24px}.lt-setup-shell{padding:0 20px}.lt-journal{padding:24px 18px}.lt-welcome{gap:25px}.lt-landscape{height:430px}}
 @media(max-width:650px){.lt-topbar{padding:15px 20px}.lt-brand{font-size:23px}.lt-brand img{width:34px;height:34px}.lt-setup-shell{padding:0 12px}.lt-preview-banner{font-size:11px;text-align:left}.lt-setup-card{display:flex;flex-direction:column;padding:9px}.lt-setup-content{order:0;padding:20px 14px}.lt-journal{order:1;margin:12px;min-height:0}.lt-journal .lt-postcard,.lt-journal-quote,.lt-journal-note{display:none}.lt-journal{padding:18px}.lt-photo{width:72px;height:72px}.lt-stepper{gap:12px;font-size:13px}.lt-stepper i{width:40px}.lt-account-page h1{font-size:28px}.lt-drawer{padding:55px 25px 24px}.lt-auth-dialog{border-radius:0}.lt-drawer>.lt-brand{margin-bottom:27px}.lt-three{flex-wrap:wrap}.lt-three .lt-primary{width:100%}.lt-extra-grid{grid-template-columns:1fr}.lt-welcome{display:block;margin:15px auto;padding:35px 25px}.lt-welcome h1{font-size:40px}.lt-landscape{height:260px;margin-top:35px}.lt-complete{padding:24px}.lt-complete .lt-actions{flex-direction:column;align-items:stretch}.lt-avatar-row{gap:10px}.lt-actions{gap:8px}.lt-actions .lt-primary,.lt-actions .lt-secondary{padding-inline:15px}.lt-back{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.lt-auth-dialog[open]{animation:none}.lt-primary,.lt-secondary{transition:none}}
+
+/* External authentication and signed-in account actions */
+.lt-auth-dialog{overflow-y:auto}
+.lt-social-heading{margin:2px 0 9px;color:#718078;font-size:12px;text-align:center;letter-spacing:.04em}
+.lt-social-stack{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px}
+.lt-social-button{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;border:0;border-radius:7px;text-decoration:none;cursor:pointer;box-shadow:0 2px 6px #243b3424;transition:filter .18s,box-shadow .18s,transform .18s}
+.lt-social-button.lt-facebook{background:#3b5998}
+.lt-social-button.lt-google{background:#df4b3f}
+.lt-social-button:hover:not(:disabled){filter:brightness(.94);box-shadow:0 4px 12px #243b3430;transform:translateY(-1px)}
+.lt-social-button:active:not(:disabled){filter:brightness(.88);transform:translateY(0)}
+.lt-social-button:disabled{cursor:not-allowed;opacity:.42;box-shadow:none}
+.lt-provider-icon{width:23px;height:23px;flex:0 0 23px}
+.lt-facebook .lt-provider-icon circle{fill:transparent}
+.lt-divider{display:flex;align-items:center;gap:12px;color:#718078;font-size:12px;margin:18px 0 4px}
+.lt-divider::before,.lt-divider::after{content:"";height:1px;background:var(--lt-line);flex:1}
+.lt-divider span{white-space:nowrap}
+.lt-auth-dialog [data-auth-pane="member"] .lt-eyebrow{display:flex;align-items:center;gap:11px;margin:0 0 8px;font-size:13px;letter-spacing:.08em}
+.lt-auth-dialog [data-auth-pane="member"] .lt-eyebrow::before{content:"";width:5px;height:24px;border-radius:5px;background:var(--lt-green)}
+.lt-auth-dialog [data-auth-pane="member"] h2{font-size:36px;letter-spacing:.04em;margin-bottom:18px}
+.lt-member-summary{display:flex;align-items:center;gap:18px;padding:20px;margin:0 0 28px;border:1px solid var(--lt-line);border-radius:14px;background:#fff}
+.lt-member-avatar{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;flex:0 0 60px;background:#dcece3;color:var(--lt-green);font:700 23px/1 var(--lt-font-ui)}
+.lt-member-summary strong{display:block;font-size:18px;font-weight:500;line-height:1.4}
+.lt-auth-dialog [data-auth-pane="member"]>.lt-primary{min-height:52px;font-size:15px}
+#ltLogoutForm{margin-top:14px}
+.lt-logout{min-height:50px;border:1px solid #c78b85;border-radius:9px;background:transparent;color:#8e3f39;font:500 15px/1.4 inherit;cursor:pointer;transition:background .18s,border-color .18s}
+.lt-logout:hover{background:#fff1ef;border-color:#a8534b}
+.lt-logout:disabled{opacity:.6;cursor:wait}
