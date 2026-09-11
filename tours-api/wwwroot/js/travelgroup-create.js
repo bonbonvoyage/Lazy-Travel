@@ -18,6 +18,23 @@ const editDraftEndpoint = isEditMode ? `/TravelGroups/EditDraft/${editGroupId}${
 const updateEndpoint = isEditMode ? `/TravelGroups/Update/${editGroupId}${editViewerMemberId ? `?viewerMemberId=${encodeURIComponent(editViewerMemberId)}` : ''}` : '';
 let currentStep = 1;
 let dateRangePicker = null;
+let hasUnsavedGroupChanges = false;
+let allowGroupEditorLeave = false;
+let groupHistoryGuardReady = false;
+
+function markGroupDirty() {
+    if (isEditMode) hasUnsavedGroupChanges = true;
+}
+
+function canSkipGroupLeaveGuard() {
+    return !isEditMode || allowGroupEditorLeave || !hasUnsavedGroupChanges;
+}
+
+function navigateGroupEditor(destination) {
+    allowGroupEditorLeave = true;
+    if (typeof destination === 'function') destination();
+    else window.location.href = destination;
+}
 
 const subtitles = {
     1: '先把旅程輪廓整理好，下一步再設定旅伴條件。',
@@ -241,6 +258,7 @@ addRegionButton?.addEventListener('click', () => {
         return;
     }
     addRegionChip(value);
+    markGroupDirty();
     regionInput.value = '';
     clearChipError();
 });
@@ -265,7 +283,7 @@ function addRegionChip(text) {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = '×';
-    button.addEventListener('click', () => chip.remove());
+    button.addEventListener('click', () => { chip.remove(); markGroupDirty(); });
     chip.appendChild(button);
     chipEditor.insertBefore(chip, chipInput);
 }
@@ -278,6 +296,7 @@ function clearChipError() {
 document.querySelectorAll('.chip button').forEach((button) => {
     button.addEventListener('click', () => {
         button.closest('.chip')?.remove();
+        markGroupDirty();
     });
 });
 
@@ -301,6 +320,7 @@ function createSupportUploadButton(fileName = '') {
     button.textContent = fileName || '＋';
     if (fileName) button.dataset.fileName = fileName;
     button.setAttribute('aria-label', fileName ? `補充圖片：${fileName}` : '新增補充圖片');
+        markGroupDirty();
     return button;
 }
 
@@ -331,6 +351,7 @@ supportImageList?.addEventListener('click', (event) => {
         button.textContent = '';
         button.dataset.fileName = file.name;
         button.setAttribute('aria-label', `補充圖片：${file.name}`);
+        markGroupDirty();
         ensureSupportAddButton();
     });
     input.click();
@@ -421,12 +442,14 @@ document.getElementById('addBudgetBtn')?.addEventListener('click', () => {
     const name = prompt('請輸入新的預算種類，例如：網卡、保險、伴手禮');
     if (!name?.trim()) return;
     budgetList?.appendChild(createBudgetRow(name.trim(), true));
+    markGroupDirty();
 });
 
 budgetList?.addEventListener('click', (event) => {
     const button = event.target.closest('.delete-budget');
     if (!button) return;
     button.closest('.budget-row')?.remove();
+    markGroupDirty();
 });
 
 function createBudgetRow(name, removable) {
@@ -611,6 +634,8 @@ async function submitTravelGroup(button) {
         } catch {
             // The database record has already been published.
         }
+        allowGroupEditorLeave = true;
+        hasUnsavedGroupChanges = false;
         window.location.href = result?.redirectUrl || '/TravelGroups';
     } catch {
         alert('送出失敗，請稍後再試。');
@@ -626,7 +651,7 @@ function getEditReturnUrl() {
     return url.toString();
 }
 
-function openCancelEditModal() {
+function openCancelEditModal(destination = getEditReturnUrl()) {
     document.getElementById('tg-edit-cancel-modal')?.remove();
     document.body.insertAdjacentHTML('beforeend', `
         <div class="tg-edit-cancel-backdrop" id="tg-edit-cancel-modal" role="dialog" aria-modal="true" aria-label="取消編輯確認">
@@ -645,7 +670,7 @@ function openCancelEditModal() {
     const close = () => modal?.remove();
     modal?.querySelector('.tg-edit-cancel-x')?.addEventListener('click', close);
     modal?.querySelector('[data-edit-cancel-close]')?.addEventListener('click', close);
-    modal?.querySelector('[data-edit-cancel-confirm]')?.addEventListener('click', () => window.location.assign(getEditReturnUrl()));
+    modal?.querySelector('[data-edit-cancel-confirm]')?.addEventListener('click', () => navigateGroupEditor(destination));
     modal?.addEventListener('click', (event) => {
         if (event.target === modal) close();
     });
@@ -676,6 +701,44 @@ async function loadDatabaseDraft() {
     } catch {
         // Keep the page usable even when the draft endpoint is unavailable.
     }
+}
+
+createForm?.addEventListener('input', markGroupDirty, true);
+createForm?.addEventListener('change', markGroupDirty, true);
+
+document.addEventListener('click', event => {
+    if (!isEditMode) return;
+    const link = event.target.closest('a[href]');
+    if (!link || link.closest('#tg-edit-cancel-modal')) return;
+    if (link.target && link.target !== '_self') return;
+    if (link.hasAttribute('download')) return;
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+    const url = new URL(href, window.location.href);
+    if (url.href === window.location.href) return;
+    if (canSkipGroupLeaveGuard()) return;
+    event.preventDefault();
+    openCancelEditModal(url.href);
+}, true);
+
+window.addEventListener('beforeunload', event => {
+    if (canSkipGroupLeaveGuard()) return;
+    event.preventDefault();
+    event.returnValue = '';
+});
+
+if (isEditMode && !groupHistoryGuardReady && history.pushState) {
+    groupHistoryGuardReady = true;
+    history.pushState({ groupEditorGuard: true }, '', window.location.href);
+    window.addEventListener('popstate', () => {
+        if (canSkipGroupLeaveGuard()) {
+            allowGroupEditorLeave = true;
+            history.back();
+            return;
+        }
+        history.pushState({ groupEditorGuard: true }, '', window.location.href);
+        openCancelEditModal(() => history.back());
+    });
 }
 
 function getAntiForgeryToken() {
@@ -716,6 +779,7 @@ if (window.flatpickr) {
         onChange() {
             const input = document.getElementById('createDateRange');
             if (input) clearFieldError(input);
+            markGroupDirty();
         },
     });
 }

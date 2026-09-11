@@ -13,8 +13,11 @@
         .Select(g => new
         {
             Day = g.Key,
-            Title = string.Join("、", g.Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
-            Route = string.Join(" → ", g.Select(n => string.IsNullOrWhiteSpace(n.Description) ? n.LocationName : n.Description).Where(n => !string.IsNullOrWhiteSpace(n))),
+            Title = string.Join("、", g.Where(n => !n.ArrivalTime.HasValue).Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
+            Morning = string.Join("\n", g.Where(n => n.ArrivalTime.HasValue && n.ArrivalTime.Value.Hour < 12).Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n))),
+            Afternoon = string.Join("\n", g.Where(n => n.ArrivalTime.HasValue && n.ArrivalTime.Value.Hour >= 12 && n.ArrivalTime.Value.Hour < 18).Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n))),
+            Evening = string.Join("\n", g.Where(n => n.ArrivalTime.HasValue && n.ArrivalTime.Value.Hour >= 18).Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n))),
+            LegacyRoute = string.Join(" → ", g.Where(n => !n.ArrivalTime.HasValue).Select(n => n.Description).Where(n => !string.IsNullOrWhiteSpace(n))),
             Note = string.Join("\n", g.Select(n => n.Remarks).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
         })
         .ToList();
@@ -141,7 +144,9 @@
                             <strong>DAY @i</strong>
                             <div class="day-fields">
                                 <input class="day-title" type="text" value="@day?.Title" placeholder="輸入每日標題（例如：大阪城公園、心齋橋逛街）" />
-                                <textarea class="day-route" rows="2" placeholder="描述當天的行程安排、美食、住宿或心得...">@day?.Route</textarea>
+                                <textarea class="day-morning" rows="2" placeholder="早上行程，例如：清水寺參拜、二年坂散步">@(string.IsNullOrWhiteSpace(day?.Morning) ? day?.LegacyRoute : day?.Morning)</textarea>
+                                <textarea class="day-afternoon" rows="2" placeholder="下午行程，例如：嵐山竹林、渡月橋">@day?.Afternoon</textarea>
+                                <textarea class="day-evening" rows="2" placeholder="晚上行程，例如：祇園晚餐、鴨川散步">@day?.Evening</textarea>
                                 <label class="note-row"><span>心得筆記</span><textarea class="day-note-input" rows="1" placeholder="寫下今天的旅行心得...">@day?.Note</textarea></label>
                             </div>
                             <button class="remove-day" type="button" aria-label="移除這一天">×</button>

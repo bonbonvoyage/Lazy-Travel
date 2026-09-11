@@ -12,6 +12,8 @@
         : Model.Highlight;
     var people = post.TravelPeople.ToLabel();
     var region = string.IsNullOrWhiteSpace(Model.Region) ? "未提供" : Model.Region;
+    var isArticleOwner = ViewBag.IsArticleOwner as bool? ?? false;
+    var authorProfileUrl = post.MemberId > 0 ? $"/Members/Profile?id={post.MemberId}" : null;
 }
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -32,9 +34,9 @@
     <main class="main article-main">
         <div class="article-test-switch" aria-label="測試身分切換">
             <span>測試身分</span>
-            <button type="button" class="active" data-article-role="visitor">訪客</button>
+            <button type="button" class="@(isArticleOwner ? "" : "active")" data-article-role="visitor">訪客</button>
             <button type="button" data-article-role="viewer">一般檢視者</button>
-            <button type="button" data-article-role="author">發文者</button>
+            <button type="button" class="@(isArticleOwner ? "active" : "")" data-article-role="author">發文者</button>
         </div>
         <button class="page-back-button article-back" type="button" data-back-fallback="@Url.Action("Index", "Explore")" aria-label="返回上一頁">＜</button>
         @if (Model.IsDraft)
@@ -62,7 +64,7 @@
                                 <button class="article-button article-interaction-button @(Model.IsLiked ? "active" : "")" type="submit" aria-pressed="@Model.IsLiked.ToString().ToLowerInvariant()" data-detail-like-button><svg class="interaction-icon interaction-like" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v10H4V11h3Zm4 10h7.2c.9 0 1.7-.6 1.9-1.5l1.3-5.3A2 2 0 0 0 19.5 12H15V6.8c0-1-.8-1.8-1.8-1.8h-.4L9 12v9h2Z"/></svg><span>按讚</span><strong data-detail-like-count>@Model.LikeCount</strong></button>
                             </form>
                             <button class="article-button" type="button" data-report-open data-report-type="VlogPost" data-report-target-id="@post.PostId" data-report-title="@post.Title" data-action-role="reader">⚑ 檢舉文章</button>
-                            <a class="article-button" asp-action="Edit" asp-route-id="@post.PostId" asp-route-viewerMemberId="@post.MemberId" data-action-role="author">✎ 編輯文章</a>
+                            <a class="article-button" asp-action="Edit" asp-route-id="@post.PostId" data-action-role="author">✎ 編輯文章</a>
                             <form asp-action="Delete" asp-route-id="@post.PostId" asp-route-viewerMemberId="@post.MemberId" method="post" data-detail-delete-form data-action-role="author">
                                 <button class="article-button article-danger-button" type="submit">刪除文章</button>
                             </form>
@@ -70,14 +72,7 @@
                     </div>
                     <div class="article-hero-copy">
                         <h1>@post.Title</h1>
-                        <p>@post.TravelDays 天的旅行記錄 · @post.Destination</p>
-                        <div class="article-byline">
-                            <span class="author-avatar small">
-                                @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="" /> }
-                                else { <span>@author[..1]</span> }
-                            </span>
-                            <span>@author</span><span>·</span><time>@post.CreatedAt.ToString("yyyy/MM/dd")</time><span>·</span><span>@people 同行</span>
-                        </div>
+                        <p>@post.Destination</p>
                     </div>
                 </header>
 
@@ -103,7 +98,7 @@
                     @foreach (var day in days)
                     {
                         <details class="article-day" open>
-                            <summary><span class="day-number">@day.Key</span><strong>DAY @day.Key</strong><span class="day-route">@string.Join(" · ", day.Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n)))</span><span class="day-chevron">⌄</span></summary>
+                            <summary><span class="day-number">@day.Key</span><strong>DAY @day.Key</strong><span class="day-route">@string.Join(" · ", day.Where(n => !n.ArrivalTime.HasValue).Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n)))</span><span class="day-chevron">⌄</span></summary>
                             <div class="day-stops">
                                 <div class="day-periods">
                                 @foreach (var period in new[] { "上午", "下午", "晚上" })
@@ -111,12 +106,10 @@
                                     var stops = day.Where(n => (n.ArrivalTime?.Hour < 12 ? "上午" : n.ArrivalTime?.Hour < 18 ? "下午" : n.ArrivalTime.HasValue ? "晚上" : "") == period).ToList();
                                     <div class="day-period"><span class="period-label">@period</span><div>
                                     @if (stops.Count == 0) { <span class="article-muted">未安排</span> }
-                                    @foreach (var stop in stops) { <span class="period-stop"><time>@stop.ArrivalTime?.ToString("HH:mm")</time> @stop.LocationName</span> }
+                                    @foreach (var stop in stops) { <span class="period-stop">@stop.LocationName</span> }
                                     </div></div>
                                 }
                                 </div>
-                                @foreach (var stop in day.Where(n => !n.ArrivalTime.HasValue))
-                                { <p class="day-note"><strong>時間未定：</strong>@stop.LocationName</p> }
                                 @foreach (var stop in day.Where(n => !string.IsNullOrWhiteSpace(n.Description)))
                                 { <p class="day-note"><strong>心得分享 · @stop.LocationName：</strong>@stop.Description</p> }
                                 @foreach (var stop in day.Where(n => !string.IsNullOrWhiteSpace(n.Remarks)))
@@ -129,15 +122,28 @@
             <aside class="article-side">
                 <section class="article-panel author-panel">
                     <div class="author-heading">
-                        <span class="author-avatar">
-                            @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="@author 的頭像" /> }
-                            else { <span>@author[..1]</span> }
-                        </span>
-                        <strong>@author</strong>
+                        @if (!string.IsNullOrWhiteSpace(authorProfileUrl))
+                        {
+                            <a class="author-profile-link" href="@authorProfileUrl" aria-label="前往 @author 的個人中心">
+                                <span class="author-avatar">
+                                    @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="@author 的頭像" /> }
+                                    else { <span>@author[..1]</span> }
+                                </span>
+                                <strong>@author</strong>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="author-avatar">
+                                @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="@author 的頭像" /> }
+                                else { <span>@author[..1]</span> }
+                            </span>
+                            <strong>@author</strong>
+                        }
                     </div>
                     <p class="author-bio">@(string.IsNullOrWhiteSpace(post.Member?.Bio) ? "這位旅人尚未填寫個人簡介。" : post.Member.Bio)</p>
                     <dl class="author-stats">
-                        <div><dt>⌖ 所在地</dt><dd>未提供</dd></div>
+                        <div><dt>⌖ 所在地</dt><dd>@(string.IsNullOrWhiteSpace(post.Member?.City) ? "未提供" : post.Member.City)</dd></div>
                         <div><dt>▦ 加入時間</dt><dd>@(post.Member?.CreatedAt.ToString("yyyy/MM") ?? "未提供")</dd></div>
                         <div><dt>♧ 已發布文章</dt><dd>@Model.PublishedCount 篇</dd></div>
                         <div><dt>✓ 已完成行程</dt><dd>@Model.CompletedCount 趟</dd></div>
@@ -172,6 +178,10 @@
 <script src="~/js/explore-details.js" asp-append-version="true"></script>
 </body>
 </html>
+
+
+
+
 
 
 
