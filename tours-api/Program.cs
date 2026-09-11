@@ -1,5 +1,6 @@
 using Amazon.S3;
 using LazyTravel.Shared.Services;
+using LazyTravel.Middleware;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 
@@ -129,6 +130,7 @@ if (app.Environment.IsDevelopment())
 		{
 			await VlogPostDbSeeder.SeedAsync(context);
 			await TravelGroupDbSeeder.SeedAsync(context);
+			await AiTravelDemoDbSeeder.SeedAsync(context);
 		}
 	}
 	catch (Exception ex)
@@ -148,6 +150,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
+app.UseMiddleware<MemberActionAuthenticationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(
