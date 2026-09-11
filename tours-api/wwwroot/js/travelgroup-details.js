@@ -9,11 +9,30 @@ const root = document.getElementById('tg-root');
 const groupId = Number(root.dataset.groupId);
 let viewerMemberId = root.dataset.viewerMemberId ? Number(root.dataset.viewerMemberId) : null;
 let applicationsRefreshTimer = null;
+let currentGalleryImages = [];
 document.querySelectorAll('[data-back-fallback]').forEach(button => {
   button.addEventListener('click', () => {
     window.location.assign(button.dataset.backFallback || '/TravelGroups');
   });
 });
+
+function openLoginPanel() {
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.hidden = true;
+  trigger.dataset.authOpen = 'login';
+  document.body.appendChild(trigger);
+  trigger.click();
+  trigger.remove();
+}
+
+function requiresLogin(vm) {
+  return vm.viewerMode === 'guest' && !viewerMemberId;
+}
+
+function authAttrs(vm) {
+  return requiresLogin(vm) ? ' data-auth-required="true"' : '';
+}
 
 function getAntiForgeryToken() {
   return document.querySelector('#tg-antiforgery input[name="__RequestVerificationToken"]').value;
@@ -26,6 +45,7 @@ async function postAction(action) {
     method: 'POST',
     headers: { 'RequestVerificationToken': getAntiForgeryToken(), 'X-Requested-With': 'XMLHttpRequest' },
   });
+  if (res.status === 401) { openLoginPanel(); return false; }
   if (!res.ok) {
     const text = await res.text();
     console.warn(text || '操作失敗，請稍後再試');
@@ -52,6 +72,7 @@ async function postOwnerApplicationAction(action, targetId) {
     method: 'POST',
     headers: { 'RequestVerificationToken': getAntiForgeryToken(), 'X-Requested-With': 'XMLHttpRequest' },
   });
+  if (res.status === 401) { openLoginPanel(); return false; }
   if (!res.ok) {
     const text = await res.text();
     console.warn(text || '管理申請失敗，請稍後再試');
@@ -76,19 +97,143 @@ function flagIconSvg() {
 }
 
 function renderGallery(urls) {
-  if (!urls.length) {
+  const safeUrls = Array.isArray(urls) ? urls.filter(Boolean) : [];
+  if (!safeUrls.length) {
     return '<div class="tg-gallery-empty">目前還沒有照片</div>';
   }
-  const shown = urls.slice(0, 5);
-  const extraCount = Math.max(0, urls.length - shown.length);
+  const shown = safeUrls.slice(0, 5);
+  const extraCount = Math.max(0, safeUrls.length - shown.length);
   const cells = shown.map((url, i) => {
     const cls = i === 0 ? 'tg-g-main' : '';
     const overlay = (i === shown.length - 1 && extraCount > 0)
-      ? `<button class="tg-g-more-overlay" type="button">${photoIconSvg()}<span>更多圖片 +${extraCount}</span></button>`
+      ? `<span class="tg-g-more-overlay">${photoIconSvg()}<span>更多圖片 +${extraCount}</span></span>`
       : '';
-    return `<div class="${cls}"><img src="${escapeHtml(url)}" alt="" onerror="this.closest('div').remove()">${overlay}</div>`;
+    return `<button class="tg-gallery-tile ${cls}" type="button" data-gallery-open data-gallery-index="${i}"><img src="${escapeHtml(url)}" alt="揪團照片 ${i + 1}" onerror="this.closest('.tg-gallery-tile').remove()">${overlay}</button>`;
   }).join('');
   return cells;
+}
+
+function openGalleryModal(images, startIndex = 0) {
+  const urls = (Array.isArray(images) ? images : []).filter(Boolean);
+  if (!urls.length) return;
+
+  let activeIndex = Math.min(Math.max(Number(startIndex) || 0, 0), urls.length - 1);
+  document.getElementById('tg-gallery-modal')?.remove();
+
+  const thumbs = urls.map((url, index) => `
+    <button class="tg-gallery-modal-thumb" type="button" data-modal-gallery-index="${index}" aria-label="查看第 ${index + 1} 張照片">
+      <img src="${escapeHtml(url)}" alt="">
+    </button>`).join('');
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="tg-gallery-modal-backdrop" id="tg-gallery-modal" role="dialog" aria-modal="true" aria-label="揪團所有圖片">
+      <div class="tg-gallery-modal-panel">
+        <button class="tg-gallery-modal-close" type="button" aria-label="關閉圖片瀏覽">×</button>
+        <div class="tg-gallery-modal-main">
+          <button class="tg-gallery-modal-nav tg-gallery-modal-prev" type="button" aria-label="上一張">＜</button>
+          <img class="tg-gallery-modal-image" src="" alt="揪團照片">
+          <button class="tg-gallery-modal-nav tg-gallery-modal-next" type="button" aria-label="下一張">＞</button>
+        </div>
+        <div class="tg-gallery-modal-meta"><span data-gallery-counter></span></div>
+        <div class="tg-gallery-modal-thumbs">${thumbs}</div>
+      </div>
+    </div>`);
+
+  const modal = document.getElementById('tg-gallery-modal');
+  const image = modal.querySelector('.tg-gallery-modal-image');
+  const counter = modal.querySelector('[data-gallery-counter]');
+  const update = index => {
+    activeIndex = (index + urls.length) % urls.length;
+    image.src = urls[activeIndex];
+    image.alt = `揪團照片 ${activeIndex + 1}`;
+    counter.textContent = `${activeIndex + 1} / ${urls.length}`;
+    modal.querySelectorAll('[data-modal-gallery-index]').forEach(button => {
+      button.classList.toggle('active', Number(button.dataset.modalGalleryIndex) === activeIndex);
+    });
+  };
+  const close = () => modal.remove();
+
+  modal.querySelector('.tg-gallery-modal-close')?.addEventListener('click', close);
+  modal.querySelector('.tg-gallery-modal-prev')?.addEventListener('click', () => update(activeIndex - 1));
+  modal.querySelector('.tg-gallery-modal-next')?.addEventListener('click', () => update(activeIndex + 1));
+  modal.querySelectorAll('[data-modal-gallery-index]').forEach(button => {
+    button.addEventListener('click', () => update(Number(button.dataset.modalGalleryIndex)));
+  });
+  modal.addEventListener('click', event => { if (event.target === modal) close(); });
+  const keyHandler = event => {
+    if (!document.getElementById('tg-gallery-modal')) {
+      document.removeEventListener('keydown', keyHandler);
+      return;
+    }
+    if (event.key === 'Escape') close();
+    if (event.key === 'ArrowLeft') update(activeIndex - 1);
+    if (event.key === 'ArrowRight') update(activeIndex + 1);
+  };
+  document.addEventListener('keydown', keyHandler);
+  update(activeIndex);
+}
+
+function getStatusOptions(vm) {
+  const status = Number(vm.groupStatus ?? -1);
+  if (status === 0 || status === 1) {
+    const options = [];
+    if (vm.canStartTrip) options.push({ action: 'start', label: '開始行程', message: '開始行程後，將不再接受新的入團申請。' });
+    options.push({ action: 'disband', label: '解散揪團', danger: true, message: '解散後此揪團將不再顯示於前台。' });
+    return options;
+  }
+  if (status === 2) return [{ action: 'complete', label: '完成行程', message: '確認此趟行程已結束。' }];
+  return [];
+}
+
+function openStatusModal(vm) {
+  document.getElementById('tg-status-modal')?.remove();
+  const options = getStatusOptions(vm);
+  const status = Number(vm.groupStatus ?? -1);
+  const insufficient = (status === 0 || status === 1) && !vm.canStartTrip;
+  const terminal = status === 3 || status === 4;
+  const message = terminal ? '此揪團狀態已結束，無法再變更。' : insufficient ? `目前為 ${vm.currentPeople} / ${vm.minPeople} 人，尚未達到最小成行人數，暫時不能開始行程。` : status === 2 && vm.isPastEndDate ? '行程結束日已過，請確認是否完成此趟行程。' : '請選擇下一步狀態。';
+  const buttons = options.map(option => `<button class="${option.danger ? 'tg-status-danger' : 'tg-status-primary'}" type="button" data-status-action="${option.action}" data-status-message="${escapeHtml(option.message)}">${option.label}</button>`).join('');
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="tg-status-backdrop" id="tg-status-modal" role="dialog" aria-modal="true" aria-label="變更揪團狀態">
+      <section class="tg-status-card">
+        <button class="tg-status-close" type="button" aria-label="關閉">×</button>
+        <span class="tg-status-eyebrow">STATUS</span>
+        <h2>變更揪團狀態</h2>
+        <p>目前狀態：<strong>${escapeHtml(vm.groupStatusText)}</strong></p>
+        <p>${escapeHtml(message)}</p>
+        <div class="tg-status-actions">${buttons}<button class="tg-status-secondary" type="button" data-status-close>取消</button></div>
+      </section>
+    </div>`);
+  const modal = document.getElementById('tg-status-modal');
+  const close = () => modal?.remove();
+  modal?.querySelector('.tg-status-close')?.addEventListener('click', close);
+  modal?.querySelector('[data-status-close]')?.addEventListener('click', close);
+  modal?.addEventListener('click', event => { if (event.target === modal) close(); });
+  modal?.querySelectorAll('[data-status-action]').forEach(button => {
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      const ok = await postStatusAction(button.dataset.statusAction);
+      if (ok) { close(); await load(); }
+      else button.disabled = false;
+    });
+  });
+}
+
+async function postStatusAction(action) {
+  const url = new URL(`/TravelGroups/ChangeStatus/${groupId}`, window.location.origin);
+  if (viewerMemberId) url.searchParams.set('viewerMemberId', viewerMemberId);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken(), 'X-Requested-With': 'XMLHttpRequest' },
+    body: JSON.stringify({ action })
+  });
+  if (res.status === 401) { openLoginPanel(); return false; }
+  if (!res.ok) {
+    const text = await res.text();
+    window.alert(text || '狀態更新失敗，請稍後再試。');
+    return false;
+  }
+  return true;
 }
 
 function renderMembers(members) {
@@ -120,7 +265,6 @@ function renderItinerary(days) {
       <div class="tg-day-head"><span><span class="tg-day-badge">DAY ${d.dayNumber}</span></span></div>
       ${d.stops.map(s => `
         <div class="tg-stop">
-          ${s.timeRangeText ? `<div class="tg-stop-time">${escapeHtml(s.timeRangeText)}</div>` : ''}
           <div class="tg-stop-title">${escapeHtml(s.title)}${s.locationName ? '　' + escapeHtml(s.locationName) : ''}</div>
           ${s.description ? `<div class="tg-stop-desc">${escapeHtml(s.description)}</div>` : ''}
         </div>`).join('')}
@@ -141,19 +285,24 @@ function renderBudget(items, total) {
 
 function renderActions(vm) {
   const favoriteActive = vm.viewerHasFavorited === true;
-  const favoriteBtn = `<button class="tg-btn tg-btn-ghost tg-interaction-btn${favoriteActive ? ' active' : ''}" id="tg-favorite-btn" type="button" aria-pressed="${favoriteActive}">${heartIconSvg()}<span>${favoriteActive ? '已收藏' : '收藏房間'}</span></button>`;
-  const reportBtn = `<button class="tg-btn tg-btn-ghost" type="button" data-report-open data-report-type="TravelGroup" data-report-target-id="${groupId}" data-report-title="${escapeHtml(vm.groupTitle)}" data-report-viewer-member-id="${viewerMemberId || ''}">${flagIconSvg()}<span>檢舉房間</span></button>`;
+  const auth = authAttrs(vm);
+  const favoriteBtn = `<button class="tg-btn tg-btn-ghost tg-interaction-btn${favoriteActive ? ' active' : ''}" id="tg-favorite-btn" type="button" aria-pressed="${favoriteActive}"${auth}>${heartIconSvg()}<span>${favoriteActive ? '已收藏' : '收藏房間'}</span></button>`;
+  const reportBtn = `<button class="tg-btn tg-btn-ghost" type="button" data-report-open data-report-type="TravelGroup" data-report-target-id="${groupId}" data-report-title="${escapeHtml(vm.groupTitle)}" data-report-viewer-member-id="${viewerMemberId || ''}"${auth}>${flagIconSvg()}<span>檢舉房間</span></button>`;
+  const statusBtn = `<button class="tg-btn tg-btn-status" id="tg-status-btn" type="button">變更狀態</button>`;
+  const disbandBtn = Number(vm.groupStatus) === 3 || Number(vm.groupStatus) === 4
+    ? ''
+    : `<button class="tg-btn tg-btn-ghost tg-btn-danger" id="tg-disband-btn" type="button">解散揪團</button>`;
 
   if (vm.viewerMode === 'owner') {
-    return `<button class="tg-btn tg-btn-ghost tg-btn-danger" type="button" disabled>解散揪團</button><button class="tg-btn tg-btn-ghost" id="tg-edit-group-btn" type="button">編輯揪團</button><button class="tg-btn tg-btn-ghost" id="tg-applications-btn" type="button">查看揪團申請</button>${favoriteBtn}`;
+    return `${disbandBtn}<button class="tg-btn tg-btn-ghost" id="tg-edit-group-btn" type="button">編輯揪團</button><button class="tg-btn tg-btn-ghost" id="tg-applications-btn" type="button">查看揪團申請</button>${favoriteBtn}${statusBtn}`;
   }
   if (vm.viewerMode === 'member') {
-    return `<button class="tg-btn tg-btn-ghost" id="tg-leave-btn">${personIconSvg()}<span>退出揪團</span></button>${favoriteBtn}${reportBtn}`;
+    return `<button class="tg-btn tg-btn-ghost" id="tg-leave-btn" type="button">${personIconSvg()}<span>退出揪團</span></button>${favoriteBtn}${reportBtn}`;
   }
   if (vm.viewerHasPendingRequest) {
-    return `<button class="tg-btn tg-btn-pending" id="tg-cancel-join-btn" type="button">取消申請</button>${favoriteBtn}${reportBtn}`;
+    return `<button class="tg-btn tg-btn-pending" id="tg-cancel-join-btn" type="button"${auth}>取消申請</button>${favoriteBtn}${reportBtn}`;
   }
-  return `<button class="tg-btn tg-btn-ghost" id="tg-join-btn">${personIconSvg()}<span>申請加入</span></button>${favoriteBtn}${reportBtn}`;
+  return `<button class="tg-btn tg-btn-ghost" id="tg-join-btn" type="button"${auth}>${personIconSvg()}<span>申請加入</span></button>${favoriteBtn}${reportBtn}`;
 }
 
 function formatDateText(value) {
@@ -236,13 +385,13 @@ function startApplicationsAutoRefresh() {
     catch (error) { console.warn('入團申請同步失敗', error); }
   }, 5000);
 }
+
 function renderApplicationsModal(applications) {
   return `<div class="tg-modal-backdrop" id="tg-applications-modal" role="dialog" aria-modal="true" aria-labelledby="tg-applications-title">
     <div class="tg-applications-modal">
       <button class="tg-modal-close" type="button" aria-label="關閉">×</button>
       <div class="tg-boarding-pass-head">
         <span>✈ BOARDING PASS ・ 入團申請</span>
-
       </div>
       <div class="tg-applications-title-row">
         <div>
@@ -265,8 +414,8 @@ function renderActivityLog(log) {
       <span class="tg-activity-text">${escapeHtml(a.text)}</span>
     </div>`).join('');
 }
-
 function render(vm) {
+  currentGalleryImages = Array.isArray(vm.galleryImageUrls) ? vm.galleryImageUrls.filter(Boolean) : [];
   root.innerHTML = `
     <div class="tg-gallery">${renderGallery(vm.galleryImageUrls)}</div>
 
@@ -311,6 +460,18 @@ function render(vm) {
     </div>
   `;
 
+  root.querySelectorAll('[data-auth-required="true"]').forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openLoginPanel();
+    }, { capture: true });
+  });
+
+  root.querySelectorAll('[data-gallery-open]').forEach(button => {
+    button.addEventListener('click', () => openGalleryModal(currentGalleryImages, Number(button.dataset.galleryIndex || 0)));
+  });
+
   root.querySelectorAll('.tg-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       root.querySelectorAll('.tg-tab').forEach(t => t.classList.toggle('active', t === tab));
@@ -324,6 +485,15 @@ function render(vm) {
     if (viewerMemberId) url.searchParams.set('viewerMemberId', viewerMemberId);
     window.location.assign(url.toString());
   });
+
+  document.getElementById('tg-status-btn')?.addEventListener('click', () => openStatusModal(vm));
+  document.getElementById('tg-disband-btn')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    if (await postStatusAction('disband')) await load();
+    else button.disabled = false;
+  });
+
   document.getElementById('tg-applications-btn')?.addEventListener('click', () => {
     stopApplicationsAutoRefresh();
     document.getElementById('tg-applications-modal')?.remove();
@@ -357,6 +527,7 @@ function render(vm) {
     refreshApplicationsModal().catch(error => console.warn('入團申請刷新失敗', error));
     startApplicationsAutoRefresh();
   });
+
   document.getElementById('tg-favorite-btn')?.addEventListener('click', async event => {
     const button = event.currentTarget;
     button.disabled = true;
@@ -366,6 +537,7 @@ function render(vm) {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         redirect: 'manual'
       });
+      if (response.status === 401) { openLoginPanel(); return; }
       if (!response.ok && response.type !== 'opaqueredirect') throw new Error(await response.text() || '收藏更新失敗');
       const result = await response.json();
       const next = result.active === true;
@@ -378,36 +550,27 @@ function render(vm) {
       button.disabled = false;
     }
   });
-  document.getElementById('tg-join-btn')?.addEventListener('click', async (event) => {
+
+  document.getElementById('tg-join-btn')?.addEventListener('click', async event => {
     const button = event.currentTarget;
     button.disabled = true;
-    if (await postAction('Join')) {
-      await 
-load();
-    } else {
-      button.disabled = false;
-    }
+    if (await postAction('Join')) await load();
+    else button.disabled = false;
   });
-  document.getElementById('tg-cancel-join-btn')?.addEventListener('click', async (event) => {
+
+  document.getElementById('tg-cancel-join-btn')?.addEventListener('click', async event => {
     const button = event.currentTarget;
     button.disabled = true;
-    if (await postAction('CancelJoin')) {
-      await 
-load();
-    } else {
-      button.disabled = false;
-    }
+    if (await postAction('CancelJoin')) await load();
+    else button.disabled = false;
   });
-  document.getElementById('tg-leave-btn')?.addEventListener('click', async (event) => {
+
+  document.getElementById('tg-leave-btn')?.addEventListener('click', async event => {
     if (!confirm('確定要退出這個揪團嗎？')) return;
     const button = event.currentTarget;
     button.disabled = true;
-    if (await postAction('Leave')) {
-      await 
-load();
-    } else {
-      button.disabled = false;
-    }
+    if (await postAction('Leave')) await load();
+    else button.disabled = false;
   });
 }
 
@@ -417,6 +580,7 @@ async function fetchDetailsVm() {
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return await res.json();
 }
+
 async function load() {
   try {
     stopApplicationsAutoRefresh();
@@ -437,34 +601,13 @@ viewerSwitch?.addEventListener('change', event => {
   else url.searchParams.delete('viewerMemberId');
   window.history.replaceState({}, '', url);
   root.dataset.viewerMemberId = viewerMemberId ? String(viewerMemberId) : '';
-  
-load();
+  load();
 });
-
-
 
 window.addEventListener('message', event => {
   if (event.origin !== window.location.origin) return;
   if (event.data?.type !== 'lazytravel:close-ticket-preview') return;
   document.getElementById('tg-ticket-preview-modal')?.remove();
 });
+
 load();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

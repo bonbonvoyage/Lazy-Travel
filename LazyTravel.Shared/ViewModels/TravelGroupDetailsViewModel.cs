@@ -16,7 +16,11 @@ public class TravelGroupDetailsViewModel
     public int MaxPeople { get; set; }
     public int CurrentPeople { get; set; }
     public string ReviewStatusText { get; set; } = "";
+    public byte GroupStatus { get; set; }
     public string GroupStatusText { get; set; } = "";
+    public bool IsExpired { get; set; }
+    public bool IsPastEndDate { get; set; }
+    public bool CanStartTrip { get; set; }
     public List<string> GalleryImageUrls { get; set; } = new();
 
     public List<TravelGroupMemberVm> Members { get; set; } = new();

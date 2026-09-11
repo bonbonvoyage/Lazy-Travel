@@ -1,5 +1,6 @@
 using LazyTravel.Shared.Models.EfModels;
 using LazyTravel.Shared.ViewModels;
+using LazyTravel.Shared.Services;
 using LazyTravel.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,12 @@ namespace LazyTravel.Controllers
     public class TravelGroupsController : Controller
     {
         private readonly LazyTravelDBContext _context;
+        private readonly ICurrentMemberAccessor _currentMemberAccessor;
 
-        public TravelGroupsController(LazyTravelDBContext context)
+        public TravelGroupsController(LazyTravelDBContext context, ICurrentMemberAccessor currentMemberAccessor)
         {
             _context = context;
+            _currentMemberAccessor = currentMemberAccessor;
         }
 
         private static readonly Dictionary<string, string[]> RegionCountryMap = new(StringComparer.OrdinalIgnoreCase)
@@ -182,7 +185,8 @@ namespace LazyTravel.Controllers
             }
 
             var actingMemberId = await GetActingMemberIdAsync(viewerMemberId);
-            if (actingMemberId != group.OwnerMemberId)
+            if (!actingMemberId.HasValue) return LoginRequired();
+            if (actingMemberId.Value != group.OwnerMemberId)
             {
                 return Forbid();
             }
@@ -218,7 +222,8 @@ namespace LazyTravel.Controllers
             }
 
             var actingMemberId = await GetActingMemberIdAsync(viewerMemberId);
-            if (actingMemberId != group.OwnerMemberId)
+            if (!actingMemberId.HasValue) return LoginRequired();
+            if (actingMemberId.Value != group.OwnerMemberId)
             {
                 return Forbid();
             }
@@ -240,8 +245,10 @@ namespace LazyTravel.Controllers
             take = Math.Clamp(take, pageSize, 120);
             scope = scope == "recommended" ? "recommended" : "all";
 
+            var today = DateOnly.FromDateTime(DateTime.Now);
             var publicGroups = _context.TravelGroups.AsNoTracking()
-                .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal);
+                .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal)
+                .Where(g => g.GroupStatus == 0 && g.CurrentPeople < g.MaxPeople && (!g.StartDate.HasValue || g.StartDate.Value >= today));
 
             var allCountries = await publicGroups
                 .Where(g => g.Country != null && g.Country != "")
@@ -306,14 +313,14 @@ namespace LazyTravel.Controllers
                 .ToListAsync();
 
             var groupIds = groups.Select(g => g.GroupId).ToList();
-            var visitorMemberId = await GetOrCreateVisitorMemberIdAsync();
+            var visitorMemberId = _currentMemberAccessor.GetCurrentMemberId();
             var favoriteCounts = await _context.TravelGroupInteractions.AsNoTracking()
                 .Where(i => groupIds.Contains(i.GroupId) && i.ActionType == TravelGroupInteractionType.Favorite)
                 .GroupBy(i => i.GroupId)
                 .Select(g => new { GroupId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.GroupId, x => x.Count);
             var favoriteIds = await _context.TravelGroupInteractions.AsNoTracking()
-                .Where(i => i.MemberId == visitorMemberId && i.ActionType == TravelGroupInteractionType.Favorite && groupIds.Contains(i.GroupId))
+                .Where(i => visitorMemberId.HasValue && i.MemberId == visitorMemberId.Value && i.ActionType == TravelGroupInteractionType.Favorite && groupIds.Contains(i.GroupId))
                 .Select(i => i.GroupId)
                 .ToListAsync();
             var favoriteSet = favoriteIds.ToHashSet();
@@ -778,26 +785,30 @@ namespace LazyTravel.Controllers
             }
 
             var isTestViewer = viewerMemberId.HasValue && await _context.Set<Member>().AsNoTracking().AnyAsync(m => m.Id == viewerMemberId.Value);
-            var visitorMemberId = isTestViewer
-                ? viewerMemberId!.Value
-                : await GetOrCreateVisitorMemberIdAsync();
+            var signedInMemberId = _currentMemberAccessor.GetCurrentMemberId();
+            int? visitorMemberId = isTestViewer ? viewerMemberId!.Value : signedInMemberId;
 
             var days = group.EndDate.HasValue && group.StartDate.HasValue
                 ? group.EndDate.Value.DayNumber - group.StartDate.Value.DayNumber + 1
                 : (int?)null;
 
+            var todayForStatus = DateOnly.FromDateTime(DateTime.Now);
+            var isExpired = group.GroupStatus == 0 && group.StartDate.HasValue && group.StartDate.Value < todayForStatus;
+            var isPastEndDate = group.GroupStatus == 2 && group.EndDate.HasValue && group.EndDate.Value < todayForStatus;
+            var canStartTrip = group.CurrentPeople >= group.MinPeople;
+
             var activeMembers = group.GroupMembers.Where(gm => !gm.IsRemoved).ToList();
-            var viewerMode = !isTestViewer
+            var viewerMode = !visitorMemberId.HasValue
                 ? "guest"
-                : group.OwnerMemberId == visitorMemberId
+                : group.OwnerMemberId == visitorMemberId.Value
                     ? "owner"
-                    : activeMembers.Any(gm => gm.MemberId == visitorMemberId)
+                    : activeMembers.Any(gm => gm.MemberId == visitorMemberId.Value)
                         ? "member"
                         : "guest";
             var pendingRequest = await _context.JoinRequests.AsNoTracking()
-                .AnyAsync(r => r.GroupId == id && r.MemberId == visitorMemberId && r.RequestStatus == 0);
+                .AnyAsync(r => visitorMemberId.HasValue && r.GroupId == id && r.MemberId == visitorMemberId.Value && r.RequestStatus == 0);
             var viewerHasFavorited = await _context.TravelGroupInteractions.AsNoTracking()
-                .AnyAsync(i => i.GroupId == id && i.MemberId == visitorMemberId && i.ActionType == TravelGroupInteractionType.Favorite);
+                .AnyAsync(i => visitorMemberId.HasValue && i.GroupId == id && i.MemberId == visitorMemberId.Value && i.ActionType == TravelGroupInteractionType.Favorite);
             var favoriteCount = await _context.TravelGroupInteractions.AsNoTracking()
                 .CountAsync(i => i.GroupId == id && i.ActionType == TravelGroupInteractionType.Favorite);
 
@@ -817,7 +828,11 @@ namespace LazyTravel.Controllers
                 MaxPeople = group.MaxPeople,
                 CurrentPeople = group.CurrentPeople,
                 ReviewStatusText = group.ReviewStatus.ToLabel(),
-                GroupStatusText = ToGroupStatusLabel(group.GroupStatus),
+                GroupStatus = group.GroupStatus,
+                GroupStatusText = isExpired ? "已逾期" : isPastEndDate ? "待確認完成" : ToGroupStatusLabel(group.GroupStatus),
+                IsExpired = isExpired,
+                IsPastEndDate = isPastEndDate,
+                CanStartTrip = canStartTrip,
                 GalleryImageUrls = group.TravelGroupImages
                     .Where(i => !i.IsDeleted)
                     .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder)
@@ -859,8 +874,8 @@ namespace LazyTravel.Controllers
                         IsRequired = b.IsRequired,
                     }).ToList(),
                 BudgetTotalPerPerson = group.TravelGroupBudgets.Sum(b => b.Amount ?? 0),
-                ViewerIsOwner = group.OwnerMemberId == visitorMemberId,
-                ViewerIsMember = activeMembers.Any(gm => gm.MemberId == visitorMemberId),
+                ViewerIsOwner = visitorMemberId.HasValue && group.OwnerMemberId == visitorMemberId.Value,
+                ViewerIsMember = visitorMemberId.HasValue && activeMembers.Any(gm => gm.MemberId == visitorMemberId.Value),
                 ViewerHasPendingRequest = pendingRequest,
                 ViewerHasFavorited = viewerHasFavorited,
                 FavoriteCount = favoriteCount,
@@ -935,9 +950,10 @@ namespace LazyTravel.Controllers
         private static string ToGroupStatusLabel(byte status) => status switch
         {
             0 => "等待中",
-            1 => "已成團",
-            2 => "已額滿",
-            3 => "已結束",
+            1 => "已額滿",
+            2 => "行程中",
+            3 => "已完成",
+            4 => "已解散",
             _ => "未知狀態",
         };
 
@@ -951,10 +967,11 @@ namespace LazyTravel.Controllers
                 return NotFound();
             }
 
-            var visitorMemberId = await GetOrCreateVisitorMemberIdAsync();
+            var visitorMemberId = _currentMemberAccessor.GetCurrentMemberId();
+            if (!visitorMemberId.HasValue) return LoginRequired();
             var existing = await _context.TravelGroupInteractions
                 .FirstOrDefaultAsync(i => i.GroupId == id &&
-                                          i.MemberId == visitorMemberId &&
+                                          i.MemberId == visitorMemberId.Value &&
                                           i.ActionType == TravelGroupInteractionType.Favorite);
             var active = existing is null;
             if (existing is null)
@@ -962,7 +979,7 @@ namespace LazyTravel.Controllers
                 _context.TravelGroupInteractions.Add(new TravelGroupInteraction
                 {
                     GroupId = id,
-                    MemberId = visitorMemberId,
+                    MemberId = visitorMemberId.Value,
                     ActionType = TravelGroupInteractionType.Favorite,
                     CreatedAt = DateTime.Now,
                 });
@@ -991,21 +1008,22 @@ namespace LazyTravel.Controllers
             }
 
             var visitorMemberId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!visitorMemberId.HasValue) return LoginRequired();
 
-            if (group.OwnerMemberId == visitorMemberId)
+            if (group.OwnerMemberId == visitorMemberId.Value)
             {
                 return BadRequest("你是這個揪團的團主。");
             }
 
             var alreadyMember = await _context.GroupMembers
-                .AnyAsync(gm => gm.GroupId == id && gm.MemberId == visitorMemberId && !gm.IsRemoved);
+                .AnyAsync(gm => gm.GroupId == id && gm.MemberId == visitorMemberId.Value && !gm.IsRemoved);
             if (alreadyMember)
             {
                 return BadRequest("你已經是這個揪團的成員了。");
             }
 
             var latestRequest = await _context.JoinRequests
-                .Where(r => r.GroupId == id && r.MemberId == visitorMemberId)
+                .Where(r => r.GroupId == id && r.MemberId == visitorMemberId.Value)
                 .OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.RequestId)
                 .FirstOrDefaultAsync();
             if (latestRequest?.RequestStatus == 0)
@@ -1019,7 +1037,7 @@ namespace LazyTravel.Controllers
             _context.JoinRequests.Add(new JoinRequest
             {
                 GroupId = id,
-                MemberId = visitorMemberId,
+                MemberId = visitorMemberId.Value,
                 Message = "想加入這個揪團！",
                 RequestStatus = 0,
                 CreatedAt = DateTime.Now,
@@ -1036,8 +1054,9 @@ namespace LazyTravel.Controllers
         public async Task<IActionResult> CancelJoin(int id, int? viewerMemberId)
         {
             var visitorMemberId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!visitorMemberId.HasValue) return LoginRequired();
             var request = await _context.JoinRequests
-                .Where(r => r.GroupId == id && r.MemberId == visitorMemberId && r.RequestStatus == 0)
+                .Where(r => r.GroupId == id && r.MemberId == visitorMemberId.Value && r.RequestStatus == 0)
                 .OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.RequestId)
                 .FirstOrDefaultAsync();
 
@@ -1056,9 +1075,10 @@ namespace LazyTravel.Controllers
         public async Task<IActionResult> Leave(int id, int? viewerMemberId)
         {
             var visitorMemberId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!visitorMemberId.HasValue) return LoginRequired();
 
             var membership = await _context.GroupMembers
-                .FirstOrDefaultAsync(gm => gm.GroupId == id && gm.MemberId == visitorMemberId && !gm.IsRemoved);
+                .FirstOrDefaultAsync(gm => gm.GroupId == id && gm.MemberId == visitorMemberId.Value && !gm.IsRemoved);
             if (membership is null)
             {
                 return BadRequest("你不是這個揪團的成員。");
@@ -1081,16 +1101,17 @@ namespace LazyTravel.Controllers
         public async Task<IActionResult> RejectJoinRequest(int id, int requestId, int? viewerMemberId)
         {
             var ownerId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!ownerId.HasValue) return LoginRequired();
             var group = await _context.TravelGroups.FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
             if (group is null) return NotFound();
-            if (group.OwnerMemberId != ownerId) return StatusCode(403, "只有團主可以管理入團申請。");
+            if (group.OwnerMemberId != ownerId.Value) return StatusCode(403, "只有團主可以管理入團申請。");
 
             var request = await _context.JoinRequests.FirstOrDefaultAsync(r => r.GroupId == id && r.RequestId == requestId);
             if (request is null) return NotFound();
             if (request.RequestStatus != 0) return BadRequest("這筆申請目前不是申請中狀態。");
 
             request.RequestStatus = 2;
-            request.ReviewedByMemberId = ownerId;
+            request.ReviewedByMemberId = ownerId.Value;
             request.ReviewedAt = DateTime.Now;
             await _context.SaveChangesAsync();
             return Ok();
@@ -1101,12 +1122,13 @@ namespace LazyTravel.Controllers
         public async Task<IActionResult> RemoveGroupMember(int id, int memberId, int? viewerMemberId)
         {
             var ownerId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!ownerId.HasValue) return LoginRequired();
             var group = await _context.TravelGroups
                 .Include(g => g.GroupMembers)
                 .FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
             if (group is null) return NotFound();
-            if (group.OwnerMemberId != ownerId) return StatusCode(403, "只有團主可以移除團員。");
-            if (memberId == ownerId) return BadRequest("不能移除團主自己。");
+            if (group.OwnerMemberId != ownerId.Value) return StatusCode(403, "只有團主可以移除團員。");
+            if (memberId == ownerId.Value) return BadRequest("不能移除團主自己。");
 
             var membership = group.GroupMembers.FirstOrDefault(gm => gm.MemberId == memberId && !gm.IsRemoved);
             if (membership is null) return NotFound();
@@ -1115,7 +1137,7 @@ namespace LazyTravel.Controllers
             membership.IsRemoved = true;
             membership.LeftAt = now;
             membership.RemovedAt = now;
-            membership.RemovedByMemberId = ownerId;
+            membership.RemovedByMemberId = ownerId.Value;
             membership.RemoveReason = "團主從申請管理移除團員";
 
             var latestRequest = await _context.JoinRequests
@@ -1130,7 +1152,7 @@ namespace LazyTravel.Controllers
                     MemberId = memberId,
                     Message = "團主移除團員後加入已拒絕名單。",
                     RequestStatus = 2,
-                    ReviewedByMemberId = ownerId,
+                    ReviewedByMemberId = ownerId.Value,
                     ReviewedAt = now,
                     CreatedAt = now,
                 });
@@ -1138,7 +1160,7 @@ namespace LazyTravel.Controllers
             else
             {
                 latestRequest.RequestStatus = 2;
-                latestRequest.ReviewedByMemberId = ownerId;
+                latestRequest.ReviewedByMemberId = ownerId.Value;
                 latestRequest.ReviewedAt = now;
             }
 
@@ -1152,29 +1174,93 @@ namespace LazyTravel.Controllers
         public async Task<IActionResult> ReleaseRejectedJoinRequest(int id, int requestId, int? viewerMemberId)
         {
             var ownerId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!ownerId.HasValue) return LoginRequired();
             var group = await _context.TravelGroups.FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
             if (group is null) return NotFound();
-            if (group.OwnerMemberId != ownerId) return StatusCode(403, "只有團主可以管理已拒絕名單。");
+            if (group.OwnerMemberId != ownerId.Value) return StatusCode(403, "只有團主可以管理已拒絕名單。");
 
             var request = await _context.JoinRequests.FirstOrDefaultAsync(r => r.GroupId == id && r.RequestId == requestId);
             if (request is null) return NotFound();
             if (request.RequestStatus != 2) return BadRequest("這筆資料目前不在已拒絕名單中。");
 
             request.RequestStatus = 3;
-            request.ReviewedByMemberId = ownerId;
+            request.ReviewedByMemberId = ownerId.Value;
             request.ReviewedAt = DateTime.Now;
             await _context.SaveChangesAsync();
             return Ok();
         }
 
-        private async Task<int> GetActingMemberIdAsync(int? viewerMemberId)
+
+        public sealed class TravelGroupStatusRequest
+        {
+            public string? Action { get; set; }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeStatus(int id, int? viewerMemberId, [FromBody] TravelGroupStatusRequest request)
+        {
+            var ownerId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!ownerId.HasValue) return LoginRequired();
+
+            var group = await _context.TravelGroups.FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
+            if (group is null) return NotFound();
+            if (group.OwnerMemberId != ownerId.Value) return StatusCode(403, "只有團主可以變更揪團狀態。");
+
+            var action = request?.Action?.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(action)) return BadRequest("缺少狀態操作。");
+            if (group.GroupStatus is 3 or 4) return BadRequest("此揪團狀態已結束，無法再變更。");
+
+            switch (action)
+            {
+                case "start":
+                    if (group.GroupStatus is not (0 or 1)) return BadRequest("目前狀態無法開始行程。");
+                    if (group.CurrentPeople < group.MinPeople) return BadRequest("尚未達到最小成行人數，無法開始行程。");
+                    group.GroupStatus = 2;
+                    break;
+                case "complete":
+                    if (group.GroupStatus != 2) return BadRequest("只有行程中狀態可以完成行程。");
+                    group.GroupStatus = 3;
+                    break;
+                case "disband":
+                    if (group.GroupStatus == 2) return BadRequest("成行中，揪團不可取消。");
+                    if (group.GroupStatus is not (0 or 1)) return BadRequest("目前狀態無法解散揪團。");
+                    group.GroupStatus = 4;
+                    group.IsPublic = false;
+                    break;
+                default:
+                    return BadRequest("不支援的狀態操作。");
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { ok = true, status = group.GroupStatus, statusText = ToGroupStatusLabel(group.GroupStatus) });
+        }
+
+        private async Task AutoCompleteOverdueTripAsync(int groupId)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            var group = await _context.TravelGroups.FirstOrDefaultAsync(g => g.GroupId == groupId && !g.IsDelete);
+            if (group is null || group.GroupStatus != 2 || !group.EndDate.HasValue)
+            {
+                return;
+            }
+
+            if (group.EndDate.Value.AddDays(7) < today)
+            {
+                group.GroupStatus = 3;
+                await _context.SaveChangesAsync();
+            }
+        }
+        private async Task<int?> GetActingMemberIdAsync(int? viewerMemberId)
         {
             if (viewerMemberId.HasValue && await _context.Users.AnyAsync(m => m.Id == viewerMemberId.Value))
             {
                 return viewerMemberId.Value;
             }
-            return await GetOrCreateVisitorMemberIdAsync();
+            return _currentMemberAccessor.GetCurrentMemberId();
         }
+
+        private IActionResult LoginRequired() => Unauthorized("請先登入。");
         private const string VisitorMemberCookieName = "ltvmid";
         private const string LegacyFavoriteGroupsCookieName = "lt_favorite_groups";
 
