@@ -488,6 +488,21 @@
     gap: 12px;
 }
 
+
+.author-profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 999px;
+    transition: transform .2s ease, opacity .2s ease;
+}
+
+.author-profile-link:hover {
+    opacity: .82;
+    transform: translateY(-1px);
+}
 .author-heading strong {
     color: #263a32;
     font-weight: 500;
@@ -969,3 +984,4 @@
         flex-wrap: wrap;
     }
 }
+

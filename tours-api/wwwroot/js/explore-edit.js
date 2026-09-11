@@ -15,8 +15,20 @@
     const endDateInput = document.querySelector('#articleEndDate');
     const dateRangeInput = document.querySelector('#articleDateRange');
     const peopleInput = document.querySelector('#articlePeople');
-    const saveButton = document.querySelector('[data-action="save"]');
+    const saveButton = document.querySelector('[data-action="submit"]');
     const addDayButton = document.querySelector('.add-day');
+    const selectedSupportFiles = [];
+    let hasUnsavedArticleChanges = false;
+    let allowArticleEditorLeave = false;
+    let articleHistoryGuardReady = false;
+
+    const markArticleDirty = () => { hasUnsavedArticleChanges = true; };
+    const canSkipArticleLeaveGuard = () => allowArticleEditorLeave || !hasUnsavedArticleChanges;
+    const navigateArticleEditor = destination => {
+        allowArticleEditorLeave = true;
+        if (typeof destination === 'function') destination();
+        else window.location.href = destination;
+    };
 
     const showToast = (message, type = 'ok') => {
         let toast = document.querySelector('.editor-toast');
@@ -47,7 +59,9 @@
             <strong>DAY</strong>
             <div class="day-fields">
                 <input class="day-title" type="text" placeholder="輸入每日標題（例如：奈良公園、回程準備）" />
-                <textarea class="day-route" rows="2" placeholder="描述當天的行程安排、美食、住宿或心得..."></textarea>
+                <textarea class="day-morning" rows="2" placeholder="早上行程，例如：清水寺參拜、二年坂散步"></textarea>
+                <textarea class="day-afternoon" rows="2" placeholder="下午行程，例如：嵐山竹林、渡月橋"></textarea>
+                <textarea class="day-evening" rows="2" placeholder="晚上行程，例如：祇園晚餐、鴨川散步"></textarea>
                 <label class="note-row"><span>心得筆記</span><textarea class="day-note-input" rows="1" placeholder="寫下今天的旅行心得..."></textarea></label>
             </div>
             <button class="remove-day" type="button" aria-label="移除這一天">×</button>`;
@@ -65,7 +79,9 @@
         people: peopleInput?.value ?? '',
         days: [...(dayList?.querySelectorAll('[data-day]') ?? [])].map(card => ({
             title: card.querySelector('.day-title')?.value?.trim() ?? '',
-            route: card.querySelector('.day-route')?.value?.trim() ?? '',
+            morning: card.querySelector('.day-morning')?.value?.trim() ?? '',
+            afternoon: card.querySelector('.day-afternoon')?.value?.trim() ?? '',
+            evening: card.querySelector('.day-evening')?.value?.trim() ?? '',
             note: card.querySelector('.day-note-input')?.value?.trim() ?? ''
         }))
     });
@@ -103,6 +119,7 @@
                 startDateInput.value = start ? formatDate(start) : '';
                 endDateInput.value = end ? formatDate(end) : '';
                 updateDateRangeText();
+                markArticleDirty();
             },
             onClose(selectedDates) {
                 if (selectedDates.length === 1) {
@@ -128,17 +145,24 @@
         setBusy(saveButton, true);
         try {
             const query = viewerMemberId ? `?viewerMemberId=${encodeURIComponent(viewerMemberId)}` : '';
+            const formData = new FormData();
+            formData.append('payload', JSON.stringify(payload));
+            const coverFile = document.querySelector('#coverImageInput')?.files?.[0];
+            if (coverFile) formData.append('coverImage', coverFile);
+            selectedSupportFiles.forEach(file => formData.append('supportImages', file));
+
             const response = await fetch(`/Explore/Submit/${postId}${query}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'RequestVerificationToken': token
                 },
-                body: JSON.stringify(payload)
+                body: formData
             });
             const data = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(data.message || '送出失敗，請稍後再試。');
             showToast(data.message || '文章已送出。');
+            allowArticleEditorLeave = true;
+            hasUnsavedArticleChanges = false;
             if (data.redirectUrl) window.setTimeout(() => { window.location.href = data.redirectUrl; }, 650);
         } catch (error) {
             showToast(error.message || '送出失敗，請稍後再試。', 'error');
@@ -149,6 +173,7 @@
 
     addDayButton?.addEventListener('click', () => {
         dayList?.appendChild(createDayCard());
+        markArticleDirty();
         renumberDays();
         dayList?.lastElementChild?.querySelector('input')?.focus();
     });
@@ -162,10 +187,14 @@
             return;
         }
         remove.closest('[data-day]')?.remove();
+        markArticleDirty();
         renumberDays();
     });
 
     saveButton?.addEventListener('click', () => send('submit'));
+
+    shell.addEventListener('input', markArticleDirty, true);
+    shell.addEventListener('change', markArticleDirty, true);
 
     document.querySelectorAll('[data-file-target]').forEach(button => {
         button.addEventListener('click', () => {
@@ -198,14 +227,15 @@
     const setLargeSupport = (src) => {
         if (supportLarge) supportLarge.innerHTML = `<img src="${src}" alt="補充照片預覽" />`;
     };
-    supportInput?.addEventListener('change', () => {
-        const files = [...(supportInput.files ?? [])].filter(file => file.type.startsWith('image/'));
+    const renderSupportFiles = () => {
+        if (!supportStrip || !supportLarge) return;
         supportStrip.innerHTML = '';
-        if (files.length === 0) {
+        if (selectedSupportFiles.length === 0) {
             supportLarge.innerHTML = '<span>尚未選擇補充照片</span>';
             return;
         }
-        files.forEach((file, index) => {
+
+        selectedSupportFiles.forEach((file, index) => {
             const src = URL.createObjectURL(file);
             const thumb = document.createElement('button');
             thumb.type = 'button';
@@ -219,7 +249,15 @@
             supportStrip.appendChild(thumb);
             if (index === 0) setLargeSupport(src);
         });
-        showToast(`已加入 ${files.length} 張補充照片預覽。`);
+    };
+
+    supportInput?.addEventListener('change', () => {
+        const files = [...(supportInput.files ?? [])].filter(file => file.type.startsWith('image/'));
+        if (files.length === 0) return;
+        selectedSupportFiles.push(...files);
+        supportInput.value = '';
+        renderSupportFiles();
+        showToast(`已累積 ${selectedSupportFiles.length} 張補充照片。`);
     });
 
     supportStrip?.addEventListener('click', event => {
@@ -232,11 +270,13 @@
     });
 
     const leaveEditor = fallback => {
-        if (window.history.length > 1) window.history.back();
-        else window.location.href = fallback;
+        navigateArticleEditor(() => {
+            if (window.history.length > 1) window.history.back();
+            else window.location.href = fallback;
+        });
     };
 
-    const openCancelEditModal = fallback => {
+    const openCancelEditModal = destination => {
         document.getElementById('article-edit-cancel-modal')?.remove();
         document.body.insertAdjacentHTML('beforeend', `
             <div class="article-edit-cancel-backdrop" id="article-edit-cancel-modal" role="dialog" aria-modal="true" aria-label="取消編輯確認">
@@ -251,14 +291,63 @@
         const modal = document.getElementById('article-edit-cancel-modal');
         const close = () => modal.remove();
         modal.querySelector('.article-edit-cancel-secondary').addEventListener('click', close);
-        modal.querySelector('.article-edit-cancel-primary').addEventListener('click', () => leaveEditor(fallback));
+        modal.querySelector('.article-edit-cancel-primary').addEventListener('click', () => {
+            if (typeof destination === 'function') navigateArticleEditor(destination);
+            else navigateArticleEditor(destination);
+        });
         modal.addEventListener('click', event => { if (event.target === modal) close(); });
     };
 
+    const confirmArticleLeave = destination => {
+        if (canSkipArticleLeaveGuard()) {
+            navigateArticleEditor(destination);
+            return;
+        }
+        openCancelEditModal(destination);
+    };
+
     document.querySelector('.editor-link-back')?.addEventListener('click', event => {
+        event.preventDefault();
         const fallback = event.currentTarget.dataset.backFallback || '/Explore';
-        openCancelEditModal(fallback);
+        confirmArticleLeave(() => {
+            if (window.history.length > 1) window.history.back();
+            else window.location.href = fallback;
+        });
     });
+
+    document.addEventListener('click', event => {
+        const link = event.target.closest('a[href]');
+        if (!link || link.closest('#article-edit-cancel-modal')) return;
+        if (link.target && link.target !== '_self') return;
+        if (link.hasAttribute('download')) return;
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        const url = new URL(href, window.location.href);
+        if (url.href === window.location.href) return;
+        if (canSkipArticleLeaveGuard()) return;
+        event.preventDefault();
+        confirmArticleLeave(url.href);
+    }, true);
+
+    window.addEventListener('beforeunload', event => {
+        if (canSkipArticleLeaveGuard()) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
+
+    if (!articleHistoryGuardReady && history.pushState) {
+        articleHistoryGuardReady = true;
+        history.pushState({ articleEditorGuard: true }, '', window.location.href);
+        window.addEventListener('popstate', () => {
+            if (canSkipArticleLeaveGuard()) {
+                allowArticleEditorLeave = true;
+                history.back();
+                return;
+            }
+            history.pushState({ articleEditorGuard: true }, '', window.location.href);
+            confirmArticleLeave(() => history.back());
+        });
+    }
 })();
 
 
