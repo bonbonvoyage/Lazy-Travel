@@ -1,5 +1,6 @@
 ﻿using LazyTravel.Shared.Models.DTOs;
 using LazyTravel.Shared.Models.EfModels;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Linq;
 
@@ -7,6 +8,7 @@ namespace LazyTravel.Shared.Services
 {
 	public class MemberAuthService : IMemberAuthService
 	{
+		private static readonly PasswordHasher<Member> PasswordHasher = new();
 		private readonly LazyTravelDBContext _context;
 
 		public MemberAuthService(LazyTravelDBContext context)
@@ -31,7 +33,13 @@ namespace LazyTravel.Shared.Services
 			bool isPasswordValid;
 			try
 			{
-				isPasswordValid = BCrypt.Net.BCrypt.Verify(password, member.PasswordHash);
+				var verificationResult = PasswordHasher.VerifyHashedPassword(member, member.PasswordHash ?? string.Empty, password);
+				isPasswordValid = verificationResult != PasswordVerificationResult.Failed;
+
+				if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
+				{
+					member.PasswordHash = PasswordHasher.HashPassword(member, password);
+				}
 			}
 			catch
 			{
