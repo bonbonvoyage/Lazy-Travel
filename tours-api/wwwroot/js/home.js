@@ -1,10 +1,6 @@
-// 首頁互動邏輯：側欄收合、搜尋列樣式、Hero 輪播、以及「熱門行程/熱門文章」兩排卡片。
-// 卡片資料一律來自 /Home/Data（HomeController.Data() 回傳的真實資料庫查詢結果，Ok(vm) JSON），
-// 這支檔案裡完全不寫死任何一筆行程或文章。
-
-document.getElementById('toggleBtn').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.toggle('expanded');
-});
+// 首頁互動邏輯：搜尋列樣式、Hero 輪播、以及「熱門行程/熱門文章」兩排卡片。
+// 側欄收合統一交給 sidebar.js，避免首頁重複綁定造成點一次切換兩次。
+// 卡片資料一律來自 /Home/Data（HomeController.Data() 回傳的真實資料庫查詢結果，Ok(vm) JSON）。
 
 document.querySelectorAll('.search-field select').forEach(sel => {
   const sync = () => sel.classList.toggle('is-placeholder', sel.selectedIndex === 0);

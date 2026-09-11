@@ -15,6 +15,7 @@ public sealed class TravelGroupIndexViewModel
     public int Page { get; init; } = 1;
     public int TotalPages { get; init; } = 1;
     public int TotalCount { get; init; }
+    public int Take { get; init; } = 12;
 
     public string DateRangeText =>
         !string.IsNullOrWhiteSpace(StartDate) && !string.IsNullOrWhiteSpace(EndDate)
@@ -37,4 +38,8 @@ public sealed class TravelGroupCardViewModel
     public byte Status { get; init; }
     public string StatusText { get; init; } = "等待中";
     public List<string> Tags { get; init; } = new();
+    public int FavoriteCount { get; init; }
+    public bool IsFavorited { get; init; }
 }
+
+

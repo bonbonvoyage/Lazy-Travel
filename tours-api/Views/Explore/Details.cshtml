@@ -6,11 +6,12 @@
     var content = Model.PlainContent;
     var cover = Model.Images.FirstOrDefault();
     var days = Model.Nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key).ToList();
-    var tags = new[] { Model.Source?.Country ?? post.Destination, Model.Source?.Region, post.TravelPeople.ToLabel() }.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
+    var tags = new[] { post.Destination, post.TravelPeople.ToLabel() }.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
     var highlight = string.IsNullOrWhiteSpace(Model.Highlight)
         ? content.Split(new[] { '。', '！', '？', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim()
         : Model.Highlight;
-    var people = Model.Source is null ? post.TravelPeople.ToLabel() : $"{Model.Source.People} 人";
+    var people = post.TravelPeople.ToLabel();
+    var region = string.IsNullOrWhiteSpace(Model.Region) ? "未提供" : Model.Region;
 }
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -23,16 +24,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/explore-details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/report-modal.css" asp-append-version="true" />
 </head>
 <body class="home-app article-page">
 <div class="app">
     @await Html.PartialAsync("_HomeSidebar", "Explore")
     <main class="main article-main">
+        <div class="article-test-switch" aria-label="測試身分切換">
+            <span>測試身分</span>
+            <button type="button" class="active" data-article-role="visitor">訪客</button>
+            <button type="button" data-article-role="viewer">一般檢視者</button>
+            <button type="button" data-article-role="author">發文者</button>
+        </div>
         <button class="page-back-button article-back" type="button" data-back-fallback="@Url.Action("Index", "Explore")" aria-label="返回上一頁">＜</button>
         @if (Model.IsDraft)
         {
             <section class="article-draft">
-                <div><strong>房間匯出草稿</strong><p>已帶入房間資訊、每日行程與照片，尚未公開。</p></div>
+                <div><strong>文章草稿</strong><p>這篇文章尚未公開，確認內容後可送出審核。</p></div>
                 <form asp-action="Publish" asp-route-id="@post.PostId" method="post"><button class="article-button" type="submit">確認並送出審核</button></form>
             </section>
         }
@@ -44,16 +52,20 @@
             <article class="article-body">
                 <header class="article-hero">
                     @if (cover is not null) { <img class="article-cover" src="@cover" alt="@post.Title" /> }
-                    <div class="article-actions">
+                    <div class="article-actions" data-article-actions>
                         @if (post.Status == VlogPostStatus.Published)
                         {
-                            <form asp-action="ToggleFavorite" asp-route-id="@post.PostId" method="post">
-                                <button class="article-button @(Model.IsFavorited ? "active" : "")" type="submit" aria-pressed="@Model.IsFavorited.ToString().ToLowerInvariant()">♡ @(Model.IsFavorited ? "已收藏" : "收藏")</button>
+                            <form asp-action="ToggleFavorite" asp-route-id="@post.PostId" method="post" data-detail-favorite-form data-action-role="reader author">
+                                <button class="article-button article-interaction-button @(Model.IsFavorited ? "active" : "")" type="submit" aria-pressed="@Model.IsFavorited.ToString().ToLowerInvariant()" data-detail-favorite-button><svg class="interaction-icon interaction-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg><span data-detail-favorite-text>@(Model.IsFavorited ? "已收藏" : "收藏")</span></button>
                             </form>
-                            <form asp-action="ToggleLike" asp-route-id="@post.PostId" method="post">
-                                <button class="article-button @(Model.IsLiked ? "active" : "")" type="submit" aria-pressed="@Model.IsLiked.ToString().ToLowerInvariant()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10h-4v11h4V10Zm0 0 6-8c2 1 2 3 1 7h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7"/></svg>按讚 @Model.LikeCount</button>
+                            <form asp-action="ToggleLike" asp-route-id="@post.PostId" method="post" data-detail-like-form data-action-role="reader author">
+                                <button class="article-button article-interaction-button @(Model.IsLiked ? "active" : "")" type="submit" aria-pressed="@Model.IsLiked.ToString().ToLowerInvariant()" data-detail-like-button><svg class="interaction-icon interaction-like" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v10H4V11h3Zm4 10h7.2c.9 0 1.7-.6 1.9-1.5l1.3-5.3A2 2 0 0 0 19.5 12H15V6.8c0-1-.8-1.8-1.8-1.8h-.4L9 12v9h2Z"/></svg><span>按讚</span><strong data-detail-like-count>@Model.LikeCount</strong></button>
                             </form>
-                            <a class="article-button" asp-controller="Report" asp-action="Create">⚑ 檢舉文章</a>
+                            <button class="article-button" type="button" data-report-open data-report-type="VlogPost" data-report-target-id="@post.PostId" data-report-title="@post.Title" data-action-role="reader">⚑ 檢舉文章</button>
+                            <a class="article-button" asp-action="Edit" asp-route-id="@post.PostId" asp-route-viewerMemberId="@post.MemberId" data-action-role="author">✎ 編輯文章</a>
+                            <form asp-action="Delete" asp-route-id="@post.PostId" asp-route-viewerMemberId="@post.MemberId" method="post" data-detail-delete-form data-action-role="author">
+                                <button class="article-button article-danger-button" type="submit">刪除文章</button>
+                            </form>
                         }
                     </div>
                     <div class="article-hero-copy">
@@ -70,8 +82,8 @@
                 </header>
 
                 <section class="article-panel article-facts" aria-label="行程資訊">
-                    <div><span class="fact-icon">◎</span><div><small>國家／目的地</small><strong>@(Model.Source?.Country ?? post.Destination)</strong></div></div>
-                    <div><span class="fact-icon">⌖</span><div><small>地區</small><strong>@(string.IsNullOrWhiteSpace(Model.Source?.Region) ? "未提供" : Model.Source.Region)</strong></div></div>
+                    <div><span class="fact-icon">◎</span><div><small>國家／目的地</small><strong>@post.Destination</strong></div></div>
+                    <div><span class="fact-icon">⌖</span><div><small>地區</small><strong>@region</strong></div></div>
                     <div><span class="fact-icon">▦</span><div><small>旅遊日期</small><strong>@(post.TravelDate.HasValue ? $"{post.TravelDate:yyyy/MM/dd} – {post.TravelDate.Value.AddDays(Math.Max(1,post.TravelDays)-1):yyyy/MM/dd}" : "未提供")</strong></div></div>
                     <div><span class="fact-icon">♙</span><div><small>同行人數</small><strong>@people</strong></div></div>
                     <div class="article-tags"><span>標籤</span>@foreach (var tag in tags) { <span class="article-tag">@tag</span> }</div>
@@ -80,10 +92,6 @@
                 <section class="article-panel article-intro">
                     <h2><span>❧</span> 旅程前言</h2>
                     <div class="article-prose">@(string.IsNullOrWhiteSpace(content) ? "作者尚未補充旅程前言。" : content)</div>
-                    @if (Model.Source is not null)
-                    {
-                        <a class="article-source" asp-controller="TravelGroups" asp-action="Details" asp-route-id="@Model.Source.GroupId">查看原揪團房間 ↗</a>
-                    }
                 </section>
                 <section class="article-panel article-highlight">
                     <span class="quote-mark" aria-hidden="true">“</span><h2>一句話亮點</h2>
@@ -160,6 +168,10 @@
 </div>
 <script id="articlePhotos" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Images))</script>
 <script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/report-modal.js" asp-append-version="true"></script>
 <script src="~/js/explore-details.js" asp-append-version="true"></script>
 </body>
 </html>
+
+
+

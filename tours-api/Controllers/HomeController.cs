@@ -17,10 +17,21 @@ namespace LazyTravel.Controllers
 
         // GET /Home/Index —— 只負責回傳頁面外殼(側欄、Hero、卡片區的空容器)，
         // 版面上看到的行程/文章資料一律由 wwwroot/js/home.js 呼叫下面的 Data() 拿真實資料。
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             ViewData["Title"] = "首頁";
-            return View();
+            var countries = await _context.TravelGroups.AsNoTracking()
+                .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal && g.Country != null && g.Country != "")
+                .Select(g => g.Country!)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            return View(new LazyTravel.ViewModels.TravelGroupIndexViewModel
+            {
+                AllCountries = countries,
+                Countries = countries,
+            });
         }
 
         // GET /Home/Data —— 首頁卡片區的真實資料，前端 fetch 這支拿 JSON。

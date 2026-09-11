@@ -96,7 +96,7 @@
                                     <span class="cover-fallback">LazyTravel</span>
                                 }
                             </a>
-                            <button class="favorite-button" type="button" aria-label="收藏 @group.Title" aria-pressed="false">
+                            <button class="favorite-button" type="button" data-group-id="@group.GroupId" aria-label="@(group.IsFavorited ? "取消收藏" : "收藏") @group.Title" aria-pressed="@group.IsFavorited.ToString().ToLowerInvariant()">
                                 <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg>
                             </button>
                             <div class="card-content">
@@ -110,6 +110,9 @@
                                     }
                                 </div>
                                 <div class="card-progress"><span>♙</span><strong>@group.CurrentPeople</strong> / @group.MaxPeople 人</div>
+                                <div class="group-card-stats" aria-label="揪團互動數據">
+                                    <span class="stat-pill stat-favorite @(group.IsFavorited ? "is-active" : "")" title="收藏數" data-group-favorite-stat data-group-id="@group.GroupId"><svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg><strong data-group-favorite-count>@group.FavoriteCount</strong></span>
+                                </div>
                                 <footer class="card-footer">
                                     <div class="owner-avatar">
                                         @if (!string.IsNullOrWhiteSpace(group.OwnerAvatarUrl))
@@ -132,21 +135,18 @@
                     }
                     </div>
                 }
-
-                @if (Model.TotalPages > 1)
+                @if (Model.Groups.Count < Model.TotalCount)
                 {
-                    <nav class="groups-pagination" aria-label="揪團分頁">
-                        <a class="@(Model.Page == 1 ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="上一頁">‹</a>
-                        @for (var i = 1; i <= Model.TotalPages; i++)
-                        {
-                            <a class="@(i == Model.Page ? "active" : "")" asp-action="Index" asp-route-page="@i" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope">@i</a>
-                        }
-                        <a class="@(Model.Page == Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope" aria-label="下一頁">›</a>
-                    </nav>
+                    <div class="groups-load-more">
+                        <a asp-action="Index" asp-route-take="@(Model.Take + 12)" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope">載入更多</a>
+                    </div>
                 }
             </section>
         </div>
-    </main>
+        <div class="groups-toast" data-groups-toast hidden>
+            <span data-toast-message>已加入收藏</span>
+            <button type="button" data-toast-undo>復原</button>
+        </div>    </main>
 </div>
 
 <script src="~/lib/flatpickr/flatpickr.min.js" asp-append-version="true"></script>
@@ -154,3 +154,6 @@
 <script src="~/js/travelgroups-index.js" asp-append-version="true"></script>
 </body>
 </html>
+
+
+

@@ -42,3 +42,115 @@ if (photoData && dialog) {
         }
     });
 }
+const toggleDetailInteraction = async (form, apply) => {
+    const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        redirect: 'manual'
+    });
+
+    if (!response.ok && response.type !== 'opaqueredirect') throw new Error('interaction failed');
+    const result = response.headers.get('content-type')?.includes('application/json') ? await response.json() : null;
+    if (result) apply(result);
+};
+
+const setArticleButtonState = (button, active) => {
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+};
+
+document.querySelector('[data-detail-favorite-form]')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('[data-detail-favorite-button]');
+    const text = form.querySelector('[data-detail-favorite-text]');
+    if (!button) return;
+
+    button.disabled = true;
+    try {
+        await toggleDetailInteraction(form, result => {
+            setArticleButtonState(button, result.active === true);
+            if (text) text.textContent = result.active ? '已收藏' : '收藏';
+        });
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.querySelector('[data-detail-like-form]')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('[data-detail-like-button]');
+    const count = form.querySelector('[data-detail-like-count]');
+    if (!button) return;
+
+    button.disabled = true;
+    try {
+        await toggleDetailInteraction(form, result => {
+            setArticleButtonState(button, result.active === true);
+            if (count && Number.isInteger(result.count)) count.textContent = result.count;
+        });
+    } finally {
+        button.disabled = false;
+    }
+});
+
+
+const articleRoleButtons = document.querySelectorAll('[data-article-role]');
+const articleRoleItems = document.querySelectorAll('[data-action-role]');
+const setArticleTestRole = role => {
+    const isAuthor = role === 'author';
+    articleRoleButtons.forEach(button => button.classList.toggle('active', button.dataset.articleRole === role));
+    articleRoleItems.forEach(item => {
+        const allowed = (item.dataset.actionRole || '').split(/\s+/);
+        const visible = isAuthor ? allowed.includes('author') : allowed.includes('reader');
+        item.classList.toggle('article-action-hidden', !visible);
+    });
+};
+articleRoleButtons.forEach(button => button.addEventListener('click', () => setArticleTestRole(button.dataset.articleRole || 'visitor')));
+setArticleTestRole(document.querySelector('[data-article-role].active')?.dataset.articleRole || 'visitor');
+
+const openArticleDeleteModal = form => {
+    document.getElementById('article-delete-modal')?.remove();
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="article-delete-backdrop" id="article-delete-modal" role="dialog" aria-modal="true" aria-label="刪除文章確認">
+            <div class="article-delete-card">
+                <h2>確定要刪除文章嗎？</h2>
+                <div class="article-delete-message" data-delete-message></div>
+                <div class="article-delete-actions">
+                    <button class="article-delete-cancel" type="button">取消</button>
+                    <button class="article-delete-confirm" type="button">確認刪除</button>
+                </div>
+            </div>
+        </div>`);
+    const modal = document.getElementById('article-delete-modal');
+    const message = modal.querySelector('[data-delete-message]');
+    const close = () => modal.remove();
+    modal.querySelector('.article-delete-cancel').addEventListener('click', close);
+    modal.addEventListener('click', event => { if (event.target === modal) close(); });
+    modal.querySelector('.article-delete-confirm').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = '刪除中...';
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = response.headers.get('content-type')?.includes('application/json') ? await response.json() : null;
+            if (!response.ok) throw new Error(data?.message || '刪除失敗，請確認目前身分是否為文章作者。');
+            window.location.assign(data?.redirectUrl || '/Explore');
+        } catch (error) {
+            message.textContent = error.message || '刪除失敗，請稍後再試。';
+            button.disabled = false;
+            button.textContent = '確認刪除';
+        }
+    });
+};
+
+document.querySelector('[data-detail-delete-form]')?.addEventListener('submit', event => {
+    event.preventDefault();
+    openArticleDeleteModal(event.currentTarget);
+});

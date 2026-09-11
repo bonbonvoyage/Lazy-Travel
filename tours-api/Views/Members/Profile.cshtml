@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "個人頁面";
+    // 這頁是第一人稱 3D 案頭場景，設計稿固定 1440 × 900，
+    // 用 iframe 載入 wwwroot/members/scene.dc.html，外層負責等比縮放置中。
+    // 場景左邊的電腦螢幕點下去會跳首頁（scene 內用 window.top 導頁，
+    // 所以在 iframe 裡也會換掉整個視窗，不是只換 iframe）。
+    // 之後要套整站導覽列，把 Layout = null 拿掉即可（場景本身不含導覽列）。
+    Layout = null;
+
+    // 🚧🚧🚧 開發期暫時後門，組長把正式登入（Identity Cookie）接上後要整段刪掉 🚧🚧🚧
+    // 登入還沒串上之前，可以用 /Members/Profile?devMemberId=1 假裝自己是某個會員。
+    // 這裡把同一個 query string 原封不動轉給 iframe，這樣 scene.dc.html 呼叫
+    // /Members/ProfileData 等 API 時才能一起帶上，讓 CurrentMemberAccessor 讀得到
+    // （見該類別裡的開發期後門邏輯）。等組長把正式登入接上，瀏覽器會自動帶登入的
+    // Cookie，devMemberId 就不會再被用到，下面這個變數、以及併進 sceneSrc 那一段
+    // 都要刪掉。
+    var devMemberId = Context.Request.Query["devMemberId"].ToString();
+    // 🚧🚧🚧 開發期暫時後門結束 🚧🚧🚧
+
+    // ⚠️ 這段不是開發後門、是正式功能，就算組長的登入系統接上了也不要刪：
+    // 查看「別人」的主頁時網址帶 ?id=5，代表「頁面上顯示的是會員 5」，
+    // 跟「你自己是誰」（devMemberId，將來是登入 Cookie）是分開的兩件事，
+    // 一樣要轉給 iframe，scene.dc.html 才能把它一起帶去打 /Members/ProfileData
+    // （見 MembersController.ProfileData(int? id) 跟 scene.dc.html 的 viewMember()）。
+    var viewId = Context.Request.Query["id"].ToString();
+    var openTicket = Context.Request.Query["openTicket"].ToString();
+    var ticketOnly = Context.Request.Query["ticketOnly"].ToString();
+
+    var sceneQs = "";
+    if (!string.IsNullOrEmpty(devMemberId)) sceneQs += "devMemberId=" + Uri.EscapeDataString(devMemberId);
+    if (!string.IsNullOrEmpty(viewId)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "id=" + Uri.EscapeDataString(viewId);
+    if (!string.IsNullOrEmpty(openTicket)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "openTicket=" + Uri.EscapeDataString(openTicket);
+    if (!string.IsNullOrEmpty(ticketOnly)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "ticketOnly=" + Uri.EscapeDataString(ticketOnly);
+    var sceneSrc = "~/members/scene.dc.html" + (sceneQs.Length > 0 ? "?" + sceneQs : "");
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lazy Travel</title>
+    <style>
+        html, body { margin: 0; height: 100%; background: #0f0c09; overflow: hidden; }
+        #sceneFit { position: fixed; inset: 0; display: grid; place-items: center; }
+        #sceneFrame {
+            width: 1440px; height: 900px; border: 0; display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="sceneFit">
+        <iframe id="sceneFrame" src="@Url.Content(sceneSrc)" title="會員個人頁面場景"></iframe>
+    </div>
+
+    <script>
+        // 等比縮放：設計稿 1440×900 永遠完整顯示，不裁切、不變形。
+        // 用 zoom 而不是 transform: scale ——
+        // transform: scale 是把已經算好版面的畫面「拉伸」成點陣圖再放大/縮小，
+        // 在螢幕不是剛好整數倍、或 Windows 顯示設定不是 100% 縮放時，很容易糊掉。
+        // zoom 會讓瀏覽器照縮放後的比例「重新排版＋重新繪製」iframe 內容，
+        // 文字和線條都是照新的解析度畫出來，不會糊。
+        // （zoom 是 Chrome / Edge / Safari 都支援的標準屬性，Firefox 126+ 也支援了）
+        (function () {
+            var W = 1440, H = 900, f = document.getElementById('sceneFrame');
+            function fit() {
+                var s = Math.min(window.innerWidth / W, window.innerHeight / H);
+                f.style.zoom = s;
+            }
+            window.addEventListener('resize', fit);
+            fit();
+        })();
+    </script>
+</body>
+</html>
+
+

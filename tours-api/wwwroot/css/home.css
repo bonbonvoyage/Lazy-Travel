@@ -678,3 +678,22 @@ html { background: #edf6f3; }
   .hero-row { flex-direction: column; height: auto; }
   .hero-row > .hero, .hero-row > .globe-panel { flex: none; width: 100%; height: 300px; }
 }
+
+/* Home page: full-width hero after removing the globe panel, and TravelGroups search reuse. */
+.home-page .home-hero-full {
+  height: 380px;
+}
+
+.home-page .home-hero-full::before {
+  display: none;
+}
+
+.home-page .home-hero-full .hero {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.home-page .home-groups-filter {
+  max-width: none;
+  margin: 0 0 2rem;
+}

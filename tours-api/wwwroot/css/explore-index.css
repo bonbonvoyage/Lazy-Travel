@@ -26,3 +26,13 @@
 @media (max-width: 760px) {
     .explore-page .card-cover { height: 210px; }
 }
+.explore-page .article-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0 2px;
+}
+
+.explore-page .article-card-stats form {
+    margin: 0;
+}

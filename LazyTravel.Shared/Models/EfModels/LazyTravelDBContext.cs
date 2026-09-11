@@ -51,6 +51,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 	public virtual DbSet<TravelGroup> TravelGroups { get; set; }
 	public virtual DbSet<TravelGroupBudget> TravelGroupBudgets { get; set; }
 	public virtual DbSet<TravelGroupImage> TravelGroupImages { get; set; }
+	public virtual DbSet<TravelGroupInteraction> TravelGroupInteractions { get; set; }
 	public virtual DbSet<TravelGroupItineraryItem> TravelGroupItineraryItems { get; set; }
 	public virtual DbSet<TravelGroupsLog> TravelGroupsLogs { get; set; }
 	public virtual DbSet<TravelSkill> TravelSkills { get; set; }
@@ -638,6 +639,25 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
 			entity.HasOne(d => d.UploadedByMember).WithMany(p => p.TravelGroupImages)
 				.HasForeignKey(d => d.UploadedByMemberId)
 				.HasConstraintName("FK_GroupImages_Member");
+		});
+
+		modelBuilder.Entity<TravelGroupInteraction>(entity =>
+		{
+			entity.HasKey(e => new { e.GroupId, e.MemberId, e.ActionType });
+			entity.Property(e => e.GroupId).HasColumnName("GroupID");
+			entity.Property(e => e.MemberId).HasColumnName("MemberID");
+			entity.Property(e => e.ActionType).HasConversion<byte>();
+			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())").HasColumnType("datetime2(0)");
+
+			entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupInteractions)
+				.HasForeignKey(d => d.GroupId)
+				.OnDelete(DeleteBehavior.ClientSetNull)
+				.HasConstraintName("FK_TravelGroupInteractions_TravelGroups");
+
+			entity.HasOne(d => d.Member).WithMany(p => p.TravelGroupInteractions)
+				.HasForeignKey(d => d.MemberId)
+				.OnDelete(DeleteBehavior.ClientSetNull)
+				.HasConstraintName("FK_TravelGroupInteractions_Members");
 		});
 
 		modelBuilder.Entity<TravelGroupItineraryItem>(entity =>

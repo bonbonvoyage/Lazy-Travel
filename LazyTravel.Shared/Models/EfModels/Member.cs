@@ -47,6 +47,7 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<Report> ReportReportedMembers { get; set; } = new List<Report>();
 	public virtual ICollection<Report> ReportReporters { get; set; } = new List<Report>();
 	public virtual ICollection<TravelGroupImage> TravelGroupImages { get; set; } = new List<TravelGroupImage>();
+	public virtual ICollection<TravelGroupInteraction> TravelGroupInteractions { get; set; } = new List<TravelGroupInteraction>();
 	public virtual ICollection<TravelGroup> TravelGroups { get; set; } = new List<TravelGroup>();
 	// 🌟 TravelGroupsLog.ChangeByMemberID 的外鍵已改指向 Employees，這個集合搬到 Employee.cs 去了。
 	public virtual ICollection<VlogPostImage> VlogPostImages { get; set; } = new List<VlogPostImage>();

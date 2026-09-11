@@ -2,9 +2,11 @@
 @{
     Layout = null;
     var post = Model.Post;
-    var country = Model.Source?.Country ?? post.Destination;
-    var region = Model.Source?.Region ?? "";
-    var people = Model.Source is null ? post.TravelPeople.ToLabel() : $"{Model.Source.People} 人";
+    var country = post.Destination;
+    var region = Model.Region;
+    var people = post.TravelPeople.ToLabel();
+    var startDate = post.TravelDate?.ToString("yyyy-MM-dd") ?? "";
+    var endDate = post.TravelDate?.AddDays(Math.Max(1, post.TravelDays) - 1).ToString("yyyy-MM-dd") ?? "";
     var days = Model.Nodes
         .GroupBy(n => n.DayNumber)
         .OrderBy(g => g.Key)
@@ -18,6 +20,8 @@
         .ToList();
     var visibleDays = Math.Max(4, Math.Max(post.TravelDays, days.Count));
     var cover = Model.Images.FirstOrDefault();
+    var viewerMemberId = Context.Request.Query["viewerMemberId"].ToString();
+    if (string.IsNullOrWhiteSpace(viewerMemberId) && post.Status == VlogPostStatus.Published) viewerMemberId = post.MemberId.ToString();
 }
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -28,6 +32,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/explore-edit.css" asp-append-version="true" />
 </head>
@@ -36,10 +41,10 @@
     @await Html.PartialAsync("_HomeSidebar", "Explore")
     <main class="main editor-main">
         <form id="article-antiforgery">@Html.AntiForgeryToken()</form>
-        <button class="editor-link-back" type="button" aria-label="返回上一頁" data-back-fallback="@(Model.Source is null ? Url.Action("Index", "Explore") : Url.Action("Details", "TravelGroups", new { id = Model.Source.GroupId }))">＜</button>
-        <div class="editor-shell" data-post-id="@post.PostId">
+        <button class="editor-link-back" type="button" aria-label="返回上一頁" data-back-fallback="@Url.Action("Index", "Explore")">＜</button>
+        <div class="editor-shell" data-post-id="@post.PostId" data-viewer-member-id="@viewerMemberId">
             <header class="editor-heading">
-                <h1>新增揪團文章</h1>
+                <h1>@(post.Status == VlogPostStatus.Published ? "編輯揪團文章" : "新增揪團文章")</h1>
             </header>
 
             <section class="editor-top-grid">
@@ -60,19 +65,15 @@
                     <div class="editor-info-layout">
                         <div class="trip-info">
                             <h3>行程資訊</h3>
-                            <div><span>◎ 國家</span><strong>@(string.IsNullOrWhiteSpace(country) ? "未提供" : country)</strong></div>
-                            <div><span>⌖ 地區</span><strong>@(string.IsNullOrWhiteSpace(region) ? "未提供" : region)</strong></div>
-                            <div><span>▦ 旅遊日期</span><strong>@Model.DateRangeText</strong></div>
-                            <div><span>♙ 總人數</span><strong>@people</strong></div>
-                        </div>
-                        <div class="article-settings">
-                            <div class="setting-block">
-                                <span>文章狀態</span>
-                                <div class="status-toggle" role="group" aria-label="文章狀態" data-status-toggle>
-                                    <button class="active" type="button" data-status-value="draft">草稿</button>
-                                    <button type="button" data-status-value="submit">發布</button>
-                                </div>
-                            </div>
+                            <label><span>◎ 國家</span><input id="articleCountry" type="text" value="@country" placeholder="例如：日本" maxlength="100" /></label>
+                            <label><span>⌖ 地區</span><input id="articleRegion" type="text" value="@region" placeholder="例如：關西、大阪" maxlength="100" /></label>
+                            <label><span>▦ 旅遊日期</span><span class="date-range-picker"><input id="articleStartDate" type="hidden" value="@startDate" /><input id="articleEndDate" type="hidden" value="@endDate" /><input id="articleDateRange" type="text" value="@(string.IsNullOrWhiteSpace(startDate) ? "" : $"{startDate} 至 {endDate}")" placeholder="選擇起訖日期" autocomplete="off" readonly /></span></label>
+                            <label><span>♙ 總人數</span><select id="articlePeople">
+                                @foreach (TravelGroupSize size in Enum.GetValues<TravelGroupSize>())
+                                {
+                                    <option value="@size" selected="@(post.TravelPeople == size)">@size.ToLabel()</option>
+                                }
+                            </select></label>
                         </div>
                     </div>
                 </div>
@@ -102,7 +103,7 @@
                             <button class="support-upload upload-picker" type="button" data-file-target="supportImagesInput">
                                 <span>＋</span>
                                 <strong>新增圖片</strong>
-                                <small>最多可上傳 8 張</small>
+                                <small>選填</small>
                             </button>
                         </div>
                     </div>
@@ -118,7 +119,7 @@
                             }
                         </div>
                         <div class="support-strip" aria-label="補充照片縮圖預覽" data-support-strip>
-                            @foreach (var image in Model.Images.Skip(1).Take(8))
+                            @foreach (var image in Model.Images.Skip(1))
                             {
                                 <button type="button" class="support-thumb"><img src="@image" alt="補充照片" /></button>
                             }
@@ -150,11 +151,15 @@
             </section>
         </div>
         <div class="editor-actions">
-            <button class="submit-article" type="button" data-action="save">▣ 儲存</button>
+            <button class="submit-article" type="button" data-action="submit">✈ 送出</button>
         </div>
     </main>
 </div>
 <script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/lib/flatpickr/flatpickr.min.js" asp-append-version="true"></script>
 <script src="~/js/explore-edit.js" asp-append-version="true"></script>
 </body>
 </html>
+
+
+

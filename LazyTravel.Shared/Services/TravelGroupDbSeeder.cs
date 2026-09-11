@@ -1,4 +1,5 @@
 using LazyTravel.Shared.Models.EfModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace LazyTravel.Shared.Services;
@@ -53,6 +54,7 @@ public static class TravelGroupDbSeeder
     {
         if (await context.TravelGroups.AnyAsync())
         {
+            await EnsureQuickTestMembersAsync(context);
             return;
         }
 
@@ -177,5 +179,243 @@ public static class TravelGroupDbSeeder
         }
 
         await context.SaveChangesAsync();
+        await EnsureQuickTestMembersAsync(context);
+    }
+
+    private static async Task EnsureQuickTestMembersAsync(LazyTravelDBContext context)
+    {
+        var now = DateTime.Now;
+        var outsider = await EnsureQuickTestMemberAsync(context,
+            email: "lt-test-outsider@lazytravel.local",
+            name: "測試旅人A・未加入",
+            avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+            bio: "快速測試用：未加入該揪團的普通會員，可測申請加入、收藏與一般檢視狀態。",
+            occupation: "自由旅人",
+            mbti: "INFP",
+            gender: 2,
+            birthDate: new DateTime(1998, 5, 12),
+            now: now);
+
+        var joined = await EnsureQuickTestMemberAsync(context,
+            email: "lt-test-member@lazytravel.local",
+            name: "測試旅人B・已加入",
+            avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+            bio: "快速測試用：已加入測試揪團的團員，可測退出揪團與團員檢視狀態。",
+            occupation: "前端工程師",
+            mbti: "ENFP",
+            gender: 1,
+            birthDate: new DateTime(1995, 9, 22),
+            now: now);
+
+        var owner = await EnsureQuickTestMemberAsync(context,
+            email: "lt-test-owner@lazytravel.local",
+            name: "測試旅人C・團長",
+            avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+            bio: "快速測試用：測試揪團的建立者，可測團長檢視與管理狀態。",
+            occupation: "行程規劃師",
+            mbti: "ENTJ",
+            gender: 2,
+            birthDate: new DateTime(1993, 2, 8),
+            now: now);
+
+        const string testGroupTitle = "快速測試：關西賞櫻身份測試團";
+        var group = await context.TravelGroups.FirstOrDefaultAsync(g => g.GroupTitle == testGroupTitle && !g.IsDelete);
+        if (group is null)
+        {
+            group = new TravelGroup
+            {
+                OwnerMemberId = owner.Id,
+                GroupTitle = testGroupTitle,
+                Description = "提供前台快速測試用：A 未加入、B 已加入、C 是團長。可用來檢查揪團詳細頁不同身份的按鈕與版面。",
+                StartDate = DateOnly.FromDateTime(now.AddDays(21)),
+                EndDate = DateOnly.FromDateTime(now.AddDays(28)),
+                MinPeople = 2,
+                MaxPeople = 6,
+                CurrentPeople = 2,
+                JoinRule = 1,
+                GroupStatus = 1,
+                IsPublic = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsDelete = false,
+                ReviewStatus = TravelGroupReviewStatus.Normal,
+                Country = "日本",
+                Region = "關西",
+            };
+            context.TravelGroups.Add(group);
+            await context.SaveChangesAsync();
+        }
+        else if (group.OwnerMemberId != owner.Id || group.CurrentPeople < 2)
+        {
+            group.OwnerMemberId = owner.Id;
+            group.CurrentPeople = Math.Max(group.CurrentPeople, 2);
+            group.UpdatedAt = now;
+            await context.SaveChangesAsync();
+        }
+
+        await EnsureQuickTestGroupMemberAsync(context, group.GroupId, owner.Id, memberRole: 1, now);
+        await EnsureQuickTestGroupMemberAsync(context, group.GroupId, joined.Id, memberRole: 0, now);
+
+        var outsiderMembership = await context.GroupMembers
+            .FirstOrDefaultAsync(m => m.GroupId == group.GroupId && m.MemberId == outsider.Id && !m.IsRemoved);
+        if (outsiderMembership is not null)
+        {
+            outsiderMembership.IsRemoved = true;
+            outsiderMembership.LeftAt = now;
+            outsiderMembership.RemovedAt = now;
+            outsiderMembership.RemovedByMemberId = owner.Id;
+            outsiderMembership.RemoveReason = "快速測試資料：保留此會員為未加入狀態";
+            await context.SaveChangesAsync();
+        }
+
+        if (!await context.TravelGroupImages.AnyAsync(i => i.GroupId == group.GroupId && i.IsCover && !i.IsDeleted))
+        {
+            context.TravelGroupImages.Add(new TravelGroupImage
+            {
+                GroupId = group.GroupId,
+                ImageUrl = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1200&q=80",
+                ImageType = 0,
+                AltText = testGroupTitle,
+                SortOrder = 0,
+                IsCover = true,
+                IsDeleted = false,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            await context.SaveChangesAsync();
+        }
+
+        if (!await context.TravelGroupItineraryItems.AnyAsync(i => i.GroupId == group.GroupId))
+        {
+            context.TravelGroupItineraryItems.AddRange(
+                new TravelGroupItineraryItem
+                {
+                    GroupId = group.GroupId,
+                    DayNumber = 1,
+                    SortOrder = 0,
+                    StartTime = new TimeOnly(10, 0),
+                    EndTime = new TimeOnly(12, 0),
+                    Title = "抵達大阪・心齋橋散步",
+                    LocationName = "大阪",
+                    Description = "團員集合後前往市區，下午用輕鬆散步確認行程節奏。",
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                },
+                new TravelGroupItineraryItem
+                {
+                    GroupId = group.GroupId,
+                    DayNumber = 2,
+                    SortOrder = 0,
+                    StartTime = new TimeOnly(9, 0),
+                    EndTime = new TimeOnly(17, 0),
+                    Title = "京都清水寺・祇園夜櫻",
+                    LocationName = "京都",
+                    Description = "測試用行程節點，方便詳細頁檢查資料對應。",
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                });
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task<Member> EnsureQuickTestMemberAsync(LazyTravelDBContext context, string email, string name,
+        string avatarUrl, string bio, string occupation, string mbti, byte gender, DateTime birthDate, DateTime now)
+    {
+        var member = await context.Users.FirstOrDefaultAsync(m => m.Email == email);
+        if (member is null)
+        {
+            member = new Member
+            {
+                UserName = email,
+                NormalizedUserName = email.ToUpperInvariant(),
+                Email = email,
+                NormalizedEmail = email.ToUpperInvariant(),
+                EmailConfirmed = true,
+                PhoneNumber = null,
+                PhoneNumberConfirmed = false,
+                TwoFactorEnabled = false,
+                LockoutEnd = null,
+                LockoutEnabled = true,
+                AccessFailedCount = 0,
+                Name = name,
+                LineId = null,
+                InstagramUrl = null,
+                FacebookUrl = null,
+                ContactBookVisibility = 0,
+                IsPrivateAccount = false,
+                AvatarUrl = avatarUrl,
+                BirthDate = birthDate,
+                Gender = gender,
+                Occupation = occupation,
+                Mbti = mbti,
+                Bio = bio,
+                Status = 1,
+                CreatedAt = now,
+                LastLoginAt = null,
+                LastLoginIp = null,
+                IsDelete = false,
+                SecurityStamp = Guid.NewGuid().ToString("N"),
+                ConcurrencyStamp = Guid.NewGuid().ToString("N"),
+            };
+            member.PasswordHash = new PasswordHasher<Member>().HashPassword(member, "Test1234!");
+            context.Users.Add(member);
+            await context.SaveChangesAsync();
+            return member;
+        }
+
+        member.UserName = email;
+        member.NormalizedUserName = email.ToUpperInvariant();
+        member.NormalizedEmail = email.ToUpperInvariant();
+        member.EmailConfirmed = true;
+        member.Name = name;
+        member.ContactBookVisibility = 0;
+        member.IsPrivateAccount = false;
+        member.AvatarUrl = avatarUrl;
+        member.BirthDate = birthDate;
+        member.Gender = gender;
+        member.Occupation = occupation;
+        member.Mbti = mbti;
+        member.Bio = bio;
+        member.Status = 1;
+        member.IsDelete = false;
+        if (string.IsNullOrWhiteSpace(member.SecurityStamp)) member.SecurityStamp = Guid.NewGuid().ToString("N");
+        if (string.IsNullOrWhiteSpace(member.ConcurrencyStamp)) member.ConcurrencyStamp = Guid.NewGuid().ToString("N");
+        if (string.IsNullOrWhiteSpace(member.PasswordHash)) member.PasswordHash = new PasswordHasher<Member>().HashPassword(member, "Test1234!");
+        await context.SaveChangesAsync();
+        return member;
+    }
+
+    private static async Task EnsureQuickTestGroupMemberAsync(LazyTravelDBContext context, int groupId, int memberId, byte memberRole, DateTime now)
+    {
+        var membership = await context.GroupMembers.FirstOrDefaultAsync(m => m.GroupId == groupId && m.MemberId == memberId);
+        if (membership is null)
+        {
+            context.GroupMembers.Add(new GroupMember
+            {
+                GroupId = groupId,
+                MemberId = memberId,
+                MemberRole = memberRole,
+                JoinedAt = now,
+                LeftAt = null,
+                IsRemoved = false,
+                RemovedByMemberId = null,
+                RemovedAt = null,
+                RemoveReason = null!,
+                CreatedAt = now,
+            });
+            await context.SaveChangesAsync();
+            return;
+        }
+
+        membership.MemberRole = memberRole;
+        membership.IsRemoved = false;
+        membership.LeftAt = null;
+        membership.RemovedByMemberId = null;
+        membership.RemovedAt = null;
+        membership.RemoveReason = null!;
+        await context.SaveChangesAsync();
     }
 }
+
+
+

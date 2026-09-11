@@ -175,33 +175,112 @@
 
 .editor-info-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 180px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
     margin-top: 12px;
 }
 
 .trip-info {
-    padding-right: 18px;
-    border-right: 1px solid #edf1ef;
+    padding-right: 0;
+    border-right: 0;
 }
 
-.trip-info > div {
+.trip-info > div,
+.trip-info > label {
     display: grid;
     grid-template-columns: 120px minmax(0, 1fr);
     gap: 12px;
+    align-items: center;
     padding: 5px 0;
     border-bottom: 1px dashed #e9efec;
     color: #65756e;
     font-size: 14px;
 }
 
-.trip-info > div:last-child {
+.trip-info > div:last-child,
+.trip-info > label:last-child {
     border-bottom: 0;
 }
 
 .trip-info strong {
     color: #263a32;
     font-weight: 600;
+}
+
+.trip-info input,
+.trip-info select {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: rgba(248, 251, 249, .92);
+    color: #263a32;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.trip-info input:focus,
+.trip-info select:focus {
+    border-color: rgba(35, 152, 102, .42);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(35, 152, 102, .08);
+}
+
+.date-range-picker {
+    position: relative;
+    display: block;
+}
+
+.date-range-picker::before {
+    content: "▦";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    z-index: 1;
+    transform: translateY(-50%);
+    color: #4d8f76;
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.trip-info .date-range-picker input[type="text"] {
+    cursor: pointer;
+    border-color: #dfe8e4;
+    background: #fff;
+    padding-left: 36px;
+    color: #263a32;
+}
+
+.trip-info .date-range-picker input[type="text"]::placeholder {
+    color: #92a09a;
+}
+
+.flatpickr-calendar {
+    border: 1px solid rgba(255, 255, 255, .85);
+    border-radius: 18px;
+    box-shadow: 0 18px 36px rgba(52, 79, 72, .16);
+    overflow: hidden;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    border-color: #378e5c;
+    background: #378e5c;
+}
+
+.flatpickr-day.inRange {
+    border-color: rgba(55, 142, 92, .16);
+    background: rgba(55, 142, 92, .14);
+    box-shadow: -5px 0 0 rgba(55, 142, 92, .14), 5px 0 0 rgba(55, 142, 92, .14);
 }
 
 .article-settings {
@@ -552,6 +631,65 @@
     background: rgba(138, 44, 44, .94);
 }
 
+.article-edit-cancel-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(32, 42, 40, .36);
+    backdrop-filter: blur(10px);
+}
+
+.article-edit-cancel-card {
+    width: min(92vw, 430px);
+    border: 1px solid rgba(220, 205, 178, .72);
+    border-radius: 18px;
+    background: radial-gradient(circle at 8% 12%, rgba(216,244,237,.82), transparent 34%), radial-gradient(circle at 86% 2%, rgba(255,226,214,.55), transparent 34%), linear-gradient(135deg, rgba(255,255,255,.97), rgba(242,249,247,.92) 52%, rgba(255,247,241,.9));
+    box-shadow: 0 24px 70px rgba(76,101,94,.2);
+    padding: 28px;
+    color: #22312f;
+    text-align: center;
+}
+
+.article-edit-cancel-card h2 {
+    margin: 0;
+    color: #263a32;
+    font-family: "Noto Serif TC", serif;
+    font-size: 25px;
+}
+
+.article-edit-cancel-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.article-edit-cancel-actions button {
+    min-width: 92px;
+    min-height: 42px;
+    border-radius: 12px;
+    padding: 0 18px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.article-edit-cancel-secondary {
+    border: 1px solid rgba(160,142,111,.42);
+    background: rgba(255,255,255,.72);
+    color: #6a5b44;
+}
+
+.article-edit-cancel-primary {
+    border: 0;
+    background: linear-gradient(135deg, #4aae75, #26935e);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(55,142,92,.2);
+}
+
 @media (max-width: 1120px) {
     .editor-top-grid,
     .editor-info-layout {
@@ -597,7 +735,8 @@
         grid-template-columns: 1fr;
     }
 
-    .trip-info > div {
+    .trip-info > div,
+    .trip-info > label {
         grid-template-columns: 98px minmax(0, 1fr);
     }
 

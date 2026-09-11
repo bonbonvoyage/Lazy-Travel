@@ -3,7 +3,6 @@ namespace LazyTravel.ViewModels;
 public class ExploreDetailsViewModel
 {
     public VlogPost Post { get; set; } = null!;
-    public VlogPostRoomExport? Source { get; set; }
     public List<ItineraryNode> Nodes { get; set; } = new();
     public List<string> Images { get; set; } = new();
     public int PublishedCount { get; set; }
@@ -13,5 +12,6 @@ public class ExploreDetailsViewModel
     public bool IsFavorited { get; set; }
     public bool IsDraft => Post.Status == VlogPostStatus.Draft;
     public string Highlight => ArticleContentParser.Highlight(Post.Content);
+    public string Region => ArticleContentParser.Region(Post.Content);
     public string PlainContent => ArticleContentParser.Intro(Post.Content);
 }

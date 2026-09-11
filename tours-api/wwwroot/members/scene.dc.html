@@ -1,0 +1,2223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="./image-slot.js"></script>
+<style>
+  body { margin: 0; background: #14100d; font-family: "Noto Sans TC", system-ui, sans-serif; }
+  a { color: #b4622f; text-decoration: none; }
+  a:hover { color: #8f4a20; }
+  input, textarea, button { font-family: inherit; }
+  input:focus, textarea:focus { outline: 1px solid #b4622f; }
+  @keyframes sealDrop {
+    0%   { transform: translateY(-300px) scale(2.5) rotate(-26deg); opacity: 0; }
+    38%  { opacity: 1; }
+    58%  { transform: translateY(0) scale(1.1) rotate(-7deg); opacity: 1; }
+    68%  { transform: translateY(-6px) scale(.93) rotate(-7deg); }
+    80%  { transform: translateY(0) scale(1.04) rotate(-7deg); }
+    100% { transform: translateY(0) scale(1) rotate(-7deg); opacity: 1; }
+  }
+  @keyframes mqLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes mqRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  @keyframes sealRing {
+    0%, 54% { opacity: 0; transform: scale(.35); }
+    60%     { opacity: .7; transform: scale(.8); }
+    100%    { opacity: 0; transform: scale(2.1); }
+  }
+  @keyframes sealDropB {
+    0%   { transform: translateY(-300px) scale(2.5) rotate(-26deg); opacity: 0; }
+    38%  { opacity: 1; }
+    58%  { transform: translateY(0) scale(1.1) rotate(-7deg); opacity: 1; }
+    68%  { transform: translateY(-6px) scale(.93) rotate(-7deg); }
+    80%  { transform: translateY(0) scale(1.04) rotate(-7deg); }
+    100% { transform: translateY(0) scale(1) rotate(-7deg); opacity: 1; }
+  }
+  @keyframes sealRingB {
+    0%, 54% { opacity: 0; transform: scale(.35); }
+    60%     { opacity: .7; transform: scale(.8); }
+    100%    { opacity: 0; transform: scale(2.1); }
+  }
+  @keyframes cloudDrift { from { transform: translateX(-70px); } to { transform: translateX(340px); } }
+  @keyframes planeFly { 0% { transform: translate(-90px,18px); } 100% { transform: translate(360px,-26px); } }
+  @keyframes twinkle { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+  @keyframes shootStar {
+    0%, 68% { opacity: 0; transform: translate(0,0) scale(.7); }
+    72%     { opacity: 1; }
+    100%    { opacity: 0; transform: translate(180px,120px) scale(1); }
+  }
+</style>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#b7a795"/><rect x="30" y="30" width="40" height="40" rx="3" fill="#fffdf7"/><text x="50" y="58" font-size="22" text-anchor="middle" fill="#b4622f" font-family="serif">旅</text></svg></template>
+</helmet>
+
+<div style="position:relative;width:1440px;height:900px;overflow:hidden;background:#0f0c09;perspective:1500px;perspective-origin:50% 40%;font-family:'Noto Sans TC',sans-serif;color:#2f2a24;user-select:none">
+
+  <!-- 鏡頭（左右轉視角） -->
+  <div style="position:absolute;inset:0;perspective:1500px;perspective-origin:50% 40%">
+
+  <!-- 牆（薄荷青） -->
+  <div style="position:absolute;left:-820px;top:0;width:2260px;height:272px;background:linear-gradient(180deg,#bcdadc 0%,#cfe8e7 44%,#a6c6c7 100%)"></div>
+  <div style="position:absolute;left:-820px;top:0;width:2260px;height:272px;background-image:repeating-linear-gradient(92deg,rgba(0,0,0,0.035) 0 1px,rgba(255,255,255,0.02) 1px 4px);opacity:.7"></div>
+  <div style="position:absolute;left:-820px;top:0;width:2260px;height:272px;pointer-events:none;background:{{ wallBloom }}"></div>
+
+  <!-- 窗（視角只看見下半部） -->
+  <div style="position:absolute;left:352px;top:-206px;width:702px;height:412px">
+    <div style="position:absolute;inset:0;border-radius:6px 6px 3px 3px;background:#4b3524;box-shadow:0 16px 34px rgba(24,15,8,0.42),inset 0 2px 0 rgba(255,255,255,0.12)"></div>
+    <div style="position:absolute;left:16px;top:16px;right:16px;bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;background:#3d2a1c">
+      <div style="position:relative;overflow:hidden;background:{{ glassStyle }}">
+        <sc-if value="{{ isDay }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:30px;top:188px;width:62px;height:62px;border-radius:50%;background:radial-gradient(circle,#fffaea 26%,#ffdf85 58%,rgba(255,214,110,0) 72%);box-shadow:0 0 46px rgba(255,222,146,.9)"></div>
+            <div style="position:absolute;left:0;top:236px;width:100%;height:40px;animation:cloudDrift 46s linear infinite">
+              <div style="position:absolute;left:0;top:14px;width:78px;height:16px;border-radius:12px;background:rgba(255,255,255,.82)"></div>
+              <div style="position:absolute;left:16px;top:4px;width:30px;height:24px;border-radius:50%;background:rgba(255,255,255,.86)"></div>
+              <div style="position:absolute;left:42px;top:8px;width:22px;height:20px;border-radius:50%;background:rgba(255,255,255,.8)"></div>
+            </div>
+            <div style="position:absolute;left:0;top:300px;width:100%;height:30px;animation:cloudDrift 72s linear infinite;animation-delay:-24s">
+              <div style="position:absolute;left:0;top:10px;width:56px;height:12px;border-radius:9px;background:rgba(255,255,255,.6)"></div>
+              <div style="position:absolute;left:12px;top:2px;width:22px;height:18px;border-radius:50%;background:rgba(255,255,255,.64)"></div>
+            </div>
+            <div style="position:absolute;left:120px;top:206px;width:150px;height:36px;animation:planeFly 26s linear infinite">
+              <div style="position:absolute;left:0;top:9px;width:52px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.75))"></div>
+              <div style="position:absolute;left:50px;top:1px;font-size:14px;line-height:1;color:#4b4033;transform:rotate(-30deg)">✈</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isNight }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:44px;top:198px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 3.2s ease-in-out infinite"></div>
+            <div style="position:absolute;left:110px;top:186px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 2.4s ease-in-out infinite;animation-delay:-.8s"></div>
+            <div style="position:absolute;left:180px;top:214px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 4s ease-in-out infinite;animation-delay:-1.6s"></div>
+            <div style="position:absolute;left:78px;top:262px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 2.8s ease-in-out infinite;animation-delay:-2.2s"></div>
+            <div style="position:absolute;left:236px;top:288px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3.6s ease-in-out infinite;animation-delay:-1.1s"></div>
+            <div style="position:absolute;left:150px;top:322px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 3s ease-in-out infinite;animation-delay:-.4s"></div>
+            <div style="position:absolute;left:34px;top:196px;width:64px;height:2px;transform:rotate(34deg);transform-origin:0 50%;animation:shootStar 9s linear infinite;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95))"></div>
+            <div style="position:absolute;left:120px;top:210px;width:150px;height:36px;animation:planeFly 30s linear infinite">
+              <div style="position:absolute;left:50px;top:1px;font-size:13px;line-height:1;color:#d9cdbb;transform:rotate(-30deg)">✈</div>
+              <div style="position:absolute;left:47px;top:13px;width:5px;height:5px;border-radius:50%;background:#ff5a4a;animation:twinkle 1.4s steps(1,end) infinite"></div>
+            </div>
+          </div>
+        </sc-if>
+        <div style="position:absolute;left:0;right:0;top:56%;height:1px;background:rgba(255,255,255,0.16)"></div>
+      </div>
+      <div style="position:relative;overflow:hidden;background:{{ glassStyle }}">
+        <sc-if value="{{ isDay }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:52px;top:196px;width:262px;height:140px;opacity:.34;filter:blur(1.6px);transform:rotate(9deg);mask-image:linear-gradient(78deg,rgba(0,0,0,.5) 8%,#000 38%,rgba(0,0,0,.55) 74%,rgba(0,0,0,0) 96%);-webkit-mask-image:linear-gradient(78deg,rgba(0,0,0,.5) 8%,#000 38%,rgba(0,0,0,.55) 74%,rgba(0,0,0,0) 96%);background:radial-gradient(circle at 50% 100%,rgba(0,0,0,0) 80px,#a86fd0 80px 85px,#6a8fe0 85px 90px,#5fc0b2 90px 95px,#f0dd78 95px 100px,#eda247 100px 105px,#df6357 105px 110px,rgba(0,0,0,0) 110px)"></div>
+            <div style="position:absolute;left:0;top:262px;width:100%;height:40px;animation:cloudDrift 58s linear infinite;animation-delay:-14s">
+              <div style="position:absolute;left:0;top:12px;width:92px;height:18px;border-radius:12px;background:rgba(255,255,255,.8)"></div>
+              <div style="position:absolute;left:20px;top:0;width:34px;height:28px;border-radius:50%;background:rgba(255,255,255,.86)"></div>
+              <div style="position:absolute;left:52px;top:6px;width:26px;height:22px;border-radius:50%;background:rgba(255,255,255,.78)"></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isNight }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;left:60px;top:224px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3.4s ease-in-out infinite"></div>
+            <div style="position:absolute;left:128px;top:196px;width:4px;height:4px;border-radius:50%;background:#fff;animation:twinkle 2.6s ease-in-out infinite;animation-delay:-1.3s"></div>
+            <div style="position:absolute;left:96px;top:300px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3.8s ease-in-out infinite;animation-delay:-2.4s"></div>
+            <div style="position:absolute;left:212px;top:318px;width:3px;height:3px;border-radius:50%;background:#fff;animation:twinkle 3s ease-in-out infinite;animation-delay:-.6s"></div>
+          </div>
+        </sc-if>
+        <div style="position:absolute;left:0;right:0;top:56%;height:1px;background:rgba(255,255,255,0.16)"></div>
+        <div style="position:absolute;right:40px;top:192px;width:52px;height:52px;border-radius:50%;background:{{ moonStyle }}"></div>
+      </div>
+    </div>
+    <div style="position:absolute;left:-22px;right:-22px;bottom:-16px;height:22px;border-radius:3px;background:linear-gradient(180deg,#e0cdb4,#a98d6e);box-shadow:0 12px 22px rgba(28,17,8,0.45)"></div>
+  </div>
+
+  <!-- 布告欄（窗左側牆面）：便利貼 = 站內頁籤 -->
+  <div style="position:absolute;left:74px;top:26px;width:252px;height:222px;z-index:3">
+    <div style="position:absolute;inset:0;border-radius:4px;background:linear-gradient(180deg,#6b4a2e,#4d331e);box-shadow:0 14px 28px rgba(24,15,8,0.44),inset 0 1px 0 rgba(255,255,255,0.14)"></div>
+    <div style="position:absolute;left:13px;top:13px;right:13px;bottom:13px;border-radius:2px;background:#c39a63;background-image:radial-gradient(rgba(90,58,26,0.26) 1px,transparent 1.4px),radial-gradient(rgba(255,236,200,0.22) 1px,transparent 1.4px);background-size:7px 7px,11px 11px;background-position:0 0,4px 5px;box-shadow:inset 0 3px 10px rgba(70,42,16,0.4)"></div>
+    <div style="position:absolute;left:20px;top:19px;font-size:11px;letter-spacing:3px;color:rgba(74,46,20,0.6);font-family:'Noto Serif TC',serif">去哪裡</div>
+    <sc-for list="{{ boardNotes }}" as="n" hint-placeholder-count="3">
+      <div onClick="{{ n.onClick }}" title="{{ n.title }}" style="position:absolute;left:{{ n.x }};top:{{ n.y }};width:78px;height:80px;cursor:pointer;transform:rotate({{ n.rot }});transition:transform .24s cubic-bezier(.34,1.3,.5,1)" style-hover="transform:rotate(0deg) translateY(-5px) scale(1.07)">
+        <div style="position:absolute;left:2px;right:0;top:3px;bottom:-2px;background:rgba(52,30,8,0.3);filter:blur(5px);clip-path:polygon(1% 2%,99% 0,100% 98%,2% 100%)"></div>
+        <div style="position:absolute;inset:0;background:{{ n.bg }};clip-path:polygon(0.8% 1.8%,99.2% 0,100% 98.2%,1.6% 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,0.5)">
+          <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(96deg,rgba(255,255,255,0.14) 0 1px,rgba(0,0,0,0.012) 1px 3px),repeating-linear-gradient(4deg,rgba(0,0,0,0.02) 0 1px,rgba(255,255,255,0.05) 1px 4px);opacity:.9"></div>
+          <div style="position:absolute;left:0;right:0;top:0;height:15px;background:linear-gradient(180deg,rgba(255,255,255,0.5),rgba(255,255,255,0))"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:22px;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(90,58,18,0.14))"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:7px;font-size:17px;letter-spacing:2px;color:{{ n.fg }};font-family:'Noto Serif TC',serif;transform:rotate(-1.2deg);text-shadow:0 1px 0 rgba(255,255,255,0.45)">{{ n.label }}</div>
+        </div>
+        <div style="position:absolute;right:0;bottom:0;width:20px;height:20px;clip-path:polygon(100% 0,100% 100%,0 100%);background:linear-gradient(315deg,#fffdf6 42%,rgba(120,88,40,0.28) 46%,rgba(120,88,40,0.06));box-shadow:-2px -2px 5px rgba(70,44,14,0.22)"></div>
+        <div style="position:absolute;left:50%;top:2px;margin-left:-5px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff6f2,#c0402f 58%,#6d1f16);box-shadow:0 3px 4px rgba(40,20,6,0.45),inset 0 -1px 1px rgba(0,0,0,0.3)"></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- 窗右側牆面：掛牌（攤平閱讀 / 登入登出） -->
+  <div style="position:absolute;left:1146px;top:58px;width:224px;height:206px;z-index:3">
+    <div style="position:absolute;left:0;top:0;width:224px;height:15px;border-radius:3px;background:linear-gradient(180deg,#7a5636,#4e3520);box-shadow:0 6px 14px rgba(24,15,8,0.4),inset 0 1px 0 rgba(255,255,255,0.16)"></div>
+    <sc-for list="{{ wallTags }}" as="t" hint-placeholder-count="2">
+      <div onClick="{{ t.onClick }}" style="position:absolute;left:{{ t.x }};top:15px;width:96px;cursor:pointer;transform-origin:50% 0;transform:rotate({{ t.rot }});transition:transform .28s" style-hover="transform:rotate(0deg)">
+        <div style="width:2px;height:{{ t.rope }};margin:0 auto;background:linear-gradient(180deg,#8d7350,#b39a72)"></div>
+        <div style="position:relative;padding:11px 8px 12px;border-radius:5px;text-align:center;background:linear-gradient(160deg,#fdf6e6,#e6d6ba);box-shadow:0 8px 16px rgba(30,18,8,0.34),inset 0 1px 0 rgba(255,255,255,0.7)">
+          <div style="position:absolute;left:50%;top:5px;margin-left:-5px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#fff0c8,#b8903f 60%,#6f5320)"></div>
+          <div style="margin-top:9px;font-size:10px;letter-spacing:2px;color:#a08a68">{{ t.hint }}</div>
+          <div style="margin-top:4px;font-size:14px;letter-spacing:2px;color:#6a4a2a;font-family:'Noto Serif TC',serif">{{ t.label }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- 桌面 -->
+  <div style="position:absolute;left:-460px;top:262px;width:2360px;height:1500px;transform-origin:50% 0%;transform:rotateX(64deg);background:#eae4db;background-image:repeating-linear-gradient(89.4deg,rgba(96,63,33,0.13) 0 2px,rgba(255,240,214,0.09) 2px 6px,rgba(96,63,33,0.07) 6px 11px,rgba(255,240,214,0.045) 11px 19px,rgba(96,63,33,0.10) 19px 23px,rgba(255,240,214,0.03) 23px 34px),repeating-linear-gradient(90.7deg,rgba(80,50,24,0.07) 0 5px,rgba(255,244,222,0.05) 5px 14px,rgba(80,50,24,0.05) 14px 27px),repeating-linear-gradient(90deg,rgba(0,0,0,0) 0 268px,rgba(84,54,26,0.34) 268px 273px),linear-gradient(180deg,#d7cfc3 0%,#efe9e0 38%,#f7f3ed 100%)"></div>
+  <div style="position:absolute;left:-820px;top:250px;width:2260px;height:70px;background:linear-gradient(180deg,rgba(64,58,48,0.34),rgba(64,58,48,0))"></div>
+  <div style="position:absolute;left:-820px;top:262px;width:2260px;height:638px;pointer-events:none;background:{{ lightPool }}"></div>
+
+  <!-- 旅遊手帳 -->
+  <div style="position:absolute;left:132px;top:266px;width:900px;height:600px;z-index:6;transform-origin:50% 100%;transition:transform .55s cubic-bezier(.3,.85,.2,1);transform:{{ journalXf }};filter:drop-shadow(0 34px 40px rgba(18,10,4,0.55))">
+    <div style="position:absolute;left:-12px;top:-10px;right:-12px;bottom:-14px;border-radius:8px;background:linear-gradient(160deg,#8d5a33,#6b4022)"></div>
+    <div style="position:absolute;inset:0;display:flex;background:#f4ecdd;border-radius:4px;overflow:hidden;box-shadow:inset 0 0 60px rgba(120,92,55,0.22)">
+
+      <!-- 左頁 -->
+      <div style="position:relative;width:450px;height:600px;padding:26px 24px;box-sizing:border-box;background:linear-gradient(90deg,#f7f1e4,#efe6d4)">
+        <sc-if value="{{ isSpreadOne }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:20px">
+            <div style="width:132px;flex:none">
+              <div style="width:132px;height:173px;box-sizing:border-box;border:1px solid #cdbfa6;padding:9px 9px 22px;background:#fffdf7;box-shadow:0 3px 8px rgba(90,66,36,0.18)">
+                <image-slot id="member-avatar" src="{{ avatarSrc }}" shape="rect" placeholder="點一下上傳大頭貼" style="width:112px;height:142px"></image-slot>
+              </div>
+              <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+                <div style="margin-top:6px;font-size:11px;line-height:1.6;color:#a2917a;text-align:center">點圖框選檔，或直接拖圖進來</div>
+              </sc-if>
+              <sc-if value="{{ showRelationBtns }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+                  <sc-if value="{{ notBlocked }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <div onClick="{{ toggleFollow }}" style="cursor:pointer;text-align:center;font-size:12.5px;padding:8px 10px;border:1px solid #b4622f;color:#b4622f;background:#fdf6e9" style-hover="background:#b4622f;color:#fff">{{ followLabel }}</div>
+                      <div onClick="{{ requestFriend }}" style="cursor:pointer;text-align:center;font-size:12.5px;padding:8px 10px;border:1px solid #6b5a45;color:#4b4033;background:#fdf6e9" style-hover="background:#4b4033;color:#fdf6e9">{{ friendLabel }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;justify-content:center;align-items:center;gap:7px;font-size:11px;color:#8d7c64">
+                    <div onClick="{{ toggleBlock }}" style="cursor:pointer;text-decoration:underline" style-hover="color:#a33227">{{ blockLabel }}</div>
+                    <div style="color:#cdbda2">|</div>
+                    <div onClick="{{ openReport }}" style="cursor:pointer;text-decoration:underline" style-hover="color:#a33227">檢舉</div>
+                  </div>
+                  <sc-if value="{{ reportSent }}" hint-placeholder-val="{{ false }}">
+                    <div style="text-align:center;font-size:11px;color:#2f7d6b">檢舉已送出</div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px">
+                <div style="font-family:'Noto Serif TC',serif;font-size:30px;font-weight:600;letter-spacing:.5px">{{ profile.nickname }}</div>
+                <div style="font-size:12px;padding:3px 9px;border-radius:3px;color:#fff;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;background:{{ mbtiColor }}">{{ profile.mbti }}</div>
+                <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ false }}">
+                  <div onClick="{{ openEdit }}" title="編輯基本資料" style="cursor:pointer;font-size:14px;color:#a08d72;padding:2px 5px;border:1px solid #d8c9ae;border-radius:3px;line-height:1" style-hover="color:#b4622f;border-color:#b4622f">✎</div>
+                </sc-if>
+              </div>
+              <div style="margin-top:5px;font-size:11px;color:#9b8a71;letter-spacing:1px">{{ mbtiGroup }}</div>
+              <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:11px 14px">
+                <sc-for list="{{ fieldRows }}" as="f" hint-placeholder-count="6">
+                  <div style="border-bottom:1px dotted #cdbda2;padding-bottom:5px">
+                    <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">{{ f.label }}</div>
+                    <div style="margin-top:2px;font-size:15px;color:#453c31">{{ f.value }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;border-top:1px solid #2f2a24;border-bottom:1px solid #2f2a24;padding:11px 0;display:grid;grid-template-columns:1fr 1fr 1fr">
+            <div style="text-align:center">
+              <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">信用評分</div>
+              <div style="margin-top:4px;font-size:18px;color:#2f7d6b;font-family:'IBM Plex Mono',monospace">{{ stats.credit }}</div>
+            </div>
+            <div style="text-align:center;border-left:1px dotted #cdbda2;border-right:1px dotted #cdbda2">
+              <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">揪團次數</div>
+              <div style="margin-top:4px;font-size:18px;color:#453c31;font-family:'IBM Plex Mono',monospace">{{ stats.groups }}</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10.5px;color:#9b8a71;letter-spacing:2px">旅遊次數</div>
+              <div style="margin-top:4px;font-size:18px;color:#453c31;font-family:'IBM Plex Mono',monospace">{{ stats.trips }}</div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">自我介紹</div>
+              <sc-if value="{{ bioEditable }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ editBio }}" title="修改自介" style="cursor:pointer;font-size:12px;color:#b0a08a;padding:1px 4px;border:1px solid #d8c9ae;border-radius:3px;line-height:1.3" style-hover="color:#b4622f;border-color:#b4622f">✎</div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ bioEditing }}" hint-placeholder-val="{{ false }}">
+              <textarea value="{{ profile.bio }}" onChange="{{ changeBio }}" style="width:100%;height:104px;margin-top:8px;font-size:14.5px;line-height:1.85;border:1px solid #b4622f;background:#fff8e9;padding:8px;box-sizing:border-box;resize:none;color:#453c31"></textarea>
+              <div style="margin-top:8px;display:flex;justify-content:flex-end">
+                <div onClick="{{ saveBio }}" style="cursor:pointer;font-size:12px;padding:7px 16px;background:#b4622f;color:#fff8ec" style-hover="background:#95491d">確認</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ bioReading }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:8px;font-size:14.5px;line-height:1.9;color:#4e4437;text-wrap:pretty">{{ profile.bio }}</div>
+            </sc-if>
+          </div>
+
+        </sc-if>
+
+        <sc-if value="{{ isSpreadTwo }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:6px;border-bottom:1px solid #d8c9ae;padding-bottom:10px">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+              <div onClick="{{ t.onClick }}" style="cursor:pointer;font-size:13px;padding:6px 11px;border-radius:12px 12px 3px 3px;border:1px solid #cbb99a;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}<span style="font-family:'IBM Plex Mono',monospace;opacity:.6;margin-left:5px">{{ t.count }}</span></div>
+            </sc-for>
+          </div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;height:462px;overflow:auto">
+            <sc-for list="{{ leftList }}" as="p" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 11px;background:#fffaee;border:1px solid #e3d6bd">
+                <div style="width:42px;height:42px;flex:none;border-radius:2px;background:#d8c2a4;color:#5b4630;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif TC',serif;font-size:19px">{{ p.initial }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:15px;font-weight:500">{{ p.name }}</div>
+                  <div style="margin-top:2px;font-size:11.5px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">{{ p.meta }}</div>
+                </div>
+                <sc-for list="{{ p.actions }}" as="a" hint-placeholder-count="1">
+                  <div onClick="{{ a.onClick }}" style="cursor:pointer;font-size:12px;padding:5px 11px;border:1px solid #b09a78;color:#5b4c39;background:#f6eddb" style-hover="border-color:#b4622f;color:#b4622f">{{ a.label }}</div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;color:#a2917a;padding:24px 4px;text-align:center">{{ listEmptyText }}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSpreadTwo }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ prevPage }}" title="上一頁" style="position:absolute;left:0;bottom:0;width:74px;height:74px;cursor:pointer;background:linear-gradient(45deg,#e5d8bf 48%,rgba(0,0,0,0) 50%)" style-hover="background:linear-gradient(45deg,#cbb99a 48%,rgba(0,0,0,0) 50%)">
+            <div style="position:absolute;left:11px;bottom:10px;font-size:11px;color:#6b5b45;font-family:'IBM Plex Mono',monospace">‹ 1</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- 書溝 -->
+      <div style="width:0;position:relative"><div style="position:absolute;left:-13px;top:0;width:26px;height:600px;background:linear-gradient(90deg,rgba(102,74,38,0),rgba(102,74,38,0.28) 46%,rgba(102,74,38,0.3) 54%,rgba(102,74,38,0))"></div></div>
+
+      <!-- 右頁 -->
+      <div style="position:relative;width:450px;height:600px;padding:26px 24px;box-sizing:border-box;background:linear-gradient(90deg,#ece2ce,#f7f1e4)">
+        <sc-if value="{{ isSpreadOne }}" hint-placeholder-val="{{ true }}">
+          <div style="position:relative;height:40px">
+            <div onClick="{{ stampSeal }}" title="信任徽章 · 已驗證旅伴（點擊重新蓋章）" style="position:absolute;right:2px;top:-6px;width:78px;height:78px;cursor:pointer;transform:rotate(-7deg);animation:{{ sealAnim }};z-index:7">
+              <div style="position:absolute;inset:-12px;border-radius:50%;border:2px solid #8e2b26;opacity:0;animation:{{ sealRingAnim }}"></div>
+              <div style="position:absolute;inset:0;border-radius:48% 52% 51% 49%/53% 47% 53% 47%;background:radial-gradient(circle at 33% 26%,#c4483c,#8f2620 54%,#5c1511);box-shadow:0 4px 9px rgba(52,12,8,.48),inset 0 0 14px rgba(255,196,176,.3),inset 0 -4px 7px rgba(0,0,0,.4)">
+                <div style="position:absolute;inset:8px;border-radius:50%;border:1px dashed rgba(255,214,196,.42)"></div>
+                <div style="position:absolute;inset:14px;border-radius:50%;border:1px solid rgba(90,18,14,.55);display:flex;align-items:center;justify-content:center">
+                  <div style="font-family:'Noto Serif TC',serif;font-size:23px;font-weight:700;color:#f0c3ae;text-shadow:0 1px 0 rgba(70,14,10,.85),0 -1px 0 rgba(255,205,185,.35)">旅</div>
+                </div>
+              </div>
+              <div style="position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);white-space:nowrap;font-size:9px;letter-spacing:2px;color:#8f7a5e;font-family:'IBM Plex Mono',monospace">VERIFIED</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;align-items:center;gap:8px">
+            <div style="font-size:12px;color:#9b8a71;letter-spacing:2px">旅行技能標籤</div>
+            <div style="font-size:11px;color:#bbab92;font-family:'IBM Plex Mono',monospace">{{ tagCountText }}</div>
+            <div onClick="{{ openSkills }}" title="{{ skillBtnTitle }}" style="cursor:pointer;font-size:12px;color:#b0a08a;padding:1px 4px;border:1px solid #d8c9ae;border-radius:3px;line-height:1.3" style-hover="color:#b4622f;border-color:#b4622f">{{ skillBtnIcon }}</div>
+          </div>
+          <div onClick="{{ openSkills }}" onMouseEnter="{{ pauseMarquee }}" onMouseLeave="{{ resumeMarquee }}" title="點擊查看全部技能標籤" style="margin-top:11px;cursor:pointer;display:flex;flex-direction:column;gap:8px;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)">
+            <div style="display:flex;width:max-content;gap:8px;animation:mqLeft 30s linear infinite;animation-play-state:{{ mqPlay }}">
+              <sc-for list="{{ marqueeA }}" as="t" hint-placeholder-count="10">
+                <div title="{{ t.note }}" style="flex:none;font-size:13.5px;padding:5px 12px;border-radius:14px;background:#e6dcc6;color:#4d4132;border:1px solid #d3c3a4;white-space:nowrap">{{ t.label }}</div>
+              </sc-for>
+            </div>
+            <div style="display:flex;width:max-content;gap:8px;animation:mqRight 36s linear infinite;animation-play-state:{{ mqPlay }}">
+              <sc-for list="{{ marqueeB }}" as="t" hint-placeholder-count="10">
+                <div title="{{ t.note }}" style="flex:none;font-size:13.5px;padding:5px 12px;border-radius:14px;background:#efe7d6;color:#5b4c39;border:1px solid #ded0b3;white-space:nowrap">{{ t.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top:22px;height:1px;background:#2f2a24;opacity:.75"></div>
+          <div style="margin-top:15px;display:flex;align-items:center;gap:8px">
+            <div style="font-size:12px;color:#9b8a71;letter-spacing:2px">旅遊 DNA</div>
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ toggleDnaEdit }}" title="修改旅遊 DNA" style="cursor:pointer;font-size:12px;color:#b0a08a;padding:1px 4px;border:1px solid #d8c9ae;border-radius:3px;line-height:1.3" style-hover="color:#b4622f;border-color:#b4622f">✎</div>
+            </sc-if>
+          </div>
+          <div style="margin-top:11px">
+            <div style="font-size:10px;letter-spacing:1.5px;color:#b7a78e;font-family:'IBM Plex Mono',monospace">CORE · 核心取向</div>
+            <div style="margin-top:9px;display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ dnaCore }}" as="d" hint-placeholder-count="4">
+                <div style="border:1px solid #e0d4ba;background:#fdf9ef;padding:9px 12px">
+                  <div onClick="{{ d.onToggle }}" style="cursor:pointer;display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;font-size:14px;color:#4e4437">{{ d.label }}</div>
+                    <div style="font-size:13px;color:#b4622f;white-space:nowrap">{{ d.tier }}</div>
+                    <div style="font-size:12px;color:#b4622f;font-family:'IBM Plex Mono',monospace">{{ d.pctText }}</div>
+                    <div style="font-size:10px;color:#c0b096;font-family:'IBM Plex Mono',monospace">{{ d.caret }}</div>
+                  </div>
+                  <div style="margin-top:7px;height:5px;background:#ddd0b6;position:relative">
+                    <div style="position:absolute;left:0;top:0;height:5px;background:#b4622f;width:{{ d.width }}"></div>
+                  </div>
+                  <sc-if value="{{ d.open }}" hint-placeholder-val="{{ false }}">
+                    <div>
+                      <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:#a2917a;font-family:'IBM Plex Mono',monospace">
+                        <span>{{ d.poleLeft }}</span><span>{{ d.poleRight }}</span>
+                      </div>
+                      <sc-if value="{{ d.editing }}" hint-placeholder-val="{{ false }}">
+                        <input type="range" min="0" max="100" value="{{ d.pct }}" onChange="{{ d.onChange }}" style="width:100%;margin-top:5px;accent-color:#b4622f" />
+                      </sc-if>
+                      <div style="margin-top:6px;font-size:13px;line-height:1.8;color:#6d5e49;text-wrap:pretty">{{ d.note }}</div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <sc-if value="{{ canFlip }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ nextPage }}" title="下一頁" style="position:absolute;right:0;bottom:0;width:74px;height:74px;cursor:pointer;background:linear-gradient(-45deg,#dfd2b8 48%,rgba(0,0,0,0) 50%)" style-hover="background:linear-gradient(-45deg,#cbb99a 48%,rgba(0,0,0,0) 50%)">
+              <div style="position:absolute;right:11px;bottom:10px;font-size:11px;color:#6b5b45;font-family:'IBM Plex Mono',monospace">2 ›</div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ isSpreadTwo }}" hint-placeholder-val="{{ false }}">
+          <div style="padding-top:2px">
+            <!-- 看自己：完整的搜尋框＋好友/追蹤/黑名單/好友申請統計，跟原本一樣 -->
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">搜尋 · {{ tabTitle }}</div>
+                <input value="{{ query }}" onChange="{{ changeQuery }}" placeholder="輸入暱稱搜尋…" style="margin-top:10px;width:100%;box-sizing:border-box;font-size:14.5px;padding:9px 11px;border:1px solid #cbb99a;background:#fffaee" />
+                <div style="margin-top:20px;font-size:13.5px;line-height:2;color:#7b6a53;border-top:1px dotted #cdbda2;padding-top:14px">
+                  <div>好友 {{ counts.friends }} 人 · 追蹤 {{ counts.following }} 人 · 黑名單 {{ counts.blocked }} 人</div>
+                  <div>待處理好友申請 <span style="color:#b4622f">{{ counts.requests }}</span> 件</div>
+                </div>
+              </div>
+            </sc-if>
+            <!-- 看別人：不需要搜尋功能、也不用看黑名單/好友申請的數字，只留標題跟
+                 好友/追蹤人數，沒有權限看的話改顯示一段說明文字 -->
+            <sc-if value="{{ viewingOther }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">{{ tabTitle }}</div>
+                <sc-if value="{{ contactBookLocked }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:14px;font-size:12.5px;line-height:1.8;color:#a2917a">對方的通訊錄未公開，看不到好友與追蹤名單。</div>
+                </sc-if>
+                <sc-if value="{{ contactBookOpenOther }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:14px;font-size:13.5px;line-height:2;color:#7b6a53;border-top:1px dotted #cdbda2;padding-top:14px">好友 {{ counts.friends }} 人 · 追蹤 {{ counts.following }} 人</div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{ flipping }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ flipSheet }}"></div>
+    </sc-if>
+  </div>
+
+  <!-- 機票（夾在手帳右頁，露出一截） -->
+  <div onClick="{{ openTicket }}" style="position:absolute;left:740px;top:148px;width:216px;height:190px;z-index:4;cursor:pointer;transform-origin:50% 100%;transition:transform .55s cubic-bezier(.3,.85,.2,1);transform:{{ ticketXf }};filter:drop-shadow(0 10px 16px rgba(20,12,4,0.4))">
+    <div style="position:absolute;inset:0;transition:transform .32s cubic-bezier(.2,.7,.2,1)" style-hover="transform:translateY(-34px)">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,#fdfaf3,#f2e9d8);border:1px solid #d9c9a9;border-radius:3px 3px 0 0;padding:13px 12px;box-sizing:border-box;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:10px;letter-spacing:2px;color:#b4622f;font-family:'IBM Plex Mono',monospace">BOARDING</div>
+        <div style="font-size:12px;color:#b4622f">✈</div>
+      </div>
+      <div style="margin-top:9px;height:1px;background:#dccdae"></div>
+      <div style="margin-top:11px;font-family:'Noto Serif TC',serif;font-size:16px;font-weight:600">{{ profile.nickname }}</div>
+      <div style="margin-top:4px;font-size:10.5px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">{{ ticketMeta }}</div>
+      <div style="margin-top:12px;font-size:10px;color:#a2917a;letter-spacing:1px">點擊查看登機證</div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:34px;background:linear-gradient(180deg,rgba(90,66,36,0),rgba(90,66,36,0.28))"></div>
+    </div>
+    </div>
+  </div>
+
+  <!-- 行李吊牌 -->
+  <div onClick="{{ openTag }}" style="position:absolute;left:1112px;top:404px;width:212px;height:296px;z-index:5;cursor:pointer;transform-origin:50% 100%;transform:rotateX(24deg) rotateZ(11deg);filter:drop-shadow(0 20px 24px rgba(18,10,4,0.5));transition:transform .3s ease" style-hover="transform:rotateX(24deg) rotateZ(11deg) translateY(-10px)">
+    <div style="position:absolute;inset:0;border-radius:18px;background:linear-gradient(150deg,rgba(255,255,255,0.62),rgba(255,255,255,0.28));border:1px solid rgba(255,255,255,0.6);backdrop-filter:blur(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),inset 0 -2px 6px rgba(120,110,96,0.16)"></div>
+    <div style="position:absolute;left:50%;top:9px;margin-left:-13px;width:26px;height:26px;border-radius:50%;background:rgba(90,84,74,0.5);box-shadow:inset 0 0 0 3px rgba(255,255,255,0.85)"></div>
+    <div style="position:absolute;left:14px;top:44px;right:14px;bottom:14px;border-radius:11px;background:linear-gradient(120deg,#f7f1e4,#efe6d4);padding:14px 13px 36px;box-sizing:border-box;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 1px 3px rgba(120,100,70,0.18);filter:{{ tagBlur }}">
+      <div style="font-size:11px;letter-spacing:2px;color:{{ tagStateColor }};font-family:'IBM Plex Mono',monospace">{{ tagStateLabel }}</div>
+      <div style="margin-top:8px;height:1px;background:#e5d9c2"></div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden">
+        <sc-for list="{{ contactPreview }}" as="c" hint-placeholder-count="3">
+          <div>
+            <div style="font-size:9.5px;color:#9b8a71;letter-spacing:1px">{{ c.label }}</div>
+            <div style="font-size:12.5px;color:#3d342a;font-family:'IBM Plex Mono',monospace">{{ c.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position:absolute;left:13px;right:13px;bottom:9px;display:flex;align-items:center;gap:5px;font-size:10px;color:#a2917a"><img src="./assets/fish-logo.png" alt="" style="width:18px;height:18px;object-fit:contain;image-rendering:pixelated" />通訊錄 · 點擊放大</div>
+    </div>
+    <sc-if value="{{ tagLocked }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:14px;top:44px;right:14px;bottom:14px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(247,241,228,0.4);opacity:0;transition:opacity .25s" style-hover="opacity:1">
+        <div style="font-size:12px;padding:7px 12px;background:#3d342a;color:#f6eddb;border-radius:3px">成為好友解鎖通訊錄</div>
+      </div>
+    </sc-if>
+  </div>
+
+  </div>
+
+  <!-- 教學導覽 -->
+  <sc-if value="{{ tourOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60">
+      <div style="position:absolute;left:0;top:0;width:1440px;height:900px;perspective:1500px;perspective-origin:50% 40%">
+        <div onClick="{{ tourNext }}" style="position:absolute;left:{{ tour.x }};top:{{ tour.y }};width:{{ tour.w }};height:{{ tour.h }};border-radius:{{ tour.r }};cursor:pointer;transform-origin:{{ tour.o }};transform:{{ tour.xf }};box-shadow:0 0 0 9999px rgba(18,22,22,0.62),inset 0 0 0 2px rgba(255,253,240,0.9);transition:left .38s cubic-bezier(.4,0,.2,1),top .38s cubic-bezier(.4,0,.2,1),width .38s,height .38s,transform .38s"></div>
+      </div>
+      <div style="position:absolute;left:{{ tour.bx }};top:{{ tour.by }};width:276px;transform:rotate(-0.8deg);transition:left .38s cubic-bezier(.4,0,.2,1),top .38s cubic-bezier(.4,0,.2,1)">
+        <div style="position:relative;padding:17px 18px 15px;background:linear-gradient(150deg,#fdf8ea,#f0e7d2);clip-path:polygon(0.6% 1.4%,99.4% 0,100% 98.6%,1.2% 100%);box-shadow:0 16px 30px rgba(16,20,20,0.45)">
+          <div style="position:absolute;left:0;right:0;top:0;height:14px;background:linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0))"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+            <div style="font-size:14.5px;letter-spacing:1.5px;color:#3f6f6b;font-family:'Noto Serif TC',serif">{{ tour.title }}</div>
+            <div style="font-size:10.5px;color:#a2957c;font-family:'IBM Plex Mono',monospace">{{ tourCount }}</div>
+          </div>
+          <div style="margin-top:9px;font-size:12.5px;line-height:1.8;color:#5b5140;text-wrap:pretty">{{ tour.text }}</div>
+          <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div onClick="{{ tourSkip }}" style="cursor:pointer;font-size:11px;letter-spacing:1px;color:#a2957c" style-hover="color:#7a6f58">略過導覽</div>
+            <div style="display:flex;gap:8px">
+              <div onClick="{{ tourPrev }}" style="cursor:pointer;font-size:11.5px;padding:6px 12px;border-radius:3px;color:#6b6250;background:rgba(255,255,255,0.6);box-shadow:inset 0 0 0 1px rgba(150,138,114,0.4);opacity:{{ tourPrevOpacity }};pointer-events:{{ tourPrevEvents }}" style-hover="background:#fffdf4">上一步</div>
+              <div onClick="{{ tourNext }}" style="cursor:pointer;font-size:11.5px;padding:6px 13px;border-radius:3px;color:#fdf8ea;background:#4a7d78;box-shadow:0 2px 5px rgba(30,60,58,0.35)" style-hover="background:#3d6b67">{{ tourNextLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 重看導覽 -->
+  <sc-if value="{{ tourReplayable }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ tourStart }}" title="重看操作導覽" style="position:absolute;right:26px;bottom:22px;z-index:44;cursor:pointer;padding:8px 14px;font-size:11.5px;letter-spacing:1.5px;color:#5b5140;background:linear-gradient(150deg,#fdf8ea,#eee4cf);clip-path:polygon(0.8% 2%,99.2% 0,100% 98%,1.6% 100%);box-shadow:0 6px 14px rgba(20,26,26,0.35);transform:rotate(-1.2deg);transition:transform .2s" style-hover="transform:rotate(0deg) translateY(-2px)">操作導覽</div>
+  </sc-if>
+
+  <!-- 視角控制 -->
+  <div style="position:absolute;right:22px;top:20px;display:flex;flex-direction:column;gap:9px;align-items:flex-end;z-index:40">
+    <div style="display:flex;gap:5px;padding:5px;border-radius:4px;background:rgba(20,14,8,0.5);backdrop-filter:blur(6px)">
+      <sc-for list="{{ viewerOptions }}" as="v" hint-placeholder-count="5">
+        <div onClick="{{ v.onClick }}" style="cursor:pointer;font-size:11px;padding:5px 9px;border-radius:2px;background:{{ v.bg }};color:{{ v.fg }}">{{ v.label }}</div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- 電子鐘（桌面右上角）：點擊切換日夜 -->
+  <div onClick="{{ toggleLight }}" title="{{ lightLabel }}" style="position:absolute;left:1158px;top:272px;width:196px;height:100px;z-index:{{ deskPropZ }};opacity:{{ deskPropOpacity }};pointer-events:{{ deskPropEvents }};cursor:pointer;perspective:620px;transition:filter .25s,opacity .5s" style-hover="filter:brightness(1.08)">
+    <div style="position:absolute;left:-10px;bottom:-6px;width:216px;height:30px;border-radius:50%;filter:blur(10px);background:radial-gradient(50% 50% at 50% 50%,rgba(14,8,2,0.6),rgba(14,8,2,0))"></div>
+    <div style="position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(11deg)">
+      <div style="position:absolute;left:5px;right:5px;bottom:-9px;height:20px;border-radius:4px 4px 8px 8px;transform:rotateX(74deg);transform-origin:50% 0;background:linear-gradient(180deg,{{ clockEdge }},rgba(0,0,0,0.5))"></div>
+      <div style="position:absolute;inset:0;border-radius:18px;padding:9px;box-sizing:border-box;background:{{ clockBody }};box-shadow:0 14px 24px rgba(20,12,4,0.5),0 3px 0 {{ clockEdge }},inset 0 2px 1px rgba(255,255,255,0.85),inset 0 -3px 6px rgba(90,72,50,0.35)">
+        <div style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;background:{{ clockFace }};box-shadow:inset 0 3px 9px rgba(0,0,0,0.62),inset 0 -1px 0 rgba(255,255,255,0.14)">
+        <div style="position:absolute;inset:0;background:linear-gradient(126deg,rgba(255,255,255,0.16) 0 26%,rgba(255,255,255,0.02) 42%,rgba(255,255,255,0.1) 70%,rgba(255,255,255,0) 86%)"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DS-Digital','Courier New',monospace;font-size:47px;font-weight:700;letter-spacing:3px;color:{{ clockInk }};text-shadow:{{ clockGlow }}">{{ clockTime }}</div>
+        <div style="position:absolute;left:9px;top:8px;font-size:9px;color:{{ clockInk }};opacity:.55">⏰</div>
+        <div style="position:absolute;left:9px;bottom:8px;font-size:9px;color:{{ clockInk }};opacity:.4">{{ clockMode }}</div>
+      </div>
+    </div>
+    <div style="position:absolute;left:34px;top:-4px;width:22px;height:5px;border-radius:3px;background:rgba(60,44,26,0.5)"></div>
+    <div style="position:absolute;left:64px;top:-4px;width:22px;height:5px;border-radius:3px;background:rgba(60,44,26,0.5)"></div>
+    <div style="position:absolute;left:94px;top:-4px;width:22px;height:5px;border-radius:3px;background:rgba(60,44,26,0.5)"></div>
+    </div>
+  </div>
+
+  <!-- 機票放大 -->
+  <sc-if value="{{ ticketOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;background:{{ ticketBackdropBg }};display:flex;align-items:center;justify-content:center">
+      <div style="width:{{ ticketWidth }};height:396px;display:flex;background:#fdfaf3;border-radius:6px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5)">
+        <div style="width:600px;padding:26px 30px;box-sizing:border-box;position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div style="font-size:15px;color:#b4622f">✈</div>
+              <div style="font-size:12px;letter-spacing:3px;color:#b4622f;font-family:'IBM Plex Mono',monospace">BOARDING PASS · 入團申請</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="font-size:11px;color:#9b8a71;font-family:'IBM Plex Mono',monospace">唯讀 · 同步旅遊手帳（於手帳修改）</div>
+              <!-- 看別人的機票時右邊那塊「給團長的話」編輯框整個不顯示（見下方 canEdit
+                   判斷），原本唯一的關閉按鈕就在那塊裡面，所以這裡另外放一個 ✕，
+                   不管是不是本人都能關掉這張機票。 -->
+              <div onClick="{{ closeTicket }}" title="關閉" style="display:{{ ticketInnerCloseDisplay }};cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:20px">
+            <!-- 看自己的機票時已經在自己的主頁上了，點大頭貼再跳一次頁面沒意義，
+                 所以 onClick／title／游標都是依 canEdit 切換：看別人的機票才能點大頭貼
+                 跳去對方主頁（ticketAvatarClick／ticketAvatarTitle／ticketAvatarCursor，
+                 見下面 renderVals()），本人自己的機票點下去什麼都不會發生。 -->
+            <div onClick="{{ ticketAvatarClick }}" title="{{ ticketAvatarTitle }}" style="width:96px;height:134px;box-sizing:border-box;flex:none;border:1px solid #cdbfa6;padding:9px 9px 22px;background:#fff;cursor:{{ ticketAvatarCursor }};box-shadow:0 3px 8px rgba(90,66,36,0.16)">
+              <image-slot id="ticket-avatar" src="{{ avatarSrc }}" shape="rect" placeholder="大頭貼" style="width:76px;height:101px"></image-slot>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px">
+                <div style="font-family:'Noto Serif TC',serif;font-size:25px;font-weight:600">{{ profile.nickname }}</div>
+                <div style="font-size:11px;padding:3px 8px;border-radius:3px;color:#fff;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;background:{{ mbtiColor }}">{{ profile.mbti }}</div>
+              </div>
+              <div style="margin-top:7px;font-size:12px;color:#7b6a53;font-family:'IBM Plex Mono',monospace">{{ ticketMeta }}</div>
+              <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ tags }}" as="t" hint-placeholder-count="5">
+                  <div style="font-size:11px;padding:3px 9px;border-radius:12px;background:#efe6d5;color:#4d4132">{{ t }}</div>
+                </sc-for>
+              </div>
+              <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">
+                <sc-for list="{{ dnaRows }}" as="d" hint-placeholder-count="4">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:#7b6a53;font-family:'IBM Plex Mono',monospace"><span>{{ d.label }}</span><span style="color:#b4622f">{{ d.pctText }}</span></div>
+                    <div style="margin-top:4px;height:4px;background:#e2d6bd;position:relative"><div style="position:absolute;left:0;top:0;height:4px;background:#b4622f;width:{{ d.width }}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="position:absolute;left:30px;bottom:20px;display:flex;gap:3px">
+            <sc-for list="{{ barcode }}" as="b" hint-placeholder-count="14">
+              <div style="width:{{ b.w }};height:30px;background:#3a3128"></div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- 「機票右側」這塊版面（分隔線／背景）不管是不是本人都顯示，內容依 canEdit／
+             viewingOther 換兩種：本人看自己的機票是原本「給團長的話」的草稿編輯區；
+             看別人的機票換成「自我介紹」，直接借對方主頁上已經有的 profile.bio 顯示
+             （bio 是進頁面時就跟 ProfileData 一起讀到的真實資料，不用另外打 API），
+             這樣別人的機票才是真的有內容可以看，不是隨便放一段固定說明文字充版面。
+             🔧 這兩個 sc-if 之前都寫成 value="{{ canEdit }}"（只差 hint-placeholder-val
+             不同），但 hint-placeholder-val 只是預覽用的預設值、不是「否則」分支，
+             同一顆變數填進兩個 sc-if 會兩邊同時顯示或同時隱藏（自己看自己的機票時
+             編輯框和下面這段字會同時跑出來）。改成 canEdit／viewingOther 這兩個本來
+             就互斥的既有變數，才會真的是「非此即彼」。 -->
+        <div style="width:0;position:relative"><div style="position:absolute;left:-1px;top:0;height:396px;border-left:2px dashed #d6c6a6"></div></div>
+
+        <div style="flex:1;padding:26px 28px;box-sizing:border-box;background:linear-gradient(180deg,#f8f1e2,#f2e8d5);display:flex;flex-direction:column">
+          <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:12px;letter-spacing:2px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">給團長的話</div>
+            <textarea value="{{ message }}" onChange="{{ changeMessage }}" placeholder="想對團長說的話、可配合的行程時間…" style="margin-top:10px;flex:1;font-size:13px;line-height:1.8;padding:11px;border:1px solid #d6c6a6;background:#fffdf7;resize:none;box-sizing:border-box;color:#3d342a"></textarea>
+            <div style="margin-top:10px;font-size:11px;line-height:1.7;color:#a2917a">預先編輯，申請入團時會帶入這段話</div>
+            <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:11px;color:#a2917a">{{ msgCount }}</div>
+              <div style="display:flex;gap:8px">
+                <div onClick="{{ closeTicket }}" style="cursor:pointer;font-size:12px;padding:8px 14px;border:1px solid #b09a78;color:#5b4c39" style-hover="border-color:#3d342a">關閉</div>
+                <div onClick="{{ saveDraft }}" style="cursor:pointer;font-size:12px;padding:8px 16px;background:#b4622f;color:#fff8ec" style-hover="background:#95491d">{{ draftLabel }}</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ viewingOther }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;letter-spacing:2px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">自我介紹</div>
+            <div style="margin-top:10px;flex:1;overflow:auto;font-size:13.5px;line-height:1.9;color:#4e4437;text-wrap:pretty">{{ ticketBioText }}</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 大頭貼導覽確認 -->
+  <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:80;background:rgba(14,9,4,0.55);display:flex;align-items:center;justify-content:center">
+      <div style="width:380px;padding:24px;background:#fdfaf3;border-radius:5px;box-shadow:0 30px 60px rgba(0,0,0,0.45)">
+        <div style="font-size:14px;line-height:1.8">{{ confirmText }}</div>
+        <div style="margin-top:18px;display:flex;justify-content:flex-end;gap:8px">
+          <div onClick="{{ cancelNavigate }}" style="cursor:pointer;font-size:12px;padding:7px 14px;border:1px solid #b09a78;color:#5b4c39">取消</div>
+          <div onClick="{{ confirmNavigate }}" style="cursor:pointer;font-size:12px;padding:7px 14px;background:#b4622f;color:#fff8ec">前往</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 吊牌放大 -->
+  <sc-if value="{{ tagOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;background:rgba(14,9,4,0.6);display:flex;align-items:center;justify-content:center">
+      <div style="position:relative;width:400px;height:560px;padding:26px;box-sizing:border-box;border-radius:26px;background:linear-gradient(150deg,rgba(255,255,255,0.7),rgba(255,255,255,0.34));border:1px solid rgba(255,255,255,0.66);backdrop-filter:blur(6px);box-shadow:0 30px 60px rgba(14,9,4,0.5),inset 0 1px 0 rgba(255,255,255,0.9)">
+        <div style="position:absolute;left:50%;top:12px;margin-left:-15px;width:30px;height:30px;border-radius:50%;background:rgba(90,84,74,0.42);box-shadow:inset 0 0 0 3px rgba(255,255,255,0.85)"></div>
+
+
+
+
+
+        <!-- 魚肚：通訊錄 -->
+        <div style="margin-top:44px;height:346px;box-sizing:border-box;border-radius:14px;background:linear-gradient(120deg,#f7f1e4,#efe6d4);padding:20px 22px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.75),0 2px 5px rgba(120,100,70,0.16);filter:{{ tagBlur }}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="font-size:11.5px;letter-spacing:2px;color:{{ tagStateColor }};font-family:'IBM Plex Mono',monospace">{{ tagStateLabel }}</div>
+            </div>
+            <div onClick="{{ closeTag }}" style="cursor:pointer;font-size:14px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+          </div>
+          <div style="margin-top:9px;height:1px;background:#e5d9c2"></div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:16px">
+            <sc-for list="{{ contactFull }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:10px;color:#9b8a71;letter-spacing:2px">{{ c.label }}</div>
+                <sc-if value="{{ c.isLink }}" hint-placeholder-val="{{ false }}">
+                  <a href="{{ c.href }}" target="_blank" rel="noopener noreferrer" style="font-size:14px;color:#b4622f;font-family:'IBM Plex Mono',monospace;text-decoration:underline;cursor:pointer" style-hover="color:#8a4a20">{{ c.value }}</a>
+                </sc-if>
+                <sc-if value="{{ c.notLink }}" hint-placeholder-val="{{ true }}">
+                  <div style="font-size:14px;color:#3d342a;font-family:'IBM Plex Mono',monospace">{{ c.value }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ togglePublic }}" style="margin-top:14px;border-radius:12px;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.7)" style-hover="background:rgba(255,255,255,0.72)">
+            <div style="font-size:11.5px;line-height:1.5;color:#5b4c39">{{ publicLabel }}</div>
+            <div style="width:42px;height:22px;border-radius:11px;flex:none;position:relative;background:{{ toggleBg }};transition:background .2s">
+              <div style="position:absolute;top:3px;left:{{ knobLeft }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s"></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tagLocked }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:22px;right:22px;top:54px;bottom:22px;border-radius:12px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;background:rgba(247,241,228,0.82)">
+            <div style="font-size:13px;padding:10px 16px;background:#3d342a;color:#f6eddb">成為好友解鎖通訊錄</div>
+            <div onClick="{{ closeTag }}" style="cursor:pointer;font-size:12px;color:#5b4c39;text-decoration:underline">關閉</div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 基本資料修改畫面 -->
+  <sc-if value="{{ editOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:70;background:rgba(14,9,4,0.62);display:flex;align-items:center;justify-content:center">
+      <div style="width:720px;background:#fdfaf3;border-radius:6px;box-shadow:0 40px 80px rgba(0,0,0,0.5);overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 26px;border-bottom:1px solid #e6dbc4;background:linear-gradient(180deg,#f8f1e2,#f3ead7)">
+          <div style="font-family:'Noto Serif TC',serif;font-size:19px;font-weight:600">修改基本資料</div>
+          <div onClick="{{ cancelEdit }}" style="cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+        </div>
+        <div style="padding:24px 26px;display:flex;gap:24px">
+          <div style="width:140px;flex:none">
+            <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">大頭照</div>
+            <div style="margin-top:8px;width:140px;height:193px;box-sizing:border-box;border:1px solid #cdbfa6;padding:9px 9px 22px;background:#fff">
+              <image-slot id="member-avatar-edit" src="{{ avatarSrc }}" shape="rect" placeholder="點一下選擇照片" style="width:120px;height:160px"></image-slot>
+            </div>
+            <div style="margin-top:8px;font-size:11px;line-height:1.6;color:#a2917a">點圖框選擇檔案，或將圖片拖進框内；已上傳後滑進圖框可按 Replace 更換。建議 3:4</div>
+          </div>
+          <div style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:16px 18px">
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">會員姓名 / 暱稱</div>
+              <input value="{{ draft.nickname }}" onChange="{{ setNickname }}" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7" />
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">生日</div>
+              <input type="date" value="{{ draft.birth }}" onChange="{{ setBirth }}" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:7px 10px;border:1px solid #cbb99a;background:#fffdf7;font-family:'IBM Plex Mono',monospace" />
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">年齡（自動計算）</div>
+              <div style="margin-top:6px;font-size:15px;padding:8px 10px;border:1px dashed #d8c9ae;background:#f4eddd;color:#8d7c64;font-family:'IBM Plex Mono',monospace">{{ draftAge }}</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">性別</div>
+              <div style="margin-top:6px;display:flex;gap:6px">
+                <sc-for list="{{ genderOptions }}" as="g" hint-placeholder-count="3">
+                  <div onClick="{{ g.onClick }}" style="cursor:pointer;font-size:13px;padding:7px 13px;border:1px solid #cbb99a;background:{{ g.bg }};color:{{ g.fg }}">{{ g.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">職業</div>
+              <input value="{{ draft.job }}" onChange="{{ setJob }}" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7" />
+            </div>
+            <div>
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">居住地</div>
+              <div style="margin-top:6px;display:flex;gap:8px">
+                <select value="{{ draft.cityName }}" onChange="{{ setCityName }}" style="flex:1;min-width:0;box-sizing:border-box;font-size:15px;padding:8px 6px;border:1px solid #cbb99a;background:#fffdf7">
+                  <option value="">縣市</option>
+                  <sc-for list="{{ cityOptions }}" as="c" hint-placeholder-count="22">
+                    <option value="{{ c.value }}">{{ c.label }}</option>
+                  </sc-for>
+                </select>
+                <select value="{{ draft.districtName }}" onChange="{{ setDistrictName }}" style="flex:1;min-width:0;box-sizing:border-box;font-size:15px;padding:8px 6px;border:1px solid #cbb99a;background:#fffdf7">
+                  <option value="">區／鄉鎮</option>
+                  <sc-for list="{{ districtOptions }}" as="dopt" hint-placeholder-count="10">
+                    <option value="{{ dopt.value }}">{{ dopt.label }}</option>
+                  </sc-for>
+                </select>
+              </div>
+            </div>
+            <div style="grid-column:1 / span 2">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">MBTI</div>
+                <div style="font-size:11px;padding:3px 8px;border-radius:3px;color:#fff;font-family:'IBM Plex Mono',monospace;background:{{ draftMbtiColor }}">{{ draft.mbti }} · {{ draftMbtiGroup }}</div>
+              </div>
+              <div style="margin-top:9px;display:flex;flex-direction:column;gap:7px">
+                <sc-for list="{{ mbtiGroups }}" as="g" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <div style="width:74px;flex:none;font-size:11px;color:{{ g.color }};letter-spacing:1px">{{ g.name }}</div>
+                    <div style="flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px">
+                      <sc-for list="{{ g.types }}" as="t" hint-placeholder-count="4">
+                        <div onClick="{{ t.onClick }}" style="cursor:pointer;text-align:center;font-size:11.5px;padding:5px 4px;border-radius:3px;font-family:'IBM Plex Mono',monospace;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <!-- 聯絡方式：手機需要簡訊驗證，這裡先不開放直接改；LINE ID／Instagram／
+                 Facebook 是使用者自己貼的文字，存檔前後端都會驗證格式（見
+                 SocialLinkValidator 的註解），只接受 instagram.com／facebook.com
+                 開頭的網址，避免被冒充成別的網站。 -->
+            <div style="grid-column:1 / span 2;border-top:1px dashed #e2d5b8;padding-top:14px;margin-top:2px">
+              <div style="font-size:11px;color:#9b8a71;letter-spacing:1px;margin-bottom:9px">聯絡方式</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 18px">
+                <div>
+                  <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">手機電話</div>
+                  <div style="margin-top:6px;font-size:13px;padding:8px 10px;border:1px dashed #d8c9ae;background:#f4eddd;color:#8d7c64">需簡訊驗證，暫時無法在這裡修改</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">LINE ID</div>
+                  <input value="{{ draft.lineId }}" onChange="{{ setLineId }}" placeholder="例如 yunxi_trip" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:15px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7" />
+                  <sc-if value="{{ hasLineIdError }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:4px;font-size:11px;color:#b4622f">{{ lineIdError }}</div>
+                  </sc-if>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">Instagram 主頁網址</div>
+                  <input value="{{ draft.instagramUrl }}" onChange="{{ setInstagramUrl }}" placeholder="https://instagram.com/你的帳號" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:13.5px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7;font-family:'IBM Plex Mono',monospace" />
+                  <sc-if value="{{ hasInstagramUrlError }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:4px;font-size:11px;color:#b4622f">{{ instagramUrlError }}</div>
+                  </sc-if>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:#9b8a71;letter-spacing:1px">Facebook 主頁網址</div>
+                  <input value="{{ draft.facebookUrl }}" onChange="{{ setFacebookUrl }}" placeholder="https://facebook.com/你的帳號" style="margin-top:6px;width:100%;box-sizing:border-box;font-size:13.5px;padding:8px 10px;border:1px solid #cbb99a;background:#fffdf7;font-family:'IBM Plex Mono',monospace" />
+                  <sc-if value="{{ hasFacebookUrlError }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:4px;font-size:11px;color:#b4622f">{{ facebookUrlError }}</div>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="margin-top:8px;font-size:11px;line-height:1.6;color:#a2917a">只接受 instagram.com／facebook.com 開頭的網址，避免被冒充成別的網站連結；留白代表這格不顯示。</div>
+            </div>
+          </div>
+        </div>
+        <sc-if value="{{ hasEditGeneralError }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 26px 12px;font-size:12px;color:#b4622f">{{ editGeneralError }}</div>
+        </sc-if>
+        <div style="display:flex;justify-content:flex-end;gap:9px;padding:16px 26px;border-top:1px solid #e6dbc4;background:#f7f0e1">
+          <div onClick="{{ cancelEdit }}" style="cursor:pointer;font-size:13px;padding:9px 16px;border:1px solid #b09a78;color:#5b4c39" style-hover="border-color:#3d342a">取消</div>
+          <div onClick="{{ saveEdit }}" style="cursor:pointer;font-size:13px;padding:9px 20px;background:#b4622f;color:#fff8ec" style-hover="background:#95491d">儲存</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 技能標籤總覽 -->
+  <sc-if value="{{ skillsOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:86;background:rgba(14,9,4,0.58);display:flex;align-items:center;justify-content:center">
+      <div style="width:660px;max-height:80%;display:flex;flex-direction:column;background:#fdfaf3;box-shadow:0 30px 60px rgba(0,0,0,0.45)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid #e6dbc4;background:linear-gradient(180deg,#f8f1e2,#f3ead7)">
+          <div style="display:flex;align-items:baseline;gap:10px">
+            <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:600">旅行技能標籤</div>
+            <div style="font-size:11px;color:#9b8a71">{{ skillsHint }}</div>
+          </div>
+          <div onClick="{{ closeSkills }}" style="cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+        </div>
+        <div style="padding:18px 22px;overflow:auto;display:flex;flex-direction:column;gap:18px">
+          <sc-for list="{{ skillGroups }}" as="g" hint-placeholder-count="4">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#3d342a">{{ g.name }}</div>
+                <div style="font-size:10px;color:#b0a08a;font-family:'IBM Plex Mono',monospace">{{ g.en }}</div>
+                <div style="flex:1;height:1px;background:#e6dbc4"></div>
+                <div style="font-size:10px;color:#b4622f;font-family:'IBM Plex Mono',monospace">{{ g.picked }}</div>
+              </div>
+              <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:7px">
+                <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="8">
+                  <div onClick="{{ t.onClick }}" title="{{ t.note }}" style="cursor:{{ t.cursor }};font-size:12.5px;padding:5px 12px;border-radius:14px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};opacity:{{ t.opacity }}">{{ t.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:9px;padding:13px 22px;border-top:1px solid #e6dbc4;background:#f7f0e1">
+          <div style="font-size:11px;color:#a2917a">已選 {{ tagCount }} 項 · 標籤會同步顯示在機票上</div>
+          <div onClick="{{ closeSkills }}" style="cursor:pointer;font-size:12.5px;padding:9px 18px;background:#b4622f;color:#fff8ec">完成</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 檢舉 -->
+  <sc-if value="{{ reportOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:85;background:rgba(14,9,4,0.58);display:flex;align-items:center;justify-content:center">
+      <div style="width:420px;background:#fdfaf3;box-shadow:0 30px 60px rgba(0,0,0,0.45);overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid #e6dbc4;background:linear-gradient(180deg,#f8f1e2,#f3ead7)">
+          <div style="font-family:'Noto Serif TC',serif;font-size:17px;font-weight:600">檢舉 {{ profile.nickname }}</div>
+          <div onClick="{{ closeReport }}" style="cursor:pointer;font-size:15px;color:#a2917a" style-hover="color:#3d342a">✕</div>
+        </div>
+        <div style="padding:20px 22px">
+          <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">檢舉原因</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ reportReasons }}" as="r" hint-placeholder-count="4">
+              <div onClick="{{ r.onClick }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid {{ r.border }};background:{{ r.bg }};font-size:13.5px;color:#453c31">
+                <div style="width:11px;height:11px;flex:none;border-radius:50%;border:1px solid #b09a78;background:{{ r.dot }}"></div>{{ r.label }}
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:18px">
+            <div style="font-size:11px;color:#9b8a71;letter-spacing:2px">檢舉截圖佐證（選填）</div>
+            <!-- 期中版本 /Report/Create 有讓會員上傳截圖佐證（ReportSubmitViewModel.Evidence），
+                 這個主頁版的檢舉 Modal 之前沒補上這塊，現在跟那邊一樣是選填。image-slot 是
+                 設計稿自帶的元件（image-slot.js），點一下會開檔案選取＋本機預覽，不用自己刻，
+                 外層 div 用跟大頭照一樣的 box-sizing:border-box + padding 對齊寫法，避免圖框
+                 沒對齊（見大頭照對齊那次的修法）。實際上傳跟 targetMemberId／reason 一起在
+                 submitReportAction 送出，不是選好檔案就馬上傳。 -->
+            <div style="margin-top:10px;width:376px;height:120px;box-sizing:border-box;border:1px dashed #cdbfa6;padding:9px;background:#fffdf7">
+              <image-slot id="report-evidence" shape="rect" placeholder="點一下附上截圖" style="width:356px;height:100px"></image-slot>
+            </div>
+            <sc-if value="{{ hasReportEvidence }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:6px;font-size:11px;color:#8d7c64">已附上：{{ reportEvidenceName }}</div>
+            </sc-if>
+          </div>
+          <div style="margin-top:14px;font-size:11px;line-height:1.7;color:#a2917a">送出後將同時進入審核，不會通知對方。可一併將對方加入黑名單。</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:9px;padding:14px 22px;border-top:1px solid #e6dbc4;background:#f7f0e1">
+          <div onClick="{{ closeReport }}" style="cursor:pointer;font-size:12.5px;padding:9px 16px;border:1px solid #b09a78;color:#5b4c39" style-hover="border-color:#3d342a">取消</div>
+          <div onClick="{{ submitReport }}" style="cursor:pointer;font-size:12.5px;padding:9px 18px;background:{{ reportBtnBg }};color:#fff8ec">送出檢舉</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute;inset:0;pointer-events:none;background:{{ vignette }}"></div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;sealIntro&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;homeHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;groupHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Tours&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;articleHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;/Articles&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;loginHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;},&quot;logoutHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;導覽&quot;}}">
+const PEOPLE = {
+  friends: [
+    { name: "林知夏", meta: "台北 · 同團 2 次" },
+    { name: "Kai Chen", meta: "高雄 · 同團 1 次" },
+    { name: "阿諾", meta: "台中 · 好友 8 個月" },
+    { name: "Mei", meta: "花蓮 · 好友 3 個月" },
+    { name: "宥蓁", meta: "新竹 · 同團 4 次" },
+    { name: "Tomo", meta: "東京 · 好友 1 年" }
+  ],
+  following: [
+    { name: "旅人小柯", meta: "單向追蹤 · 看不到通訊錄" },
+    { name: "山系女子 Ann", meta: "單向追蹤" },
+    { name: "背包客阿翔", meta: "單向追蹤" },
+    { name: "Nina 拍照旅行", meta: "單向追蹤" },
+    { name: "老王環島", meta: "單向追蹤" }
+  ],
+  blocked: [
+    { name: "匿名使用者 #4821", meta: "已封鎖 · 2026/03" },
+    { name: "廣告帳號 travel_bot", meta: "已封鎖 · 2026/07" }
+  ],
+  requests: [
+    { name: "郁婷", meta: "留言：想約十月京都" },
+    { name: "Leo", meta: "留言：同團認識的，加個好友" },
+    { name: "小雨", meta: "留言：一起爬合歡山" }
+  ]
+};
+
+const REPORT_REASONS = ["不實資訊或假帳號", "騷擾、不當言詞", "詐騙或商業廣告", "冒用他人身分或照片"];
+
+// ------------------------------------------------------------------
+// 串接後端 API：/Members/ProfileData（讀）、/Members/UpdateProfile（存）、
+// /Members/UploadAvatar（大頭貼）。這個檔案是用 iframe 嵌進 tours-api 的
+// /Members/Profile 頁面，是同源請求，直接用相對路徑 fetch 就會帶到同一顆
+// Cookie（等組長把登入接上就自動生效），不用額外處理 CORS。
+// ------------------------------------------------------------------
+const QUERY_PARAMS = (() => {
+  try { return new URLSearchParams(window.location.search); }
+  catch (e) { return new URLSearchParams(); }
+})();
+
+// 🚧🚧🚧 開發期暫時後門，組長把正式登入（Identity Cookie）接上後要整段刪掉 🚧🚧🚧
+// 登入還沒做好之前，Profile.cshtml 會把網址上的 ?devMemberId=1 原封不動轉給
+// 這個 iframe（見 Profile.cshtml 同樣標記 🚧 的那一段），這裡讀出來、呼叫後端
+// API 時一起帶上，讓 CurrentMemberAccessor 讀得到「目前登入的是誰」。
+// 等組長把正式登入接上，瀏覽器會自動帶登入的 Cookie，不再需要這個查詢字串，
+// DEV_MEMBER_QS 這個常數、以及下面 apiUrl() 裡把它併進查詢字串的那一小段都要刪掉。
+const DEV_MEMBER_QS = (() => {
+  const v = QUERY_PARAMS.get("devMemberId");
+  return v ? ("devMemberId=" + encodeURIComponent(v)) : "";
+})();
+// 🚧🚧🚧 開發期暫時後門結束 🚧🚧🚧
+
+// ⚠️ 這段不是開發後門、是正式功能，就算組長的登入系統接上了也不要刪：
+// 查看「別人」的主頁時，網址上帶 ?id=5 代表「頁面上顯示的是會員 5」，
+// 跟「你自己是誰」（devMemberId，將來是登入 Cookie）是分開的兩件事，
+// 對應後端 MembersController.ProfileData(int? id) 的 id 參數（見 viewMember()）。
+const VIEW_TARGET_QS = (() => {
+  const v = QUERY_PARAMS.get("id");
+  return v ? ("id=" + encodeURIComponent(v)) : "";
+})();
+
+const apiUrl = (path) => {
+  // devMemberId 是上面標記要刪的開發後門；id（VIEW_TARGET_QS）是正式功能，
+  // 組長登入接上後這裡只要把 DEV_MEMBER_QS 從這個陣列拿掉、留 VIEW_TARGET_QS 就好。
+  const qs = [DEV_MEMBER_QS, VIEW_TARGET_QS].filter(Boolean).join("&");
+  return qs ? (path + "?" + qs) : path;
+};
+
+// 通訊錄裡 Instagram／Facebook 這兩格：資料庫存的是會員自己貼的完整網址
+// （Members.InstagramUrl／FacebookUrl），但整串網址直接顯示很難看，所以這裡
+// 從網址裡抓出「看起來像帳號名稱」的那一段來顯示，實際點擊還是連到完整網址
+// （新分頁打開，不會離開手帳頁面）。抓不到乾淨的帳號名稱（例如 Facebook
+// 常見的 profile.php?id=123456789 這種網址）就退回一段通用文字，不會硬猜、
+// 也不會讓畫面顯示一串奇怪的數字 ID。
+// kind 是 "instagram" 或 "facebook"，只影響抓不到帳號名稱時的退回文字，
+// 跟開頭要不要加 "@" 這個小細節。
+function prettySocialLink(rawValue, kind) {
+  if (!rawValue) return null;
+  const raw = String(rawValue).trim();
+  if (!raw) return null;
+
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : "https://" + raw.replace(/^\/+/, "");
+
+  try {
+    const u = new URL(withScheme);
+    const seg = decodeURIComponent(
+      (u.pathname.split("/").filter(Boolean).pop() || "")
+    );
+    const looksUseless = !seg || seg.toLowerCase() === "profile.php" || /^\d+$/.test(seg);
+
+    if (!looksUseless) {
+      return { href: u.href, text: kind === "instagram" ? "@" + seg : seg };
+    }
+    return { href: u.href, text: kind === "instagram" ? "查看 Instagram 主頁" : "查看 Facebook 主頁" };
+  } catch (e) {
+    // 網址格式真的解析不出來（例如貼的根本不是網址，是純帳號代號之類的），
+    // 至少把原始文字當連結顯示，好過整個不能點。
+    return { href: withScheme, text: raw };
+  }
+}
+
+// 編輯 Modal 存檔前的「前端驗證」，跟後端 SocialLinkValidator（LazyTravel.Shared/
+// Services/SocialLinkValidator.cs）用同一套規則，兩邊都要擋是因為：前端這裡只是
+// 讓使用者馬上看到哪裡填錯、不用等一趟網路來回；真正擋得住惡意內容（例如有人
+// 繞過畫面直接打 API）的是後端那份，前端這份不能被信任、也不是唯一防線。
+// 回傳 null 代表沒問題（包含「使用者留白」這種合法情況——留白代表這格不顯示），
+// 否則回傳一句可以直接顯示給使用者看的錯誤訊息。
+function validateSocialUrl(rawValue, kind) {
+  if (!rawValue || !String(rawValue).trim()) return null;
+  const raw = String(rawValue).trim();
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : "https://" + raw.replace(/^\/+/, "");
+  let u;
+  try {
+    u = new URL(withScheme);
+  } catch (e) {
+    return "看起來不是一個有效的網址。";
+  }
+  // 只收 http/https，擋掉 javascript:、data: 這類可以拿來搞事的 scheme。
+  if (u.protocol !== "http:" && u.protocol !== "https:") {
+    return "網址只能是 http 或 https 開頭。";
+  }
+  // 網域白名單：只接受真的指向 instagram.com／facebook.com 的網址，不然有心人
+  // 可以把一個釣魚網站包裝成「我的 IG 主頁」，別人點了會被騙去假網站——這是
+  // 這種「使用者自己貼網址」欄位真正的風險所在（不是「病毒」，瀏覽器不會因為
+  // 單純導覽一個連結就自動執行任何東西，風險是被騙去假頁面）。
+  const host = u.hostname.toLowerCase();
+  const allowed = kind === "instagram"
+    ? ["instagram.com", "www.instagram.com"]
+    : ["facebook.com", "www.facebook.com", "m.facebook.com", "fb.com", "www.fb.com"];
+  if (!allowed.includes(host)) {
+    return kind === "instagram" ? "請貼 instagram.com 的個人主頁網址。" : "請貼 facebook.com 的個人主頁網址。";
+  }
+  return null;
+}
+
+// LINE 官方 ID 規則大致是 4~20 個半形英數字/底線/句點/連字號，這裡做同樣寬鬆的
+// 檢查，不用做到跟 LINE 一模一樣（畢竟這欄位只是拿來顯示，不是真的去驗證帳號存在）。
+function validateLineId(rawValue) {
+  if (!rawValue || !String(rawValue).trim()) return null;
+  const raw = String(rawValue).trim();
+  if (raw.length < 4 || raw.length > 20 || !/^[A-Za-z0-9_.-]+$/.test(raw)) {
+    return "LINE ID 格式怪怪的（建議 4~20 個半形英數字、底線、句點或連字號）。";
+  }
+  return null;
+}
+
+// Members.Gender 這個 byte 欄位的編碼，已對照《Lazy Travel 旅遊平台資料表》文件
+// 確認過：0=未知、1=男、2=女（文件上還有 3=其他，但畫面上不提供這個選項，
+// 產品範圍內只用不透露/男/女三種）。畫面上把 0 顯示成「不透露」（使用者主動選擇
+// 不透露，跟系統預設的「未知」用起來意思相通）。
+const GENDER_BYTE_TO_LABEL = { 0: "不透露", 1: "男", 2: "女" };
+const GENDER_LABEL_TO_BYTE = { "不透露": 0, "男": 1, "女": 2 };
+
+// 居住地改成「先選縣市、再選鄉鎮市區」的兩層下拉選單，取代原本自由輸入的文字框，
+// 避免使用者亂打（縣市/鄉鎮打錯字、格式每個人都不一樣）。22 縣市、368 個鄉鎮市區，
+// 對齊內政部戶政的行政區劃分，由北到南排列。
+const TAIWAN_DISTRICTS = {
+  "基隆市": ["仁愛區", "信義區", "中正區", "中山區", "安樂區", "暖暖區", "七堵區"],
+  "台北市": ["中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", "北投區", "內湖區", "南港區", "文山區"],
+  "新北市": ["板橋區", "三重區", "中和區", "永和區", "新莊區", "新店區", "樹林區", "鶯歌區", "三峽區", "淡水區", "汐止區", "瑞芳區", "土城區", "蘆洲區", "五股區", "泰山區", "林口區", "深坑區", "石碇區", "坪林區", "三芝區", "石門區", "八里區", "平溪區", "雙溪區", "貢寮區", "金山區", "萬里區", "烏來區"],
+  "桃園市": ["桃園區", "中壢區", "平鎮區", "八德區", "楊梅區", "蘆竹區", "大溪區", "龍潭區", "龜山區", "大園區", "觀音區", "新屋區", "復興區"],
+  "新竹市": ["東區", "北區", "香山區"],
+  "新竹縣": ["竹北市", "竹東鎮", "新埔鎮", "關西鎮", "湖口鄉", "新豐鄉", "芎林鄉", "橫山鄉", "北埔鄉", "寶山鄉", "峨眉鄉", "尖石鄉", "五峰鄉"],
+  "苗栗縣": ["苗栗市", "苑裡鎮", "通霄鎮", "竹南鎮", "頭份市", "後龍鎮", "卓蘭鎮", "大湖鄉", "公館鄉", "銅鑼鄉", "南庄鄉", "頭屋鄉", "三義鄉", "西湖鄉", "造橋鄉", "三灣鄉", "獅潭鄉", "泰安鄉"],
+  "台中市": ["中區", "東區", "南區", "西區", "北區", "北屯區", "西屯區", "南屯區", "太平區", "大里區", "霧峰區", "烏日區", "豐原區", "后里區", "石岡區", "東勢區", "和平區", "新社區", "潭子區", "大雅區", "神岡區", "大肚區", "沙鹿區", "龍井區", "梧棲區", "清水區", "大甲區", "外埔區", "大安區"],
+  "彰化縣": ["彰化市", "鹿港鎮", "和美鎮", "線西鄉", "伸港鄉", "福興鄉", "秀水鄉", "花壇鄉", "芬園鄉", "員林市", "溪湖鎮", "田中鎮", "大村鄉", "埔鹽鄉", "埔心鄉", "永靖鄉", "社頭鄉", "二水鄉", "北斗鎮", "二林鎮", "田尾鄉", "埤頭鄉", "芳苑鄉", "大城鄉", "竹塘鄉", "溪州鄉"],
+  "南投縣": ["南投市", "埔里鎮", "草屯鎮", "竹山鎮", "集集鎮", "名間鄉", "鹿谷鄉", "中寮鄉", "魚池鄉", "國姓鄉", "水里鄉", "信義鄉", "仁愛鄉"],
+  "雲林縣": ["斗六市", "斗南鎮", "虎尾鎮", "西螺鎮", "土庫鎮", "北港鎮", "古坑鄉", "大埤鄉", "莿桐鄉", "林內鄉", "二崙鄉", "崙背鄉", "麥寮鄉", "東勢鄉", "褒忠鄉", "台西鄉", "元長鄉", "四湖鄉", "口湖鄉", "水林鄉"],
+  "嘉義市": ["東區", "西區"],
+  "嘉義縣": ["太保市", "朴子市", "布袋鎮", "大林鎮", "民雄鄉", "溪口鄉", "新港鄉", "六腳鄉", "東石鄉", "義竹鄉", "鹿草鄉", "水上鄉", "中埔鄉", "竹崎鄉", "梅山鄉", "番路鄉", "大埔鄉", "阿里山鄉"],
+  "台南市": ["中西區", "東區", "南區", "北區", "安平區", "安南區", "永康區", "歸仁區", "新化區", "左鎮區", "玉井區", "楠西區", "南化區", "仁德區", "關廟區", "龍崎區", "官田區", "麻豆區", "佳里區", "西港區", "七股區", "將軍區", "學甲區", "北門區", "新營區", "後壁區", "白河區", "東山區", "六甲區", "下營區", "柳營區", "鹽水區", "善化區", "大內區", "山上區", "新市區", "安定區"],
+  "高雄市": ["新興區", "前金區", "苓雅區", "鹽埕區", "鼓山區", "旗津區", "前鎮區", "三民區", "楠梓區", "小港區", "左營區", "仁武區", "大社區", "岡山區", "路竹區", "阿蓮區", "田寮區", "燕巢區", "橋頭區", "梓官區", "彌陀區", "永安區", "湖內區", "鳳山區", "大寮區", "林園區", "鳥松區", "大樹區", "旗山區", "美濃區", "六龜區", "內門區", "杉林區", "甲仙區", "桃源區", "那瑪夏區", "茂林區", "茄萣區"],
+  "屏東縣": ["屏東市", "潮州鎮", "東港鎮", "恆春鎮", "萬丹鄉", "長治鄉", "麟洛鄉", "九如鄉", "里港鄉", "鹽埔鄉", "高樹鄉", "萬巒鄉", "竹田鄉", "內埔鄉", "新埤鄉", "枋寮鄉", "新園鄉", "崁頂鄉", "林邊鄉", "南州鄉", "佳冬鄉", "琉球鄉", "車城鄉", "滿州鄉", "枋山鄉", "三地門鄉", "霧台鄉", "瑪家鄉", "泰武鄉", "來義鄉", "春日鄉", "獅子鄉", "牡丹鄉"],
+  "宜蘭縣": ["宜蘭市", "羅東鎮", "蘇澳鎮", "頭城鎮", "礁溪鄉", "壯圍鄉", "員山鄉", "冬山鄉", "五結鄉", "三星鄉", "大同鄉", "南澳鄉"],
+  "花蓮縣": ["花蓮市", "鳳林鎮", "玉里鎮", "新城鄉", "吉安鄉", "壽豐鄉", "秀林鄉", "萬榮鄉", "光復鄉", "豐濱鄉", "瑞穗鄉", "富里鄉", "卓溪鄉"],
+  "台東縣": ["台東市", "成功鎮", "關山鎮", "卑南鄉", "大武鄉", "太麻里鄉", "東河鄉", "長濱鄉", "鹿野鄉", "池上鄉", "綠島鄉", "達仁鄉", "金峰鄉", "蘭嶼鄉", "延平鄉", "海端鄉"],
+  "澎湖縣": ["馬公市", "湖西鄉", "白沙鄉", "西嶼鄉", "望安鄉", "七美鄉"],
+  "金門縣": ["金城鎮", "金湖鎮", "金沙鎮", "金寧鄉", "烈嶼鄉", "烏坵鄉"],
+  "連江縣": ["南竿鄉", "北竿鄉", "莒光鄉", "東引鄉"],
+};
+const TAIWAN_CITIES = Object.keys(TAIWAN_DISTRICTS);
+
+// 畫面顯示／存進 Members.City 時把「市／縣／區／鄉／鎮」這些行政區後綴拿掉，
+// 跟原本自由輸入時代留下來的資料格式一致（例如「台北・大安」不是「台北市・大安區」），
+// 舊資料不用另外遷移。
+function stripAdminSuffix(name) {
+  return name ? name.replace(/(市|縣|區|鄉|鎮)$/, "") : name;
+}
+function formatCityDistrict(cityName, districtName) {
+  if (!cityName) return "";
+  if (!districtName) return stripAdminSuffix(cityName);
+  return stripAdminSuffix(cityName) + "・" + stripAdminSuffix(districtName);
+}
+// 從既有的 city 字串（例如「台北・大安」，也相容中間用 "･"／"·" 分隔的舊資料）
+// 反推出縣市／鄉鎮下拉選單該選哪個選項。這欄位以前是自由輸入，資料不一定乾淨，
+// 配不到就讓兩個下拉都留白、不強迫塞一個猜錯的值，使用者自己重選就好。
+function parseCityString(raw) {
+  if (!raw) return { cityName: "", districtName: "" };
+  const parts = String(raw).split(/[・･·]/).map((s) => s.trim()).filter(Boolean);
+  const cityName = TAIWAN_CITIES.find((c) => stripAdminSuffix(c) === parts[0]) || "";
+  const districtName = cityName
+    ? (TAIWAN_DISTRICTS[cityName].find((d) => stripAdminSuffix(d) === parts[1]) || "")
+    : "";
+  return { cityName, districtName };
+}
+
+const SKILL_GROUPS = [
+  {
+    name: "語言天賦", en: "LANGUAGE",
+    items: [
+      ["中文", "母語或精通"], ["英文", "可與當地人日常溝通"], ["日文", "可處理訂房、點餐、問路"],
+      ["韓文", "可處理日常溝通"], ["粵語", "香港、廣東區域溝通"], ["西語", "西語系國家溝通"],
+      ["法語", "法語區溝通"], ["德語", "德語區溝通"], ["手語", "可以手語溝通"],
+      ["泰語", "泰國旅行可溝通"], ["越語", "越南旅行可溝通"], ["印尼語", "印尼、馬來區域溝通"]
+    ]
+  },
+  {
+    name: "行程推進", en: "EXECUTION",
+    items: [
+      ["行程總召", "負責排定整體路線"], ["攻略達人", "負責查秘境、查資料"], ["人肉導航", "方向感極佳，找路擔當"],
+      ["訂房/機票好手", "擅長比價、搶票"], ["票務達人", "處理各類當地通票、景點票"], ["網卡處理器", "出國前負責搞定全團網路"],
+      ["外語溝通", "負責跟當地人、飯店、店家交涉"], ["危機處理", "遇到班機取消、弄丟護照時能冷靜解決"]
+    ]
+  },
+  {
+    name: "團隊角色", en: "TEAM ROLE",
+    items: [
+      ["首席攝影師", "很會抓角度，不嫌煩"], ["Vlog 大師", "負責記錄旅途並剪輯"], ["扛行李硬漢", "搬行李上樓梯不抱怨"],
+      ["無情晨喚機", "負責準時叫大家起床"], ["氣氛製造機", "不怕冷場，超會接話"], ["財務大臣", "負責管公費、分帳"],
+      ["美食探測器", "找餐廳絕不踩雷"], ["隨和綠葉", "去哪都說好，隨和不挑剔"]
+    ]
+  },
+  {
+    name: "交通駕駛", en: "TRANSPORT",
+    items: [
+      ["左駕老司機", "習慣台灣/美國等左駕模式"], ["右駕老司機", "習慣日本/英國等右駕模式"],
+      ["機車騎士", "擅長在東南亞或離島騎機車"], ["國際駕照持有者", "已經準備好可以出國租車"],
+      ["副駕 DJ", "不會開車但會幫忙看路、播音樂、餵食司機"]
+    ]
+  }
+];
+
+const DNA_DEFS = [
+  {
+    label: "行程規劃", short: "規劃", left: "隨機應變", right: "按照計畫",
+    tiers: [
+      [25, "佛系盲遊", "走到哪算到哪，不做功課不查地圖，相信一切都是最好的安排。"],
+      [50, "大綱走起", "只定好大方向（如機票、住宿），每天要去哪看當天起床的心情決定。"],
+      [75, "按圖索驥", "有明確的每日行程規劃，但允許行程根據體力或天氣微調。"],
+      [100, "表格魔人", "行程精確到分鐘，Excel 表格排好排滿，任何延誤都會讓他焦慮。"]
+    ]
+  },
+  {
+    label: "消費價值觀", short: "消費", left: "精打細算", right: "奢華享受",
+    tiers: [
+      [25, "極致窮遊", "青年旅館、廉價航空、走路代步，最高指導原則是「能省則省」。"],
+      [50, "CP 精算師", "該花花該省省，擅長比價找優惠，追求每一塊錢都花在刀口上。"],
+      [75, "質感微奢", "願意花錢住幾晚好飯店或吃頓大餐，認為出來玩就是要對自己好一點。"],
+      [100, "財富自由", "五星級飯店、商務艙、高級包車，旅行的目的是極致的享受與服務。"]
+    ]
+  },
+  {
+    label: "景點偏好", short: "景點", left: "擁抱山海", right: "都會霓虹",
+    tiers: [
+      [25, "野外探險", "熱愛爬山、潛水、遠離塵囂的秘境，比起人潮更愛看風景。"],
+      [50, "踏青放空", "喜歡好山好水，但不用太累，搭車能到的風景區最棒。"],
+      [75, "走跳街區", "喜歡穿梭城市巷弄、逛街買東西、感受都市特有的文化氛圍。"],
+      [100, "不夜城迷", "只愛大都會，高樓大廈、百貨商場、繁華便利是旅行的唯一選擇。"]
+    ]
+  },
+  {
+    label: "飲食追求", short: "飲食", left: "巷弄尋寶", right: "指標名店",
+    tiers: [
+      [25, "在地老饕", "專挑沒有招牌的路邊攤或傳統菜市場，越是在地人吃的越愛。"],
+      [50, "隨機盲測", "肚子餓了看順眼就走進去吃，不依賴網路評價，隨遇而安。"],
+      [75, "評星指南", "吃飯前一定要先查 Google Maps 星星數，4 顆星以上的才吃，不吃雷店。"],
+      [100, "名店執著", "為了吃米其林或網紅名店，排隊兩三個小時也在所不惜，絕不妥協。"]
+    ]
+  }
+];
+const dnaTier = (i, pct) => (DNA_DEFS[i].tiers.find((t) => pct <= t[0]) || DNA_DEFS[i].tiers[3]);
+
+const MBTI_GROUPS = [
+  { name: "分析家 NT", color: "#7a5cbf", types: ["INTJ", "INTP", "ENTJ", "ENTP"] },
+  { name: "外交官 NF", color: "#3f8f6b", types: ["INFJ", "INFP", "ENFJ", "ENFP"] },
+  { name: "守護者 SJ", color: "#3b6ea8", types: ["ISTJ", "ISFJ", "ESTJ", "ESFJ"] },
+  { name: "探險家 SP", color: "#c08a1c", types: ["ISTP", "ISFP", "ESTP", "ESFP"] }
+];
+const mbtiInfo = (t) => MBTI_GROUPS.find((g) => g.types.includes(t)) || MBTI_GROUPS[0];
+const ageOf = (iso) => {
+  if (!iso) return null; // 資料庫還沒填生日
+  const b = new Date(iso), n = new Date();
+  let a = n.getFullYear() - b.getFullYear();
+  const m = n.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && n.getDate() < b.getDate())) a -= 1;
+  return a;
+};
+const fmtBirth = (iso) => (iso ? iso.split("-").join(" / ") : "尚未設定");
+const ageText = (age) => (age == null ? "尚未設定" : age + " 歲");
+
+const JXF = "rotateX(21deg) rotateZ(-2deg)";
+const TOUR = [
+  { title: "攤平閱讀", text: "牆上這張木牌會把手帳放平，字更好讀；再點一次回到案頭視角。", x: "1158px", y: "69px", w: "104px", h: "105px", r: "8px", xf: "none", o: "50% 100%", bx: "848px", by: "72px" },
+  { title: "編輯你的資料", text: "左頁是你的名片。點照片框可以換照片，點姓名、生日、MBTI 或技能標籤就能直接改。", x: "132px", y: "266px", w: "450px", h: "600px", r: "6px", xf: JXF, o: "450px 600px", bx: "628px", by: "300px" },
+  { title: "旅遊 DNA", text: "右頁是你的旅遊 DNA 和技能標籤。四個面向都能點開看細節，右上角的修改圖示可以調整比重。", x: "582px", y: "266px", w: "450px", h: "600px", r: "6px", xf: JXF, o: "0px 600px", bx: "180px", by: "300px" },
+  { title: "翻到第二頁", text: "手帳右下角的翻頁角可以翻到好友、追蹤、黑名單和好友申請。黑名單和好友申請只有你自己看得到，別人翻到你的第二頁只會看到好友和追蹤名單。", x: "958px", y: "792px", w: "74px", h: "74px", r: "4px", xf: JXF, o: "-376px 74px", bx: "620px", by: "700px" },
+  { title: "機票", text: "機票記著你的旅程，點開可以放大查看與編輯。申請加入揪團時，這張機票就會寄給團長。", x: "740px", y: "148px", w: "216px", h: "190px", r: "6px", xf: "rotateX(21deg) rotateZ(2.4deg)", o: "50% 100%", bx: "440px", by: "160px" },
+  { title: "通訊錄吊牌", text: "右下角的行李吊牌是你的通訊錄，點一下展開，裡面收著五種聯絡方式。上方的公開切換是整份一起設定 —— 設為私人時，只有好友和同團友人看得到，其他人只會看到模糊的紙面。", x: "1112px", y: "404px", w: "212px", h: "296px", r: "18px", xf: "rotateX(24deg) rotateZ(11deg)", o: "50% 100%", bx: "790px", by: "430px" },
+  { title: "電子鐘", text: "桌上的鐘顯示 09:00 是白天、20:00 是夜晚。點一下切換，窗外的光線也會跟著變。", x: "1154px", y: "268px", w: "204px", h: "108px", r: "16px", xf: "none", o: "50% 100%", bx: "846px", by: "272px" },
+  { title: "布告欄便利貼", text: "三張便利貼通往站內其他頁面：首頁、揪團、文章。點一下就跳過去。", x: "72px", y: "24px", w: "256px", h: "226px", r: "6px", xf: "none", o: "50% 100%", bx: "352px", by: "36px" },
+  { title: "登入與登出", text: "最後這張木牌處理帳號。要離開時點一下登出，下次回來還在這張桌子前。", x: "1268px", y: "69px", w: "104px", h: "123px", r: "8px", xf: "none", o: "50% 100%", bx: "952px", by: "108px" },
+];
+
+class Component extends DCLogic {
+  state = {
+    // ---- 串接後端用的狀態，畫面載入完成前先用下面的示範資料撐著 ----
+    loading: true,
+    loadError: null,
+    saving: false,
+    memberId: null,       // 讀到真實資料後才會有值；null 代表還沒讀到（未登入或讀取失敗）
+    skillCatalog: [],     // [{ skillId, skillName }]，存檔時把技能名稱轉成 ID 要用
+    avatarUrl: null,
+    avatarUploading: false,
+    groupsOwnedCount: 12, // 讀到真實資料前的示範值，跟原本 stats.groups 一致
+    tripsJoinedCount: 27, // 讀到真實資料前的示範值，跟原本 stats.trips 一致
+    people: null,          // 手帳第二頁的好友/追蹤/黑名單/好友申請，null 代表還沒讀到真實資料
+                            // （render() 裡會 fallback 回下面的 PEOPLE 示範資料）
+    contactActionBusy: null, // 正在處理中的那個人的 memberId，避免同一列被連點兩次
+
+    // 查看「別人」頁面時追蹤／申請好友／封鎖要用的真實狀態，null/false 是還沒讀到
+    // 真實資料前的預設值，applyProfileData() 讀到 ProfileData 之後會覆蓋成真的。
+    realIsSelf: null,               // null 代表還沒讀到真實資料，畫面上會 fallback 回 viewer 那個設計預覽切換鈕
+    realContactVisible: null,       // 後端算好的「看不看得到對方通訊錄／聯絡方式」（null＝還沒讀到真實資料，
+                                     // 見 MemberProfileDto.ContactVisible 的註解），跟聯絡方式鎖定卡、
+                                     // 手帳第二頁看得到 Friends／Following 與否共用同一個判斷。
+    viewerIsFollowing: false,       // 我是不是已經在追蹤這個人
+    viewerHasPendingFriendRequest: false, // 我是不是已經送出好友申請、對方還沒審核
+    viewerHasBlocked: false,        // 我是不是已經封鎖這個人
+    viewerIsBlockedByTarget: false, // 對方是不是封鎖了我
+    relationActionBusy: false,      // 追蹤/申請好友/封鎖其中一個動作正在送出中，避免連點
+
+    viewer: "本人",
+    light: "day",
+    spread: 0,
+    flipping: null,
+    tab: "friends",
+    query: "",
+    editing: null,
+    tagEditing: false,
+    dnaEditing: false,
+    newTag: "",
+    ticketOpen: QUERY_PARAMS.get("openTicket") === "1" || QUERY_PARAMS.get("ticketOnly") === "1",
+    ticketOnly: QUERY_PARAMS.get("ticketOnly") === "1",
+    tagOpen: false,
+    confirmOpen: false,
+    sent: false,
+    contactPublic: false,
+    message: "",
+    editOpen: false,
+    editErrors: {},
+    reportOpen: false,
+    reportReason: null,
+    reportEvidenceName: null,
+    reportSent: false,
+    stampRun: 0,
+    draft: null,
+    profile: {
+      nickname: "林昀希",
+      mbti: "ENFP",
+      gender: "女",
+      birth: "1999-11-04",
+      city: "台北 · 大安",
+      job: "UI 設計師",
+      bio: "喜歡把行程排一半，另一半留給當天的天氣和心情。長途火車、清晨市場、深夜便利商店都是我的行程重點。",
+      // LINE ID／Instagram／Facebook 現在也有真的編輯畫面了，跟其他欄位一樣放在
+      // profile 裡當「原始值的唯一真相來源」；contacts 陣列只負責顯示（會經過
+      // prettySocialLink 美化），存檔時一律讀這裡的原始值，不要讀 contacts。
+      lineId: "yunxi_trip",
+      instagramUrl: "https://instagram.com/yunxi.walks",
+      facebookUrl: "https://facebook.com/yunxi.lin",
+    },
+    tags: ["日文", "英文", "行程總召", "攻略達人", "訂房/機票好手", "首席攝影師", "美食探測器", "無情晨喚機", "右駕老司機", "國際駕照持有者"],
+    dna: [58, 42, 30, 55],
+    skillsOpen: false,
+    flat: false,
+    loggedIn: true,
+    tour: -1,
+    mqPaused: false,
+    dnaOpen: 0,
+    // 設計稿預覽用的示範資料（還沒讀到真實 API 資料時顯示），Instagram／Facebook
+    // 也補上 isLink/notLink/href，格式跟 applyProfileData() 組出來的真實資料一致，
+    // 不然設計稿獨立預覽時 contactFull 那邊的 sc-if 會抓不到值。
+    contacts: [
+      { label: "電子信箱", value: "yunxi.lin@mail.com", href: null, isLink: false, notLink: true },
+      { label: "手機電話", value: "0912-345-678", href: null, isLink: false, notLink: true },
+      { label: "LINE ID", value: "yunxi_trip", href: null, isLink: false, notLink: true },
+      { label: "Instagram", value: "@yunxi.walks", href: "https://instagram.com/yunxi.walks", isLink: true, notLink: false },
+      { label: "Facebook", value: "Yunxi Lin", href: "https://facebook.com/yunxi.lin", isLink: true, notLink: false }
+    ]
+  };
+
+  set(k, v) { this.setState({ [k]: v }); }
+
+  endTour() {
+    try { localStorage.setItem("trip-member-tour-seen", "1"); } catch (e) {}
+    this.setState({ tour: -1 });
+  }
+
+  componentDidMount() {
+    let tourSeen = false;
+    try { tourSeen = !!localStorage.getItem("trip-member-tour-seen"); } catch (e) {}
+    if (!tourSeen && this.state.viewer === "本人") this.setState({ tour: 0 });
+
+    let seen = false;
+    try { seen = !!localStorage.getItem("trip-member-seal-stamped"); } catch (e) {}
+    if (this.props.sealIntro === false && seen) return;
+    try { localStorage.setItem("trip-member-seal-stamped", "1"); } catch (e) {}
+    this.stamp();
+
+    this.loadProfile();
+  }
+
+  stamp() {
+    this.setState({ stampRun: (this.state.stampRun || 0) + 1 });
+  }
+
+  flip(dir) {
+    if (this.state.flipping) return;
+    // 第二頁現在看別人的主頁也翻得到（只是好友申請／黑名單／搜尋這幾個本人專屬的
+    // 功能會隱藏，只留好友列表／追蹤名單，而且要不要看得到內容還要另外看
+    // ContactBookLocked／ContactBookOpenOther，見 renderVals 那段），
+    // 所以這裡不再擋 dir==="next"。
+    this.setState({ flipping: dir });
+    setTimeout(() => this.setState({ spread: dir === "next" ? 1 : 0 }), 300);
+    setTimeout(() => this.setState({ flipping: null }), 660);
+  }
+
+  // ---- 以下都是串接後端的部分，跟原本設計稿的展示邏輯無關 ----
+
+  async loadProfile() {
+    try {
+      const res = await fetch(apiUrl("/Members/ProfileData"), { headers: { Accept: "application/json" } });
+      if (res.status === 401) {
+        // 尚未登入（組長的登入還沒接上，或沒帶 ?devMemberId=）：
+        // 保留畫面原本寫死的示範資料，不動它，方便設計稿本身還是能單獨預覽。
+        this.setState({ loading: false, loadError: "尚未登入" });
+        return;
+      }
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      this.applyProfileData(data);
+    } catch (err) {
+      console.warn("讀取會員資料失敗，暫時顯示預設示範資料：", err);
+      this.setState({ loading: false, loadError: String(err) });
+    }
+  }
+
+  applyProfileData(data) {
+    const dnaByDim = {};
+    (data.travelDna || []).forEach((d) => { dnaByDim[d.dimensionId] = d.score; });
+
+    // 通訊錄：後端已經照隱私規則算好 ContactVisible，看不到的欄位這裡本來就是 null，
+    // 所以不用另外判斷，null/空字串就不放進清單裡（畫面上就是模糊的那三格示範資料）。
+    const contacts = [];
+    if (data.phone) contacts.push({ label: "手機電話", value: data.phone, href: null, isLink: false, notLink: true });
+    if (data.lineId) contacts.push({ label: "LINE ID", value: data.lineId, href: null, isLink: false, notLink: true });
+    // Instagram／Facebook 存的是完整網址，顯示成可以點擊跳轉的連結（見 prettySocialLink
+    // 的註解），電話跟 LINE ID 不是網址，維持純文字。
+    const igLink = prettySocialLink(data.instagramUrl, "instagram");
+    if (igLink) contacts.push({ label: "Instagram", value: igLink.text, href: igLink.href, isLink: true, notLink: false });
+    const fbLink = prettySocialLink(data.facebookUrl, "facebook");
+    if (fbLink) contacts.push({ label: "Facebook", value: fbLink.text, href: fbLink.href, isLink: true, notLink: false });
+
+    // 手帳第二頁：看自己一定有 contactBook；看別人的話，後端會依 ContactVisible
+    // 判斷要不要給（見 MemberProfileDto.ContactBook 的註解）——contactBook 是 null
+    // 代表「讀到真實資料了，但沒有權限看對方通訊錄」，這裡直接組一份「內容全空」的
+    // 真實資料，不能再 fallback 回 this.state.people，不然沒權限看的時候會被誤判成
+    // 「還沒讀到真實資料」，結果又跑去顯示 PEOPLE 那份假的示範好友清單。
+    const cb = data.contactBook;
+    const fmtYm = (iso) => {
+      if (!iso) return "";
+      const d = new Date(iso);
+      return isNaN(d) ? "" : (d.getFullYear() + "/" + String(d.getMonth() + 1).padStart(2, "0"));
+    };
+    const people = {
+      friends: ((cb && cb.friends) || []).map((m) => ({
+        memberId: m.memberId, name: m.name,
+        meta: [m.city, "成為好友於 " + fmtYm(m.createdAt)].filter(Boolean).join(" · "),
+      })),
+      following: ((cb && cb.following) || []).map((m) => ({
+        memberId: m.memberId, name: m.name,
+        meta: [m.city, "單向追蹤"].filter(Boolean).join(" · "),
+      })),
+      blocked: ((cb && cb.blocked) || []).map((m) => ({
+        memberId: m.memberId, name: m.name,
+        meta: "已封鎖 · " + fmtYm(m.createdAt),
+      })),
+      requests: ((cb && cb.requests) || []).map((m) => ({
+        memberId: m.memberId, name: m.name,
+        meta: m.message ? ("留言：" + m.message) : "沒有附上留言",
+      })),
+    };
+
+    this.setState({
+      loading: false,
+      loadError: null,
+      memberId: data.memberId,
+      skillCatalog: data.skillCatalog || [],
+      avatarUrl: data.avatarUrl || null,
+      contactPublic: !!data.contactBookPublic,
+      contacts: contacts.length ? contacts : this.state.contacts,
+      groupsOwnedCount: data.groupsOwnedCount ?? this.state.groupsOwnedCount,
+      tripsJoinedCount: data.tripsJoinedCount ?? this.state.tripsJoinedCount,
+      people,
+
+      // 查看別人頁面時追蹤／申請好友／封鎖要用的真實狀態（見 MemberProfileDto 裡
+      // IsSelf／ViewerIsFollowing／ViewerHasPendingFriendRequest／ViewerHasBlocked／
+      // ViewerIsBlockedByTarget 那幾個欄位的註解）。
+      realIsSelf: !!data.isSelf,
+      realContactVisible: !!data.contactVisible,
+      viewerIsFollowing: !!data.viewerIsFollowing,
+      viewerHasPendingFriendRequest: !!data.viewerHasPendingFriendRequest,
+      viewerHasBlocked: !!data.viewerHasBlocked,
+      viewerIsBlockedByTarget: !!data.viewerIsBlockedByTarget,
+      profile: {
+        ...this.state.profile,
+        nickname: data.name || this.state.profile.nickname,
+        mbti: data.mbti || this.state.profile.mbti,
+        gender: GENDER_BYTE_TO_LABEL[data.gender] ?? this.state.profile.gender,
+        birth: data.birthDate || null,
+        // 居住地欄位（Members.City）已經補上去了，跟其他欄位一樣正常讀寫。
+        city: data.city || "",
+        job: data.occupation || "",
+        bio: data.bio || "",
+        // 原始值（不是美化過的顯示文字），編輯 Modal 直接讀寫這幾格。
+        lineId: data.lineId || "",
+        instagramUrl: data.instagramUrl || "",
+        facebookUrl: data.facebookUrl || "",
+      },
+      // 技能標籤名稱本來就跟 SKILL_GROUPS 用同一份中文名稱，可以直接替換。
+      tags: data.skillNames || [],
+      dna: [1, 2, 3, 4].map((dimId) => (dnaByDim[dimId] != null ? dnaByDim[dimId] : 50)),
+    });
+  }
+
+  // ---- 手帳第二頁的動作：接受/拒絕好友申請、解除黑名單、解除好友、取消追蹤 ----
+  // 五個共用同一套邏輯：呼叫對應的 /Members/... API，成功後整批重新撈一次
+  // loadProfile()（最簡單、不用自己在前端維護樂觀更新的邊界狀況）。
+  async respondFriendRequest(requesterId, accept) {
+    if (!this.state.memberId || !requesterId || this.state.contactActionBusy) return;
+    this.setState({ contactActionBusy: requesterId });
+    try {
+      const res = await fetch(apiUrl(accept ? "/Members/AcceptFriendRequest" : "/Members/DeclineFriendRequest"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: requesterId }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      await this.loadProfile();
+    } catch (err) {
+      console.warn("處理好友申請失敗：", err);
+    } finally {
+      this.setState({ contactActionBusy: null });
+    }
+  }
+
+  async unblockMember(blockedId) {
+    if (!this.state.memberId || !blockedId || this.state.contactActionBusy) return;
+    this.setState({ contactActionBusy: blockedId });
+    try {
+      const res = await fetch(apiUrl("/Members/Unblock"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: blockedId }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      await this.loadProfile();
+    } catch (err) {
+      console.warn("解除黑名單失敗：", err);
+    } finally {
+      this.setState({ contactActionBusy: null });
+    }
+  }
+
+  async removeFriend(friendId) {
+    if (!this.state.memberId || !friendId || this.state.contactActionBusy) return;
+    this.setState({ contactActionBusy: friendId });
+    try {
+      const res = await fetch(apiUrl("/Members/RemoveFriend"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: friendId }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      await this.loadProfile();
+    } catch (err) {
+      console.warn("解除好友失敗：", err);
+    } finally {
+      this.setState({ contactActionBusy: null });
+    }
+  }
+
+  async unfollowMember(followeeId) {
+    if (!this.state.memberId || !followeeId || this.state.contactActionBusy) return;
+    this.setState({ contactActionBusy: followeeId });
+    try {
+      const res = await fetch(apiUrl("/Members/Unfollow"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: followeeId }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      await this.loadProfile();
+    } catch (err) {
+      console.warn("取消追蹤失敗：", err);
+    } finally {
+      this.setState({ contactActionBusy: null });
+    }
+  }
+
+  // 以下三個是「查看別人的主頁」時，追蹤／申請好友／封鎖三個按鈕真正打 API 用的動作，
+  // 對象一律是目前正在看的這個人（this.state.memberId），跟手帳第二頁那三個
+  // removeFriend／unfollowMember／unblockMember（對象是清單裡點的那一列，id 用參數傳進來）
+  // 是兩組獨立按鈕，不要搞混。busy 旗標也分開用 relationActionBusy，避免互相卡住。
+
+  async toggleFollowAction() {
+    const targetId = this.state.memberId;
+    if (!targetId || this.state.relationActionBusy) return;
+    this.setState({ relationActionBusy: true });
+    try {
+      const url = this.state.viewerIsFollowing ? "/Members/Unfollow" : "/Members/Follow";
+      const res = await fetch(apiUrl(url), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: targetId }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      await this.loadProfile();
+    } catch (err) {
+      console.warn("切換追蹤狀態失敗：", err);
+    } finally {
+      this.setState({ relationActionBusy: false });
+    }
+  }
+
+  async sendFriendRequestAction() {
+    const targetId = this.state.memberId;
+    if (!targetId || this.state.relationActionBusy) return;
+    // 已經送出過、還在等審核的時候按鈕會顯示「已送出申請」，這裡就不用再送一次。
+    if (this.state.viewerHasPendingFriendRequest) return;
+    this.setState({ relationActionBusy: true });
+    try {
+      const res = await fetch(apiUrl("/Members/SendFriendRequest"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: targetId, message: null }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      await this.loadProfile();
+    } catch (err) {
+      console.warn("送出好友申請失敗：", err);
+    } finally {
+      this.setState({ relationActionBusy: false });
+    }
+  }
+
+  async toggleBlockAction() {
+    const targetId = this.state.memberId;
+    if (!targetId || this.state.relationActionBusy) return;
+    this.setState({ relationActionBusy: true });
+    try {
+      const url = this.state.viewerHasBlocked ? "/Members/Unblock" : "/Members/Block";
+      const res = await fetch(apiUrl(url), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: targetId }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      await this.loadProfile();
+    } catch (err) {
+      console.warn("切換封鎖狀態失敗：", err);
+    } finally {
+      this.setState({ relationActionBusy: false });
+    }
+  }
+
+  async submitReportAction(reasonLabel) {
+    const targetId = this.state.memberId;
+    if (!targetId || !reasonLabel || this.state.relationActionBusy) return;
+    this.setState({ relationActionBusy: true });
+    try {
+      // 🔧 截圖佐證是選填的檔案，JSON body 夾不了檔案，所以這裡改成跟 uploadAvatar()
+      // 一樣送 multipart/form-data（FormData），不要手動設 Content-Type——瀏覽器會自己
+      // 帶正確的 boundary，手動設反而會漏掉 boundary 讓後端解析失敗。對應後端也已經把
+      // MembersController.ReportMember 從 [FromBody] 改成 [FromForm]（見該處註解）。
+      const form = new FormData();
+      form.append("targetMemberId", targetId);
+      form.append("reason", reasonLabel);
+      if (this._reportEvidenceFile) form.append("evidence", this._reportEvidenceFile);
+      const res = await fetch(apiUrl("/Members/ReportMember"), { method: "POST", body: form });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      this._reportEvidenceFile = null;
+      this.setState({ reportOpen: false, reportSent: true, reportEvidenceName: null });
+    } catch (err) {
+      console.warn("送出檢舉失敗：", err);
+    } finally {
+      this.setState({ relationActionBusy: false });
+    }
+  }
+
+  viewMember(memberId) {
+    // ⚠️ 正式功能（不是開發後門，組長登入接上後不用改）：查看別人的主頁時，
+    // 保留網址上原本的 devMemberId（將來是登入 Cookie，這裡完全不用管），
+    // 只把 ?id= 換成對方的會員編號——後端 ProfileData(int? id) 才能分清楚
+    // 「你是誰」跟「頁面上顯示的是誰」是兩件事，不會誤判成在看自己的頁面。
+    if (!memberId) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("id", memberId);
+    const url = "/Members/Profile?" + params.toString();
+    try { (window.top || window).location.href = url; }
+    catch (e) { window.location.href = url; }
+  }
+
+  // 把畫面上的技能名稱（沒有 ID）對照 skillCatalog 轉成後端要的 SkillId 清單。
+  buildSkillIds(tags) {
+    const byName = {};
+    (this.state.skillCatalog || []).forEach((s) => { byName[s.skillName] = s.skillId; });
+    return (tags || this.state.tags).map((name) => byName[name]).filter((id) => id != null);
+  }
+
+  buildEditDto(overrides) {
+    overrides = overrides || {};
+    const p = overrides.profile || this.state.profile;
+    const tags = overrides.tags || this.state.tags;
+    const contactPublic = overrides.contactPublic != null ? overrides.contactPublic : this.state.contactPublic;
+
+    return {
+      name: p.nickname,
+      birthDate: p.birth || null,
+      gender: GENDER_LABEL_TO_BYTE[p.gender] ?? 0,
+      occupation: p.job || null,
+      mbti: p.mbti || null,
+      bio: p.bio || null,
+      city: p.city || null,
+      // LINE ID／Instagram／Facebook 現在有真的編輯畫面了（編輯 Modal 的「聯絡
+      // 方式」區塊），一律從 profile／draft 讀原始值（不是 contacts 裡美化過的
+      // 顯示文字，見 profile.lineId/instagramUrl/facebookUrl 的註解）。存檔前
+      // saveEdit 已經用 validateSocialUrl／validateLineId 驗證過一次，後端
+      // MemberProfileService.UpdateProfile 也會用 SocialLinkValidator 再驗證
+      // 一次——前端這關只是即時提示，真正擋得住的是後端那關。
+      lineId: (p.lineId || "").trim() || null,
+      instagramUrl: (p.instagramUrl || "").trim() || null,
+      facebookUrl: (p.facebookUrl || "").trim() || null,
+      contactBookPublic: !!contactPublic,
+      skillIds: this.buildSkillIds(tags),
+    };
+  }
+
+  // 存檔動作分散在好幾個地方觸發（基本資料 Modal、簡介、技能標籤、通訊錄公開切換），
+  // 統一都呼叫這個方法，並且允許呼叫端直接把「這次改完應該長怎樣」傳進來，
+  // 不依賴 setState 之後 this.state 是否已經更新完成（這個小框架沒有明講 setState
+  // 是同步還是非同步，用 overrides 保險一點）。
+  // 回傳 { success, message } 給呼叫端（例如 saveEdit）判斷要不要把畫面退回
+  // 存檔前的樣子。存成功之後重新 loadProfile() 一次，是因為 contacts（通訊錄
+  // 顯示用的美化文字）是從 profile 的原始值另外組出來的，重撈一次最省事，
+  // 不用在這裡自己重寫一次跟 applyProfileData 一樣的組資料邏輯。
+  async persistProfile(overrides) {
+    if (!this.state.memberId) return { success: true }; // 還沒讀到真實會員（沒登入/沒帶 devMemberId），不用存
+    this.setState({ saving: true });
+    try {
+      const res = await fetch(apiUrl("/Members/UpdateProfile"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(this.buildEditDto(overrides)),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.warn("儲存會員資料失敗：", data.message || res.status);
+        return { success: false, message: data.message };
+      }
+      await this.loadProfile();
+      return { success: true };
+    } catch (err) {
+      console.warn("儲存會員資料失敗：", err);
+      return { success: false, message: String(err) };
+    } finally {
+      this.setState({ saving: false });
+    }
+  }
+
+  // dna 是 [行程規劃, 消費價值觀, 景點偏好, 飲食追求] 四個 0~100 的分數，跟
+  // DNA_DEFS／TravelDNADimensions 的順序（DimensionID 1~4）是對齊的。
+  async persistDna(dna) {
+    if (!this.state.memberId) return;
+    try {
+      await fetch(apiUrl("/Members/UpdateTravelDna"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scores: dna.map((score, idx) => ({ dimensionId: idx + 1, score })),
+        }),
+      });
+    } catch (err) {
+      console.warn("儲存旅遊 DNA 失敗：", err);
+    }
+  }
+
+  async uploadAvatar(file) {
+    this.setState({ avatarUploading: true });
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(apiUrl("/Members/UploadAvatar"), { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.warn("大頭貼上傳失敗：", data.message || res.status);
+        return;
+      }
+      this.setState({ avatarUrl: data.avatarUrl });
+    } catch (err) {
+      console.warn("大頭貼上傳失敗：", err);
+    } finally {
+      this.setState({ avatarUploading: false });
+    }
+  }
+
+  // <image-slot id="member-avatar-edit"> 是設計稿自帶的元件（image-slot.js），
+  // 點一下會直接打開檔案選取視窗、本機裁切預覽——這部分是設計稿原本就做好的，
+  // 不用動。但它只把選好的圖存在瀏覽器本機（給設計稿預覽用），不會送去後端，
+  // 所以這裡另外掛一個「change」監聽，file 選好的當下順便把同一個檔案上傳到
+  // /Members/UploadAvatar。這個 Modal 是點「編輯基本資料」才會出現，所以要等
+  // Modal 真的畫出來之後才找得到這個元件，openEdit 呼叫這裡時稍微延遲一下。
+  wireAvatarUpload() {
+    const el = document.getElementById("member-avatar-edit");
+    const input = el && el.shadowRoot && el.shadowRoot.querySelector('input[type="file"]');
+    if (!input || input.__ltBound) return;
+    input.__ltBound = true;
+    input.addEventListener("change", () => {
+      const f = input.files && input.files[0];
+      if (f) this.uploadAvatar(f);
+    });
+  }
+
+  // 檢舉截圖佐證跟大頭照不一樣的地方：選好檔案不用馬上傳，先存在 this._reportEvidenceFile，
+  // 等真的按「送出檢舉」時才跟 targetMemberId／reason 一起包進同一個 FormData 送出
+  // （見 submitReportAction）。同樣要等 Modal（openReport）畫出來後才找得到這個元件，
+  // 所以呼叫端也要延遲一下。
+  wireReportEvidenceUpload() {
+    const el = document.getElementById("report-evidence");
+    const input = el && el.shadowRoot && el.shadowRoot.querySelector('input[type="file"]');
+    if (!input || input.__ltBound) return;
+    input.__ltBound = true;
+    input.addEventListener("change", () => {
+      const f = input.files && input.files[0];
+      this._reportEvidenceFile = f || null;
+      this.set("reportEvidenceName", f ? f.name : null);
+    });
+  }
+
+  renderVals() {
+    const s = this.state, p = s.profile;
+    // 「是不是在看自己」優先用後端真的算出來的 IsSelf（realIsSelf，null 代表還沒讀到
+    // 真實資料），沒有真實資料時（例如設計稿獨立預覽、還沒登入）才 fallback 回
+    // viewerOptions 那個設計預覽用的本人／陌生人／…／同團成員切換鈕。
+    const own = s.realIsSelf != null ? s.realIsSelf : s.viewer === "本人";
+    // 站內導頁：被 iframe 嵌入時（整合進專題）跳最外層視窗
+    const go = (href) => {
+      try { (window.top || window).location.href = href; }
+      catch (e) { window.location.href = href; }
+    };
+    const day = s.light === "day";
+    // 通訊錄/聯絡方式看不看得到，優先用後端真的算出來的 ContactVisible（realContactVisible，
+    // null 代表還沒讀到真實資料），沒有真實資料時才 fallback 回設計預覽用的 viewer 切換鈕，
+    // 邏輯跟上面 own／realIsSelf 是同一組模式。
+    const contactVisible = s.realContactVisible != null
+      ? s.realContactVisible
+      : (own || s.contactPublic || s.viewer === "好友（雙向）" || s.viewer === "同團成員");
+    const locked = !contactVisible;
+    // 查看別人的手帳第二頁：黑名單／好友申請／搜尋這幾個本人專屬的功能要隱藏，
+    // 而且要不要看得到 Friends／Following 還要另外看 contactVisible（跟聯絡方式共用
+    // 同一個權限判斷，已跟負責會員主頁的組員確認）。
+    const viewingOther = !own;
+    const contactBookLocked = !own && !contactVisible;
+    const contactBookOpenOther = !own && contactVisible;
+
+    const age = ageOf(p.birth);
+    const fieldRows = [
+      { label: "年齡", value: ageText(age) },
+      { label: "性別", value: p.gender },
+      { label: "生日", value: fmtBirth(p.birth) },
+      { label: "居住地", value: p.city },
+      { label: "職業", value: p.job }
+    ];
+    const info = mbtiInfo(p.mbti);
+    const d = s.draft || p;
+    const dInfo = mbtiInfo(d.mbti);
+    const setDraft = (k) => (e) => this.setState({ draft: { ...(this.state.draft || this.state.profile), [k]: e.target.value } });
+
+    // 有讀到真實資料（s.people）就用真的，還沒讀到（沒登入/讀取中/看別人的頁面）
+    // 就 fallback 回模組層級的 PEOPLE 示範資料，讓設計稿本身還是能單獨預覽。
+    const peopleData = s.people || PEOPLE;
+    const lists = {
+      friends: peopleData.friends, following: peopleData.following,
+      blocked: peopleData.blocked, requests: peopleData.requests
+    };
+    // 黑名單／好友申請是「我自己」的隱私，而且那兩個分頁籤的動作（解除黑名單／
+    // 接受或拒絕好友申請）本來就是在處理「我自己」的關聯，套用在別人身上沒有意義，
+    // 所以看別人的頁面時這兩個分頁籤直接不出現（後端 GetPublicContactBook 也配合
+    // 只回傳 Friends／Following，見那邊的註解，前端這裡不是唯一防線）。
+    // 完全没有權限看對方通訊錄（contactBookLocked）時，連 Friends／Following 這兩個
+    // 分頁籤也不出現，只顯示一段說明文字。
+    const tabDefsAll = [
+      ["friends", "好友列表"], ["following", "追蹤名單"],
+      ["blocked", "黑名單"], ["requests", "好友申請"]
+    ];
+    const tabDefs = own
+      ? tabDefsAll
+      : contactBookLocked
+        ? []
+        : tabDefsAll.filter(([key]) => key === "friends" || key === "following");
+    const tabs = tabDefs.map(([key, label]) => ({
+      label, count: lists[key].length,
+      bg: s.tab === key ? "#e0d0ae" : "#f8f2e4",
+      fg: s.tab === key ? "#3d342a" : "#8d7c64",
+      onClick: () => this.setState({ tab: key, query: "" })
+    }));
+    const q = s.query.trim();
+    // 看別人的頁面時，清單裡的每一列只留「查看」（跳到那個人的主頁），
+    // 解除好友／取消追蹤／解除黑名單／接受或拒絕好友申請這些都是在修改「我自己」的
+    // 關聯資料，套在別人的好友/追蹤名單上沒有意義，所以一律不顯示（呼應「查看別人的
+    // 頁面所有資料都不能修改」這條規則）。
+    const leftList = lists[s.tab]
+      .filter((x) => !q || x.name.toLowerCase().includes(q.toLowerCase()))
+      .map((x) => ({
+        name: x.name, meta: x.meta, initial: x.name.slice(0, 1),
+        actions: !own
+          ? [{ label: "查看", onClick: () => this.viewMember(x.memberId) }]
+          : s.tab === "requests"
+            ? [
+                { label: "接受", onClick: () => this.respondFriendRequest(x.memberId, true) },
+                { label: "拒絕", onClick: () => this.respondFriendRequest(x.memberId, false) },
+              ]
+            : s.tab === "blocked"
+              ? [{ label: "解除", onClick: () => this.unblockMember(x.memberId) }]
+              : s.tab === "friends"
+                ? [
+                    { label: "查看", onClick: () => this.viewMember(x.memberId) },
+                    { label: "解除好友", onClick: () => this.removeFriend(x.memberId) },
+                  ]
+                : [
+                    { label: "查看", onClick: () => this.viewMember(x.memberId) },
+                    { label: "取消追蹤", onClick: () => this.unfollowMember(x.memberId) },
+                  ]
+      }));
+
+    const setPct = (i) => (e) => {
+      const dna = this.state.dna.slice();
+      dna[i] = Number(e.target.value);
+      this.setState({ dna });
+      this.persistDna(dna);
+    };
+    const dnaEditing = own && s.dnaEditing;
+    const dnaCore = [0, 1, 2, 3].map((i) => {
+      const def = DNA_DEFS[i], pct = s.dna[i], tier = dnaTier(i, pct);
+      const open = s.dnaOpen === i;
+      return {
+        label: def.label, poleLeft: def.left, poleRight: def.right,
+        pct, pctText: pct + "%", width: pct + "%",
+        tier: tier[1], note: tier[2],
+        open, caret: open ? "−" : "+",
+        editing: dnaEditing,
+        onToggle: () => this.set("dnaOpen", open ? null : i),
+        onChange: setPct(i)
+      };
+    });
+
+    const dnaRows = DNA_DEFS.map((def, i) => ({
+      label: def.short, pct: s.dna[i], pctText: s.dna[i] + "%", width: s.dna[i] + "%"
+    }));
+
+    const skillNote = (label) => {
+      for (const g of SKILL_GROUPS) {
+        const f = g.items.find((it) => it[0] === label);
+        if (f) return g.name + " · " + f[1];
+      }
+      return "";
+    };
+    const dupTrack = (arr) => [...arr, ...arr].map((t) => ({ label: t, note: skillNote(t) }));
+    const marqueeA = dupTrack(s.tags.filter((_, i) => i % 2 === 0));
+    const marqueeB = dupTrack(s.tags.filter((_, i) => i % 2 === 1));
+    const toggleTag = (label) => () => {
+      const cur = this.state.tags;
+      const next = cur.includes(label) ? cur.filter((t) => t !== label) : [...cur, label];
+      this.setState({ tags: next });
+      this.persistProfile({ tags: next });
+    };
+    const skillGroups = SKILL_GROUPS.map((g) => ({
+      name: g.name, en: g.en,
+      picked: g.items.filter((it) => s.tags.includes(it[0])).length + " / " + g.items.length,
+      items: g.items.map((it) => {
+        const label = it[0], on = s.tags.includes(label);
+        return {
+          label, note: it[1],
+          cursor: own ? "pointer" : "default",
+          bg: on ? "#b4622f" : "#fdf9ef",
+          fg: on ? "#fff8ec" : "#5b4c39",
+          border: on ? "#b4622f" : "#ded0b3",
+          opacity: on || own ? "1" : "0.4",
+          onClick: own ? toggleTag(label) : () => {}
+        };
+      })
+    }));
+
+    const flipNext = s.flipping === "next";
+    const flipSheet = "position:absolute;top:0;width:450px;height:600px;z-index:20;background:linear-gradient(90deg,#f2e9d7,#fbf5e8);box-shadow:0 0 40px rgba(80,55,25,0.4);backface-visibility:hidden;transition:transform .62s cubic-bezier(.4,.1,.3,1);"
+      + (flipNext
+        ? "left:450px;transform-origin:left center;transform:rotateY(-172deg);"
+        : "left:0;transform-origin:right center;transform:rotateY(172deg);");
+
+    return {
+      profile: p, tags: s.tags, fieldRows, dnaRows, dnaCore,
+      marqueeA, marqueeB, skillGroups,
+      mqPlay: s.mqPaused ? "paused" : "running",
+      pauseMarquee: () => { if (!this.state.mqPaused) this.set("mqPaused", true); },
+      resumeMarquee: () => { if (this.state.mqPaused) this.set("mqPaused", false); },
+      skillsOpen: s.skillsOpen,
+      openSkills: () => this.set("skillsOpen", true),
+      closeSkills: () => this.set("skillsOpen", false),
+      skillBtnIcon: own ? "✎" : "⋯",
+      skillBtnTitle: own ? "選擇技能標籤" : "查看全部技能標籤",
+      skillsHint: own ? "點選標籤加入或移除" : "以下為對方已選取的技能",
+      tagCount: s.tags.length,
+      tagCountText: s.tags.length + " / " + SKILL_GROUPS.reduce((n, g) => n + g.items.length, 0),
+      tabs, leftList,
+      listEmpty: leftList.length === 0,
+      listEmptyText: contactBookLocked ? "對方的通訊錄未公開，看不到好友與追蹤名單。" : "沒有符合的名單",
+      tabTitle: tabDefs.length ? (tabDefs.find((t) => t[0] === s.tab) || [null, ""])[1] : "通訊錄",
+      viewingOther, contactBookLocked, contactBookOpenOther,
+      counts: { friends: peopleData.friends.length, following: peopleData.following.length, blocked: peopleData.blocked.length, requests: peopleData.requests.length },
+      stats: { credit: "4.8 / 5.0", groups: String(s.groupsOwnedCount), trips: String(s.tripsJoinedCount) },
+      avatarSrc: s.avatarUrl || "",
+      canEdit: own,
+      isDay: day,
+      isNight: !day,
+      isSpreadOne: s.spread === 0, isSpreadTwo: s.spread === 1,
+      flipping: !!s.flipping, flipSheet,
+      nextPage: () => this.flip("next"), prevPage: () => this.flip("prev"),
+      mbtiColor: info.color, mbtiGroup: info.name,
+      editOpen: s.editOpen, draft: d, draftAge: ageText(ageOf(d.birth)),
+      draftMbtiColor: dInfo.color, draftMbtiGroup: dInfo.name,
+      openEdit: () => {
+        // 居住地兩層下拉（縣市／鄉鎮）要從既有的 profile.city（例如「台北・大安」）
+        // 反推出該選哪個選項，見 parseCityString()。
+        const parsedCity = parseCityString(this.state.profile.city);
+        this.setState({
+          editOpen: true,
+          draft: { ...this.state.profile, cityName: parsedCity.cityName, districtName: parsedCity.districtName },
+          editErrors: {},
+        });
+        // Modal 裡的 <image-slot id="member-avatar-edit"> 要等這次 setState 畫出來
+        // 之後才存在於 DOM，稍微延遲一下再去掛上傳監聽（見 wireAvatarUpload 註解）。
+        setTimeout(() => this.wireAvatarUpload(), 50);
+      },
+      cancelEdit: () => this.setState({ editOpen: false, draft: null, editErrors: {} }),
+      // 存檔前先在前端驗證一次 LINE ID／Instagram／Facebook（見 validateSocialUrl／
+      // validateLineId），有錯就不送出、留在 Modal 裡把錯誤訊息顯示出來。前端驗證
+      // 過了也不代表一定存得進去——後端 SocialLinkValidator 才是真正的防線，
+      // 萬一後端仍然回絕（例如兩份規則以後不小心兜不起來、或是繞過畫面直接打
+      // API），這裡會把畫面退回存檔前的樣子並重新打開 Modal，顯示後端的錯誤，
+      // 不會讓使用者誤以為已經存成功。
+      saveEdit: async () => {
+        const draft = this.state.draft || this.state.profile;
+        const errors = {};
+        const lineIdErr = validateLineId(draft.lineId);
+        if (lineIdErr) errors.lineId = lineIdErr;
+        const igErr = validateSocialUrl(draft.instagramUrl, "instagram");
+        if (igErr) errors.instagramUrl = igErr;
+        const fbErr = validateSocialUrl(draft.facebookUrl, "facebook");
+        if (fbErr) errors.facebookUrl = fbErr;
+        if (Object.keys(errors).length) {
+          this.setState({ editErrors: errors });
+          return;
+        }
+
+        const prevProfile = this.state.profile;
+        const merged = { ...this.state.profile, ...draft };
+        this.setState({ profile: merged, editOpen: false, draft: null, editErrors: {} });
+        const result = await this.persistProfile({ profile: merged });
+        if (result && result.success === false) {
+          this.setState({
+            profile: prevProfile,
+            editOpen: true,
+            draft: merged,
+            editErrors: { _general: result.message || "儲存失敗，請稍後再試一次。" },
+          });
+        }
+      },
+      setNickname: setDraft("nickname"), setBirth: setDraft("birth"),
+      setJob: setDraft("job"),
+      // 居住地改成兩層下拉：先選縣市，再選鄉鎮市區，選完組成「台北・大安」這種格式
+      // 存進 draft.city（見 formatCityDistrict），buildEditDto() 繼續讀 city 這個
+      // 組好的字串就好，不用動存檔那段。換縣市時如果原本選的鄉鎮不屬於新縣市
+      // （例如從「台北市」換成「高雄市」，原本選的「大安區」不存在於高雄市底下），
+      // 就把鄉鎮欄位清空，不要留著一個對不上的舊選項。
+      cityOptions: TAIWAN_CITIES.map((c) => ({ value: c, label: stripAdminSuffix(c) })),
+      districtOptions: (d.cityName && TAIWAN_DISTRICTS[d.cityName] || []).map((x) => ({ value: x, label: stripAdminSuffix(x) })),
+      setCityName: (e) => {
+        const cityName = e.target.value;
+        const current = this.state.draft || this.state.profile;
+        const districtStillValid = cityName && TAIWAN_DISTRICTS[cityName] && TAIWAN_DISTRICTS[cityName].includes(current.districtName);
+        const districtName = districtStillValid ? current.districtName : "";
+        this.setState({ draft: { ...current, cityName, districtName, city: formatCityDistrict(cityName, districtName) } });
+      },
+      setDistrictName: (e) => {
+        const districtName = e.target.value;
+        const current = this.state.draft || this.state.profile;
+        this.setState({ draft: { ...current, districtName, city: formatCityDistrict(current.cityName, districtName) } });
+      },
+      setLineId: setDraft("lineId"), setInstagramUrl: setDraft("instagramUrl"), setFacebookUrl: setDraft("facebookUrl"),
+      lineIdError: (s.editErrors && s.editErrors.lineId) || "",
+      hasLineIdError: !!(s.editErrors && s.editErrors.lineId),
+      instagramUrlError: (s.editErrors && s.editErrors.instagramUrl) || "",
+      hasInstagramUrlError: !!(s.editErrors && s.editErrors.instagramUrl),
+      facebookUrlError: (s.editErrors && s.editErrors.facebookUrl) || "",
+      hasFacebookUrlError: !!(s.editErrors && s.editErrors.facebookUrl),
+      editGeneralError: (s.editErrors && s.editErrors._general) || "",
+      hasEditGeneralError: !!(s.editErrors && s.editErrors._general),
+      genderOptions: ["女", "男", "不透露"].map((label) => ({
+        label,
+        bg: d.gender === label ? "#b4622f" : "#fffdf7",
+        fg: d.gender === label ? "#fff8ec" : "#5b4c39",
+        onClick: () => this.setState({ draft: { ...(this.state.draft || this.state.profile), gender: label } })
+      })),
+      mbtiGroups: MBTI_GROUPS.map((g) => ({
+        name: g.name, color: g.color,
+        types: g.types.map((t) => ({
+          label: t,
+          bg: d.mbti === t ? g.color : "#fffdf7",
+          fg: d.mbti === t ? "#fff" : g.color,
+          border: d.mbti === t ? g.color : "#d8c9ae",
+          onClick: () => this.setState({ draft: { ...(this.state.draft || this.state.profile), mbti: t } })
+        }))
+      })),
+      bioEditable: own, bioEditing: own && s.editing === "bio", bioReading: !(own && s.editing === "bio"),
+      editBio: () => this.set("editing", "bio"),
+      changeBio: (e) => this.setState({ profile: { ...this.state.profile, bio: e.target.value } }),
+      saveBio: () => {
+        this.set("editing", null);
+        this.persistProfile();
+      },
+      toggleDnaEdit: () => this.set("dnaEditing", !s.dnaEditing),
+      // 以下追蹤／申請好友／封鎖三個按鈕，已經接了真的資料庫（見 toggleFollowAction／
+      // sendFriendRequestAction／toggleBlockAction），viewerIsFollowing／
+      // viewerHasPendingFriendRequest／viewerHasBlocked／viewerIsBlockedByTarget
+      // 都是後端 MemberProfileService.GetProfile 算好、跟著 ProfileData 一起回來的真實狀態。
+      // 「檢舉」現在也接了真的資料庫（見下面 submitReportAction），送去 /Members/ReportMember，
+      // 最後寫進共用資料庫的 Reports 表——已經確認過共用資料庫的 Reports 表有
+      // ReasonCategory／IsMalicious／TargetTitle／Description／EvidenceUrl 這幾個欄位，
+      // 直接沿用現成的 IReportService（新增 SubmitMemberReportAsync 這個會員自己送出檢舉
+      // 專用的簡化版方法），不用另外做一份簡化版資料表。
+      showRelationBtns: !own,
+      notBlocked: !s.viewerHasBlocked && !s.viewerIsBlockedByTarget,
+      blockLabel: s.viewerHasBlocked ? "解除黑名單" : "加入黑名單",
+      toggleBlock: () => this.toggleBlockAction(),
+      reportSent: s.reportSent,
+      reportOpen: s.reportOpen,
+      openReport: () => {
+        this._reportEvidenceFile = null;
+        this.setState({ reportOpen: true, reportReason: null, reportEvidenceName: null });
+        // <image-slot id="report-evidence"> 要等這次 setState 把 Modal 畫出來之後才存在
+        // 於 DOM，稍微延遲一下再去掛上傳監聽（見 wireReportEvidenceUpload 註解）。
+        setTimeout(() => this.wireReportEvidenceUpload(), 50);
+      },
+      closeReport: () => {
+        this._reportEvidenceFile = null;
+        this.setState({ reportOpen: false, reportEvidenceName: null });
+      },
+      reportEvidenceName: s.reportEvidenceName,
+      hasReportEvidence: !!s.reportEvidenceName,
+      reportBtnBg: s.reportReason ? "#a33227" : "#c8a89c",
+      submitReport: () => {
+        if (!s.reportReason || s.relationActionBusy) return;
+        this.submitReportAction(s.reportReason);
+      },
+      reportReasons: REPORT_REASONS.map((r) => ({
+        label: r,
+        border: s.reportReason === r ? "#a33227" : "#ded1b6",
+        bg: s.reportReason === r ? "#fbeee9" : "#fffdf7",
+        dot: s.reportReason === r ? "#a33227" : "transparent",
+        onClick: () => this.set("reportReason", r)
+      })),
+      followLabel: s.viewerIsFollowing ? "追蹤中" : "追蹤",
+      friendLabel: s.viewerHasPendingFriendRequest ? "已送出申請" : "申請好友",
+      toggleFollow: () => this.toggleFollowAction(),
+      requestFriend: () => this.sendFriendRequestAction(),
+      query: s.query, changeQuery: (e) => this.set("query", e.target.value),
+
+      // 機票（登機證）上顯示的資料——照片/暱稱/MBTI/年齡/性別/居住地/技能標籤/旅遊 DNA，
+      // 全部跟左頁用同一份 s.profile／s.tags／s.dna，本來就是真實資料，不用另外接。
+      ticketMeta: ageText(age) + " · " + p.gender + " · " + p.city,
+      barcode: [3, 1, 2, 1, 4, 1, 2, 3, 1, 2, 1, 3, 2, 1].map((w) => ({ w: w + "px" })),
+      // 右側「給團長的話」版面不管是不是本人都保留（只有裡面的輸入框／按鈕會依
+      // canEdit 換成「僅本人可以編輯」的提示，見下方模板），所以機票寬度固定，
+      // 不再依 own 縮小。
+      ticketWidth: "1010px",
+      ticketBackdropBg: s.ticketOnly ? "transparent" : "rgba(14,9,4,0.6)",
+      ticketInnerCloseDisplay: s.ticketOnly ? "none" : "block",
+      ticketOpen: s.ticketOpen,
+      openTicket: () => this.set("ticketOpen", true),
+      closeTicket: () => { if (s.ticketOnly) { (window.top || window.parent)?.postMessage({ type: "lazytravel:close-ticket-preview" }, window.location.origin); return; } this.set("ticketOpen", false); },
+
+      // 🚧 「給團長的話」這段草稿刻意先不接資料庫（已跟負責會員主頁的組員確認）：
+      // JoinRequests.GroupID 是必填欄位，一定要對應到一個真的揪團，但這個機票頁面
+      // 目前完全沒有「現在是在申請哪個揪團」這個資訊，沒有 GroupID 可以寫入。
+      // 等揪團／入團申請那邊做出「選定一個揪團、帶著 GroupID 開這張機票」的流程後，
+      // 這裡才把 message 直接存進對應那筆 JoinRequests.Message，現在維持前端暫存就好。
+      message: s.message,
+      changeMessage: (e) => this.set("message", e.target.value),
+      msgCount: s.message.length + " / 300 字",
+      draftLabel: s.sent ? "已儲存" : "確認",
+      saveDraft: () => this.set("sent", true),
+      // 看別人的機票時右側改顯示對方的自我介紹（p.bio，跟主頁手帳第一頁同一份資料），
+      // 沒填自我介紹就給一句說明，不要留白。
+      ticketBioText: p.bio && p.bio.trim() ? p.bio : "這位旅伴還沒有填寫自我介紹。",
+      // 看別人的機票才能點大頭貼跳轉（見上面模板註解），看自己的機票時
+      // ticketAvatarClick 是一個什麼都不做的空函式，游標也改回預設箭頭、
+      // title 提示文字清空，不會讓人誤以為點了會有反應。
+      ticketAvatarClick: own ? () => {} : () => this.set("confirmOpen", true),
+      ticketAvatarTitle: own ? "" : "查看個人頁面",
+      ticketAvatarCursor: own ? "default" : "pointer",
+      askNavigate: () => this.set("confirmOpen", true),
+      confirmOpen: s.confirmOpen,
+      confirmText: "是否進入「" + p.nickname + "」的個人頁面？",
+      confirmNavigate: () => {
+        this.set("confirmOpen", false);
+        this.viewMember(s.memberId);
+      },
+      cancelNavigate: () => this.set("confirmOpen", false),
+
+      tagOpen: s.tagOpen,
+      openTag: () => { if (!locked) this.set("tagOpen", true); },
+      closeTag: () => this.set("tagOpen", false),
+      tagBlur: locked ? "blur(5px)" : "none",
+      tagLocked: locked,
+      tagStateLabel: locked ? "LOCKED · 私人" : (own ? (s.contactPublic ? "PUBLIC · 公開" : "PRIVATE · 僅限好友與同團") : "UNLOCKED · 已解鎖"),
+      tagStateColor: locked ? "#a06333" : "#2f7d6b",
+      contactPreview: s.contacts.slice(0, 3).map((c) => ({
+        label: c.label,
+        value: "*".repeat(Math.max(6, Math.min(14, String(c.value).length)))
+      })),
+      contactFull: s.contacts,
+      stampSeal: () => this.stamp(),
+      sealAnim: s.stampRun ? (s.stampRun % 2 ? "sealDrop" : "sealDropB") + " 1.15s cubic-bezier(.3,.9,.3,1) both" : "none",
+      sealRingAnim: s.stampRun ? (s.stampRun % 2 ? "sealRing" : "sealRingB") + " 1.15s ease-out both" : "none",
+      togglePublic: () => {
+        const next = !s.contactPublic;
+        this.set("contactPublic", next);
+        this.persistProfile({ contactPublic: next });
+      },
+      publicLabel: s.contactPublic ? "公開通訊錄（所有人可見）" : "僅限好友與同團成員可見",
+      toggleBg: s.contactPublic ? "#2f7d6b" : "#c9b795",
+      knobLeft: s.contactPublic ? "23px" : "3px",
+
+      viewerOptions: ["本人", "陌生人", "追蹤中（單向）", "好友（雙向）", "同團成員"].map((label) => ({
+        label,
+        bg: s.viewer === label ? "#b4622f" : "rgba(255,255,255,0.06)",
+        fg: s.viewer === label ? "#fff8ec" : "#cbbda6",
+        onClick: () => this.setState({ viewer: label, spread: label === "本人" ? this.state.spread : 0, editing: null, tagEditing: false, dnaEditing: false, skillsOpen: false })
+      })),
+      wallBloom: day
+        ? "radial-gradient(680px 320px at 67% 26%,rgba(255,250,226,0.5),rgba(255,250,226,0.12) 52%,rgba(0,0,0,0) 76%)"
+        : "radial-gradient(620px 300px at 67% 24%,rgba(150,180,220,0.16),rgba(0,0,0,0.18) 62%,rgba(0,0,0,0.3) 100%)",
+      // 對方通訊錄沒公開（contactBookLocked）時，翻過去第二頁左右兩邊都只會
+      // 各顯示一句「看不到」的說明，整頁很空，乾脆直接不給翻——第一頁右下角
+      // 的翻頁箭頭就不出現了。看得到通訊錄（自己或 contactBookOpenOther）時
+      // 才維持原本可以翻頁。
+      canFlip: !contactBookLocked,
+      tourOn: own && s.tour >= 0,
+      tourReplayable: own && s.tour < 0,
+      tour: TOUR[Math.max(0, Math.min(s.tour, TOUR.length - 1))],
+      tourCount: (Math.max(0, s.tour) + 1) + " / " + TOUR.length,
+      tourNextLabel: s.tour >= TOUR.length - 1 ? "開始使用" : "下一步",
+      tourPrevOpacity: s.tour <= 0 ? "0.35" : "1",
+      tourPrevEvents: s.tour <= 0 ? "none" : "auto",
+      tourStart: () => this.setState({ tour: 0, spread: 0, flat: false }),
+      tourPrev: () => this.setState({ tour: Math.max(0, s.tour - 1) }),
+      tourNext: () => {
+        if (s.tour >= TOUR.length - 1) { this.endTour(); return; }
+        this.setState({ tour: s.tour + 1 });
+      },
+      tourSkip: () => this.endTour(),
+      toggleLight: () => this.set("light", day ? "night" : "day"),
+      deskPropZ: s.flat ? 2 : 6,
+      deskPropOpacity: s.flat ? "0" : "1",
+      deskPropEvents: s.flat ? "none" : "auto",
+      clockTime: day ? "09:00" : "20:00",
+      clockMode: day ? "AM" : "PM",
+      clockBody: day
+        ? "linear-gradient(160deg,#fdfdfb,#d9d4cb)"
+        : "linear-gradient(160deg,#3b3630,#221e1a)",
+      clockFace: day
+        ? "linear-gradient(150deg,#4a4740,#2b2926)"
+        : "linear-gradient(150deg,#1b1917,#0d0c0b)",
+      clockEdge: day ? "#a9a19a" : "#15120f",
+      clockInk: day ? "#f6f4ee" : "#eaf4ff",
+      clockGlow: day
+        ? "0 0 10px rgba(255,255,255,0.5)"
+        : "0 0 14px rgba(170,205,255,0.75)",
+      boardNotes: [
+        { label: "首頁", title: "前往專題首頁", x: "28px", y: "48px", rot: "-3.2deg", bg: "linear-gradient(160deg,#f7e07f,#e7c85a)", fg: "#6a5410", onClick: () => go(this.props.homeHref || "/") },
+        { label: "揪團", title: "前往揪團頁面", x: "112px", y: "62px", rot: "2.6deg", bg: "linear-gradient(160deg,#f3ab93,#e08d72)", fg: "#6f3323", onClick: () => go(this.props.groupHref || "/Tours") },
+        { label: "文章", title: "前往文章頁面", x: "66px", y: "138px", rot: "-1.4deg", bg: "linear-gradient(160deg,#a8d3bb,#88bda3)", fg: "#28503c", onClick: () => go(this.props.articleHref || "/Articles") },
+      ],
+      wallTags: [
+        { label: s.flat ? "案頭視角" : "攤平閱讀", hint: s.flat ? "回到桌面" : "手帳放平", x: "16px", rot: "-2.4deg", rope: "26px", onClick: () => this.set("flat", !s.flat) },
+        { label: s.loggedIn ? "登出" : "登入", hint: s.loggedIn ? "結束這趟" : "回到帳號", x: "126px", rot: "2.2deg", rope: "44px", onClick: () => {
+          const href = s.loggedIn ? (this.props.logoutHref || "") : (this.props.loginHref || "");
+          if (href) { go(href); return; }
+          this.set("loggedIn", !s.loggedIn);
+        } },
+      ],
+      journalXf: s.flat ? "translate3d(174px,-74px,0)" : "rotateX(21deg) rotateZ(-2deg)",
+      ticketXf: s.flat ? "translate3d(174px,6px,0)" : "rotateX(21deg) rotateZ(2.4deg)",
+      flatLabel: s.flat ? "▣ 閱讀模式（點擊回到案頭視角）" : "△ 案頭視角（點擊攤平閱讀）",
+      toggleFlat: () => this.set("flat", !s.flat),
+      lightLabel: day ? "☀ 日光（點擊切換月光）" : "☾ 月光（點擊切換日光）",
+      glassStyle: day
+        ? "linear-gradient(180deg,#9fd8de 0%,#bce4e2 46%,#e6f2e4 78%,#f4f4e2 100%)"
+        : "linear-gradient(180deg,#16233c 0%,#22314b 60%,#2c3550 100%)",
+      moonStyle: day ? "transparent" : "radial-gradient(circle,#f4ecd6,#c8bda0 62%,rgba(200,189,160,0) 70%)",
+      lightPool: day
+        ? "radial-gradient(760px 420px at 69% 4%,rgba(255,238,198,0.5),rgba(255,238,198,0.12) 46%,rgba(0,0,0,0.24) 78%,rgba(0,0,0,0.5) 100%)"
+        : "radial-gradient(700px 400px at 69% 2%,rgba(178,203,255,0.26),rgba(120,150,210,0.07) 44%,rgba(0,0,0,0.5) 74%,rgba(0,0,0,0.74) 100%)",
+      vignette: day
+        ? "radial-gradient(1200px 760px at 50% 42%,rgba(0,0,0,0) 52%,rgba(12,7,3,0.42) 100%)"
+        : "radial-gradient(1100px 700px at 50% 40%,rgba(0,0,0,0) 40%,rgba(6,8,16,0.66) 100%)"
+    };
+  }
+}
+
+</script>
+</body>
+</html>
+
+
+
+

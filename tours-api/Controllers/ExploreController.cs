@@ -18,9 +18,10 @@ namespace LazyTravel.Controllers
         }
 
         // GET /Explore
-        public async Task<IActionResult> Index(string? country, string? startDate, string? endDate, string scope = "all", int page = 1)
+        public async Task<IActionResult> Index(string? country, string? startDate, string? endDate, string scope = "all", int take = 12)
         {
-            const int pageSize = 6;
+            const int pageSize = 12;
+            take = Math.Clamp(take, pageSize, 120);
             scope = scope == "recommended" ? "recommended" : "all";
             var published = await _context.VlogPosts.AsNoTracking()
                 .Include(p => p.Member)
@@ -48,25 +49,39 @@ namespace LazyTravel.Controllers
             }
 
             var ids = published.Select(p => p.PostId).ToList();
-            var counts = await _context.PostInteractions.AsNoTracking()
-                .Where(i => ids.Contains(i.PostId)).GroupBy(i => i.PostId)
-                .Select(g => new { Id = g.Key, Count = g.Count() }).ToDictionaryAsync(g => g.Id, g => g.Count);
+            var interactionCounts = await _context.PostInteractions.AsNoTracking()
+                .Where(i => ids.Contains(i.PostId))
+                .GroupBy(i => new { i.PostId, i.ActionType })
+                .Select(g => new { g.Key.PostId, g.Key.ActionType, Count = g.Count() })
+                .ToListAsync();
+            var favoriteCounts = interactionCounts
+                .Where(i => i.ActionType == PostInteractionType.Favorite)
+                .ToDictionary(i => i.PostId, i => i.Count);
+            var likeCounts = interactionCounts
+                .Where(i => i.ActionType == PostInteractionType.Like)
+                .ToDictionary(i => i.PostId, i => i.Count);
+            var counts = interactionCounts
+                .GroupBy(i => i.PostId)
+                .ToDictionary(g => g.Key, g => g.Sum(i => i.Count));
             var ordered = scope == "recommended"
                 ? filtered.OrderByDescending(p => counts.GetValueOrDefault(p.PostId)).ThenByDescending(p => p.UpdatedAt ?? p.CreatedAt)
                 : filtered.OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt);
-            var totalPages = Math.Max(1, (int)Math.Ceiling(ordered.Count() / (double)pageSize));
-            page = Math.Clamp(page, 1, totalPages);
-            var visitorId = GetOrCreateVisitorId();
+            var totalCount = ordered.Count();
+            var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
+            var visitorId = await GetOrCreateVisitorMemberIdAsync();
             var favorites = await _context.PostInteractions.AsNoTracking()
                 .Where(i => i.MemberId == visitorId && i.ActionType == PostInteractionType.Favorite && ids.Contains(i.PostId))
                 .Select(i => i.PostId).ToListAsync();
+            var likes = await _context.PostInteractions.AsNoTracking()
+                .Where(i => i.MemberId == visitorId && i.ActionType == PostInteractionType.Like && ids.Contains(i.PostId))
+                .Select(i => i.PostId).ToListAsync();
             return View(new LazyTravel.ViewModels.ExploreCardsViewModel
             {
-                Articles = ordered.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+                Articles = ordered.Take(take).ToList(),
                 AllCountries = countries, Country = country, Scope = scope,
                 StartDate = hasStart ? start.ToString("yyyy-MM-dd") : null,
                 EndDate = hasEnd ? end.ToString("yyyy-MM-dd") : null,
-                Page = page, TotalPages = totalPages, Favorites = favorites.ToHashSet()
+                Page = 1, TotalPages = totalPages, TotalCount = totalCount, Take = take, Favorites = favorites.ToHashSet(), Likes = likes.ToHashSet(), FavoriteCounts = favoriteCounts, LikeCounts = likeCounts
             });
         }
 
@@ -97,15 +112,14 @@ namespace LazyTravel.Controllers
         }
 
         // GET /Explore/Edit/5
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, int? viewerMemberId)
         {
             var post = await _context.VlogPosts.AsNoTracking()
                 .Include(p => p.VlogPostImages)
                 .Include(p => p.ItineraryNodes)
                 .FirstOrDefaultAsync(p => p.PostId == id && !p.IsDelete);
             if (post is null) return NotFound();
-            if (!IsArticleOwner(post.MemberId)) return StatusCode(403);
-            if (post.Status == VlogPostStatus.Published) return RedirectToAction(nameof(Details), new { id });
+            if (!IsArticleOwner(post.MemberId, viewerMemberId)) return StatusCode(403);
 
             var nodes = post.ItineraryNodes.OrderBy(n => n.DayNumber).ThenBy(n => n.ArrivalTime).ThenBy(n => n.NodeId).ToList();
             var images = post.VlogPostImages.Where(i => !i.IsDeleted && i.ImageType == 0)
@@ -120,7 +134,6 @@ namespace LazyTravel.Controllers
             return View(new LazyTravel.ViewModels.ExploreEditorViewModel
             {
                 Post = post,
-                Source = await _context.VlogPostRoomExports.AsNoTracking().FirstOrDefaultAsync(e => e.PostId == id),
                 Nodes = nodes,
                 Images = images,
             });
@@ -134,7 +147,7 @@ namespace LazyTravel.Controllers
             if (post is null || (post.Status != VlogPostStatus.Published &&
                 !((post.Status == VlogPostStatus.Draft || post.Status == VlogPostStatus.PendingReview) && IsArticleOwner(post.MemberId)))) return NotFound();
 
-            var visitorId = GetOrCreateVisitorId();
+            var visitorId = await GetOrCreateVisitorMemberIdAsync();
             var nodes = post.ItineraryNodes.OrderBy(n => n.DayNumber).ThenBy(n => n.ArrivalTime).ThenBy(n => n.NodeId).ToList();
             var images = post.VlogPostImages.Where(i => !i.IsDeleted && i.ImageType == 0)
                 .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).Select(i => i.ImageUrl)
@@ -144,7 +157,6 @@ namespace LazyTravel.Controllers
             var vm = new LazyTravel.ViewModels.ExploreDetailsViewModel
             {
                 Post = post, Nodes = nodes, Images = images,
-                Source = await _context.VlogPostRoomExports.AsNoTracking().FirstOrDefaultAsync(e => e.PostId == id),
                 PublishedCount = await _context.VlogPosts.CountAsync(p => p.MemberId == post.MemberId && !p.IsDelete && p.Status == VlogPostStatus.Published),
                 CompletedCount = await _context.TravelGroups.CountAsync(g => !g.IsDelete && g.GroupStatus == 3 &&
                     (g.OwnerMemberId == post.MemberId || g.GroupMembers.Any(m => m.MemberId == post.MemberId && !m.IsRemoved))),
@@ -155,7 +167,8 @@ namespace LazyTravel.Controllers
             return View(vm);
         }
 
-        private bool IsArticleOwner(int memberId) =>
+        private bool IsArticleOwner(int memberId, int? viewerMemberId = null) =>
+            viewerMemberId == memberId ||
             Request.Cookies.TryGetValue("ltvmid", out var raw) && int.TryParse(raw, out var id) && id == memberId;
 
         private static bool IsImageUrl(string? url) =>
@@ -169,31 +182,30 @@ namespace LazyTravel.Controllers
             var post = await _context.VlogPosts.FirstOrDefaultAsync(p => p.PostId == id && !p.IsDelete);
             if (post is null) return NotFound();
             if (!IsArticleOwner(post.MemberId)) return StatusCode(403);
-            if (post.Status != VlogPostStatus.Draft) return BadRequest("只有草稿可送出審核。");
-            post.Status = VlogPostStatus.PendingReview;
+            if (post.Status != VlogPostStatus.Draft) return BadRequest("只有草稿可送出。");
+            post.Status = VlogPostStatus.Published;
             post.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
-            TempData["ArticleNotice"] = "文章已送出審核，通過後會出現在文章列表。";
+            TempData["ArticleNotice"] = "文章已送出，已顯示在行程文章首頁。";
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveDraft(int id, [FromBody] JsonElement payload)
+        public async Task<IActionResult> Submit(int id, int? viewerMemberId, [FromBody] JsonElement payload)
         {
-            var result = await SaveEditorAsync(id, payload, submit: false);
-            return result ?? Json(new { ok = true });
+            var wasPublished = await _context.VlogPosts.AsNoTracking()
+                .AnyAsync(p => p.PostId == id && !p.IsDelete && p.Status == VlogPostStatus.Published);
+            var result = await SaveEditorAsync(id, payload, submit: true, viewerMemberId);
+            if (result is not null) return result;
+
+            var redirectUrl = wasPublished
+                ? Url.Action(nameof(Details), "Explore", new { id, viewerMemberId })
+                : Url.Action(nameof(Index), "Explore");
+            return Json(new { ok = true, message = wasPublished ? "文章已更新。" : "文章已送出。", redirectUrl });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(int id, [FromBody] JsonElement payload)
-        {
-            var result = await SaveEditorAsync(id, payload, submit: true);
-            return result ?? Json(new { ok = true, redirectUrl = Url.Action(nameof(Index), "Explore") });
-        }
-
-        private async Task<IActionResult?> SaveEditorAsync(int id, JsonElement payload, bool submit)
+        private async Task<IActionResult?> SaveEditorAsync(int id, JsonElement payload, bool submit, int? viewerMemberId = null)
         {
             var form = ReadArticleEditorRequest(payload);
             if (form is null) return BadRequest(new { message = "沒有收到文章資料。" });
@@ -202,8 +214,7 @@ namespace LazyTravel.Controllers
                 .Include(p => p.ItineraryNodes)
                 .FirstOrDefaultAsync(p => p.PostId == id && !p.IsDelete);
             if (post is null) return NotFound();
-            if (!IsArticleOwner(post.MemberId)) return StatusCode(403);
-            if (post.Status == VlogPostStatus.Published) return BadRequest(new { message = "已發布文章不能在此前台頁面編輯。" });
+            if (!IsArticleOwner(post.MemberId, viewerMemberId)) return StatusCode(403);
 
             var title = SafeText(form.Title, 100);
             if (submit && string.IsNullOrWhiteSpace(title))
@@ -212,10 +223,21 @@ namespace LazyTravel.Controllers
             post.Title = string.IsNullOrWhiteSpace(title) ? "未命名文章" : title;
             var intro = SafeText(form.Intro, 4000);
             var highlight = SafeText(form.Highlight, 180);
-            post.Content = string.IsNullOrWhiteSpace(highlight)
-                ? System.Net.WebUtility.HtmlEncode(intro)
-                : $"<!--LT-HIGHLIGHT:{System.Net.WebUtility.HtmlEncode(highlight)}-->{System.Net.WebUtility.HtmlEncode(intro)}";
-            post.Status = submit ? VlogPostStatus.PendingReview : VlogPostStatus.Draft;
+            var region = SafeText(form.Region, 100);
+            post.Destination = string.IsNullOrWhiteSpace(form.Country) ? "未提供" : SafeText(form.Country, 100);
+            if (Enum.TryParse<TravelGroupSize>(form.People, out var people))
+            {
+                post.TravelPeople = people;
+            }
+            ApplyTravelDate(post, form.StartDate, form.EndDate);
+
+            var meta = "";
+            if (!string.IsNullOrWhiteSpace(highlight))
+                meta += $"<!--LT-HIGHLIGHT:{System.Net.WebUtility.HtmlEncode(highlight)}-->";
+            if (!string.IsNullOrWhiteSpace(region))
+                meta += $"<!--LT-REGION:{System.Net.WebUtility.HtmlEncode(region)}-->";
+            post.Content = meta + System.Net.WebUtility.HtmlEncode(intro);
+            post.Status = submit ? VlogPostStatus.Published : VlogPostStatus.Draft;
             post.UpdatedAt = DateTime.Now;
 
             _context.ItineraryNodes.RemoveRange(post.ItineraryNodes);
@@ -227,13 +249,38 @@ namespace LazyTravel.Controllers
             await _context.SaveChangesAsync();
             return null;
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, int? viewerMemberId)
+        {
+            var post = await _context.VlogPosts.FirstOrDefaultAsync(p => p.PostId == id && !p.IsDelete);
+            if (post is null) return NotFound();
+            if (!IsArticleOwner(post.MemberId, viewerMemberId)) return StatusCode(403);
+
+            post.IsDelete = true;
+            post.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+                return Json(new { ok = true, redirectUrl = Url.Action(nameof(Index), "Explore") });
+
+            TempData["ArticleNotice"] = "文章已刪除。";
+            return RedirectToAction(nameof(Index));
+        }
+
         // POST /Explore/ToggleLike/5 —— 讀者點一次讚就加一筆互動紀錄，再點一次取消（跟收藏共用同一套邏輯）。
         // 目前沒有真的會員登入系統，先用瀏覽器 Cookie 記一個匿名訪客 ID，同一支瀏覽器重複點才會正確切換讚/取消讚。
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleLike(int id)
         {
-            await ToggleInteractionAsync(id, PostInteractionType.Like);
+            var active = await ToggleInteractionAsync(id, PostInteractionType.Like);
+            if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+            {
+                var count = await _context.PostInteractions.CountAsync(i => i.PostId == id && i.ActionType == PostInteractionType.Like);
+                return Json(new { ok = true, active, count });
+            }
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -242,33 +289,40 @@ namespace LazyTravel.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleFavorite(int id, string? returnUrl)
         {
-            await ToggleInteractionAsync(id, PostInteractionType.Favorite);
+            var active = await ToggleInteractionAsync(id, PostInteractionType.Favorite);
+            if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+            {
+                var count = await _context.PostInteractions.CountAsync(i => i.PostId == id && i.ActionType == PostInteractionType.Favorite);
+                return Json(new { ok = true, active, count });
+            }
             if (Url.IsLocalUrl(returnUrl)) return LocalRedirect(returnUrl!);
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        private async Task ToggleInteractionAsync(int postId, PostInteractionType actionType)
+        private async Task<bool> ToggleInteractionAsync(int postId, PostInteractionType actionType)
         {
             var postExists = await _context.VlogPosts.AnyAsync(p => p.PostId == postId && !p.IsDelete && p.Status == VlogPostStatus.Published);
             if (!postExists)
             {
-                return;
+                return false;
             }
 
-            var visitorId = GetOrCreateVisitorId();
+            var visitorId = await GetOrCreateVisitorMemberIdAsync();
             var existing = await _context.PostInteractions
                 .FirstOrDefaultAsync(i => i.PostId == postId && i.MemberId == visitorId && i.ActionType == actionType);
 
             if (existing is not null)
             {
                 _context.PostInteractions.Remove(existing);
+                await _context.SaveChangesAsync();
+                return false;
             }
             else
             {
-                _context.PostInteractions.Add(new PostInteraction { PostId = postId, MemberId = visitorId, ActionType = actionType });
+                _context.PostInteractions.Add(new PostInteraction { PostId = postId, MemberId = visitorId, ActionType = actionType, CreatedAt = DateTime.Now });
+                await _context.SaveChangesAsync();
+                return true;
             }
-
-            await _context.SaveChangesAsync();
         }
 
         private const string VisitorCookieName = "ltvid";
@@ -335,6 +389,28 @@ namespace LazyTravel.Controllers
             }
         }
 
+        private static void ApplyTravelDate(VlogPost post, string? startDate, string? endDate)
+        {
+            var hasStart = DateTime.TryParseExact(startDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var start);
+            var hasEnd = DateTime.TryParseExact(endDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var end);
+
+            if (!hasStart && !hasEnd)
+            {
+                post.TravelDate = null;
+                post.TravelDays = Math.Max(1, post.TravelDays);
+                return;
+            }
+
+            if (hasStart && !hasEnd) end = start;
+            if (hasEnd && !hasStart) start = end;
+            if (start > end) (start, end) = (end, start);
+
+            post.TravelDate = start;
+            post.TravelDays = Math.Max(1, (end.Date - start.Date).Days + 1);
+        }
+
         private static IEnumerable<ItineraryNode> BuildArticleNodes(List<ArticleEditorDayRequest>? days)
         {
             if (days is null) yield break;
@@ -373,6 +449,11 @@ namespace LazyTravel.Controllers
             public string? Title { get; set; }
             public string? Intro { get; set; }
             public string? Highlight { get; set; }
+            public string? Country { get; set; }
+            public string? Region { get; set; }
+            public string? StartDate { get; set; }
+            public string? EndDate { get; set; }
+            public string? People { get; set; }
             public List<ArticleEditorDayRequest>? Days { get; set; }
         }
 
@@ -397,3 +478,14 @@ namespace LazyTravel.Controllers
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+

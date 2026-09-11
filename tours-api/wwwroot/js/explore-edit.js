@@ -3,14 +3,20 @@
     if (!shell) return;
 
     const postId = shell.dataset.postId;
+    const viewerMemberId = shell.dataset.viewerMemberId || '';
     const token = document.querySelector('#article-antiforgery input[name="__RequestVerificationToken"]')?.value ?? '';
     const dayList = document.querySelector('#dayList');
     const titleInput = document.querySelector('#articleTitle');
     const introInput = document.querySelector('#articleIntro');
     const highlightInput = document.querySelector('#articleHighlight');
+    const countryInput = document.querySelector('#articleCountry');
+    const regionInput = document.querySelector('#articleRegion');
+    const startDateInput = document.querySelector('#articleStartDate');
+    const endDateInput = document.querySelector('#articleEndDate');
+    const dateRangeInput = document.querySelector('#articleDateRange');
+    const peopleInput = document.querySelector('#articlePeople');
     const saveButton = document.querySelector('[data-action="save"]');
     const addDayButton = document.querySelector('.add-day');
-    const statusToggle = document.querySelector('[data-status-toggle]');
 
     const showToast = (message, type = 'ok') => {
         let toast = document.querySelector('.editor-toast');
@@ -52,6 +58,11 @@
         title: titleInput?.value?.trim() ?? '',
         intro: introInput?.value?.trim() ?? '',
         highlight: highlightInput?.value?.trim() ?? '',
+        country: countryInput?.value?.trim() ?? '',
+        region: regionInput?.value?.trim() ?? '',
+        startDate: startDateInput?.value ?? '',
+        endDate: endDateInput?.value ?? '',
+        people: peopleInput?.value ?? '',
         days: [...(dayList?.querySelectorAll('[data-day]') ?? [])].map(card => ({
             title: card.querySelector('.day-title')?.value?.trim() ?? '',
             route: card.querySelector('.day-route')?.value?.trim() ?? '',
@@ -59,22 +70,51 @@
         }))
     });
 
-    const setStatus = (status) => {
-        statusToggle?.querySelectorAll('[data-status-value]').forEach(button => {
-            button.classList.toggle('active', button.dataset.statusValue === status);
-        });
-        if (saveButton) {
-            saveButton.dataset.currentStatus = status;
-            saveButton.textContent = status === 'submit' ? '✈ 送出' : '▣ 儲存';
-        }
-    };
-
     const setBusy = (button, busy) => {
         if (!button) return;
         button.disabled = busy;
         button.dataset.originalText ??= button.textContent;
         button.textContent = busy ? '處理中...' : button.dataset.originalText;
     };
+
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const updateDateRangeText = () => {
+        if (!dateRangeInput) return;
+        const start = startDateInput?.value || '';
+        const end = endDateInput?.value || '';
+        dateRangeInput.value = start ? `${start} 至 ${end || start}` : '';
+    };
+
+    if (dateRangeInput && startDateInput && endDateInput && window.flatpickr) {
+        const initialDates = [startDateInput.value, endDateInput.value].filter(Boolean);
+        flatpickr(dateRangeInput, {
+            mode: 'range',
+            dateFormat: 'Y-m-d',
+            defaultDate: initialDates,
+            disableMobile: true,
+            onChange(selectedDates) {
+                const [start, end] = selectedDates;
+                startDateInput.value = start ? formatDate(start) : '';
+                endDateInput.value = end ? formatDate(end) : '';
+                updateDateRangeText();
+            },
+            onClose(selectedDates) {
+                if (selectedDates.length === 1) {
+                    const onlyDate = formatDate(selectedDates[0]);
+                    startDateInput.value = onlyDate;
+                    endDateInput.value = onlyDate;
+                    updateDateRangeText();
+                }
+            }
+        });
+        updateDateRangeText();
+    }
 
     const send = async (action) => {
         const isSubmit = action === 'submit';
@@ -87,7 +127,8 @@
 
         setBusy(saveButton, true);
         try {
-            const response = await fetch(`/Explore/${isSubmit ? 'Submit' : 'SaveDraft'}/${postId}`, {
+            const query = viewerMemberId ? `?viewerMemberId=${encodeURIComponent(viewerMemberId)}` : '';
+            const response = await fetch(`/Explore/Submit/${postId}${query}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -96,11 +137,11 @@
                 body: JSON.stringify(payload)
             });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.message || '儲存失敗，請稍後再試。');
-            showToast(isSubmit ? '文章已送出審核。' : '草稿已儲存。');
-            if (isSubmit && data.redirectUrl) window.setTimeout(() => { window.location.href = data.redirectUrl; }, 650);
+            if (!response.ok) throw new Error(data.message || '送出失敗，請稍後再試。');
+            showToast(data.message || '文章已送出。');
+            if (data.redirectUrl) window.setTimeout(() => { window.location.href = data.redirectUrl; }, 650);
         } catch (error) {
-            showToast(error.message || '儲存失敗，請稍後再試。', 'error');
+            showToast(error.message || '送出失敗，請稍後再試。', 'error');
         } finally {
             setBusy(saveButton, false);
         }
@@ -124,16 +165,7 @@
         renumberDays();
     });
 
-    saveButton?.addEventListener('click', () => send(saveButton.dataset.currentStatus || 'draft'));
-
-    statusToggle?.addEventListener('click', event => {
-        const button = event.target.closest('[data-status-value]');
-        if (!button) return;
-        setStatus(button.dataset.statusValue);
-        saveButton?.focus();
-    });
-
-    setStatus(statusToggle?.querySelector('[data-status-value].active')?.dataset.statusValue || 'draft');
+    saveButton?.addEventListener('click', () => send('submit'));
 
     document.querySelectorAll('[data-file-target]').forEach(button => {
         button.addEventListener('click', () => {
@@ -167,7 +199,7 @@
         if (supportLarge) supportLarge.innerHTML = `<img src="${src}" alt="補充照片預覽" />`;
     };
     supportInput?.addEventListener('change', () => {
-        const files = [...(supportInput.files ?? [])].filter(file => file.type.startsWith('image/')).slice(0, 8);
+        const files = [...(supportInput.files ?? [])].filter(file => file.type.startsWith('image/'));
         supportStrip.innerHTML = '';
         if (files.length === 0) {
             supportLarge.innerHTML = '<span>尚未選擇補充照片</span>';
@@ -199,9 +231,35 @@
         setLargeSupport(img.src);
     });
 
-    document.querySelector('.editor-link-back')?.addEventListener('click', event => {
-        const fallback = event.currentTarget.dataset.backFallback || '/Explore';
+    const leaveEditor = fallback => {
         if (window.history.length > 1) window.history.back();
         else window.location.href = fallback;
+    };
+
+    const openCancelEditModal = fallback => {
+        document.getElementById('article-edit-cancel-modal')?.remove();
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="article-edit-cancel-backdrop" id="article-edit-cancel-modal" role="dialog" aria-modal="true" aria-label="取消編輯確認">
+                <div class="article-edit-cancel-card">
+                    <h2>要取消編輯嗎？</h2>
+                    <div class="article-edit-cancel-actions">
+                        <button class="article-edit-cancel-secondary" type="button">取消</button>
+                        <button class="article-edit-cancel-primary" type="button">確定</button>
+                    </div>
+                </div>
+            </div>`);
+        const modal = document.getElementById('article-edit-cancel-modal');
+        const close = () => modal.remove();
+        modal.querySelector('.article-edit-cancel-secondary').addEventListener('click', close);
+        modal.querySelector('.article-edit-cancel-primary').addEventListener('click', () => leaveEditor(fallback));
+        modal.addEventListener('click', event => { if (event.target === modal) close(); });
+    };
+
+    document.querySelector('.editor-link-back')?.addEventListener('click', event => {
+        const fallback = event.currentTarget.dataset.backFallback || '/Explore';
+        openCancelEditModal(fallback);
     });
 })();
+
+
+

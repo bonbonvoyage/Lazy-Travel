@@ -10,6 +10,12 @@ const draftStorageKey = 'lazytravel.travelGroupCreateDraft';
 const draftEndpoint = createForm?.dataset.draftUrl;
 const saveDraftEndpoint = createForm?.dataset.saveDraftUrl;
 const submitEndpoint = createForm?.dataset.submitUrl;
+const queryParams = new URLSearchParams(window.location.search);
+const editGroupId = Number(queryParams.get('editId') || 0);
+const editViewerMemberId = queryParams.get('viewerMemberId');
+const isEditMode = Number.isFinite(editGroupId) && editGroupId > 0;
+const editDraftEndpoint = isEditMode ? `/TravelGroups/EditDraft/${editGroupId}${editViewerMemberId ? `?viewerMemberId=${encodeURIComponent(editViewerMemberId)}` : ''}` : '';
+const updateEndpoint = isEditMode ? `/TravelGroups/Update/${editGroupId}${editViewerMemberId ? `?viewerMemberId=${encodeURIComponent(editViewerMemberId)}` : ''}` : '';
 let currentStep = 1;
 let dateRangePicker = null;
 
@@ -39,6 +45,15 @@ const countryRegionDefaults = {
 };
 
 const allCountries = Object.values(countriesByRegion).flat();
+if (isEditMode) {
+    document.title = document.title.replace('建立一趟新的旅行', '編輯揪團');
+    document.querySelector('.create-header h1')?.replaceChildren(document.createTextNode('編輯揪團'));
+    const cancel = document.querySelector('[data-cancel]');
+    if (cancel) cancel.textContent = '返回詳情';
+    subtitles[1] = '調整旅程輪廓後送出，就會更新原本的揪團房間。';
+    subtitles[2] = '確認旅伴條件是否仍符合這趟行程。';
+    subtitles[3] = '補上行程亮點與預算，送出後會更新詳細頁資料。';
+}
 
 function setStep(step) {
     currentStep = Math.min(3, Math.max(1, step));
@@ -278,22 +293,47 @@ coverFileInput?.addEventListener('change', () => {
     if (fileName) fileName.textContent = file.name;
 });
 
-document.querySelectorAll('.support-upload').forEach((button) => {
-    button.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.addEventListener('change', () => {
-            const file = input.files?.[0];
-            if (!file) return;
-            button.style.backgroundImage = `url("${URL.createObjectURL(file)}")`;
-            button.style.backgroundSize = 'cover';
-            button.style.backgroundPosition = 'center';
-            button.textContent = '';
-            button.dataset.fileName = file.name;
-        });
-        input.click();
+const supportImageList = document.getElementById('supportImageList');
+function createSupportUploadButton(fileName = '') {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = fileName ? 'support-upload has-image' : 'support-upload support-upload-add';
+    button.textContent = fileName || '＋';
+    if (fileName) button.dataset.fileName = fileName;
+    button.setAttribute('aria-label', fileName ? `補充圖片：${fileName}` : '新增補充圖片');
+    return button;
+}
+
+function ensureSupportAddButton() {
+    if (!supportImageList) return;
+    supportImageList.querySelectorAll('.support-upload-add').forEach((button, index) => {
+        if (index > 0) button.remove();
     });
+    if (!supportImageList.querySelector('.support-upload-add')) {
+        supportImageList.appendChild(createSupportUploadButton());
+    }
+}
+
+supportImageList?.addEventListener('click', (event) => {
+    const button = event.target.closest('.support-upload');
+    if (!button) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        button.classList.remove('support-upload-add');
+        button.classList.add('has-image');
+        button.style.backgroundImage = `url("${URL.createObjectURL(file)}")`;
+        button.style.backgroundSize = 'cover';
+        button.style.backgroundPosition = 'center';
+        button.textContent = '';
+        button.dataset.fileName = file.name;
+        button.setAttribute('aria-label', `補充圖片：${file.name}`);
+        ensureSupportAddButton();
+    });
+    input.click();
 });
 
 document.querySelectorAll('.number-stepper').forEach((stepper) => {
@@ -312,6 +352,7 @@ document.querySelectorAll('.number-stepper').forEach((stepper) => {
 const ageMin = document.getElementById('ageMin');
 const ageMax = document.getElementById('ageMax');
 const ageRangePreview = document.getElementById('ageRangePreview');
+const ageRange = document.getElementById('ageRange');
 function updateAgeRange(changed) {
     if (!ageMin || !ageMax || !ageRangePreview) return;
     let min = Number(ageMin.value);
@@ -326,6 +367,15 @@ function updateAgeRange(changed) {
         }
     }
     ageRangePreview.textContent = `${min} - ${max} 歲`;
+    if (ageRange) {
+        const minLimit = Number(ageMin.min || 18);
+        const maxLimit = Number(ageMin.max || 65);
+        const span = Math.max(1, maxLimit - minLimit);
+        const left = ((min - minLimit) / span) * 100;
+        const right = ((max - minLimit) / span) * 100;
+        ageRange.style.setProperty('--range-left', `${left}%`);
+        ageRange.style.setProperty('--range-right', `${right}%`);
+    }
 }
 ageMin?.addEventListener('input', () => updateAgeRange(ageMin));
 ageMax?.addEventListener('input', () => updateAgeRange(ageMax));
@@ -403,7 +453,7 @@ function collectDraft() {
         dateRange: document.getElementById('createDateRange')?.value || '',
         description: document.querySelector('[name="description"]')?.value || '',
         coverFileName: document.getElementById('coverFileName')?.textContent || '',
-        supportFileNames: Array.from(document.querySelectorAll('.support-upload')).map((button) => button.dataset.fileName || ''),
+        supportFileNames: Array.from(document.querySelectorAll('.support-upload.has-image')).map((button) => button.dataset.fileName || ''),
         activeOptions: Array.from(document.querySelectorAll('.option.active')).map((button) => button.textContent.trim()),
         people: Array.from(document.querySelectorAll('.number-stepper input')).map((input) => input.value),
         ageMin: ageMin?.value || '18',
@@ -495,13 +545,12 @@ function restoreDraft(sourceDraft) {
         });
     }
 
-    if (Array.isArray(draft.supportFileNames)) {
-        document.querySelectorAll('.support-upload').forEach((button, index) => {
-            const fileName = draft.supportFileNames[index];
-            if (!fileName) return;
-            button.dataset.fileName = fileName;
-            button.textContent = fileName;
+    if (Array.isArray(draft.supportFileNames) && supportImageList) {
+        supportImageList.replaceChildren();
+        draft.supportFileNames.filter(Boolean).forEach((fileName) => {
+            supportImageList.appendChild(createSupportUploadButton(fileName));
         });
+        ensureSupportAddButton();
     }
 
     setStep(Number(draft.currentStep || 1));
@@ -530,14 +579,15 @@ async function saveDraftToDatabase(draft) {
 }
 
 async function submitTravelGroup(button) {
-    if (!submitEndpoint) return;
+    const endpoint = isEditMode ? updateEndpoint : submitEndpoint;
+    if (!endpoint) return;
 
     const original = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '送出中...';
 
     try {
-        const response = await fetch(submitEndpoint, {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -554,8 +604,10 @@ async function submitTravelGroup(button) {
 
         const result = await response.json();
         try {
-            localStorage.removeItem(draftStorageKey);
-            localStorage.removeItem(`${draftStorageKey}.id`);
+            if (!isEditMode) {
+                localStorage.removeItem(draftStorageKey);
+                localStorage.removeItem(`${draftStorageKey}.id`);
+            }
         } catch {
             // The database record has already been published.
         }
@@ -568,18 +620,57 @@ async function submitTravelGroup(button) {
     }
 }
 
+function getEditReturnUrl() {
+    const url = new URL(`/TravelGroups/Details/${editGroupId}`, window.location.origin);
+    if (editViewerMemberId) url.searchParams.set('viewerMemberId', editViewerMemberId);
+    return url.toString();
+}
+
+function openCancelEditModal() {
+    document.getElementById('tg-edit-cancel-modal')?.remove();
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="tg-edit-cancel-backdrop" id="tg-edit-cancel-modal" role="dialog" aria-modal="true" aria-label="取消編輯確認">
+            <section class="tg-edit-cancel-card">
+                <button class="tg-edit-cancel-x" type="button" aria-label="關閉">×</button>
+                <span class="tg-edit-cancel-mark">?</span>
+                <h2>要取消編輯嗎？</h2>
+                <p>尚未送出的修改不會儲存，會返回揪團詳細頁。</p>
+                <div class="tg-edit-cancel-actions">
+                    <button class="glass-btn" type="button" data-edit-cancel-close>繼續編輯</button>
+                    <button class="primary-btn" type="button" data-edit-cancel-confirm>取消編輯</button>
+                </div>
+            </section>
+        </div>`);
+    const modal = document.getElementById('tg-edit-cancel-modal');
+    const close = () => modal?.remove();
+    modal?.querySelector('.tg-edit-cancel-x')?.addEventListener('click', close);
+    modal?.querySelector('[data-edit-cancel-close]')?.addEventListener('click', close);
+    modal?.querySelector('[data-edit-cancel-confirm]')?.addEventListener('click', () => window.location.assign(getEditReturnUrl()));
+    modal?.addEventListener('click', (event) => {
+        if (event.target === modal) close();
+    });
+}
+
+cancelButton?.addEventListener('click', (event) => {
+    if (!isEditMode) return;
+    event.preventDefault();
+    openCancelEditModal();
+});
 async function loadDatabaseDraft() {
-    if (!draftEndpoint) return;
+    const endpoint = isEditMode ? editDraftEndpoint : draftEndpoint;
+    if (!endpoint) return;
 
     try {
-        const response = await fetch(draftEndpoint, { headers: { Accept: 'application/json' } });
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
         if (!response.ok) return;
         if (response.status === 204) return;
         const draft = await response.json();
         if (!draft) return;
-        localStorage.setItem(draftStorageKey, JSON.stringify(draft));
-        if (draft.draftId) {
-            localStorage.setItem(`${draftStorageKey}.id`, String(draft.draftId));
+        if (!isEditMode) {
+            localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+            if (draft.draftId) {
+                localStorage.setItem(`${draftStorageKey}.id`, String(draft.draftId));
+            }
         }
         restoreDraft(draft);
     } catch {
@@ -630,5 +721,5 @@ if (window.flatpickr) {
 }
 
 setStep(1);
-restoreDraft();
+if (!isEditMode) restoreDraft();
 loadDatabaseDraft();
