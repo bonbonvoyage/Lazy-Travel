@@ -173,6 +173,12 @@ namespace LazyTravel.Shared.Services
             // 但那邊不是唯一防線（有人可能繞過畫面直接打這支 API），這裡才是真正
             // 擋得住的地方。任何一項驗證沒過就整批不存，並把原因帶回去，不要靜靜
             // 存一半或是把壞資料存進去。
+            // 手機不用簡訊驗證了（產品規則已確認），一樣先驗證台灣手機格式再存，
+            // 邏輯跟 LineId/Instagram/Facebook 這三個完全同一套模式。
+            if (!SocialLinkValidator.TryNormalizePhone(dto.Phone, out var normalizedPhone, out var phoneError))
+            {
+                return ProfileUpdateResult.Fail(phoneError!);
+            }
             if (!SocialLinkValidator.TryNormalizeLineId(dto.LineId, out var normalizedLineId, out var lineIdError))
             {
                 return ProfileUpdateResult.Fail(lineIdError!);
@@ -194,6 +200,15 @@ namespace LazyTravel.Shared.Services
             member.Bio = dto.Bio;
             member.City = dto.City;
             // 存驗證/正規化過後的值（normalized*），不是 dto 上原始未經檢查的內容。
+            // 手機號碼變更的話，順便把 PhoneNumberConfirmed 重設成 false——這個欄位
+            // 語意是「這支號碼有沒有經過簡訊驗證」，既然現在跳過簡訊驗證直接讓會員
+            // 自己改，新填的號碼當然還沒被驗證過，不應該沿用舊號碼留下的已驗證狀態。
+            // 目前系統其他地方都還沒有讀這個欄位做任何判斷，這裡只是先把資料語意存對。
+            if (normalizedPhone != member.PhoneNumber)
+            {
+                member.PhoneNumberConfirmed = false;
+            }
+            member.PhoneNumber = normalizedPhone;
             member.LineId = normalizedLineId;
             member.InstagramUrl = normalizedIg;
             member.FacebookUrl = normalizedFb;
@@ -261,6 +276,65 @@ namespace LazyTravel.Shared.Services
             _context.SaveChanges();
 
             return url;
+        }
+
+        public List<MemberSearchResultDto> SearchMembers(string keyword, int viewerMemberId)
+        {
+            var q = (keyword ?? "").Trim();
+            if (q.Length == 0) return new List<MemberSearchResultDto>();
+
+            // 封鎖關係不分方向：我封鎖的人、封鎖我的人都不該出現在搜尋結果裡，
+            // 直接送好友申請給對方也一定會被擋，不如一開始就不要顯示。
+            var blockedByMeIds = _context.Blocks
+                .Where(b => b.BlockerId == viewerMemberId)
+                .Select(b => b.BlockedId);
+            var blockedMeIds = _context.Blocks
+                .Where(b => b.BlockedId == viewerMemberId)
+                .Select(b => b.BlockerId);
+
+            var candidates = _context.Users.AsNoTracking()
+                .Where(m => !m.IsDelete && m.Id != viewerMemberId && m.Name.Contains(q))
+                .Where(m => !blockedByMeIds.Contains(m.Id) && !blockedMeIds.Contains(m.Id))
+                .OrderBy(m => m.Name)
+                .Take(30)
+                .Select(m => new { m.Id, m.Name, m.AvatarUrl, m.City, m.Mbti })
+                .ToList();
+
+            if (candidates.Count == 0) return new List<MemberSearchResultDto>();
+
+            var candidateIds = candidates.Select(c => c.Id).ToList();
+
+            var friendIds = _context.Friendships
+                .Where(f =>
+                    (f.MemberId1 == viewerMemberId && candidateIds.Contains(f.MemberId2)) ||
+                    (f.MemberId2 == viewerMemberId && candidateIds.Contains(f.MemberId1)))
+                .ToList()
+                .Select(f => f.MemberId1 == viewerMemberId ? f.MemberId2 : f.MemberId1)
+                .ToHashSet();
+
+            var pendingSentIds = _context.FriendRequests
+                .Where(r => r.RequesterId == viewerMemberId && r.ReviewedAt == null && candidateIds.Contains(r.ReceiverId))
+                .Select(r => r.ReceiverId)
+                .ToHashSet();
+
+            var pendingReceivedIds = _context.FriendRequests
+                .Where(r => r.ReceiverId == viewerMemberId && r.ReviewedAt == null && candidateIds.Contains(r.RequesterId))
+                .Select(r => r.RequesterId)
+                .ToHashSet();
+
+            return candidates.Select(c => new MemberSearchResultDto
+            {
+                MemberId = c.Id,
+                Name = c.Name,
+                AvatarUrl = c.AvatarUrl,
+                City = c.City,
+                Mbti = c.Mbti,
+                RelationshipStatus =
+                    friendIds.Contains(c.Id) ? "Friend"
+                    : pendingSentIds.Contains(c.Id) ? "PendingSent"
+                    : pendingReceivedIds.Contains(c.Id) ? "PendingReceived"
+                    : "Stranger",
+            }).ToList();
         }
 
         private static int CalcAge(DateOnly birthDate)

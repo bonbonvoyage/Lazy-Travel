@@ -97,5 +97,30 @@ namespace LazyTravel.Shared.Services
             normalized = trimmed;
             return true;
         }
+
+        // 手機不用簡訊驗證了（產品規則已確認），改成開放會員自己在個人頁直接改
+        // 手機號碼，但要照台灣手機規則驗證：09 開頭、共 10 碼數字。使用者可能會用
+        // 「0912-345-678」這種排版打進來，這裡把連字號／空白拿掉，統一存成純數字，
+        // 方便之後如果要做重複比對或串簡訊 API 都不用再處理格式。
+        public static bool TryNormalizePhone(string? raw, out string? normalized, out string? error)
+        {
+            normalized = null;
+            error = null;
+
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return true;
+            }
+
+            var digits = Regex.Replace(raw.Trim(), "[-\\s]", "");
+            if (!Regex.IsMatch(digits, "^09\\d{8}$"))
+            {
+                error = "手機號碼格式不正確（需為 09 開頭的 10 碼數字，例如 0912345678）。";
+                return false;
+            }
+
+            normalized = digits;
+            return true;
+        }
     }
 }

@@ -22,5 +22,11 @@ namespace LazyTravel.Shared.Services
 
         // 上傳新大頭貼，回傳可以直接放進 <img src> 的網址，同時已經存回資料庫。
         Task<string> UpdateAvatarAsync(int memberId, IFormFile file);
+
+        // 手帳第二頁「搜尋陌生人」：依暱稱模糊搜尋會員，viewerMemberId 是目前登入
+        // 的自己（一定要登入才能搜尋）。已經排除自己、已刪除帳號、跟自己有封鎖
+        // 關係（不論誰封鎖誰）的人，並且把每一筆結果跟 viewer 的關係狀態一併算好
+        // 回傳（見 MemberSearchResultDto 的註解），前端不用自己再判斷一次。
+        List<MemberSearchResultDto> SearchMembers(string keyword, int viewerMemberId);
     }
 }
