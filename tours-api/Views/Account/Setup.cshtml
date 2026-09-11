@@ -1,0 +1,51 @@
+@{ Layout = null; ViewData["Title"] = "個人資料設定"; }
+<!DOCTYPE html><html lang="zh-Hant"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>個人資料設定 - LazyTravel</title>
+<link rel="stylesheet" href="~/css/account-flow.css" asp-append-version="true" />
+</head><body class="lt-account-page">
+<header class="lt-topbar"><a class="lt-brand" href="/"><img src="/img/logo.png" alt="" />LazyTravel</a><a class="lt-back" href="/">← 返回首頁</a></header>
+<main class="lt-setup-shell" id="ltSetup">
+<p class="lt-preview-banner">介面預覽 · 尚未建立帳號或儲存到個人中心；本分頁重新整理會清除填寫內容。</p>
+<nav class="lt-stepper" aria-label="設定進度"><span data-step-marker="1" aria-current="step"><b>1</b> 關於我</span><i></i><span data-step-marker="2"><b>2</b> 旅行偏好</span></nav>
+<div class="lt-setup-card">
+<aside class="lt-journal" aria-label="個人名片預覽">
+<span class="lt-journal-kicker">YOUR TRAVEL JOURNAL</span>
+<p class="lt-journal-quote">每一段旅程，<br />都有屬於自己的節奏。</p>
+<div class="lt-photo"><img id="ltAvatarPreview" alt="頭像預覽" hidden /><svg id="ltAvatarPlaceholder" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="29" r="13" /><path d="M15 69c0-25 50-25 50 0" /></svg></div>
+<h2 id="ltNamePreview">你的暱稱</h2><span id="ltMbtiPreview" class="lt-mbti" hidden></span><p id="ltBioPreview">在這裡，收藏你的旅行故事。</p>
+<div id="ltDnaPreview" hidden></div>
+<div class="lt-postcard" aria-hidden="true"><span class="lt-postcard-sun"></span><div></div></div>
+<span class="lt-journal-note">Collect moments,<br />not things.</span><small>即時預覽 · 尚未儲存</small>
+</aside>
+<div class="lt-setup-content">
+<section data-step="1">
+<span class="lt-eyebrow">A LITTLE ABOUT YOU</span><h1 tabindex="-1">讓旅伴認識你</h1><p class="lt-muted">先留下名字，再慢慢分享你的故事。</p>
+<form id="ltAboutForm">
+<div class="lt-avatar-row"><div class="lt-avatar-mini" aria-hidden="true">LT</div><label class="lt-secondary lt-upload">上傳頭像<input id="ltAvatarInput" type="file" accept="image/jpeg,image/png,image/webp" /></label><small>JPG、PNG、WebP<br />最大 5 MB，僅供本次預覽</small></div>
+<p class="lt-error" id="ltAvatarError" role="alert"></p>
+<label class="lt-field">暱稱 <span class="lt-required">＊</span><input id="ltNickname" name="nickname" maxlength="40" placeholder="旅伴該怎麼稱呼你？" required autocomplete="nickname" /></label>
+<label class="lt-field">MBTI <span class="lt-optional">（選填）</span><select id="ltMbti"><option value="">不知道／暫不填寫</option><option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option><option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option><option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option><option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option></select></label>
+<label class="lt-field">自我介紹 <span class="lt-optional">（選填）</span><textarea id="ltBio" rows="3" maxlength="300" placeholder="例如：喜歡海邊、老街，還有沒有排滿的行程。"></textarea><small class="lt-count"><span id="ltBioCount">0</span> / 300</small></label>
+<details class="lt-more"><summary>更多基本資料 <span>（選填）</span></summary><div class="lt-extra-grid">
+<label class="lt-field">生日<input type="date" id="ltBirthday" name="birthday" autocomplete="bday" /><small>生日不會出現在這張公開名片預覽。</small></label>
+<label class="lt-field">性別<select name="gender"><option value="">暫不填寫</option><option>女</option><option>男</option><option>其他／不透露</option></select></label>
+<label class="lt-field">居住地<input name="city" maxlength="50" placeholder="例如：台北市" /></label>
+<label class="lt-field">職業<input name="occupation" maxlength="50" placeholder="例如：設計師" /></label>
+</div></details>
+<p class="lt-privacy">ⓘ 暱稱與自我介紹將用於公開個人頁。</p>
+<div class="lt-actions"><a class="lt-text-button" href="/Account/Register">← 返回註冊</a><button class="lt-primary" type="submit">下一步 <span aria-hidden="true">→</span></button></div>
+</form>
+</section>
+<section data-step="2" hidden>
+<span class="lt-eyebrow">FIND YOUR TRAVEL RHYTHM</span><h1 tabindex="-1">你的旅遊 DNA</h1><p class="lt-muted">沒有標準答案，選擇最像你的旅行方式。<br />全部皆為選填，也可以留待以後慢慢探索。</p>
+<div id="ltDnaFields"></div>
+<p class="lt-soft-note">沒有回答的項目會保留為「尚未選擇」。</p>
+<div class="lt-actions lt-three"><button type="button" class="lt-secondary" id="ltPrevious">← 上一步</button><button type="button" class="lt-text-button" id="ltSkip">稍後填寫</button><button type="button" class="lt-primary" id="ltFinish">完成預覽 →</button></div>
+</section>
+</div></div>
+<p class="lt-bottom-note">慢一點，讓這段旅程更像你。</p>
+</main>
+<dialog id="ltCompleteDialog" class="lt-complete" aria-labelledby="ltCompleteTitle"><div><span class="lt-eyebrow">READY FOR YOUR NEXT CHAPTER</span><h2 id="ltCompleteTitle">資料設定畫面已預覽完成</h2><p>本次沒有建立帳號或儲存會員資料。<br />接下來可以查看原有個人中心；它不會顯示這次的預覽內容。</p><div class="lt-actions"><button type="button" class="lt-secondary" id="ltContinueEditing">繼續調整</button><a class="lt-primary" href="/Members/Profile" id="ltGoProfile">查看既有個人中心 →</a></div></div></dialog>
+<script src="~/js/account-setup.js" asp-append-version="true" defer></script>
+</body></html>

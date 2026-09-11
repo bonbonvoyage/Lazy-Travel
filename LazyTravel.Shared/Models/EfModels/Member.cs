@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 
+Member · CS
+using Microsoft.AspNetCore.Identity;
+ 
 namespace LazyTravel.Shared.Models.EfModels;
-
+ 
 public partial class Member : IdentityUser<int>
 {
+	public string? City { get; set; }
 	public string Name { get; set; } = null!;
 	public string? LineId { get; set; }
 	public string? InstagramUrl { get; set; }
@@ -21,7 +25,7 @@ public partial class Member : IdentityUser<int>
 	public DateTime? LastLoginAt { get; set; }
 	public string? LastLoginIp { get; set; }
 	public bool IsDelete { get; set; }
-
+ 
 	public virtual ICollection<Block> BlockBlockeds { get; set; } = new List<Block>();
 	public virtual ICollection<Block> BlockBlockers { get; set; } = new List<Block>();
 	public virtual ICollection<ExpenseSplit> ExpenseSplits { get; set; } = new List<ExpenseSplit>();
@@ -42,6 +46,7 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 	public virtual ICollection<MemberSkill> MemberSkills { get; set; } = new List<MemberSkill>();
 	public virtual ICollection<MemberSubscription> MemberSubscriptions { get; set; } = new List<MemberSubscription>();
+	public virtual ICollection<MemberTravelDNA> MemberTravelDnas { get; set; } = new List<MemberTravelDNA>();
 	public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 	public virtual ICollection<PostInteraction> PostInteractions { get; set; } = new List<PostInteraction>();
 	public virtual ICollection<Report> ReportReportedMembers { get; set; } = new List<Report>();

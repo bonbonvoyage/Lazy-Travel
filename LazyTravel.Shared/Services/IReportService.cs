@@ -1,5 +1,6 @@
 using LazyTravel.Shared.Models;
 using LazyTravel.Shared.Models.DTOs;
+using Microsoft.AspNetCore.Http;
 
 namespace LazyTravel.Shared.Services
 {
@@ -42,6 +43,21 @@ namespace LazyTravel.Shared.Services
         // reporterAccount 仍是 Reports.ReporterID 這個 NOT NULL 外鍵要用的顯示名稱/Email,兩者用途不同,都要保留。
         Task<Report> SubmitAsync(ReportTargetType targetType, int targetId, string targetTitle,
             string reportedMemberAccount, string reporterAccount, ReportReasonCategory reasonCategory, string reason, int employeeId);
+
+        // 會員自己在主頁對別人按「檢舉」用的簡化版：跟上面 SubmitAsync 不一樣的地方——
+        //   1. 沒有 employeeId，因為不是後台小編代為送出，送出後也不寫 AdminAuditLogs
+        //      （那是後台操作紀錄，會員自己在前台檢舉不算後台操作）。
+        //   2. reporterId／reportedMemberId 直接用真的會員編號（從 ICurrentMemberAccessor
+        //      跟目前正在看的主頁帶進來），不用像 SubmitAsync 那樣還要用 Email 反查、
+        //      也不用查無此人時的系統管理員佔位帳號那套邏輯。
+        //   3. 檢舉對象固定是「會員」（ReportTargetType.Member），因為這是主頁上針對
+        //      「這個人」的檢舉，不是針對某篇 Vlog 文章或某個揪團——TargetId 直接沿用
+        //      reportedMemberId（跟既有 ReportController.Create 那邊「檢舉會員類型時，
+        //      對象編號直接沿用會員編號」是同一條規則）。
+        //   4. evidence 是選填的檢舉截圖佐證，比照期中版本 /Report/Create 的做法——
+        //      有上傳就用 IImageStorageService 存起來、把回傳的網址寫進 Reports.EvidenceUrl；
+        //      沒有就跟以前一樣留空，不強制要求佐證圖片。
+        Task<Report> SubmitMemberReportAsync(int reporterId, int reportedMemberId, ReportReasonCategory reasonCategory, string reason, IFormFile? evidence = null);
 
         // 這個模組相關的操作紀錄(給檢舉審核台頁面用)
         Task<List<AdminLogDto>> GetRecentReportLogsAsync(int take);

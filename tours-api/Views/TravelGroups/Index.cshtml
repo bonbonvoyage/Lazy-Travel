@@ -29,6 +29,7 @@
 
             <form class="groups-filter" method="get" asp-action="Index">
                 <input type="hidden" name="scope" value="@Model.Scope" />
+                <input type="hidden" name="maxDays" value="@Model.MaxDays" />
                 <input type="hidden" id="groupStartDate" name="startDate" value="@Model.StartDate" />
                 <input type="hidden" id="groupEndDate" name="endDate" value="@Model.EndDate" />
 

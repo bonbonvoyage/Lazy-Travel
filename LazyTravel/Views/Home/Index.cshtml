@@ -169,6 +169,40 @@
         }
         /* x 425-517 */
 
+        /* ============================================================
+                   個人主頁入口
+                   ------------------------------------------------------------
+                   設計圖上沒有這顆按鈕（圖是先畫好的），所以用真的 <a> 疊在
+                   右上角搜尋圖示左邊。之後重畫首頁圖時可以改成熱區。
+                   ============================================================ */
+        .btn-profile {
+            position: absolute;
+            z-index: 3;
+            top: 3.4%;
+            right: 9%;
+            display: inline-flex;
+            align-items: center;
+            padding: .62em 1.25em;
+            border-radius: 999px;
+            background: #F5822B;
+            color: #fff;
+            font: 600 clamp(11px, 1.05vw, 15px)/1 "Noto Sans TC", system-ui, sans-serif;
+            letter-spacing: .08em;
+            text-decoration: none;
+            box-shadow: 0 3px 0 rgba(0,0,0,.18), 0 6px 14px rgba(245,130,43,.32);
+            transition: transform .15s ease, background .15s ease;
+        }
+
+            .btn-profile:hover {
+                background: #E0701C;
+                transform: translateY(-1px);
+            }
+
+            .btn-profile:focus-visible {
+                outline: 3px solid #1D63C4;
+                outline-offset: 3px;
+            }
+
         /* ---------- 除錯模式 ----------
                    網址加 ?debug，或在頁面上按鍵盤 D，會顯示所有熱區的紅框與名稱 */
         body.debug .hotspot {
@@ -209,6 +243,13 @@
                 pointer-events: none;
             }
             /* 手機停用熱區，避免誤觸 */
+
+            .btn-profile {
+                position: static;
+                margin: 1rem auto 0;
+                padding: .9em 1.7em;
+                font-size: 14px;
+            }
 
             .mobile-nav {
                 display: flex;
@@ -253,6 +294,7 @@
         <ul>
             <li><a asp-controller="Home" asp-action="Index">首頁</a></li>
             <li><a asp-controller="Explore" asp-action="Index">找行程</a></li>
+            <li><a asp-controller="Members" asp-action="Profile">個人主頁</a></li>
             <li><a asp-area="Admin" asp-controller="Auth" asp-action="Login">CMS 後台管理系統</a></li>
         </ul>
     </nav>
@@ -273,6 +315,10 @@
            asp-controller="Home" asp-action="Index"></a>
         <a class="hotspot hs-about" data-label="ABOUT" aria-label="關於我們" href="#"></a>
         <a class="hotspot hs-contact" data-label="CONTACT" aria-label="聯絡我們" href="#"></a>
+        @* ★ 個人主頁（第一人稱案頭場景）。設計圖上沒有這顆，所以放一顆真的按鈕 *@
+        <a class="btn-profile" aria-label="個人主頁"
+           asp-controller="Members" asp-action="Profile">個人主頁</a>
+
         <a class="hotspot hs-search" data-label="SEARCH" aria-label="搜尋"
            asp-controller="Explore" asp-action="Index"></a>
         <a class="hotspot hs-readmore" data-label="READ MORE" aria-label="了解更多"
@@ -291,6 +337,7 @@
         <a class="on" asp-controller="Home" asp-action="Index">HOME</a>
         <a href="#">ABOUT</a>
         <a href="#">CONTACT</a>
+        <a asp-controller="Members" asp-action="Profile">個人主頁</a>
         <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">CMS</a>
     </nav>
 

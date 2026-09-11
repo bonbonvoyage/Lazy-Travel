@@ -4,9 +4,11 @@ using LazyTravel.Shared.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Controllers
+namespace LazyTravel.Controllers;
+
+public class HomeController(LazyTravelDBContext context) : Controller
 {
-    public class HomeController : Controller
+    public async Task<IActionResult> Index()
     {
         private readonly LazyTravelDBContext _context;
 
@@ -15,11 +17,11 @@ namespace LazyTravel.Controllers
             _context = context;
         }
 
-        // GET /Home/Index â€”â€” åªè² è²¬å›å‚³é é¢å¤–æ®¼(å´æ¬„ã€Heroã€å¡ç‰‡å€çš„ç©ºå®¹å™¨)ï¼Œ
-        // ç‰ˆé¢ä¸Šçœ‹åˆ°çš„è¡Œç¨‹/æ–‡ç« è³‡æ–™ä¸€å¾‹ç”± wwwroot/js/home.js å‘¼å«ä¸‹é¢çš„ Data() æ‹¿çœŸå¯¦è³‡æ–™ã€‚
+        // GET /Home/Index ¡X¡X ¥u­t³d¦^¶Ç­¶­±¥~´ß(°¼Äæ¡BHero¡B¥d¤ù°ÏªºªÅ®e¾¹)¡A
+        // ª©­±¤W¬İ¨ìªº¦æµ{/¤å³¹¸ê®Æ¤@«ß¥Ñ wwwroot/js/home.js ©I¥s¤U­±ªº Data() ®³¯u¹ê¸ê®Æ¡C
         public async Task<IActionResult> Index()
         {
-            ViewData["Title"] = "é¦–é ";
+            ViewData["Title"] = "­º­¶";
             var countries = await _context.TravelGroups.AsNoTracking()
                 .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal && g.Country != null && g.Country != "")
                 .Select(g => g.Country!)
@@ -34,8 +36,8 @@ namespace LazyTravel.Controllers
             });
         }
 
-        // GET /Home/Data â€”â€” é¦–é å¡ç‰‡å€çš„çœŸå¯¦è³‡æ–™ï¼Œå‰ç«¯ fetch é€™æ”¯æ‹¿ JSONã€‚
-        // ä¾ FRONTEND_BACKEND_SPLIT.md æ…£ä¾‹ï¼šç›´æ¥ Ok(vm)ï¼Œä¸åŒ… {success,data} å¤–å±¤ã€‚
+        // GET /Home/Data ¡X¡X ­º­¶¥d¤ù°Ïªº¯u¹ê¸ê®Æ¡A«eºİ fetch ³o¤ä®³ JSON¡C
+        // ¨Ì FRONTEND_BACKEND_SPLIT.md ºD¨Ò¡Gª½±µ Ok(vm)¡A¤£¥] {success,data} ¥~¼h¡C
         public async Task<IActionResult> Data()
         {
             var trips = await _context.TravelGroups.AsNoTracking()
@@ -63,7 +65,7 @@ namespace LazyTravel.Controllers
                     Country = g.Country,
                     GroupTitle = g.GroupTitle,
                     CoverImageUrl = cover?.ImageUrl ?? "",
-                    DaysText = days.HasValue ? $"{days}å¤©{days - 1}å¤œ" : "",
+                    DaysText = days.HasValue ? $"{days}¤Ñ{days - 1}©]" : "",
                     CurrentPeople = g.CurrentPeople,
                     MaxPeople = g.MaxPeople,
                 };
@@ -111,4 +113,5 @@ namespace LazyTravel.Controllers
             return View();
         }
     }
+    public IActionResult Error() => View();
 }

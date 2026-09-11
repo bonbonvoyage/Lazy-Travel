@@ -12,6 +12,7 @@ public sealed class TravelGroupIndexViewModel
     public string? StartDate { get; init; }
     public string? EndDate { get; init; }
     public string Scope { get; init; } = "all";
+    public int? MaxDays { get; init; }
     public int Page { get; init; } = 1;
     public int TotalPages { get; init; } = 1;
     public int TotalCount { get; init; }
