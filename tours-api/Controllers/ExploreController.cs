@@ -30,10 +30,12 @@ namespace LazyTravel.Controllers
         {
             const int pageSize = 12;
             take = Math.Clamp(take, pageSize, 120);
-            scope = scope == "recommended" ? "recommended" : "all";
+            scope = scope == "mine" ? "mine" : "all";
+            var currentMemberId = GetCurrentMemberId();
             var published = await _context.VlogPosts.AsNoTracking()
                 .Include(p => p.Member)
                 .Where(p => !p.IsDelete && p.Status == VlogPostStatus.Published)
+                .Where(p => scope != "mine" || (currentMemberId.HasValue && p.MemberId == currentMemberId.Value))
                 .ToListAsync();
             var countries = published.Select(p => p.Destination)
                 .Where(d => !string.IsNullOrWhiteSpace(d)).Distinct().OrderBy(d => d).ToList();
@@ -68,15 +70,10 @@ namespace LazyTravel.Controllers
             var likeCounts = interactionCounts
                 .Where(i => i.ActionType == PostInteractionType.Like)
                 .ToDictionary(i => i.PostId, i => i.Count);
-            var counts = interactionCounts
-                .GroupBy(i => i.PostId)
-                .ToDictionary(g => g.Key, g => g.Sum(i => i.Count));
-            var ordered = scope == "recommended"
-                ? filtered.OrderByDescending(p => counts.GetValueOrDefault(p.PostId)).ThenByDescending(p => p.UpdatedAt ?? p.CreatedAt)
-                : filtered.OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt);
+            var ordered = filtered.OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt);
             var totalCount = ordered.Count();
             var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
-            var visitorId = GetCurrentMemberId() ?? await GetOrCreateVisitorMemberIdAsync();
+            var visitorId = currentMemberId ?? await GetOrCreateVisitorMemberIdAsync();
             var favorites = await _context.PostInteractions.AsNoTracking()
                 .Where(i => i.MemberId == visitorId && i.ActionType == PostInteractionType.Favorite && ids.Contains(i.PostId))
                 .Select(i => i.PostId).ToListAsync();

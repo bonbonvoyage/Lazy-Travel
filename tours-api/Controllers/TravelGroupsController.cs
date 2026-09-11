@@ -243,14 +243,19 @@ namespace LazyTravel.Controllers
         {
             const int pageSize = 12;
             take = Math.Clamp(take, pageSize, 120);
-            scope = scope == "recommended" ? "recommended" : "all";
+            scope = scope == "mine" ? "mine" : "all";
 
             var today = DateOnly.FromDateTime(DateTime.Now);
-            var publicGroups = _context.TravelGroups.AsNoTracking()
+            var currentMemberId = _currentMemberAccessor.GetCurrentMemberId();
+            var allGroups = _context.TravelGroups.AsNoTracking()
                 .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal)
                 .Where(g => g.GroupStatus == 0 && g.CurrentPeople < g.MaxPeople && (!g.StartDate.HasValue || g.StartDate.Value >= today));
+            var myGroups = currentMemberId.HasValue
+                ? _context.TravelGroups.AsNoTracking().Where(g => !g.IsDelete && g.OwnerMemberId == currentMemberId.Value)
+                : _context.TravelGroups.AsNoTracking().Where(g => false);
+            var scopedGroups = scope == "mine" ? myGroups : allGroups;
 
-            var allCountries = await publicGroups
+            var allCountries = await scopedGroups
                 .Where(g => g.Country != null && g.Country != "")
                 .Select(g => g.Country!)
                 .Distinct()
@@ -264,7 +269,7 @@ namespace LazyTravel.Controllers
             {
                 country = null;
             }
-            var query = publicGroups
+            var query = scopedGroups
                 .Include(g => g.OwnerMember)
                 .Include(g => g.TravelGroupImages)
                 .AsQueryable();
@@ -301,8 +306,8 @@ namespace LazyTravel.Controllers
                 endDate = null;
             }
 
-            query = scope == "recommended"
-                ? query.OrderByDescending(g => g.CurrentPeople).ThenBy(g => g.StartDate)
+            query = scope == "mine"
+                ? query.OrderByDescending(g => g.UpdatedAt)
                 : query.OrderBy(g => g.StartDate ?? DateOnly.MaxValue).ThenByDescending(g => g.CreatedAt);
 
             var totalCount = await query.CountAsync();
@@ -874,6 +879,7 @@ namespace LazyTravel.Controllers
                         IsRequired = b.IsRequired,
                     }).ToList(),
                 BudgetTotalPerPerson = group.TravelGroupBudgets.Sum(b => b.Amount ?? 0),
+                ViewerIsAuthenticated = visitorMemberId.HasValue,
                 ViewerIsOwner = visitorMemberId.HasValue && group.OwnerMemberId == visitorMemberId.Value,
                 ViewerIsMember = visitorMemberId.HasValue && activeMembers.Any(gm => gm.MemberId == visitorMemberId.Value),
                 ViewerHasPendingRequest = pendingRequest,

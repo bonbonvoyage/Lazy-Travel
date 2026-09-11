@@ -27,7 +27,7 @@ function openLoginPanel() {
 }
 
 function requiresLogin(vm) {
-  return vm.viewerMode === 'guest' && !viewerMemberId;
+  return vm.viewerIsAuthenticated !== true;
 }
 
 function authAttrs(vm) {
@@ -219,6 +219,30 @@ function openStatusModal(vm) {
   });
 }
 
+function openApplicationConfirmModal(message) {
+  document.getElementById('tg-application-confirm-modal')?.remove();
+  return new Promise(resolve => {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="tg-status-backdrop" id="tg-application-confirm-modal" role="dialog" aria-modal="true" aria-label="確認名單操作">
+        <section class="tg-status-card tg-confirm-card">
+          <button class="tg-status-close" type="button" aria-label="關閉">×</button>
+          <span class="tg-status-eyebrow">CONFIRM</span>
+          <h2>確認操作</h2>
+          <p>${escapeHtml(message)}</p>
+          <div class="tg-status-actions tg-confirm-actions">
+            <button class="tg-status-danger" type="button" data-confirm-ok>確定</button>
+            <button class="tg-status-secondary" type="button" data-confirm-cancel>取消</button>
+          </div>
+        </section>
+      </div>`);
+    const modal = document.getElementById('tg-application-confirm-modal');
+    const close = value => { modal?.remove(); resolve(value); };
+    modal?.querySelector('[data-confirm-ok]')?.addEventListener('click', () => close(true));
+    modal?.querySelector('[data-confirm-cancel]')?.addEventListener('click', () => close(false));
+    modal?.querySelector('.tg-status-close')?.addEventListener('click', () => close(false));
+    modal?.addEventListener('click', event => { if (event.target === modal) close(false); });
+  });
+}
 async function postStatusAction(action) {
   const url = new URL(`/TravelGroups/ChangeStatus/${groupId}`, window.location.origin);
   if (viewerMemberId) url.searchParams.set('viewerMemberId', viewerMemberId);
@@ -514,7 +538,7 @@ function render(vm) {
         : action === 'reject-request'
           ? '確定要拒絕此申請嗎？'
           : '確定要將此會員移出已拒絕名單嗎？';
-      if (!confirm(confirmMessage)) return;
+      if (!await openApplicationConfirmModal(confirmMessage)) return;
       actionButton.disabled = true;
       const ok = await postOwnerApplicationAction(action, targetId);
       if (ok) {
@@ -592,17 +616,6 @@ async function load() {
     root.innerHTML = '<div class="tg-empty">行程資料載入失敗，請稍後重新整理</div>';
   }
 }
-
-const viewerSwitch = document.getElementById('tgViewerSwitch');
-viewerSwitch?.addEventListener('change', event => {
-  viewerMemberId = event.currentTarget.value ? Number(event.currentTarget.value) : null;
-  const url = new URL(window.location.href);
-  if (viewerMemberId) url.searchParams.set('viewerMemberId', viewerMemberId);
-  else url.searchParams.delete('viewerMemberId');
-  window.history.replaceState({}, '', url);
-  root.dataset.viewerMemberId = viewerMemberId ? String(viewerMemberId) : '';
-  load();
-});
 
 window.addEventListener('message', event => {
   if (event.origin !== window.location.origin) return;

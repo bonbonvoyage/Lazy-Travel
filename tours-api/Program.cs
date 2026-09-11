@@ -131,11 +131,12 @@ if (app.Environment.IsDevelopment())
 			await VlogPostDbSeeder.SeedAsync(context);
 			await TravelGroupDbSeeder.SeedAsync(context);
 			await AiTravelDemoDbSeeder.SeedAsync(context);
+			await LazyTravelDemoContentSeeder.SeedAsync(context);
 		}
 	}
 	catch (Exception ex)
 	{
-		app.Logger.LogWarning(ex, "灌示範資料時發生錯誤，已略過。");
+		app.Logger.LogWarning(ex, "灌資料時發生錯誤，已略過。");
 	}
 }
 
@@ -158,3 +159,5 @@ app.MapControllerRoute(
 	pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+

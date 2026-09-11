@@ -3,7 +3,6 @@
     Layout = null;
     var groupId = (int)ViewData["GroupId"]!;
     var viewerMemberId = ViewData["ViewerMemberId"] as int?;
-    var testViewers = ViewData["TestViewers"] as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
 }
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -25,20 +24,6 @@
         <main class="main">
             <form id="tg-antiforgery">@Html.AntiForgeryToken()</form>
             <button class="page-back-button tg-back" type="button" data-back-fallback="@Url.Action("Index", "TravelGroups")" aria-label="返回上一頁">＜</button>
-            @if (testViewers.Any())
-            {
-                <label class="test-viewer-switch" aria-label="測試檢視身分">
-                    <span>測試身分</span>
-                    <select id="tgViewerSwitch">
-                        <option value="">目前訪客</option>
-                        @foreach (var viewer in testViewers)
-                        {
-                            var selected = viewerMemberId.HasValue && viewer.Id == viewerMemberId.Value;
-                            <option value="@viewer.Id" selected="@selected">@viewer.Name</option>
-                        }
-                    </select>
-                </label>
-            }
             <div class="content-wrap" id="tg-root" data-group-id="@groupId" data-viewer-member-id="@(viewerMemberId?.ToString() ?? "")">
                 <div class="tg-loading" id="tg-loading">載入中…</div>
             </div>

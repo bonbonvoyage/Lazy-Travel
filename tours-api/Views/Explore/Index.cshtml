@@ -70,18 +70,28 @@
                 <div class="board-toolbar">
                     <nav class="groups-tabs" aria-label="文章分類">
                         <a class="@(Model.Scope == "all" ? "active" : "")" asp-action="Index" asp-route-scope="all" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" id="board-title">所有文章</a>
-                        <button type="button" disabled title="登入後即可查看">我的文章</button>
-                        <a class="@(Model.Scope == "recommended" ? "active" : "")" asp-action="Index" asp-route-scope="recommended" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">文章推薦</a>
+                        <a class="@(Model.Scope == "mine" ? "active" : "")" asp-action="Index" asp-route-scope="mine" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">我的文章</a>
+
                     </nav>
                     <a class="create-group" asp-action="Create"><span>＋</span> 新增文章</a>
                 </div>
 
                 @if (Model.Articles.Count == 0)
                 {
-                    <div class="groups-empty">
-                        <div class="empty-icon">⌁</div>
-                        <h2>目前沒有符合條件的文章</h2>
-                        <p>換個國家或日期看看。</p>
+                    <div class="groups-empty @(Model.Scope == "mine" ? "mine-empty" : "")">
+                        @if (Model.Scope == "mine")
+                        {
+                            <img class="empty-illustration" src="~/images/empty-states/my-articles-empty.svg" alt="尚未發表文章" asp-append-version="true" />
+                            <h2>目前還沒有自己的文章</h2>
+                            <p>新增一篇文章，保存旅行路線與回憶。</p>
+                            <a asp-action="Create">新增文章</a>
+                        }
+                        else
+                        {
+                            <div class="empty-icon">⌁</div>
+                            <h2>目前沒有符合條件的文章</h2>
+                            <p>換個國家或日期看看。</p>
+                        }
                     </div>
                 }
                 else

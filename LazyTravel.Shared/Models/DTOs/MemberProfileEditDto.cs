@@ -15,6 +15,10 @@ namespace LazyTravel.Shared.Models.DTOs
         public string? Bio { get; set; }
         public string? City { get; set; } // 居住地，例如「台北・大安」
 
+        // 手機不用簡訊驗證了（產品規則已確認），開放跟 LineId 一樣讓會員自己改，
+        // 存進資料庫前一樣會在 MemberProfileService.UpdateProfile 用
+        // SocialLinkValidator.TryNormalizePhone 驗證台灣手機格式。
+        public string? Phone { get; set; }
         public string? LineId { get; set; }
         public string? InstagramUrl { get; set; }
         public string? FacebookUrl { get; set; }
