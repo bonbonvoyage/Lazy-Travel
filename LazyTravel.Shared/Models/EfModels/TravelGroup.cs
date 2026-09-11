@@ -62,5 +62,9 @@ public partial class Member : IdentityUser<int>
 
     public virtual ICollection<TravelGroupImage> TravelGroupImages { get; set; } = new List<TravelGroupImage>();
 
+    public virtual ICollection<TravelGroupInteraction> TravelGroupInteractions { get; set; } = new List<TravelGroupInteraction>();
+
     public virtual ICollection<TravelGroupItineraryItem> TravelGroupItineraryItems { get; set; } = new List<TravelGroupItineraryItem>();
 
+    public virtual ICollection<TravelGroupsLog> TravelGroupsLogs { get; set; } = new List<TravelGroupsLog>();
+}

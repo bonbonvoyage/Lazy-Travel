@@ -23,10 +23,14 @@
     // 一樣要轉給 iframe，scene.dc.html 才能把它一起帶去打 /Members/ProfileData
     // （見 MembersController.ProfileData(int? id) 跟 scene.dc.html 的 viewMember()）。
     var viewId = Context.Request.Query["id"].ToString();
+    var openTicket = Context.Request.Query["openTicket"].ToString();
+    var ticketOnly = Context.Request.Query["ticketOnly"].ToString();
 
     var sceneQs = "";
     if (!string.IsNullOrEmpty(devMemberId)) sceneQs += "devMemberId=" + Uri.EscapeDataString(devMemberId);
     if (!string.IsNullOrEmpty(viewId)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "id=" + Uri.EscapeDataString(viewId);
+    if (!string.IsNullOrEmpty(openTicket)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "openTicket=" + Uri.EscapeDataString(openTicket);
+    if (!string.IsNullOrEmpty(ticketOnly)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "ticketOnly=" + Uri.EscapeDataString(ticketOnly);
     var sceneSrc = "~/members/scene.dc.html" + (sceneQs.Length > 0 ? "?" + sceneQs : "");
 }
 <!DOCTYPE html>
@@ -68,3 +72,5 @@
     </script>
 </body>
 </html>
+
+

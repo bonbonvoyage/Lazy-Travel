@@ -32,6 +32,9 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 	public virtual ICollection<Follow> FollowFollowees { get; set; } = new List<Follow>();
 	public virtual ICollection<Follow> FollowFollowers { get; set; } = new List<Follow>();
+	public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
+	public virtual ICollection<ForumInteract> ForumInteracts { get; set; } = new List<ForumInteract>();
+	public virtual ICollection<ForumPost> ForumPosts { get; set; } = new List<ForumPost>();
 	public virtual ICollection<FriendRequest> FriendRequestReceivers { get; set; } = new List<FriendRequest>();
 	public virtual ICollection<FriendRequest> FriendRequestRequesters { get; set; } = new List<FriendRequest>();
 	public virtual ICollection<Friendship> FriendshipMemberId1Navigations { get; set; } = new List<Friendship>();
@@ -49,6 +52,7 @@ public partial class Member : IdentityUser<int>
 	public virtual ICollection<Report> ReportReportedMembers { get; set; } = new List<Report>();
 	public virtual ICollection<Report> ReportReporters { get; set; } = new List<Report>();
 	public virtual ICollection<TravelGroupImage> TravelGroupImages { get; set; } = new List<TravelGroupImage>();
+	public virtual ICollection<TravelGroupInteraction> TravelGroupInteractions { get; set; } = new List<TravelGroupInteraction>();
 	public virtual ICollection<TravelGroup> TravelGroups { get; set; } = new List<TravelGroup>();
 	// 🌟 TravelGroupsLog.ChangeByMemberID 的外鍵已改指向 Employees，這個集合搬到 Employee.cs 去了。
 	public virtual ICollection<VlogPostImage> VlogPostImages { get; set; } = new List<VlogPostImage>();

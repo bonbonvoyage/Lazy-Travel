@@ -42,6 +42,4 @@ public partial class VlogPost
     public virtual ICollection<PostInteraction> PostInteractions { get; set; } = new List<PostInteraction>();
 
     public virtual ICollection<VlogPostImage> VlogPostImages { get; set; } = new List<VlogPostImage>();
-
-    public virtual ICollection<VlogPostTag> VlogPostTags { get; set; } = new List<VlogPostTag>();
 }

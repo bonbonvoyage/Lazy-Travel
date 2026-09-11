@@ -378,6 +378,14 @@
 .search-field select { border: none; background: none; font-family: var(--font-ui); font-size: .9rem; color: var(--text); width: 100%; font-weight: 600; }
 .search-field select.is-placeholder { color: var(--text-muted); font-weight: 400; }
 .search-sep { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
+.search-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem; flex: 0 0 auto;
+  border: none; border-radius: 999px; padding: .7rem 1.4rem;
+  background: var(--indigo); color: #fff; font-size: .9rem; font-weight: 700; line-height: 1.5; white-space: nowrap;
+  transition: background-color .15s ease;
+}
+.search-btn svg { display: block; width: 18px; height: 18px; flex-shrink: 0; }
+.search-btn:hover { background: var(--indigo-dark); }
 .filter-clear {
   display: flex; align-items: center; gap: .3rem; flex-shrink: 0; border: none; background: none;
   color: var(--text-muted); font-size: .82rem; font-weight: 600; padding: .5rem .7rem; border-radius: 999px;
@@ -663,4 +671,29 @@ html { background: #edf6f3; }
     animation: none !important;
     transition-duration: .001ms !important;
   }
+}
+
+/* 首頁上方區塊：窄螢幕時保留輪播與地球各自的高度。 */
+@media (max-width: 900px) {
+  .hero-row { flex-direction: column; height: auto; }
+  .hero-row > .hero, .hero-row > .globe-panel { flex: none; width: 100%; height: 300px; }
+}
+
+/* Home page: full-width hero after removing the globe panel, and TravelGroups search reuse. */
+.home-page .home-hero-full {
+  height: 380px;
+}
+
+.home-page .home-hero-full::before {
+  display: none;
+}
+
+.home-page .home-hero-full .hero {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.home-page .home-groups-filter {
+  max-width: none;
+  margin: 0 0 2rem;
 }

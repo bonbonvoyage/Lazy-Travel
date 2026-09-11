@@ -2,36 +2,22 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
 public partial class LoginHistory
 {
-    [Key]
-    [Column("HistoryID")]
     public int HistoryId { get; set; }
 
-    [Column("MemberID")]
     public int MemberId { get; set; }
 
-    [Required]
-    [Column("LoginIP")]
-    [StringLength(50)]
-    [Unicode(false)]
     public string LoginIp { get; set; }
 
     public bool IsSuccess { get; set; }
 
-    [StringLength(255)]
     public string UserAgent { get; set; }
 
-    [Column(TypeName = "datetime")]
     public DateTime AttemptedAt { get; set; }
 
-    [ForeignKey("MemberId")]
-    [InverseProperty("LoginHistories")]
     public virtual Member Member { get; set; }
 }

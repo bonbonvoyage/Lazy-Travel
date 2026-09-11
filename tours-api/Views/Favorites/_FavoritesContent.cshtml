@@ -1,0 +1,181 @@
+@model LazyTravel.ViewModels.FavoriteTripsViewModel
+@{
+    var isArticles = Model.Type == "articles";
+    var currentTitle = isArticles ? "收藏文章" : "收藏行程";
+    var searchPlaceholder = isArticles ? "搜尋收藏文章" : "搜尋收藏行程";
+}
+<div class="favorites-content-zone" data-favorites-content>
+            <section class="favorites-panel" aria-label="收藏列表工具列">
+                <div class="favorites-switch" role="tablist" aria-label="收藏類型">
+                    <a role="tab" aria-selected="@(!isArticles).ToString().ToLowerInvariant()" class="@(!isArticles ? "active" : "")" asp-action="Index" asp-route-type="trips" asp-route-sort="@Model.Sort" asp-route-keyword="@Model.Keyword" asp-route-country="@Model.Country">收藏行程</a>
+                    <a role="tab" aria-selected="@(isArticles).ToString().ToLowerInvariant()" class="@(isArticles ? "active" : "")" asp-action="Index" asp-route-type="articles" asp-route-sort="@Model.Sort" asp-route-keyword="@Model.Keyword" asp-route-country="@Model.Country">收藏文章</a>
+                </div>
+
+                <div class="favorites-section-title">
+                    <span>@(isArticles ? "文章" : "行程")</span>
+                    <strong>@currentTitle</strong>
+                    <small>目前顯示 @Model.ActiveCount 筆</small>
+                </div>
+
+                <form class="favorites-search" method="get" asp-action="Index">
+                    <input type="hidden" name="type" value="@Model.Type" />
+                    <input type="hidden" name="sort" value="@Model.Sort" />
+                    <label class="favorite-search-input">
+                        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                        <input name="keyword" value="@Model.Keyword" placeholder="@searchPlaceholder" autocomplete="off" />
+                    </label>
+                    <label class="favorite-country-select">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9Z"/></svg>
+                        <select name="country">
+                            <option value="">所有國家</option>
+                            @foreach (var country in Model.AllCountries)
+                            {
+                                <option value="@country" selected="@(country == Model.Country)">@country</option>
+                            }
+                        </select>
+                    </label>
+                    <button class="favorites-search-submit" type="submit">搜尋</button>
+                </form>
+
+                <div class="favorites-toolbar">
+                    <div class="favorites-count">已收藏 <strong>@Model.ActiveCount</strong> 筆@((isArticles ? "文章" : "行程"))</div>
+                    <div class="sort-pills" role="group" aria-label="排序方式">
+                        <a class="@(Model.Sort == "newest" ? "active" : "")" asp-action="Index" asp-route-type="@Model.Type" asp-route-sort="newest" asp-route-keyword="@Model.Keyword" asp-route-country="@Model.Country">最新收藏</a>
+                        <a class="@(Model.Sort == "oldest" ? "active" : "")" asp-action="Index" asp-route-type="@Model.Type" asp-route-sort="oldest" asp-route-keyword="@Model.Keyword" asp-route-country="@Model.Country">最早收藏</a>
+                    </div>
+                </div>
+            </section>
+
+            @if ((!isArticles && Model.Trips.Count == 0) || (isArticles && Model.Articles.Count == 0))
+            {
+                <section class="favorites-empty" aria-label="尚無收藏">
+                    <div class="empty-illustration" aria-hidden="true">
+                        <svg viewBox="0 0 220 110" role="img">
+                            <defs>
+                                <linearGradient id="fishBody" x1="0" x2="1">
+                                    <stop offset="0" stop-color="#ff9fbd"/>
+                                    <stop offset="1" stop-color="#ff759f"/>
+                                </linearGradient>
+                                <linearGradient id="caseBody" x1="0" x2="1">
+                                    <stop offset="0" stop-color="#93dce9"/>
+                                    <stop offset="1" stop-color="#61bfd5"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M23 78c34-18 63-18 96 0s61 18 89 0" fill="none" stroke="#c8edf0" stroke-width="7" stroke-linecap="round" opacity=".75"/>
+                            <path d="M53 46c17-17 49-18 69 1 17-12 30-12 43 0-11 7-13 20 0 29-15 10-30 7-44-4-22 15-55 13-70-4-10 2-18 8-25 16 2-16 9-27 27-38Z" fill="url(#fishBody)"/>
+                            <circle cx="83" cy="51" r="4" fill="#24445a"/>
+                            <path d="M116 59c7 0 12 4 13 10-8 1-13-2-13-10Z" fill="#ffc0d3" opacity=".9"/>
+                            <rect x="112" y="66" width="46" height="34" rx="8" fill="url(#caseBody)"/>
+                            <path d="M125 66v-7c0-5 5-9 10-9s10 4 10 9v7" fill="none" stroke="#247f9a" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M112 78h46" stroke="#e8fbff" stroke-width="3"/>
+                            <path d="M135 82c5-8 18-6 18 4 0 8-12 15-18 19-6-4-18-11-18-19 0-10 13-12 18-4Z" fill="#ff709f"/>
+                            <path d="M39 27l3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8ZM178 26l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z" fill="#55c8d8"/>
+                            <path d="M62 17l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z" fill="#ffbd61"/>
+                        </svg>
+                    </div>
+                    <div class="empty-copy">
+                        <h2>還沒有收藏任何@(isArticles ? "文章" : "行程")</h2>
+                        <p>看到喜歡的@(isArticles ? "行程文章" : "揪團行程")，點擊愛心就會出現在這裡！<br />收藏你的旅行靈感，讓下一次出發更簡單。</p>
+                        <a class="empty-action" href="@(isArticles ? "/Explore" : "/TravelGroups")">@(isArticles ? "探索文章" : "探索行程")</a>
+                    </div>
+                    <div class="empty-note" aria-hidden="true">Good<br />Trips<br />Ahead！</div>
+                </section>
+            }
+            else if (isArticles)
+            {
+                <section class="favorites-grid" aria-label="收藏文章列表">
+                    @foreach (var article in Model.Articles)
+                    {
+                        <article class="favorite-trip-card" data-favorite-card data-favorite-type="article" data-item-id="@article.PostId">
+                            <a class="favorite-cover" asp-controller="Explore" asp-action="Details" asp-route-id="@article.PostId" aria-label="查看 @article.Title">
+                                @if (!string.IsNullOrWhiteSpace(article.CoverImageUrl))
+                                {
+                                    <img src="@article.CoverImageUrl" alt="@article.Title" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span>LazyTravel</span>
+                                }
+                            </a>
+                            <form class="favorite-remove-form" method="post" asp-controller="Explore" asp-action="ToggleFavorite" asp-route-id="@article.PostId">
+                                <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                <button class="favorite-remove" type="submit" data-favorite-remove data-favorite-kind="article" data-item-id="@article.PostId" aria-label="取消收藏 @article.Title" aria-pressed="true">
+                                    <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg>
+                                </button>
+                            </form>
+                            <div class="favorite-content">
+                                <p class="favorite-place">⌖ @article.Country@(string.IsNullOrWhiteSpace(article.Region) ? "" : $"・{article.Region}")</p>
+                                <a class="favorite-title" asp-controller="Explore" asp-action="Details" asp-route-id="@article.PostId">@article.Title</a>
+                                <div class="favorite-facts">
+                                    <span>日期／天數：@article.DateText</span>
+                                    <span>人數：@article.PeopleText</span>
+                                </div>
+                                <footer class="favorite-footer">
+                                    <div class="favorite-owner">
+                                        <span class="owner-avatar-mini">
+                                            @if (!string.IsNullOrWhiteSpace(article.AuthorAvatarUrl))
+                                            {
+                                                <img src="@article.AuthorAvatarUrl" alt="" loading="lazy" />
+                                            }
+                                            else
+                                            {
+                                                <span>@article.AuthorName[..1]</span>
+                                            }
+                                        </span>
+                                        <span>by @article.AuthorName</span>
+                                    </div>
+                                </footer>
+                            </div>
+                        </article>
+                    }
+                </section>
+            }
+            else
+            {
+                <section class="favorites-grid" aria-label="收藏行程列表">
+                    @foreach (var trip in Model.Trips)
+                    {
+                        <article class="favorite-trip-card" data-favorite-card data-favorite-type="trip" data-item-id="@trip.GroupId">
+                            <a class="favorite-cover" asp-controller="TravelGroups" asp-action="Details" asp-route-id="@trip.GroupId" aria-label="查看 @trip.Title">
+                                @if (!string.IsNullOrWhiteSpace(trip.CoverImageUrl))
+                                {
+                                    <img src="@trip.CoverImageUrl" alt="@trip.Title" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span>LazyTravel</span>
+                                }
+                            </a>
+                            <button class="favorite-remove" type="button" data-favorite-remove data-favorite-kind="trip" data-item-id="@trip.GroupId" aria-label="取消收藏 @trip.Title" aria-pressed="true">
+                                <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg>
+                            </button>
+                            <div class="favorite-content">
+                                <p class="favorite-place">⌖ @trip.Country@(string.IsNullOrWhiteSpace(trip.Region) ? "" : $"・{trip.Region}")</p>
+                                <a class="favorite-title" asp-controller="TravelGroups" asp-action="Details" asp-route-id="@trip.GroupId">@trip.Title</a>
+                                <div class="favorite-facts">
+                                    <span>日期／天數：@trip.DateText</span>
+                                    <span>人數狀態：@trip.CurrentPeople / @trip.MaxPeople 人・@trip.StatusText</span>
+                                </div>
+                                <footer class="favorite-footer">
+                                    <div class="favorite-owner">
+                                        <span class="owner-avatar-mini">
+                                            @if (!string.IsNullOrWhiteSpace(trip.OwnerAvatarUrl))
+                                            {
+                                                <img src="@trip.OwnerAvatarUrl" alt="" loading="lazy" />
+                                            }
+                                            else
+                                            {
+                                                <span>@trip.OwnerName[..1]</span>
+                                            }
+                                        </span>
+                                        <span>by @trip.OwnerName</span>
+                                    </div>
+                                </footer>
+                            </div>
+                        </article>
+                    }
+                </section>
+            }
+
+</div>
+

@@ -2,11 +2,18 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace LazyTravel.Models.EfModels;
+namespace LazyTravel.Shared.Models.EfModels;
 
-public partial class LazyTravelDBContext : DbContext
+// 🌟 手動加了 IdentityDbContext<Member, IdentityRole<int>, int> 繼承（原本反向工程只會產生
+// 純 DbContext）。OnModelCreating 第一行要呼叫 base.OnModelCreating(modelBuilder)，
+// 並且 Member 這個 entity 設定要補一個 entity.ToTable("Members")，
+// 蓋掉 IdentityDbContext 預設會用的 "AspNetUsers" 資料表名稱。
+// 每次重新反向工程都會被蓋回純 DbContext，記得要改回來。
+public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRole<int>, int>
 {
     public LazyTravelDBContext(DbContextOptions<LazyTravelDBContext> options)
         : base(options)
@@ -15,39 +22,17 @@ public partial class LazyTravelDBContext : DbContext
 
     public virtual DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 
-    public virtual DbSet<AdminLog> AdminLogs { get; set; }
-
-    public virtual DbSet<AdminPermission> AdminPermissions { get; set; }
-
     public virtual DbSet<Block> Blocks { get; set; }
 
     public virtual DbSet<Employee> Employees { get; set; }
 
     public virtual DbSet<EmployeeRole> EmployeeRoles { get; set; }
 
-    public virtual DbSet<Permission> Permissions { get; set; }
-
-    public virtual DbSet<Role> Roles { get; set; }
-
-    public virtual DbSet<RolePermission> RolePermissions { get; set; }
-
-    public virtual DbSet<TravelGroupsLog> TravelGroupsLogs { get; set; }
-
     public virtual DbSet<Expense> Expenses { get; set; }
 
     public virtual DbSet<ExpenseSplit> ExpenseSplits { get; set; }
 
-    public virtual DbSet<ExternalLogin> ExternalLogins { get; set; }
-
     public virtual DbSet<Follow> Follows { get; set; }
-
-    public virtual DbSet<ForumComment> ForumComments { get; set; }
-
-    public virtual DbSet<ForumImage> ForumImages { get; set; }
-
-    public virtual DbSet<ForumInteract> ForumInteracts { get; set; }
-
-    public virtual DbSet<ForumPost> ForumPosts { get; set; }
 
     public virtual DbSet<FriendRequest> FriendRequests { get; set; }
 
@@ -63,468 +48,1098 @@ public partial class LazyTravelDBContext : DbContext
 
     public virtual DbSet<Member> Members { get; set; }
 
+    public virtual DbSet<MemberClaim> MemberClaims { get; set; }
+
+    public virtual DbSet<MemberLogin> MemberLogins { get; set; }
+
+    public virtual DbSet<MemberRole> MemberRoles { get; set; }
+
+    public virtual DbSet<MemberRoleClaim> MemberRoleClaims { get; set; }
+
+    public virtual DbSet<MemberSkill> MemberSkills { get; set; }
+
     public virtual DbSet<MemberSubscription> MemberSubscriptions { get; set; }
 
     public virtual DbSet<MemberToken> MemberTokens { get; set; }
 
+    public virtual DbSet<MemberTravelDNA> MemberTravelDnas { get; set; }
+
     public virtual DbSet<Notification> Notifications { get; set; }
+
+    public virtual DbSet<Permission> Permissions { get; set; }
 
     public virtual DbSet<PostInteraction> PostInteractions { get; set; }
 
     public virtual DbSet<Report> Reports { get; set; }
 
-    public virtual DbSet<ReportTargetTypeLookup> ReportTargetTypeLookups { get; set; }
-
     public virtual DbSet<ReportReasonCategoryLookup> ReportReasonCategoryLookups { get; set; }
 
     public virtual DbSet<ReportStatusLookup> ReportStatusLookups { get; set; }
 
+    public virtual DbSet<ReportTargetTypeLookup> ReportTargetTypeLookups { get; set; }
+
+    public virtual DbSet<Role> StaffRoles { get; set; }
+
     public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+
+    public virtual DbSet<TravelDNADimension> TravelDnaDimensions { get; set; }
+
+    public virtual DbSet<TravelDNAOption> TravelDnaOptions { get; set; }
 
     public virtual DbSet<TravelGroup> TravelGroups { get; set; }
 
+    public virtual DbSet<TravelGroupBudget> TravelGroupBudgets { get; set; }
+
+    public virtual DbSet<TravelGroupImage> TravelGroupImages { get; set; }
+
+    public virtual DbSet<TravelGroupInteraction> TravelGroupInteractions { get; set; }
+
+    public virtual DbSet<TravelGroupItineraryItem> TravelGroupItineraryItems { get; set; }
+
+    public virtual DbSet<TravelGroupTag> TravelGroupTags { get; set; }
+
+    public virtual DbSet<TravelGroupsLog> TravelGroupsLogs { get; set; }
+
+    public virtual DbSet<TravelSkill> TravelSkills { get; set; }
+
     public virtual DbSet<VlogPost> VlogPosts { get; set; }
+
+    public virtual DbSet<VlogPostImage> VlogPostImages { get; set; }
+
+    public virtual DbSet<VlogPostTag> VlogPostTags { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<AdminAuditLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK_AdminAuditLogs");
+            entity.HasKey(e => e.LogId);
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.LogId).HasColumnName("LogID");
+            entity.Property(e => e.Action)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.Ipaddress)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("IPAddress");
+            entity.Property(e => e.TargetId)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("TargetID");
+            entity.Property(e => e.TargetResource)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Employee).WithMany(p => p.AdminAuditLogs)
+                .HasForeignKey(d => d.EmployeeId)
                 .HasConstraintName("FK_AdminAuditLogs_Employee");
-        });
-
-        modelBuilder.Entity<AdminLog>(entity =>
-        {
-            entity.HasKey(e => e.LogId).HasName("PK__AdminLog__5E5499A8B71F8697");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.Admin).WithMany(p => p.AdminLogs)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__AdminLogs__Admin__3493CFA7");
-        });
-
-        modelBuilder.Entity<AdminPermission>(entity =>
-        {
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.Admin).WithMany(p => p.AdminPermissions).HasConstraintName("FK_AdminPermissions_Members");
         });
 
         modelBuilder.Entity<Block>(entity =>
         {
-            entity.HasKey(e => new { e.BlockerId, e.BlockedId }).HasName("PK__Blocks__416BCA145ED007B7");
+            entity.HasKey(e => new { e.BlockerId, e.BlockedId });
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.BlockerId).HasColumnName("BlockerID");
+            entity.Property(e => e.BlockedId).HasColumnName("BlockedID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
             entity.HasOne(d => d.Blocked).WithMany(p => p.BlockBlockeds)
+                .HasForeignKey(d => d.BlockedId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Blocks__BlockedI__367C1819");
+                .HasConstraintName("FK_Blocks_Blocked");
 
             entity.HasOne(d => d.Blocker).WithMany(p => p.BlockBlockers)
+                .HasForeignKey(d => d.BlockerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Blocks__BlockerI__37703C52");
+                .HasConstraintName("FK_Blocks_Blocker");
         });
 
         modelBuilder.Entity<Employee>(entity =>
         {
-            entity.HasKey(e => e.EmployeeId).HasName("PK_Employees");
+            entity.HasIndex(e => e.Email, "UQ_Employees_Email")
+                .IsUnique()
+                .HasFilter("([IsDelete]=(0))");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Department)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.Email)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.EmployeeNo)
+                .IsRequired()
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.LastLoginAt).HasColumnType("datetime");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasMaxLength(255);
             entity.Property(e => e.Status).HasDefaultValue((byte)1);
         });
 
         modelBuilder.Entity<EmployeeRole>(entity =>
         {
-            entity.HasKey(e => new { e.EmployeeId, e.RoleId }).HasName("PK_EmployeeRoles");
+            entity.HasKey(e => new { e.EmployeeId, e.RoleId });
 
-            entity.Property(e => e.GrantedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.RoleId).HasColumnName("RoleID");
+            entity.Property(e => e.GrantedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
             entity.HasOne(d => d.Employee).WithMany(p => p.EmployeeRoles)
+                .HasForeignKey(d => d.EmployeeId)
                 .HasConstraintName("FK_EmployeeRoles_Employee");
 
             entity.HasOne(d => d.Role).WithMany(p => p.EmployeeRoles)
+                .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("FK_EmployeeRoles_Role");
         });
 
         modelBuilder.Entity<Expense>(entity =>
         {
-            entity.HasKey(e => e.ExpenseId).HasName("PK__Expenses__1445CFF3AEC30FE1");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.PayerId).HasColumnName("PayerID");
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Group).WithMany(p => p.Expenses)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Expenses__GroupI__3864608B");
+                .HasForeignKey(d => d.GroupId)
+                .HasConstraintName("FK_Expenses_Group");
 
             entity.HasOne(d => d.Payer).WithMany(p => p.Expenses)
+                .HasForeignKey(d => d.PayerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Expenses__PayerI__395884C4");
+                .HasConstraintName("FK_Expenses_Payer");
         });
 
         modelBuilder.Entity<ExpenseSplit>(entity =>
         {
-            entity.HasKey(e => e.SplitId).HasName("PK__ExpenseS__06CEF2D3227BEDA1");
+            entity.HasKey(e => e.SplitId);
+
+            entity.Property(e => e.SplitId).HasColumnName("SplitID");
+            entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.OweAmount).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Expense).WithMany(p => p.ExpenseSplits)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ExpenseSp__Expen__3A4CA8FD");
+                .HasForeignKey(d => d.ExpenseId)
+                .HasConstraintName("FK_ExpenseSplits_Expense");
 
             entity.HasOne(d => d.Member).WithMany(p => p.ExpenseSplits)
+                .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ExpenseSp__Membe__3B40CD36");
-        });
-
-        modelBuilder.Entity<ExternalLogin>(entity =>
-        {
-            entity.HasKey(e => e.LoginId).HasName("PK__External__4DDA28384FBD7CAD");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.Member).WithMany(p => p.ExternalLogins)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ExternalL__Membe__3C34F16F");
+                .HasConstraintName("FK_ExpenseSplits_Member");
         });
 
         modelBuilder.Entity<Follow>(entity =>
         {
-            entity.HasKey(e => e.FollowId).HasName("PK__Follows__2CE8108E84365964");
+            entity.HasIndex(e => new { e.FollowerId, e.FolloweeId }, "UQ_Follows_Follower_Followee").IsUnique();
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.FollowId).HasColumnName("FollowID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FolloweeId).HasColumnName("FolloweeID");
+            entity.Property(e => e.FollowerId).HasColumnName("FollowerID");
             entity.Property(e => e.Status).HasDefaultValue((byte)1);
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
             entity.HasOne(d => d.Followee).WithMany(p => p.FollowFollowees)
+                .HasForeignKey(d => d.FolloweeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Follows__Followe__3E1D39E1");
+                .HasConstraintName("FK_Follows_Followee");
 
             entity.HasOne(d => d.Follower).WithMany(p => p.FollowFollowers)
+                .HasForeignKey(d => d.FollowerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Follows__Followe__3D2915A8");
-        });
-
-        modelBuilder.Entity<ForumComment>(entity =>
-        {
-            entity.HasKey(e => e.CommentId).HasName("PK__ForumCom__C3B4DFAA87459FFA");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.ForumPost).WithMany(p => p.ForumComments)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ForumComm__Forum__3F115E1A");
-
-            entity.HasOne(d => d.Member).WithMany(p => p.ForumComments)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ForumComm__Membe__40058253");
-        });
-
-        modelBuilder.Entity<ForumImage>(entity =>
-        {
-            entity.HasKey(e => e.ImageId).HasName("PK__ForumIma__7516F4ECF9C4BC5A");
-
-            entity.HasOne(d => d.ForumPost).WithMany(p => p.ForumImages)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ForumImag__Forum__40F9A68C");
-        });
-
-        modelBuilder.Entity<ForumInteract>(entity =>
-        {
-            entity.HasKey(e => new { e.ForumPostId, e.MemberId, e.ActionType }).HasName("PK__ForumInt__BE93040F60F2E848");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.ForumPost).WithMany(p => p.ForumInteracts)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ForumInte__Forum__41EDCAC5");
-
-            entity.HasOne(d => d.Member).WithMany(p => p.ForumInteracts)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ForumInte__Membe__42E1EEFE");
-        });
-
-        modelBuilder.Entity<ForumPost>(entity =>
-        {
-            entity.HasKey(e => e.ForumPostId).HasName("PK__ForumPos__415AEB0CFEA90386");
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-
-            entity.HasOne(d => d.Member).WithMany(p => p.ForumPosts)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ForumPost__Membe__43D61337");
+                .HasConstraintName("FK_Follows_Follower");
         });
 
         modelBuilder.Entity<FriendRequest>(entity =>
         {
-            entity.HasKey(e => e.RequestId).HasName("PK__FriendRe__33A8519A18ADD626");
+            entity.HasKey(e => e.RequestId);
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.RequestId).HasColumnName("RequestID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Message).HasMaxLength(300);
+            entity.Property(e => e.ReceiverId).HasColumnName("ReceiverID");
+            entity.Property(e => e.RequesterId).HasColumnName("RequesterID");
+            entity.Property(e => e.ReviewedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Receiver).WithMany(p => p.FriendRequestReceivers)
+                .HasForeignKey(d => d.ReceiverId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__FriendReq__Recei__44CA3770");
+                .HasConstraintName("FK_FriendReq_Receiver");
 
             entity.HasOne(d => d.Requester).WithMany(p => p.FriendRequestRequesters)
+                .HasForeignKey(d => d.RequesterId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__FriendReq__Reque__45BE5BA9");
+                .HasConstraintName("FK_FriendReq_Requester");
         });
 
         modelBuilder.Entity<Friendship>(entity =>
         {
-            entity.HasKey(e => e.FriendshipId).HasName("PK__Friendsh__4D531A7459BD3BF4");
+            entity.HasIndex(e => new { e.MemberId1, e.MemberId2 }, "UQ_Friendships_Pair").IsUnique();
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.FriendshipId).HasColumnName("FriendshipID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.MemberId1).HasColumnName("MemberID1");
+            entity.Property(e => e.MemberId2).HasColumnName("MemberID2");
 
             entity.HasOne(d => d.MemberId1Navigation).WithMany(p => p.FriendshipMemberId1Navigations)
+                .HasForeignKey(d => d.MemberId1)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Friendshi__Membe__46B27FE2");
+                .HasConstraintName("FK_Friendships_M1");
 
             entity.HasOne(d => d.MemberId2Navigation).WithMany(p => p.FriendshipMemberId2Navigations)
+                .HasForeignKey(d => d.MemberId2)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Friendshi__Membe__47A6A41B");
+                .HasConstraintName("FK_Friendships_M2");
         });
 
         modelBuilder.Entity<GroupMember>(entity =>
         {
-            entity.HasKey(e => e.GroupMemberId).HasName("PK__GroupMem__344812B2E81E1659");
+            entity.HasIndex(e => e.MemberId, "IX_GroupMembers_MemberID");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.JoinedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.GroupMemberId).HasColumnName("GroupMemberID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.JoinedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LeftAt).HasColumnType("datetime");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.RemoveReason).HasMaxLength(300);
+            entity.Property(e => e.RemovedAt).HasColumnType("datetime");
+            entity.Property(e => e.RemovedByMemberId).HasColumnName("RemovedByMemberID");
 
             entity.HasOne(d => d.Group).WithMany(p => p.GroupMembers)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__GroupMemb__Group__489AC854");
+                .HasForeignKey(d => d.GroupId)
+                .HasConstraintName("FK_GroupMembers_Group");
 
             entity.HasOne(d => d.Member).WithMany(p => p.GroupMemberMembers)
+                .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__GroupMemb__Membe__498EEC8D");
+                .HasConstraintName("FK_GroupMembers_Member");
 
-            entity.HasOne(d => d.RemovedByMember).WithMany(p => p.GroupMemberRemovedByMembers).HasConstraintName("FK__GroupMemb__Remov__4A8310C6");
+            entity.HasOne(d => d.RemovedByMember).WithMany(p => p.GroupMemberRemovedByMembers)
+                .HasForeignKey(d => d.RemovedByMemberId)
+                .HasConstraintName("FK_GroupMembers_RemovedBy");
         });
 
         modelBuilder.Entity<ItineraryNode>(entity =>
         {
-            entity.HasKey(e => e.NodeId).HasName("PK__Itinerar__6BAE224383D52036");
+            entity.HasKey(e => e.NodeId);
 
-            entity.Property(e => e.MediaType).HasColumnType("tinyint").HasConversion<byte>();
+            entity.Property(e => e.NodeId).HasColumnName("NodeID");
+            entity.Property(e => e.LocationName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.MediaType).HasConversion<byte>();
+            entity.Property(e => e.MediaUrl).HasMaxLength(500);
+            entity.Property(e => e.PostId).HasColumnName("PostID");
 
             entity.HasOne(d => d.Post).WithMany(p => p.ItineraryNodes)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Itinerary__PostI__4B7734FF");
+                .HasForeignKey(d => d.PostId)
+                .HasConstraintName("FK_ItineraryNodes_Post");
         });
 
         modelBuilder.Entity<JoinRequest>(entity =>
         {
-            entity.HasKey(e => e.RequestId).HasName("PK__JoinRequ__33A8519AA98E2F9E");
+            entity.HasKey(e => e.RequestId);
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.RequestId).HasColumnName("RequestID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.Message).HasMaxLength(500);
+            entity.Property(e => e.ReviewedAt).HasColumnType("datetime");
+            entity.Property(e => e.ReviewedByMemberId).HasColumnName("ReviewedByMemberID");
 
             entity.HasOne(d => d.Group).WithMany(p => p.JoinRequests)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__JoinReque__Group__4C6B5938");
+                .HasForeignKey(d => d.GroupId)
+                .HasConstraintName("FK_JoinRequests_Group");
 
             entity.HasOne(d => d.Member).WithMany(p => p.JoinRequestMembers)
+                .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__JoinReque__Membe__4D5F7D71");
+                .HasConstraintName("FK_JoinRequests_Member");
 
-            entity.HasOne(d => d.ReviewedByMember).WithMany(p => p.JoinRequestReviewedByMembers).HasConstraintName("FK__JoinReque__Revie__4E53A1AA");
+            entity.HasOne(d => d.ReviewedByMember).WithMany(p => p.JoinRequestReviewedByMembers)
+                .HasForeignKey(d => d.ReviewedByMemberId)
+                .HasConstraintName("FK_JoinRequests_Reviewer");
         });
 
         modelBuilder.Entity<LoginHistory>(entity =>
         {
-            entity.Property(e => e.AttemptedAt).HasDefaultValueSql("(getdate())");
+            entity.HasKey(e => e.HistoryId);
 
-            entity.HasOne(d => d.Member).WithMany(p => p.LoginHistories).HasConstraintName("FK_LoginHistories_Members");
+            entity.HasIndex(e => e.MemberId, "IX_LoginHistories_MemberID");
+
+            entity.Property(e => e.HistoryId).HasColumnName("HistoryID");
+            entity.Property(e => e.AttemptedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LoginIp)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("LoginIP");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.UserAgent).HasMaxLength(255);
+
+            entity.HasOne(d => d.Member).WithMany(p => p.LoginHistories)
+                .HasForeignKey(d => d.MemberId)
+                .HasConstraintName("FK_LoginHistories_Members");
         });
 
         modelBuilder.Entity<Member>(entity =>
         {
-            entity.HasKey(e => e.MemberId).HasName("PK__Members__0CF04B383156A75F");
+            entity.ToTable("Members");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.HasIndex(e => e.NormalizedEmail, "IX_Members_NormalizedEmail");
+
+            entity.HasIndex(e => e.NormalizedUserName, "IX_Members_NormalizedUserName")
+                .IsUnique()
+                .HasFilter("([NormalizedUserName] IS NOT NULL)");
+
+            entity.HasIndex(e => e.Status, "IX_Members_Status");
+
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
+            entity.Property(e => e.Bio).HasMaxLength(500);
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.FacebookUrl).HasMaxLength(255);
+            entity.Property(e => e.InstagramUrl).HasMaxLength(255);
+            entity.Property(e => e.LastLoginAt).HasColumnType("datetime");
+            entity.Property(e => e.LastLoginIp)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.LineId).HasMaxLength(50);
+            entity.Property(e => e.LockoutEnabled).HasDefaultValue(true);
+            entity.Property(e => e.Mbti)
+                .HasMaxLength(4)
+                .IsUnicode(false)
+                .HasColumnName("MBTI");
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
+            entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
+            entity.Property(e => e.Occupation).HasMaxLength(50);
             entity.Property(e => e.Status).HasDefaultValue((byte)1);
+            entity.Property(e => e.UserName).HasMaxLength(256);
+
+            entity.HasMany(d => d.Roles).WithMany(p => p.Users)
+                .UsingEntity<Dictionary<string, object>>(
+                    "MemberUserRole",
+                    r => r.HasOne<MemberRole>().WithMany()
+                        .HasForeignKey("RoleId")
+                        .HasConstraintName("FK_MemberUserRoles_MemberRoles"),
+                    l => l.HasOne<Member>().WithMany()
+                        .HasForeignKey("UserId")
+                        .HasConstraintName("FK_MemberUserRoles_Members"),
+                    j =>
+                    {
+                        j.HasKey("UserId", "RoleId");
+                        j.ToTable("MemberUserRoles");
+                    });
+        });
+
+        modelBuilder.Entity<MemberClaim>(entity =>
+        {
+            entity.HasOne(d => d.User).WithMany(p => p.MemberClaims)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_MemberClaims_Members");
+        });
+
+        modelBuilder.Entity<MemberLogin>(entity =>
+        {
+            entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
+
+            entity.Property(e => e.LoginProvider).HasMaxLength(128);
+            entity.Property(e => e.ProviderKey).HasMaxLength(128);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany(p => p.MemberLogins)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_MemberLogins_Members");
+        });
+
+        modelBuilder.Entity<MemberRole>(entity =>
+        {
+            entity.HasIndex(e => e.NormalizedName, "IX_MemberRoles_NormalizedName")
+                .IsUnique()
+                .HasFilter("([NormalizedName] IS NOT NULL)");
+
+            entity.Property(e => e.Name).HasMaxLength(256);
+            entity.Property(e => e.NormalizedName).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<MemberRoleClaim>(entity =>
+        {
+            entity.HasOne(d => d.Role).WithMany(p => p.MemberRoleClaims)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK_MemberRoleClaims_MemberRoles");
+        });
+
+        modelBuilder.Entity<MemberSkill>(entity =>
+        {
+            entity.HasKey(e => new { e.MemberId, e.SkillId });
+
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.SkillId).HasColumnName("SkillID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Member).WithMany(p => p.MemberSkills)
+                .HasForeignKey(d => d.MemberId)
+                .HasConstraintName("FK_MemberSkills_Member");
+
+            entity.HasOne(d => d.Skill).WithMany(p => p.MemberSkills)
+                .HasForeignKey(d => d.SkillId)
+                .HasConstraintName("FK_MemberSkills_Skill");
         });
 
         modelBuilder.Entity<MemberSubscription>(entity =>
         {
-            entity.HasKey(e => e.SubscriptionId).HasName("PK__MemberSu__9A2B24BD88FF083D");
+            entity.HasKey(e => e.SubscriptionId);
+
+            entity.Property(e => e.SubscriptionId).HasColumnName("SubscriptionID");
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.PlanId).HasColumnName("PlanID");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Member).WithMany(p => p.MemberSubscriptions)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__MemberSub__Membe__503BEA1C");
+                .HasForeignKey(d => d.MemberId)
+                .HasConstraintName("FK_MemberSubscriptions_Member");
 
             entity.HasOne(d => d.Plan).WithMany(p => p.MemberSubscriptions)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__MemberSub__PlanI__51300E55");
+                .HasForeignKey(d => d.PlanId)
+                .HasConstraintName("FK_MemberSubscriptions_Plan");
         });
 
         modelBuilder.Entity<MemberToken>(entity =>
         {
-            entity.HasKey(e => e.TokenId).HasName("PK__MemberTo__658FEE8A58B57292");
+            entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.LoginProvider).HasMaxLength(128);
+            entity.Property(e => e.Name).HasMaxLength(128);
+            entity.Property(e => e.ExpiresAt)
+                .HasDefaultValueSql("(dateadd(hour,(24),getdate()))")
+                .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Member).WithMany(p => p.MemberTokens)
+            entity.HasOne(d => d.User).WithMany(p => p.MemberTokens)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_MemberTokens_Members");
+        });
+
+        modelBuilder.Entity<MemberTravelDNA>(entity =>
+        {
+            entity.HasKey(e => new { e.MemberId, e.DimensionId });
+
+            entity.ToTable("MemberTravelDNA", tb => tb.HasCheckConstraint("CK_MemberTravelDNA_Score", "[Score] >= 0 AND [Score] <= 100"));
+
+            entity.HasIndex(e => e.DimensionId, "IX_MemberTravelDNA_DimensionID");
+
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+            entity.Property(e => e.Score)
+                .HasDefaultValue((byte)50)
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_MemberTravelDNA_Score");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_MemberTravelDNA_UpdatedAt")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Dimension).WithMany(p => p.MemberTravelDnas)
+                .HasForeignKey(d => d.DimensionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__MemberTok__Membe__5224328E");
+                .HasConstraintName("FK_MemberTravelDNA_Dimension");
+
+            entity.HasOne(d => d.Member).WithMany(p => p.MemberTravelDnas)
+                .HasForeignKey(d => d.MemberId)
+                .HasConstraintName("FK_MemberTravelDNA_Member");
         });
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E320BDEFB19");
+            entity.HasIndex(e => new { e.MemberId, e.IsRead, e.CreatedAt }, "IX_Notifications_Member_Read_Time");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.NotificationId).HasColumnName("NotificationID");
+            entity.Property(e => e.Content)
+                .IsRequired()
+                .HasMaxLength(255);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.RelatedId).HasColumnName("RelatedID");
 
             entity.HasOne(d => d.Member).WithMany(p => p.Notifications)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Notificat__Membe__531856C7");
+                .HasForeignKey(d => d.MemberId)
+                .HasConstraintName("FK_Notifications_Members");
         });
 
         modelBuilder.Entity<Permission>(entity =>
         {
-            entity.HasKey(e => e.PermissionId).HasName("PK_Permissions");
+            entity.Property(e => e.PermissionId).HasColumnName("PermissionID");
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.ModuleName)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.PermissionCode)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<PostInteraction>(entity =>
         {
-            entity.HasKey(e => new { e.PostId, e.MemberId, e.ActionType }).HasName("PK__PostInte__55DB8F3BB779147E");
+            entity.HasKey(e => new { e.PostId, e.MemberId, e.ActionType });
 
-            entity.Property(e => e.ActionType).HasColumnType("tinyint").HasConversion<byte>();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.PostId).HasColumnName("PostID");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.ActionType).HasConversion<byte>();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
             entity.HasOne(d => d.Member).WithMany(p => p.PostInteractions)
+                .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PostInter__Membe__540C7B00");
+                .HasConstraintName("FK_PostInteractions_Member");
 
             entity.HasOne(d => d.Post).WithMany(p => p.PostInteractions)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PostInter__PostI__55009F39");
+                .HasForeignKey(d => d.PostId)
+                .HasConstraintName("FK_PostInteractions_Post");
         });
 
         modelBuilder.Entity<Report>(entity =>
         {
-            entity.HasKey(e => e.ReportId);
+            entity.HasIndex(e => e.ReportStatus, "IX_Reports_Status");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.ReportId).HasColumnName("ReportID");
+            entity.Property(e => e.AdminNotes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.EvidenceUrl).HasMaxLength(300);
+            entity.Property(e => e.Reason)
+                .IsRequired()
+                .HasMaxLength(500);
+            entity.Property(e => e.ReasonCategory).HasDefaultValue((byte)5);
+            entity.Property(e => e.ReportedMemberId).HasColumnName("ReportedMemberID");
+            entity.Property(e => e.ReporterId).HasColumnName("ReporterID");
+            entity.Property(e => e.TargetId).HasColumnName("TargetID");
+            entity.Property(e => e.TargetSnapshot).HasMaxLength(500);
+            entity.Property(e => e.TargetTitle).HasMaxLength(200);
 
-            // Reports 對 Members 有兩條各自獨立的外鍵(誰檢舉的、被檢舉的是誰),
-            // 兩條都指向同一張表,EF Core 沒辦法自己猜,必須各自明講要用哪個外鍵、不要牽連對方
-            entity.HasOne(d => d.Reporter).WithMany(p => p.ReportReporters)
-                .HasForeignKey(d => d.ReporterId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(d => d.ReasonCategoryNavigation).WithMany(p => p.Reports)
+                .HasForeignKey(d => d.ReasonCategory)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Reports_Category");
+
+            entity.HasOne(d => d.ReportStatusNavigation).WithMany(p => p.Reports)
+                .HasForeignKey(d => d.ReportStatus)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Reports_Status");
+
+            entity.HasOne(d => d.ReportTypeNavigation).WithMany(p => p.Reports)
+                .HasForeignKey(d => d.ReportType)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Reports_Type");
 
             entity.HasOne(d => d.ReportedMember).WithMany(p => p.ReportReportedMembers)
                 .HasForeignKey(d => d.ReportedMemberId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
-        });
+                .HasConstraintName("FK_Reports_ReportedMember");
 
-        modelBuilder.Entity<ReportTargetTypeLookup>(entity =>
-        {
-            entity.HasKey(e => e.TypeId);
-            entity.ToTable("ReportTargetTypes");
+            entity.HasOne(d => d.Reporter).WithMany(p => p.ReportReporters)
+                .HasForeignKey(d => d.ReporterId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Reports_Reporter");
         });
 
         modelBuilder.Entity<ReportReasonCategoryLookup>(entity =>
         {
             entity.HasKey(e => e.CategoryId);
+
             entity.ToTable("ReportReasonCategories");
+
+            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+            entity.Property(e => e.CategoryName)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<ReportStatusLookup>(entity =>
         {
             entity.HasKey(e => e.StatusId);
+
             entity.ToTable("ReportStatuses");
+
+            entity.Property(e => e.StatusId).HasColumnName("StatusID");
+            entity.Property(e => e.StatusName)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<ReportTargetTypeLookup>(entity =>
+        {
+            entity.HasKey(e => e.TypeId);
+
+            entity.ToTable("ReportTargetTypes");
+
+            entity.Property(e => e.TypeId).HasColumnName("TypeID");
+            entity.Property(e => e.TypeName)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK_Roles");
+            entity.ToTable("Roles");
 
-            // Role.Permissions / Permission.Roles 多對多,共用既有的 RolePermissions 中介表
-            // (RolePermission 實體本身保留,兩種存取方式並存)
-            entity.HasMany(r => r.Permissions)
-                .WithMany(p => p.Roles)
-                .UsingEntity<RolePermission>(
-                    right => right.HasOne(rp => rp.Permission).WithMany(p => p.RolePermissions),
-                    left => left.HasOne(rp => rp.Role).WithMany(r => r.RolePermissions));
-        });
+            entity.Property(e => e.RoleId).HasColumnName("RoleID");
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.RoleCode)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.RoleName)
+                .IsRequired()
+                .HasMaxLength(50);
 
-        modelBuilder.Entity<RolePermission>(entity =>
-        {
-            entity.HasKey(e => new { e.RoleId, e.PermissionId }).HasName("PK_RolePermissions");
-
-            entity.HasOne(d => d.Role).WithMany(p => p.RolePermissions)
-                .HasConstraintName("FK_RolePermissions_Role");
-
-            entity.HasOne(d => d.Permission).WithMany(p => p.RolePermissions)
-                .HasConstraintName("FK_RolePermissions_Permission");
+            entity.HasMany(d => d.Permissions).WithMany(p => p.Roles)
+                .UsingEntity<Dictionary<string, object>>(
+                    "RolePermission",
+                    r => r.HasOne<Permission>().WithMany()
+                        .HasForeignKey("PermissionId")
+                        .HasConstraintName("FK_RolePermissions_Permission"),
+                    l => l.HasOne<Role>().WithMany()
+                        .HasForeignKey("RoleId")
+                        .HasConstraintName("FK_RolePermissions_Role"),
+                    j =>
+                    {
+                        j.HasKey("RoleId", "PermissionId");
+                        j.ToTable("RolePermissions");
+                        j.IndexerProperty<int>("RoleId").HasColumnName("RoleID");
+                        j.IndexerProperty<int>("PermissionId").HasColumnName("PermissionID");
+                    });
         });
 
         modelBuilder.Entity<SubscriptionPlan>(entity =>
         {
-            entity.HasKey(e => e.PlanId).HasName("PK__Subscrip__755C22D7DDA444B6");
+            entity.HasKey(e => e.PlanId);
 
+            entity.Property(e => e.PlanId).HasColumnName("PlanID");
+            entity.Property(e => e.Description).HasMaxLength(300);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.PlanName)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+        });
+
+        modelBuilder.Entity<TravelDNADimension>(entity =>
+        {
+            entity.HasKey(e => e.DimensionId);
+
+            entity.ToTable("TravelDNADimensions");
+
+            entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+            entity.Property(e => e.DimensionName)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.LeftLabel)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.RightLabel)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<TravelDNAOption>(entity =>
+        {
+            entity.HasKey(e => e.OptionId);
+
+            entity.ToTable("TravelDNAOptions", tb => tb.HasCheckConstraint("CK_TravelDNAOptions_ScoreRange", "[MinScore] >= 0 AND [MinScore] <= 100 AND [MaxScore] >= 0 AND [MaxScore] <= 100 AND [MinScore] <= [MaxScore]"));
+
+            entity.HasIndex(e => e.DimensionId, "IX_TravelDNAOptions_DimensionID");
+
+            entity.Property(e => e.OptionId).HasColumnName("OptionID");
+            entity.Property(e => e.Description)
+                .IsRequired()
+                .HasMaxLength(200);
+            entity.Property(e => e.DimensionId).HasColumnName("DimensionID");
+            entity.Property(e => e.OptionName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.HasOne(d => d.Dimension).WithMany(p => p.TravelDnaOptions)
+                .HasForeignKey(d => d.DimensionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TravelDNAOptions_Dimension");
         });
 
         modelBuilder.Entity<TravelGroup>(entity =>
         {
-            entity.HasKey(e => e.GroupId).HasName("PK__TravelGr__149AF30AF64F87EB");
+            entity.HasKey(e => e.GroupId);
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.HasIndex(e => e.IsDelete, "IX_TravelGroups_IsDelete");
+
+            entity.HasIndex(e => e.StartDate, "IX_TravelGroups_StartDate");
+
+            entity.HasIndex(e => e.GroupStatus, "IX_TravelGroups_Status");
+
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.AccommNote).HasMaxLength(300);
+            entity.Property(e => e.AccommType).HasMaxLength(50);
+            entity.Property(e => e.Country)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.CurrentPeople).HasDefaultValue(1);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.GroupTitle)
+                .IsRequired()
+                .HasMaxLength(100);
             entity.Property(e => e.IsPublic).HasDefaultValue(true);
             entity.Property(e => e.JoinRule).HasDefaultValue((byte)1);
             entity.Property(e => e.MaxPeople).HasDefaultValue(10);
             entity.Property(e => e.MinPeople).HasDefaultValue(2);
-            entity.Property(e => e.ReviewStatus)
-                .HasDefaultValue("正常")
-                .HasAnnotation("Relational:DefaultConstraintName", "DF_TravelGroups_ReviewStatus");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.OwnerMemberId).HasColumnName("OwnerMemberID");
+            entity.Property(e => e.Region)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.ReviewStatus).HasConversion<byte>();
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
 
             entity.HasOne(d => d.OwnerMember).WithMany(p => p.TravelGroups)
+                .HasForeignKey(d => d.OwnerMemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TravelGro__Owner__57DD0BE4");
+                .HasConstraintName("FK_TravelGroups_Owner");
+        });
+
+        modelBuilder.Entity<TravelGroupBudget>(entity =>
+        {
+            entity.HasKey(e => e.BudgetId);
+
+            entity.Property(e => e.BudgetId).HasColumnName("BudgetID");
+            entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.BudgetName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.CurrencyCode)
+                .IsRequired()
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .HasDefaultValue("TWD")
+                .IsFixedLength();
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.IsRequired).HasDefaultValue(true);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupBudgets)
+                .HasForeignKey(d => d.GroupId)
+                .HasConstraintName("FK_TravelGroupBudgets_Group");
+        });
+
+        modelBuilder.Entity<TravelGroupImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId);
+
+            entity.Property(e => e.ImageId).HasColumnName("ImageID");
+            entity.Property(e => e.AltText)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.ImageUrl)
+                .IsRequired()
+                .HasMaxLength(600);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UploadedByMemberId).HasColumnName("UploadedByMemberID");
+
+            entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupImages)
+                .HasForeignKey(d => d.GroupId)
+                .HasConstraintName("FK_GroupImages_Group");
+
+            entity.HasOne(d => d.UploadedByMember).WithMany(p => p.TravelGroupImages)
+                .HasForeignKey(d => d.UploadedByMemberId)
+                .HasConstraintName("FK_GroupImages_Member");
+        });
+
+        modelBuilder.Entity<TravelGroupInteraction>(entity =>
+        {
+            entity.HasKey(e => new { e.GroupId, e.MemberId, e.ActionType });
+
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.ActionType).HasConversion<byte>();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupInteractions)
+                .HasForeignKey(d => d.GroupId)
+                .HasConstraintName("FK_TravelGroupInteractions_Group");
+
+            entity.HasOne(d => d.Member).WithMany(p => p.TravelGroupInteractions)
+                .HasForeignKey(d => d.MemberId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TravelGroupInteractions_Member");
+        });
+
+        modelBuilder.Entity<TravelGroupItineraryItem>(entity =>
+        {
+            entity.HasKey(e => e.ItineraryItemId);
+
+            entity.Property(e => e.ItineraryItemId).HasColumnName("ItineraryItemID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description)
+                .IsRequired()
+                .HasMaxLength(1000);
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.LocationName)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupItineraryItems)
+                .HasForeignKey(d => d.GroupId)
+                .HasConstraintName("FK_ItineraryItems_Group");
+        });
+
+        modelBuilder.Entity<TravelGroupTag>(entity =>
+        {
+            entity.HasKey(e => e.TagId);
+
+            entity.HasIndex(e => e.GroupId, "IX_TravelGroupTags_GroupID");
+
+            entity.HasIndex(e => e.IsDelete, "IX_TravelGroupTags_IsDelete");
+
+            entity.Property(e => e.TagId).HasColumnName("TagID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_TravelGroupTags_CreatedAt")
+                .HasColumnType("datetime");
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.IsDelete).HasAnnotation("Relational:DefaultConstraintName", "DF_TravelGroupTags_IsDelete");
+            entity.Property(e => e.TagCategory).HasMaxLength(20);
+            entity.Property(e => e.TagName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupTags)
+                .HasForeignKey(d => d.GroupId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TravelGroupTags_Group");
         });
 
         modelBuilder.Entity<TravelGroupsLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK_TravelGroupsLog");
+            entity.HasKey(e => e.LogId);
 
-            // 資料表名稱是單數 TravelGroupsLog,跟 DbSet 屬性名稱(複數)不一致,要明確指定
             entity.ToTable("TravelGroupsLog");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.LogId).HasColumnName("LogID");
+            entity.Property(e => e.ChangeByMemberId).HasColumnName("ChangeByMemberID");
+            entity.Property(e => e.ChangeType)
+                .IsRequired()
+                .HasMaxLength(30);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FieldName)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+            entity.Property(e => e.NewValue)
+                .IsRequired()
+                .HasMaxLength(300);
+            entity.Property(e => e.OldValue)
+                .IsRequired()
+                .HasMaxLength(300);
+            entity.Property(e => e.Remark).HasMaxLength(300);
+
+            entity.HasOne(d => d.ChangeByMember).WithMany(p => p.TravelGroupsLogs)
+                .HasForeignKey(d => d.ChangeByMemberId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TravelGroupsLog_Employee");
 
             entity.HasOne(d => d.Group).WithMany(p => p.TravelGroupsLogs)
+                .HasForeignKey(d => d.GroupId)
                 .HasConstraintName("FK_TravelGroupsLog_Group");
+        });
 
-            entity.HasOne(d => d.ChangedByEmployee).WithMany(p => p.TravelGroupsLogs)
-                .HasConstraintName("FK_TravelGroupsLog_ChangeByEmployee");
+        modelBuilder.Entity<TravelSkill>(entity =>
+        {
+            entity.HasKey(e => e.SkillId);
+
+            entity.Property(e => e.SkillId).HasColumnName("SkillID");
+            entity.Property(e => e.IconCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.SkillCategory).HasDefaultValue((byte)1);
+            entity.Property(e => e.SkillName)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<VlogPost>(entity =>
         {
-            entity.HasKey(e => e.PostId).HasName("PK__VlogPost__AA126038E4AC2808");
+            entity.HasKey(e => e.PostId);
 
-            entity.Property(e => e.MediaType).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(VlogMediaType.Photo);
-            entity.Property(e => e.Status).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(VlogPostStatus.Draft);
-            entity.Property(e => e.TravelPeople).HasColumnType("tinyint").HasConversion<byte>().HasDefaultValue(TravelGroupSize.Solo);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.HasIndex(e => e.IsDelete, "IX_VlogPosts_IsDelete");
+
+            entity.Property(e => e.PostId).HasColumnName("PostID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Destination)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.MediaType).HasConversion<byte>();
+            entity.Property(e => e.MediaUrl).HasMaxLength(500);
+            entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.Status).HasConversion<byte>();
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.TravelDate).HasColumnType("datetime");
             entity.Property(e => e.TravelDays).HasDefaultValue(1);
-
-            // TravelDate 在 C# 屬性上有 [Required]（給新增/編輯文章的表單驗證用），但 EF Core 建 model 時
-            // 也會讀 Data Annotations，[Required] 會讓 EF 誤以為這個資料庫欄位不可為 null，對舊資料裡
-            // TravelDate 本來就是 NULL 的文章讀取時會直接丟 SqlNullValueException。這裡明確覆寫成
-            // IsRequired(false)，讓 EF 的 model 跟 MVC 表單驗證脫鉤——欄位本身在資料庫仍然允許 NULL。
-            entity.Property(e => e.TravelDate).IsRequired(false);
+            entity.Property(e => e.TravelPeople)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasConversion<string>();
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Member).WithMany(p => p.VlogPosts)
+                .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__VlogPosts__Membe__58D1301D");
+                .HasConstraintName("FK_VlogPosts_Member");
+        });
+
+        modelBuilder.Entity<VlogPostImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId);
+
+            entity.Property(e => e.ImageId).HasColumnName("ImageID");
+            entity.Property(e => e.AltText)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ImageUrl)
+                .IsRequired()
+                .HasMaxLength(600);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UploadedByMemberId).HasColumnName("UploadedByMemberID");
+            entity.Property(e => e.VlogPostId).HasColumnName("VlogPostID");
+
+            entity.HasOne(d => d.UploadedByMember).WithMany(p => p.VlogPostImages)
+                .HasForeignKey(d => d.UploadedByMemberId)
+                .HasConstraintName("FK_VlogPostImages_Member");
+
+            entity.HasOne(d => d.VlogPost).WithMany(p => p.VlogPostImages)
+                .HasForeignKey(d => d.VlogPostId)
+                .HasConstraintName("FK_VlogPostImages_Post");
+        });
+
+        modelBuilder.Entity<VlogPostTag>(entity =>
+        {
+            entity.HasKey(e => e.TagId);
+
+            entity.HasIndex(e => e.IsDelete, "IX_VlogPostTags_IsDelete");
+
+            entity.HasIndex(e => e.PostId, "IX_VlogPostTags_PostID");
+
+            entity.Property(e => e.TagId).HasColumnName("TagID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_VlogPostTags_CreatedAt")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsDelete).HasAnnotation("Relational:DefaultConstraintName", "DF_VlogPostTags_IsDelete");
+            entity.Property(e => e.PostId).HasColumnName("PostID");
+            entity.Property(e => e.TagCategory).HasMaxLength(20);
+            entity.Property(e => e.TagName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.HasOne(d => d.Post).WithMany(p => p.VlogPostTags)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_VlogPostTags_Post");
         });
 
         OnModelCreatingPartial(modelBuilder);

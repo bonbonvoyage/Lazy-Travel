@@ -1,217 +1,177 @@
-@model VlogPost
+@model LazyTravel.ViewModels.ExploreDetailsViewModel
 @{
-    ViewData["Title"] = Model.Title;
-    var nodes = (List<ItineraryNode>)ViewBag.Nodes;
-    var likeCount = (int)ViewBag.LikeCount;
-    var favoriteCount = (int)ViewBag.FavoriteCount;
+    Layout = null;
+    var post = Model.Post;
+    var author = string.IsNullOrWhiteSpace(post.Member?.Name) ? "旅人" : post.Member.Name;
+    var content = Model.PlainContent;
+    var cover = Model.Images.FirstOrDefault();
+    var days = Model.Nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key).ToList();
+    var tags = new[] { post.Destination, post.TravelPeople.ToLabel() }.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
+    var highlight = string.IsNullOrWhiteSpace(Model.Highlight)
+        ? content.Split(new[] { '。', '！', '？', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim()
+        : Model.Highlight;
+    var people = post.TravelPeople.ToLabel();
+    var region = string.IsNullOrWhiteSpace(Model.Region) ? "未提供" : Model.Region;
 }
-
-<style>
-    .post-content { color: var(--ink); line-height: 1.8; }
-    .post-content h2 { font-family: var(--font-display); font-size: 1.3rem; color: var(--sea-800); margin-top: 1rem; }
-    .post-content h3 { font-family: var(--font-display); font-size: 1.1rem; color: var(--sea-800); margin-top: .8rem; }
-    .post-content img { max-width: 100%; border-radius: var(--radius-sm); margin: .5rem 0; }
-    .explore-official-badge {
-        display: inline-flex; align-items: center; gap: .15rem;
-        background-color: var(--coral-600); color: #fff; border-radius: var(--radius-pill);
-        font-size: .72rem; font-weight: 500; padding: .1rem .6rem;
-    }
-
-    /* 主圖 + 標題疊字，跟參考圖右半邊的呈現方式一致 */
-    .detail-hero {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 16 / 10;
-        background-size: cover;
-        background-position: center;
-        background-color: var(--sea-800);
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: flex-end;
-    }
-    .detail-hero-overlay {
-        width: 100%;
-        padding: 3rem 1.5rem 1.5rem;
-        background: linear-gradient(to top, rgba(15,30,40,.88), rgba(15,30,40,0));
-        color: #fff;
-    }
-    .detail-hero-title { color: #fff; font-family: var(--font-display); margin-bottom: .5rem; }
-    .detail-hero-meta {
-        font-size: .88rem;
-        opacity: .95;
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-        flex-wrap: wrap;
-    }
-
-    /* 每日行程列表：日期用大圓圈編號，中間用連接線串起每一天，底下是單純堆疊的景點卡片（不再用每站小圓點）。 */
-    .day-group { position: relative; padding-left: 3.25rem; padding-bottom: 1.75rem; }
-    .day-group:last-child { padding-bottom: 0; }
-    .day-badge {
-        position: absolute;
-        left: 0;
-        top: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 50%;
-        background-color: var(--sea-600);
-        color: #fff;
-        font-family: var(--font-display);
-        font-weight: 600;
-        font-size: 1.1rem;
-        z-index: 2;
-    }
-    .day-group.has-next-day::before {
-        content: '';
-        position: absolute;
-        left: 1.19rem;
-        top: 2.5rem;
-        bottom: 0;
-        width: 2px;
-        background-color: var(--border-soft);
-    }
-    .itinerary-stop-card {
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius-md);
-        background-color: var(--surface);
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    .itinerary-stop-card:last-child { margin-bottom: 0; }
-    .itinerary-stop-title { font-family: var(--font-display); color: var(--sea-700); font-size: 1.05rem; font-weight: 600; }
-    .itinerary-stop-time { color: var(--text-muted); font-size: .85rem; }
-    .itinerary-stop-image { width: 100%; max-height: 260px; object-fit: cover; border-radius: var(--radius-sm); margin: .75rem 0; }
-
-    /* 底部社交互動列 */
-    .social-bar {
-        position: sticky;
-        bottom: 0;
-        background-color: var(--surface);
-        border-top: 1px solid var(--border-soft);
-        padding: .85rem 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        border-radius: var(--radius-md) var(--radius-md) 0 0;
-        box-shadow: 0 -4px 16px rgba(31, 61, 78, .08);
-        margin-top: 2rem;
-    }
-    .social-bar .social-stat {
-        display: flex;
-        align-items: center;
-        gap: .35rem;
-        color: var(--text-secondary);
-        font-size: .92rem;
-        background: none;
-        border: none;
-        padding: .25rem .5rem;
-        border-radius: var(--radius-pill);
-        transition: background-color .15s ease, color .15s ease;
-    }
-    .social-bar .social-stat:hover { background-color: var(--sea-50); }
-    .social-bar .social-stat.active { color: var(--coral-600); font-weight: 600; }
-</style>
-
-<div class="container py-4">
-    <a asp-action="Index" class="btn btn-sm btn-outline-primary mb-3">← 回行程靈感</a>
-
-    <div class="detail-hero" style="background-image:url('@Model.MediaUrl')">
-        <div class="detail-hero-overlay">
-            <h1 class="h3 detail-hero-title mb-2">@Model.Title</h1>
-            <div class="detail-hero-meta">
-                @if (Model.TravelDate is not null)
-                {
-                    <span>@Model.TravelDate.Value.ToString("yyyy-MM")</span>
-                    <span>·</span>
-                }
-                <span>@Model.TravelDays 天</span>
-                <span>·</span>
-                <span>@(Model.Member?.Name ?? $"會員 #{Model.MemberId}")</span>
-                @if (MemberLookup.IsOfficial(Model.Member))
-                {
-                    <span class="explore-official-badge">✓ 官方合作</span>
-                }
-            </div>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@post.Title - Lazy Travel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/explore-details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/report-modal.css" asp-append-version="true" />
+</head>
+<body class="home-app article-page">
+<div class="app">
+    @await Html.PartialAsync("_HomeSidebar", "Explore")
+    <main class="main article-main">
+        <div class="article-test-switch" aria-label="測試身分切換">
+            <span>測試身分</span>
+            <button type="button" class="active" data-article-role="visitor">訪客</button>
+            <button type="button" data-article-role="viewer">一般檢視者</button>
+            <button type="button" data-article-role="author">發文者</button>
         </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-8">
-            @if (!string.IsNullOrWhiteSpace(Model.Content))
-            {
-                <div class="post-content mb-4">@Html.Raw(Model.Content)</div>
-            }
-
-            @if (nodes.Any())
-            {
-                <h2 class="h5 mt-4 mb-3">🗓️ 每日行程</h2>
-                var dayGroupsList = nodes.GroupBy(n => n.DayNumber).OrderBy(g => g.Key).ToList();
-                for (var d = 0; d < dayGroupsList.Count; d++)
-                {
-                    var dayGroup = dayGroupsList[d];
-                    var isLastDay = d == dayGroupsList.Count - 1;
-                    <div class="day-group @(isLastDay ? "" : "has-next-day")">
-                        <div class="day-badge">@dayGroup.Key</div>
-                        <div class="fw-medium mb-3">第 @dayGroup.Key 天</div>
-                        @foreach (var node in dayGroup)
+        <button class="page-back-button article-back" type="button" data-back-fallback="@Url.Action("Index", "Explore")" aria-label="返回上一頁">＜</button>
+        @if (Model.IsDraft)
+        {
+            <section class="article-draft">
+                <div><strong>文章草稿</strong><p>這篇文章尚未公開，確認內容後可送出審核。</p></div>
+                <form asp-action="Publish" asp-route-id="@post.PostId" method="post"><button class="article-button" type="submit">確認並送出審核</button></form>
+            </section>
+        }
+        else if (post.Status == VlogPostStatus.PendingReview)
+        {
+            <section class="article-draft"><strong>文章審核中，通過後會公開顯示。</strong></section>
+        }
+        <div class="article-layout">
+            <article class="article-body">
+                <header class="article-hero">
+                    @if (cover is not null) { <img class="article-cover" src="@cover" alt="@post.Title" /> }
+                    <div class="article-actions" data-article-actions>
+                        @if (post.Status == VlogPostStatus.Published)
                         {
-                            <div class="itinerary-stop-card">
-                                <div class="itinerary-stop-title">@node.LocationName</div>
-                                <div class="itinerary-stop-time">
-                                    @(node.ArrivalTime?.ToString("HH:mm") ?? "—")@(node.DepartureTime is not null ? " - " + node.DepartureTime.Value.ToString("HH:mm") : "")
-                                    @{ var stayLabel = node.StayTime.ToStayLabel(); }
-                                    @if (!string.IsNullOrWhiteSpace(stayLabel))
-                                    {
-                                        <text>（停留 @stayLabel）</text>
-                                    }
-                                </div>
-                                @if (!string.IsNullOrWhiteSpace(node.MediaUrl))
-                                {
-                                    <img src="@node.MediaUrl" alt="" class="itinerary-stop-image" />
-                                }
-                                @if (!string.IsNullOrWhiteSpace(node.Description))
-                                {
-                                    <p class="text-secondary mb-1">@node.Description</p>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(node.Remarks))
-                                {
-                                    <p class="text-muted small mb-0">備註：@node.Remarks</p>
-                                }
-                            </div>
+                            <form asp-action="ToggleFavorite" asp-route-id="@post.PostId" method="post" data-detail-favorite-form data-action-role="reader author">
+                                <button class="article-button article-interaction-button @(Model.IsFavorited ? "active" : "")" type="submit" aria-pressed="@Model.IsFavorited.ToString().ToLowerInvariant()" data-detail-favorite-button><svg class="interaction-icon interaction-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg><span data-detail-favorite-text>@(Model.IsFavorited ? "已收藏" : "收藏")</span></button>
+                            </form>
+                            <form asp-action="ToggleLike" asp-route-id="@post.PostId" method="post" data-detail-like-form data-action-role="reader author">
+                                <button class="article-button article-interaction-button @(Model.IsLiked ? "active" : "")" type="submit" aria-pressed="@Model.IsLiked.ToString().ToLowerInvariant()" data-detail-like-button><svg class="interaction-icon interaction-like" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v10H4V11h3Zm4 10h7.2c.9 0 1.7-.6 1.9-1.5l1.3-5.3A2 2 0 0 0 19.5 12H15V6.8c0-1-.8-1.8-1.8-1.8h-.4L9 12v9h2Z"/></svg><span>按讚</span><strong data-detail-like-count>@Model.LikeCount</strong></button>
+                            </form>
+                            <button class="article-button" type="button" data-report-open data-report-type="VlogPost" data-report-target-id="@post.PostId" data-report-title="@post.Title" data-action-role="reader">⚑ 檢舉文章</button>
+                            <a class="article-button" asp-action="Edit" asp-route-id="@post.PostId" asp-route-viewerMemberId="@post.MemberId" data-action-role="author">✎ 編輯文章</a>
+                            <form asp-action="Delete" asp-route-id="@post.PostId" asp-route-viewerMemberId="@post.MemberId" method="post" data-detail-delete-form data-action-role="author">
+                                <button class="article-button article-danger-button" type="submit">刪除文章</button>
+                            </form>
                         }
                     </div>
-                }
-            }
-        </div>
+                    <div class="article-hero-copy">
+                        <h1>@post.Title</h1>
+                        <p>@post.TravelDays 天的旅行記錄 · @post.Destination</p>
+                        <div class="article-byline">
+                            <span class="author-avatar small">
+                                @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="" /> }
+                                else { <span>@author[..1]</span> }
+                            </span>
+                            <span>@author</span><span>·</span><time>@post.CreatedAt.ToString("yyyy/MM/dd")</time><span>·</span><span>@people 同行</span>
+                        </div>
+                    </div>
+                </header>
 
-        <div class="col-lg-4">
-            <div class="card p-3">
-                <dl class="row small mb-0">
-                    <dt class="col-5 text-muted">目的地</dt><dd class="col-7">@Model.Destination</dd>
-                    <dt class="col-5 text-muted">天數</dt><dd class="col-7">@Model.TravelDays 天</dd>
-                    <dt class="col-5 text-muted">出遊日期</dt><dd class="col-7">@(Model.TravelDate?.ToString("yyyy/MM/dd") ?? "—")</dd>
-                </dl>
-            </div>
-        </div>
-    </div>
+                <section class="article-panel article-facts" aria-label="行程資訊">
+                    <div><span class="fact-icon">◎</span><div><small>國家／目的地</small><strong>@post.Destination</strong></div></div>
+                    <div><span class="fact-icon">⌖</span><div><small>地區</small><strong>@region</strong></div></div>
+                    <div><span class="fact-icon">▦</span><div><small>旅遊日期</small><strong>@(post.TravelDate.HasValue ? $"{post.TravelDate:yyyy/MM/dd} – {post.TravelDate.Value.AddDays(Math.Max(1,post.TravelDays)-1):yyyy/MM/dd}" : "未提供")</strong></div></div>
+                    <div><span class="fact-icon">♙</span><div><small>同行人數</small><strong>@people</strong></div></div>
+                    <div class="article-tags"><span>標籤</span>@foreach (var tag in tags) { <span class="article-tag">@tag</span> }</div>
+                </section>
 
-    @* ---------- 底部互動列：只留讚/收藏(真實資料，點下去會真的加減)，不放分享跟留言 ---------- *@
-    <div class="social-bar">
-        <form asp-controller="Explore" asp-action="ToggleLike" asp-route-id="@Model.PostId" method="post" class="d-inline">
-            <button type="submit" class="social-stat @(ViewBag.IsLiked ? "active" : "")">
-                @(ViewBag.IsLiked ? "❤️" : "🤍") @likeCount
-            </button>
-        </form>
-        <form asp-controller="Explore" asp-action="ToggleFavorite" asp-route-id="@Model.PostId" method="post" class="d-inline">
-            <button type="submit" class="social-stat @(ViewBag.IsFavorited ? "active" : "")">
-                🔖 @favoriteCount 收藏
-            </button>
-        </form>
-    </div>
+                <section class="article-panel article-intro">
+                    <h2><span>❧</span> 旅程前言</h2>
+                    <div class="article-prose">@(string.IsNullOrWhiteSpace(content) ? "作者尚未補充旅程前言。" : content)</div>
+                </section>
+                <section class="article-panel article-highlight">
+                    <span class="quote-mark" aria-hidden="true">“</span><h2>一句話亮點</h2>
+                    <p>@(string.IsNullOrWhiteSpace(highlight) ? "作者尚未補充旅程亮點。" : highlight)</p>
+                </section>
+                <section class="article-panel article-days">
+                    <h2><span>▦</span> 每日行程與分享</h2>
+                    @if (days.Count == 0) { <p class="article-muted">尚未提供每日行程。</p> }
+                    @foreach (var day in days)
+                    {
+                        <details class="article-day" open>
+                            <summary><span class="day-number">@day.Key</span><strong>DAY @day.Key</strong><span class="day-route">@string.Join(" · ", day.Select(n => n.LocationName).Where(n => !string.IsNullOrWhiteSpace(n)))</span><span class="day-chevron">⌄</span></summary>
+                            <div class="day-stops">
+                                <div class="day-periods">
+                                @foreach (var period in new[] { "上午", "下午", "晚上" })
+                                {
+                                    var stops = day.Where(n => (n.ArrivalTime?.Hour < 12 ? "上午" : n.ArrivalTime?.Hour < 18 ? "下午" : n.ArrivalTime.HasValue ? "晚上" : "") == period).ToList();
+                                    <div class="day-period"><span class="period-label">@period</span><div>
+                                    @if (stops.Count == 0) { <span class="article-muted">未安排</span> }
+                                    @foreach (var stop in stops) { <span class="period-stop"><time>@stop.ArrivalTime?.ToString("HH:mm")</time> @stop.LocationName</span> }
+                                    </div></div>
+                                }
+                                </div>
+                                @foreach (var stop in day.Where(n => !n.ArrivalTime.HasValue))
+                                { <p class="day-note"><strong>時間未定：</strong>@stop.LocationName</p> }
+                                @foreach (var stop in day.Where(n => !string.IsNullOrWhiteSpace(n.Description)))
+                                { <p class="day-note"><strong>心得分享 · @stop.LocationName：</strong>@stop.Description</p> }
+                                @foreach (var stop in day.Where(n => !string.IsNullOrWhiteSpace(n.Remarks)))
+                                { <p class="day-note"><strong>行程筆記：</strong>@stop.Remarks</p> }
+                            </div>
+                        </details>
+                    }
+                </section>
+            </article>
+            <aside class="article-side">
+                <section class="article-panel author-panel">
+                    <div class="author-heading">
+                        <span class="author-avatar">
+                            @if (!string.IsNullOrWhiteSpace(post.Member?.AvatarUrl)) { <img src="@post.Member.AvatarUrl" alt="@author 的頭像" /> }
+                            else { <span>@author[..1]</span> }
+                        </span>
+                        <strong>@author</strong>
+                    </div>
+                    <p class="author-bio">@(string.IsNullOrWhiteSpace(post.Member?.Bio) ? "這位旅人尚未填寫個人簡介。" : post.Member.Bio)</p>
+                    <dl class="author-stats">
+                        <div><dt>⌖ 所在地</dt><dd>未提供</dd></div>
+                        <div><dt>▦ 加入時間</dt><dd>@(post.Member?.CreatedAt.ToString("yyyy/MM") ?? "未提供")</dd></div>
+                        <div><dt>♧ 已發布文章</dt><dd>@Model.PublishedCount 篇</dd></div>
+                        <div><dt>✓ 已完成行程</dt><dd>@Model.CompletedCount 趟</dd></div>
+                    </dl>
+                </section>
+                <section class="article-panel article-gallery" aria-label="旅程照片">
+                    <h2>旅程相簿 <small>@Model.Images.Count 張</small></h2>
+                    <div class="article-photo-grid">
+                    @for (var i = 0; i < Math.Min(6, Model.Images.Count); i++)
+                    {
+                        <button type="button" class="article-photo" data-photo-index="@i" aria-label="@(i == 5 && Model.Images.Count > 6 ? $"更多圖片，共 {Model.Images.Count} 張" : $"查看第 {i+1} 張照片")">
+                            <img src="@Model.Images[i]" alt="旅程照片 @(i+1)" loading="lazy" />
+                            @if (i == 5 && Model.Images.Count > 6) { <span class="more-photos">＋更多圖片</span> }
+                        </button>
+                    }
+                    </div>
+                    @if (Model.Images.Count == 0) { <p class="article-muted">尚未提供旅程照片。</p> }
+                </section>
+            </aside>
+        </div>
+        <dialog class="photo-dialog" aria-label="旅程相簿">
+            <button class="photo-close" type="button" aria-label="關閉相簿">×</button>
+            <button class="photo-prev" type="button" aria-label="上一張">‹</button>
+            <figure><img id="photoFull" alt="" /><figcaption id="photoCounter" aria-live="polite"></figcaption></figure>
+            <button class="photo-next" type="button" aria-label="下一張">›</button>
+        </dialog>
+    </main>
 </div>
+<script id="articlePhotos" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Images))</script>
+<script src="~/js/sidebar.js" asp-append-version="true"></script>
+<script src="~/js/report-modal.js" asp-append-version="true"></script>
+<script src="~/js/explore-details.js" asp-append-version="true"></script>
+</body>
+</html>
+
+
+

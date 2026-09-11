@@ -11,6 +11,10 @@ builder.Services.AddDataProtection()
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
 
+// 前台是純 JS fetch 打 POST（申請加入/退出揪團），不是傳統表單送出，
+// 所以要讓 [ValidateAntiForgeryToken] 也認 Header 帶的 token，不是只認表單欄位。
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
+
 // 共享數據庫 Context
 builder.Services.AddDbContext<LazyTravel.Shared.Models.EfModels.LazyTravelDBContext>(options =>
 	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -85,6 +89,7 @@ if (app.Environment.IsDevelopment())
 		if (await context.Database.CanConnectAsync())
 		{
 			await VlogPostDbSeeder.SeedAsync(context);
+			await TravelGroupDbSeeder.SeedAsync(context);
 		}
 	}
 	catch (Exception ex)
