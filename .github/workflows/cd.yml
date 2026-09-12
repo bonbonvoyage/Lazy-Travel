@@ -1,0 +1,108 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Trigger production deploy hooks after publishing images
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.service }} image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: tours-api
+            dockerfile: Dockerfile
+          - service: admin-api
+            dockerfile: admin-api/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set image coordinates
+        id: image
+        shell: bash
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          version="${GITHUB_REF_NAME//\//-}"
+          echo "name=ghcr.io/${owner}/lazytravel-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ steps.image.outputs.version }}
+            ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  deploy:
+    name: Trigger production deployment
+    needs: publish
+    if: ${{ vars.ENABLE_DEPLOY == 'true' && (github.event_name == 'push' || inputs.deploy == true) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ vars.TOURS_PUBLIC_URL }}
+    steps:
+      - name: Trigger tours-api deploy hook
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.TOURS_DEPLOY_HOOK_URL }}
+        run: |
+          test -n "$DEPLOY_HOOK_URL"
+          curl --fail --show-error --silent --retry 3 --request POST "$DEPLOY_HOOK_URL"
+
+      - name: Trigger admin-api deploy hook
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.ADMIN_DEPLOY_HOOK_URL }}
+        run: |
+          test -n "$DEPLOY_HOOK_URL"
+          curl --fail --show-error --silent --retry 3 --request POST "$DEPLOY_HOOK_URL"
+
+      - name: Verify tours-api health
+        if: ${{ vars.TOURS_HEALTH_URL != '' }}
+        env:
+          HEALTH_URL: ${{ vars.TOURS_HEALTH_URL }}
+        run: curl --fail --show-error --silent --retry 12 --retry-delay 10 --retry-all-errors "$HEALTH_URL"
+
+      - name: Verify admin-api health
+        if: ${{ vars.ADMIN_HEALTH_URL != '' }}
+        env:
+          HEALTH_URL: ${{ vars.ADMIN_HEALTH_URL }}
+        run: curl --fail --show-error --silent --retry 12 --retry-delay 10 --retry-all-errors "$HEALTH_URL"

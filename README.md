@@ -19,7 +19,7 @@
    ```json
    {
      "ConnectionStrings": {
-       "DefaultConnection": "Server=.\\SQL2025;Database=LazyTravelDB;User Id=sa5;Password=123456;TrustServerCertificate=True;MultipleActiveResultSets=true"
+       "DefaultConnection": "Server=.\\SQL2025;Database=LazyTravelDB;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=true"
      }
    }
    ```

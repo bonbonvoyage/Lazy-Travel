@@ -4,12 +4,12 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS restore
 WORKDIR /src
 
 COPY ["LazyTravel.Shared/LazyTravel.Shared.csproj", "LazyTravel.Shared/"]
-COPY ["tours-api/tours-api.csproj", "tours-api/"]
-RUN dotnet restore "tours-api/tours-api.csproj"
+COPY ["admin-api/admin-api.csproj", "admin-api/"]
+RUN dotnet restore "admin-api/admin-api.csproj"
 
 FROM restore AS publish
 COPY . .
-RUN dotnet publish "tours-api/tours-api.csproj" \
+RUN dotnet publish "admin-api/admin-api.csproj" \
     --configuration Release \
     --no-restore \
     --output /app/publish \
@@ -28,4 +28,4 @@ RUN mkdir -p /app/wwwroot/uploads /var/lib/lazytravel/keys \
     && chown -R "$APP_UID:$APP_UID" /app /var/lib/lazytravel
 USER $APP_UID
 
-ENTRYPOINT ["dotnet", "tours-api.dll"]
+ENTRYPOINT ["dotnet", "admin-api.dll"]

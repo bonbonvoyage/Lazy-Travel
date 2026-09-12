@@ -21,6 +21,6 @@
     "DefaultConnection": "Server=.\\你的執行個體名稱;Database=LazyTravelDB;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true"
 
     // B. SQL 帳密（要用的話把上面那行註解掉，改用這行）
-    // "DefaultConnection": "Server=.\\你的執行個體名稱;Database=LazyTravelDB;User Id=sa5;Password=123456;TrustServerCertificate=True;MultipleActiveResultSets=true"
+    // "DefaultConnection": "Server=.\\你的執行個體名稱;Database=LazyTravelDB;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=true"
   }
 }
