@@ -1,38 +1,74 @@
-version: '3.8'
+name: lazytravel
 
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: lazytravel-db
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "LazyTravel@123"
       MSSQL_PID: "Express"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Copy .env.example to .env and set MSSQL_SA_PASSWORD}
     ports:
       - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "LazyTravel@123", "-Q", "SELECT 1"]
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
 
-  web:
-    build: .
-    container_name: lazytravel-web
+  tours-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       sqlserver:
         condition: service_healthy
     environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=LazyTravel;User Id=sa;Password=LazyTravel@123;Encrypt=false;TrustServerCertificate=true;"
-      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=LazyTravelDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=false;TrustServerCertificate=true
+      Cors__AllowedOrigins__0: ${TOURS_PUBLIC_URL:-http://localhost:8080}
+      CloudflareR2__ServiceUrl: ${R2_SERVICE_URL:-}
+      CloudflareR2__AccessKey: ${R2_ACCESS_KEY:-}
+      CloudflareR2__SecretKey: ${R2_SECRET_KEY:-}
+      CloudflareR2__BucketName: ${R2_BUCKET_NAME:-}
+      CloudflareR2__PublicUrl: ${R2_PUBLIC_URL:-}
+      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Authentication__Facebook__AppId: ${FACEBOOK_APP_ID:-}
+      Authentication__Facebook__AppSecret: ${FACEBOOK_APP_SECRET:-}
     ports:
-      - "5000:5000"
-      - "5001:5001"
+      - "8080:8080"
     volumes:
-      - ./LazyTravel:/app/LazyTravel
+      - tours-keys:/var/lib/lazytravel/keys
+    restart: unless-stopped
+
+  admin-api:
+    build:
+      context: .
+      dockerfile: admin-api/Dockerfile
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=LazyTravelDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=false;TrustServerCertificate=true
+      CloudflareR2__ServiceUrl: ${R2_SERVICE_URL:-}
+      CloudflareR2__AccessKey: ${R2_ACCESS_KEY:-}
+      CloudflareR2__SecretKey: ${R2_SECRET_KEY:-}
+      CloudflareR2__BucketName: ${R2_BUCKET_NAME:-}
+      CloudflareR2__PublicUrl: ${R2_PUBLIC_URL:-}
+    ports:
+      - "8081:8080"
+    volumes:
+      - admin-keys:/var/lib/lazytravel/keys
     restart: unless-stopped
 
 volumes:
   sqlserver-data:
+  tours-keys:
+  admin-keys:

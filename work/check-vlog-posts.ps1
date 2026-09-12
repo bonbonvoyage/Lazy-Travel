@@ -1,4 +1,5 @@
-$conn = New-Object System.Data.SqlClient.SqlConnection "Server=.\SQL2025;Database=LazyTravelDB;User Id=sa5;Password=123456;TrustServerCertificate=True;"
+if ([string]::IsNullOrWhiteSpace($env:LAZYTRAVEL_DB_CONNECTION)) { throw "Set LAZYTRAVEL_DB_CONNECTION before running this script." }
+$conn = New-Object System.Data.SqlClient.SqlConnection $env:LAZYTRAVEL_DB_CONNECTION
 $conn.Open()
 $cmd=$conn.CreateCommand()
 $cmd.CommandText="SELECT TOP 5 PostID, Title, Destination, TravelDays, Status, IsDelete, CreatedAt FROM dbo.VlogPosts ORDER BY PostID DESC"

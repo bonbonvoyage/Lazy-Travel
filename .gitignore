@@ -7,6 +7,9 @@ obj/
 
 ## 個人環境設定(每人自己的連線字串,不進版控)
 appsettings.Development.json
+.env
+.env.local
+repopack-output.txt
 
 ## 其他
 *.log

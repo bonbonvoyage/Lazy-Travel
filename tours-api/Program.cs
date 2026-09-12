@@ -6,8 +6,13 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDataProtection()
-	   .UseEphemeralDataProtectionProvider();
+var dataProtection = builder.Services.AddDataProtection()
+	.SetApplicationName("LazyTravel.Tours");
+var dataProtectionKeyPath = builder.Configuration["DataProtection:KeyPath"];
+if (!string.IsNullOrWhiteSpace(dataProtectionKeyPath))
+{
+	dataProtection.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeyPath));
+}
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
@@ -120,6 +125,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.MapGet("/health/live", () => Results.Ok(new
+{
+	status = "ok",
+	service = "tours-api",
+	timestamp = DateTimeOffset.UtcNow,
+})).AllowAnonymous();
+
 if (app.Environment.IsDevelopment())
 {
 	using var scope = app.Services.CreateScope();
@@ -159,5 +171,3 @@ app.MapControllerRoute(
 	pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-
-
