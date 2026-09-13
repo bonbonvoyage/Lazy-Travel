@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-pull_request:
+  pull_request:
     branches: [main, feature_TourGroups_怡茜]
 
 permissions:
@@ -85,3 +85,35 @@ jobs:
           tags: lazytravel/${{ matrix.service }}:ci
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  container-smoke:
+    name: Run Docker container health checks
+    needs: containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build runtime images
+        run: |
+          docker build --tag lazytravel/tours-api:smoke --file Dockerfile .
+          docker build --tag lazytravel/admin-api:smoke --file admin-api/Dockerfile .
+
+      - name: Start application containers
+        run: |
+          docker run --detach --name tours-api --publish 18080:8080 \
+            --env ASPNETCORE_ENVIRONMENT=Production \
+            --env 'ConnectionStrings__DefaultConnection=Server=unused;Database=LazyTravelDB;User Id=sa;Password=NotUsed-For-Health-Check1!;Encrypt=false;TrustServerCertificate=true' \
+            lazytravel/tours-api:smoke
+          docker run --detach --name admin-api --publish 18081:8080 \
+            --env ASPNETCORE_ENVIRONMENT=Production \
+            --env 'ConnectionStrings__DefaultConnection=Server=unused;Database=LazyTravelDB;User Id=sa;Password=NotUsed-For-Health-Check1!;Encrypt=false;TrustServerCertificate=true' \
+            lazytravel/admin-api:smoke
+
+      - name: Verify container health endpoints
+        shell: bash
+        run: |
+          trap 'docker logs tours-api; docker logs admin-api; docker rm --force tours-api admin-api || true' EXIT
+          curl --fail --show-error --silent --retry 12 --retry-delay 2 --retry-connrefused http://127.0.0.1:18080/health/live
+          curl --fail --show-error --silent --retry 12 --retry-delay 2 --retry-connrefused http://127.0.0.1:18081/health/live
