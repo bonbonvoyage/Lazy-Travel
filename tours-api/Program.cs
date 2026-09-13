@@ -1,8 +1,11 @@
 using Amazon.S3;
 using LazyTravel.Shared.Services;
 using LazyTravel.Middleware;
+using LazyTravel.Security;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +14,7 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
 
 // 前台是純 JS fetch 打 POST（申請加入/退出揪團），不是傳統表單送出，
 // 所以要讓 [ValidateAntiForgeryToken] 也認 Header 帶的 token，不是只認表單欄位。
@@ -52,6 +56,8 @@ builder.Services.AddKeyedScoped<LazyTravel.Shared.Services.IImageStorageService>
 
 // 前台登入驗證服務
 builder.Services.AddScoped<IMemberAuthService, MemberAuthService>();
+builder.Services.AddSingleton<PasswordRecoveryService>();
+builder.Services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, PasswordResetCookieValidator>();
 
 // 前台會員 Cookie 認證
 var authenticationBuilder = builder.Services

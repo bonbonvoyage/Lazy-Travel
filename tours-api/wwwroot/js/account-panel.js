@@ -27,11 +27,15 @@ document.addEventListener('click',e=>{
 dialog.querySelector('[data-auth-close]').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
 dialog.addEventListener('close',()=>{resetSecrets();trigger?.focus();});
-dialog.querySelectorAll('[data-auth-switch]').forEach(b=>b.addEventListener('click',()=>switchPane(b.dataset.authSwitch)));
-dialog.querySelectorAll('[data-toggle-password]').forEach(b=>b.addEventListener('click',()=>{
- const input=document.getElementById(b.dataset.togglePassword); input.dataset.secret='true';
- const visible=input.type==='password';input.type=visible?'text':'password';b.textContent=visible?'隱藏':'顯示';b.setAttribute('aria-label',visible?'隱藏密碼':'顯示密碼');
+dialog.querySelectorAll('[data-auth-switch]').forEach(b=>b.addEventListener('click',()=>{
+ if(b.dataset.authSwitch==='recovery') resetRecovery();
+ switchPane(b.dataset.authSwitch);
 }));
+dialog.addEventListener('click',e=>{
+ const b=e.target.closest('[data-toggle-password]');if(!b)return;
+ const input=document.getElementById(b.dataset.togglePassword);if(!input)return;input.dataset.secret='true';
+ const visible=input.type==='password';input.type=visible?'text':'password';b.textContent=visible?'隱藏':'顯示';b.setAttribute('aria-label',visible?'隱藏密碼':'顯示密碼');
+});
 const register=document.getElementById('ltRegisterForm');
 const password=document.getElementById('ltRegisterPassword'),confirm=document.getElementById('ltConfirmPassword');
 function validateMatch(){confirm.setCustomValidity(confirm.value&&confirm.value!==password.value?'兩次輸入的密碼不一致。':'');}
@@ -71,6 +75,57 @@ document.getElementById('ltLogoutForm')?.addEventListener('submit',async e=>{
  }catch{error.textContent='目前無法連線，請稍後再試。';}
  finally{button.disabled=false;button.textContent='登出此帳號';}
 });
+const recoveryForm=document.getElementById('ltRecoveryForm');
+const recoveryFields=document.getElementById('ltRecoveryFields');
+const recoveryTitle=document.getElementById('ltRecoveryTitle');
+const recoveryKicker=document.getElementById('ltRecoveryKicker');
+const recoveryDescription=document.getElementById('ltRecoveryDescription');
+const recoveryHelp=document.getElementById('ltRecoveryHelp');
+const recoveryError=document.getElementById('ltRecoveryError');
+const recoverySubmit=document.getElementById('ltRecoverySubmit');
+const recoveryProgress=[...dialog.querySelectorAll('.lt-recovery-progress span')];
+const recoveryState={stage:'email',requestId:''};
+const recoveryScreens={
+ email:{kicker:'ACCOUNT SECURITY · 1 / 4',title:'驗證你的身分',description:'輸入註冊信箱，我們會寄送一次性驗證碼，作為重設密碼的身分驗證。',help:'驗證碼將在 10 分鐘後失效；系統不會顯示或寄送你的舊密碼。',button:'寄送驗證碼',action:'/Auth/PasswordRecovery/RequestCode',fields:'<label class="lt-field">電子信箱<input name="Email" type="email" autocomplete="email" placeholder="name@example.com" required maxlength="254" /></label>',progress:1},
+ emailOtp:{kicker:'ACCOUNT SECURITY · 2 / 4',title:'輸入信箱驗證碼',description:'請輸入寄至你註冊信箱的 6 位一次性驗證碼。',help:'未收到信件？請確認垃圾郵件，或返回上一步重新寄送。',button:'驗證並繼續',action:'/Auth/PasswordRecovery/VerifyEmailCode',fields:'<label class="lt-field">6 位驗證碼</label><div class="lt-recovery-code" data-otp-inputs><input inputmode="numeric" maxlength="1" aria-label="驗證碼第 1 位" required><input inputmode="numeric" maxlength="1" aria-label="驗證碼第 2 位" required><input inputmode="numeric" maxlength="1" aria-label="驗證碼第 3 位" required><input inputmode="numeric" maxlength="1" aria-label="驗證碼第 4 位" required><input inputmode="numeric" maxlength="1" aria-label="驗證碼第 5 位" required><input inputmode="numeric" maxlength="1" aria-label="驗證碼第 6 位" required></div>',progress:2},
+ authenticator:{kicker:'ACCOUNT SECURITY · 3 / 4',title:'2FA 安全驗證',description:'此帳號已啟用 Google Authenticator，請輸入目前顯示的 6 位驗證碼。',help:'這一步會在重設密碼前再次確認你的身分。',button:'驗證並繼續',action:'/Auth/PasswordRecovery/VerifyAuthenticatorCode',fields:'<label class="lt-field">Authenticator 驗證碼</label><div class="lt-recovery-code" data-otp-inputs><input inputmode="numeric" maxlength="1" aria-label="Authenticator 驗證碼第 1 位" required><input inputmode="numeric" maxlength="1" aria-label="Authenticator 驗證碼第 2 位" required><input inputmode="numeric" maxlength="1" aria-label="Authenticator 驗證碼第 3 位" required><input inputmode="numeric" maxlength="1" aria-label="Authenticator 驗證碼第 4 位" required><input inputmode="numeric" maxlength="1" aria-label="Authenticator 驗證碼第 5 位" required><input inputmode="numeric" maxlength="1" aria-label="Authenticator 驗證碼第 6 位" required></div>',progress:3},
+ password:{kicker:'ACCOUNT SECURITY · 4 / 4',title:'設定新密碼',description:'身分驗證完成。請設定新密碼以重新登入。',help:'至少 8 個字元；完成後會更新 Security Stamp，讓其他裝置上的舊登入失效。',button:'更新密碼並重新登入',action:'/Auth/PasswordRecovery/ResetPassword',fields:'<label class="lt-field">新密碼<span class="lt-password"><input id="ltRecoveryPassword" name="Password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"><button type="button" data-toggle-password="ltRecoveryPassword" aria-label="顯示新密碼">顯示</button></span></label><label class="lt-field">確認新密碼<span class="lt-password"><input id="ltRecoveryConfirmPassword" name="ConfirmPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="128"><button type="button" data-toggle-password="ltRecoveryConfirmPassword" aria-label="顯示確認新密碼">顯示</button></span></label>',progress:4},
+ complete:{kicker:'ACCOUNT SECURITY · COMPLETE',title:'密碼已更新',description:'你的密碼已安全更新，其他裝置上的舊登入已失效。請使用新密碼重新登入。',help:'',button:'返回登入',action:'',fields:'<div class="lt-recovery-complete" aria-hidden="true">✓</div>',progress:4}
+};
+function resetRecovery(){recoveryState.stage='email';recoveryState.requestId='';renderRecovery();}
+function renderRecovery(){
+ if(!recoveryForm)return;const screen=recoveryScreens[recoveryState.stage];
+ recoveryKicker.textContent=screen.kicker;recoveryTitle.textContent=screen.title;recoveryDescription.textContent=screen.description;recoveryHelp.textContent=screen.help;recoverySubmit.textContent=screen.button;recoveryForm.action=screen.action||'#';recoveryFields.innerHTML=screen.fields;recoveryError.textContent='';
+ recoveryProgress.forEach((s,index)=>s.classList.toggle('is-active',index<screen.progress));
+ recoveryHelp.hidden=recoveryState.stage==='complete';
+ recoveryFields.querySelectorAll('[data-otp-inputs] input').forEach((input,index,inputs)=>input.addEventListener('input',()=>{input.value=input.value.replace(/\D/g,'').slice(0,1);if(input.value&&index<inputs.length-1)inputs[index+1].focus();}));
+}
+function recoveryOtp(){return [...recoveryFields.querySelectorAll('[data-otp-inputs] input')].map(x=>x.value).join('');}
+function recoveryData(){const data=new FormData(recoveryForm);if(recoveryState.requestId)data.set('RequestId',recoveryState.requestId);if(recoveryState.stage==='emailOtp'||recoveryState.stage==='authenticator')data.set('Code',recoveryOtp());return data;}
+recoveryForm?.addEventListener('submit',async e=>{
+ e.preventDefault();const screen=recoveryScreens[recoveryState.stage];
+ if(recoveryState.stage==='complete'){switchPane('login');return;}
+ if(recoveryState.stage==='password'){
+  const p=recoveryFields.querySelector('[name=Password]'),c=recoveryFields.querySelector('[name=ConfirmPassword]');
+  if(p.value!==c.value){recoveryError.textContent='兩次輸入的新密碼不一致。';c.focus();return;}
+ }
+ if(!recoveryForm.reportValidity())return;
+ recoverySubmit.disabled=true;recoverySubmit.textContent='處理中…';recoveryError.textContent='';
+ try{
+  const response=await fetch(screen.action,{method:'POST',body:recoveryData(),credentials:'same-origin',headers:{Accept:'application/json'}});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){recoveryError.textContent=data.message||'驗證失敗，請再試一次。';return;}
+  if(recoveryState.stage==='email'){
+   if(!data.requestId){recoveryError.textContent=data.message||'若此信箱已註冊，驗證碼將寄送至該信箱。';return;}
+   recoveryState.requestId=data.requestId;recoveryState.stage='emailOtp';renderRecovery();
+   if(data.demoCode){const note=document.createElement('p');note.className='lt-recovery-demo';note.textContent=`開發預覽驗證碼：${data.demoCode}`;recoveryForm.insertBefore(note,recoveryFields);}
+  }else if(recoveryState.stage==='emailOtp'){recoveryState.stage=data.requiresAuthenticator?'authenticator':'password';renderRecovery();}
+  else if(recoveryState.stage==='authenticator'){recoveryState.stage='password';renderRecovery();}
+  else if(recoveryState.stage==='password'){recoveryState.stage='complete';renderRecovery();}
+ }catch{recoveryError.textContent='目前無法連線，請稍後再試。';}
+ finally{recoverySubmit.disabled=false;if(recoveryState.stage!=='complete')recoverySubmit.textContent=recoveryScreens[recoveryState.stage].button;}
+});
+renderRecovery();
 const query=new URLSearchParams(location.search);const authError=query.get('authError');
 if(authError){open('login');document.getElementById('ltLoginError').textContent=authError;history.replaceState({},'',location.pathname+location.hash);}
 if(document.body.hasAttribute('data-register-page'))open('register');
