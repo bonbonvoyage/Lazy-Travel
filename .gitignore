@@ -12,3 +12,4 @@ appsettings.Development.json
 *.log
 node_modules/
 ~$*.docx
+tours-api/App_Data/DataProtectionKeys/

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDataProtection()
-	   .UseEphemeralDataProtectionProvider();
+	   .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")));
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
@@ -57,6 +57,7 @@ builder.Services.AddKeyedScoped<LazyTravel.Shared.Services.IImageStorageService>
 // 前台登入驗證服務
 builder.Services.AddScoped<IMemberAuthService, MemberAuthService>();
 builder.Services.AddSingleton<PasswordRecoveryService>();
+builder.Services.AddSingleton<AuthenticatorSetupService>();
 builder.Services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, PasswordResetCookieValidator>();
 
 // 前台會員 Cookie 認證
@@ -158,6 +159,7 @@ app.UseRouting();
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseMiddleware<MemberActionAuthenticationMiddleware>();
+app.UseMiddleware<TwoFactorAuthenticationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(
