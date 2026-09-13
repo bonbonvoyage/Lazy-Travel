@@ -115,5 +115,5 @@ jobs:
         shell: bash
         run: |
           trap 'docker logs tours-api; docker logs admin-api; docker rm --force tours-api admin-api || true' EXIT
-          curl --fail --show-error --silent --retry 12 --retry-delay 2 --retry-connrefused http://127.0.0.1:18080/health/live
-          curl --fail --show-error --silent --retry 12 --retry-delay 2 --retry-connrefused http://127.0.0.1:18081/health/live
+          curl --fail --show-error --silent --retry 12 --retry-delay 2 --retry-connrefused --retry-all-errors http://127.0.0.1:18080/health/live
+          curl --fail --show-error --silent --retry 12 --retry-delay 2 --retry-connrefused --retry-all-errors http://127.0.0.1:18081/health/live
