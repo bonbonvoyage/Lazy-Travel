@@ -4,7 +4,7 @@
 
 這套流程把前台 `tours-api`、後台 `admin-api` 與共用類別庫 `LazyTravel.Shared` 納入同一條交付鏈。
 
-- Pull Request 與 `main` / `dev` push 會執行 restore、build、test、publish，並啟動兩個發布產物做健康檢查。
+- Pull Request 指向 `main` 或 `feature_TourGroups_怡茜`，以及任何分支 push 時，會執行 restore、build、test、publish，並啟動兩個發布產物做健康檢查。
 - CI 會分別建置兩個 production Docker image，但不會推送。
 - 建立 `vX.Y.Z` tag 或手動執行 CD 時，會把兩個 image 推送到 GitHub Container Registry。
 - production deployment 使用兩個通用 deploy hook，因此可接 Render、Railway 或其他能以 webhook 觸發部署的平台。
@@ -38,7 +38,7 @@ Repository Settings > Actions > General：
 
 1. 啟用 GitHub Actions。
 2. Workflow permissions 保持最小權限即可，`cd.yml` 已明確要求 `packages: write`。
-3. 建議對 `main` 啟用 branch protection，要求 CI 的 .NET 與兩個 container jobs 通過。
+3. 建議對目前整合分支 `feature_TourGroups_怡茜` 啟用 branch protection，要求 CI 的 .NET 與兩個 container jobs 通過。
 
 ### Production environment
 

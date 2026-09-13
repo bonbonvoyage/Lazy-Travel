@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-  pull_request:
-    branches: [main, dev]
+pull_request:
+    branches: [main, feature_TourGroups_怡茜]
 
 permissions:
   contents: read
