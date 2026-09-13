@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 
-Member · CS
 using Microsoft.AspNetCore.Identity;
  
 namespace LazyTravel.Shared.Models.EfModels;
