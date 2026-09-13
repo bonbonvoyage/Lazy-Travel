@@ -159,3 +159,22 @@
 .lt-logout{min-height:50px;border:1px solid #c78b85;border-radius:9px;background:transparent;color:#8e3f39;font:500 15px/1.4 inherit;cursor:pointer;transition:background .18s,border-color .18s}
 .lt-logout:hover{background:#fff1ef;border-color:#a8534b}
 .lt-logout:disabled{opacity:.6;cursor:wait}
+
+/* Password recovery is an added pane inside the existing account drawer. */
+.lt-login-utility{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:15px 0 11px}
+.lt-login-utility .lt-checkbox{margin:0}
+.lt-forgot-link,.lt-recovery-back{border:0;background:transparent;color:var(--lt-green);font:600 12px/1.4 inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:8px 0}
+.lt-recovery-back{display:block;text-decoration:none;margin:-8px 0 5px;font-weight:500}
+.lt-recovery-progress{display:flex;gap:5px;margin:0 0 16px}
+.lt-recovery-progress span{height:4px;flex:1;border-radius:999px;background:#dce7df}
+.lt-recovery-progress .is-active{background:var(--lt-green)}
+.lt-recovery-kicker{margin:0 0 6px;color:var(--lt-green);font-size:10px;font-weight:700;letter-spacing:.11em}
+.lt-recovery-help{min-height:38px;margin:9px 0 14px;color:var(--lt-muted);font-size:11px;line-height:1.6}
+.lt-recovery-code{display:flex;justify-content:space-between;gap:7px;margin:2px 0 4px}
+.lt-recovery-code input{width:calc((100% - 35px)/6);min-width:0;height:47px;padding:0;border:1px solid var(--lt-line);border-radius:8px;background:#fff;color:var(--lt-ink);font:700 19px/1 var(--lt-font-ui);text-align:center}
+.lt-recovery-code input:focus{outline:3px solid #7db89a;outline-offset:1px;border-color:var(--lt-green)}
+.lt-recovery-security{display:flex;gap:8px;margin:16px 0 0;padding-top:13px;border-top:1px solid var(--lt-line);color:var(--lt-muted);font-size:11px;line-height:1.55}
+.lt-recovery-security span{display:grid;place-items:center;flex:0 0 19px;height:19px;border-radius:6px;background:#e0efe4;color:var(--lt-green);font-weight:700}
+.lt-recovery-demo{margin:0 0 11px;padding:8px 10px;border:1px solid #e9d7a8;border-radius:7px;background:#fff8e8;color:#785e24;font-size:12px;line-height:1.5}
+.lt-recovery-complete{display:grid;place-items:center;width:60px;height:60px;margin:6px auto 17px;border-radius:50%;background:#e0efe4;color:var(--lt-green);font-size:28px;font-weight:700}
+@media(max-width:650px){.lt-login-utility{margin-top:12px}.lt-recovery-code{gap:5px}.lt-recovery-code input{width:calc((100% - 25px)/6)}}

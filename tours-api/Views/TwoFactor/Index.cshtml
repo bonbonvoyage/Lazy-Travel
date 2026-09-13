@@ -1,0 +1,28 @@
+@model LazyTravel.Controllers.TwoFactorController.VerifyInput
+@{ Layout = null; var returnUrl = ViewData["ReturnUrl"]?.ToString() ?? Model.ReturnUrl ?? "/"; }
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>兩步驟驗證 · LazyTravel</title>
+  <style>
+    body{margin:0;min-height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at 15% 12%,#f7e8c8,transparent 35%),#4c3828;color:#4c3d2e;font:16px/1.55 'Noto Serif TC','Microsoft JhengHei',serif}.sheet{width:min(420px,calc(100vw - 36px));box-sizing:border-box;padding:35px 36px;background:#fff8e8;border:1px solid #c6a779;box-shadow:0 22px 70px #21140c}.kicker{margin:0;color:#a35a37;font:700 11px monospace;letter-spacing:.14em}.shield{display:grid;place-items:center;width:50px;height:50px;margin:18px auto 12px;border-radius:50%;background:#e7f1e7;color:#28725d;font-size:27px}h1{text-align:center;margin:0;font-size:26px}p{text-align:center;color:#786754}label{display:block;margin-top:22px;font-weight:700}input{width:100%;height:48px;box-sizing:border-box;margin-top:8px;border:1px solid #b99771;background:#fffdf7;text-align:center;letter-spacing:.55em;font:700 22px monospace}button{width:100%;min-height:46px;margin-top:18px;border:0;background:#a9562e;color:#fff;font:700 15px inherit;cursor:pointer}.error{color:#a1422e;font-size:13px}.back{display:block;margin-top:16px;text-align:center;color:#715d49;font-size:13px}button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #2f7d6b;outline-offset:3px}
+  </style>
+</head>
+<body>
+  <main class="sheet">
+    <p class="kicker">ACCOUNT SECURITY · 2FA</p><div class="shield" aria-hidden="true">✓</div>
+    <h1>輸入驗證碼</h1><p>請開啟 Google Authenticator，輸入目前顯示的 6 位數驗證碼。</p>
+    <form method="post" asp-action="Verify">
+      @Html.AntiForgeryToken()
+      <input type="hidden" asp-for="ReturnUrl" value="@returnUrl" />
+      <label for="Code">Google Authenticator 驗證碼</label>
+      <input asp-for="Code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" autofocus required />
+      @if (!string.IsNullOrWhiteSpace(Model.Error)) { <p class="error" role="alert">@Model.Error</p> }
+      <button type="submit">驗證並繼續</button>
+    </form>
+    <a class="back" href="/">返回首頁</a>
+  </main>
+</body>
+</html>
