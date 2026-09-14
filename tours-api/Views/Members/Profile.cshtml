@@ -59,6 +59,10 @@
         <iframe id="sceneFrame" src="@Url.Content(sceneSrc)" title="會員個人頁面場景"></iframe>
     </div>
 
+    @* 2FA 是外掛式功能：不修改 scene.dc.html，只在載入後由獨立腳本疊加元件。 *@
+    <link rel="stylesheet" href="~/css/member-2fa-overlay.css" asp-append-version="true" />
+    <script src="~/js/member-2fa-overlay.js" asp-append-version="true" defer></script>
+
     <script>
         // 等比縮放：設計稿 1440×900 永遠完整顯示，不裁切、不變形。
         // 用 zoom 而不是 transform: scale ——

@@ -1,0 +1,2 @@
+/* The visual styles live inside member-2fa-overlay.js because the component is injected into
+   a same-origin iframe. This file intentionally remains a stable, separately-owned asset. */

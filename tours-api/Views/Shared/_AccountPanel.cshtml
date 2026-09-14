@@ -50,11 +50,26 @@
 @Html.AntiForgeryToken()
 <label class="lt-field">電子信箱<input name="Email" type="email" autocomplete="username" placeholder="name@example.com" required /></label>
 <label class="lt-field">密碼<span class="lt-password"><input id="ltLoginPassword" name="Password" type="password" autocomplete="current-password" required /><button type="button" data-toggle-password="ltLoginPassword" aria-label="顯示密碼">顯示</button></span></label>
-<label class="lt-checkbox"><input type="checkbox" name="RememberMe" value="true" />記住我</label>
+<div class="lt-login-utility"><label class="lt-checkbox"><input type="checkbox" name="RememberMe" value="true" />記住我</label><button class="lt-forgot-link" type="button" data-auth-switch="recovery">忘記密碼？</button></div>
 <p class="lt-error" id="ltLoginError" role="alert"></p>
 <button class="lt-primary lt-full" type="submit">登入</button>
 </form>
 <p class="lt-switch">還沒有帳號？ <button type="button" data-auth-switch="register">建立帳號</button></p>
+</section>
+<section data-auth-pane="recovery" hidden>
+<button class="lt-recovery-back" type="button" data-auth-switch="login">← 返回登入</button>
+<div class="lt-recovery-progress" aria-label="重設密碼進度"><span class="is-active"></span><span></span><span></span><span></span></div>
+<p class="lt-recovery-kicker" id="ltRecoveryKicker">ACCOUNT SECURITY · 1 / 4</p>
+<h2 id="ltRecoveryTitle">驗證你的身分</h2>
+<p class="lt-muted" id="ltRecoveryDescription">輸入註冊信箱，我們會寄送一次性驗證碼，作為重設密碼的身分驗證。</p>
+<form id="ltRecoveryForm" action="/Auth/PasswordRecovery/RequestCode" method="post">
+@Html.AntiForgeryToken()
+<div id="ltRecoveryFields"><label class="lt-field">電子信箱<input name="Email" type="email" autocomplete="email" placeholder="name@example.com" required maxlength="254" /></label></div>
+<p class="lt-recovery-help" id="ltRecoveryHelp">驗證碼將在 10 分鐘後失效；系統不會顯示或寄送你的舊密碼。</p>
+<p class="lt-error" id="ltRecoveryError" role="alert"></p>
+<button class="lt-primary lt-full" id="ltRecoverySubmit" type="submit">寄送驗證碼</button>
+</form>
+<p class="lt-recovery-security"><span aria-hidden="true">✓</span>完成重設後將更新 Security Stamp，使其他裝置上的舊登入失效。</p>
 </section>
 <section data-auth-pane="member" hidden>
 <span class="lt-eyebrow">已登入</span>
