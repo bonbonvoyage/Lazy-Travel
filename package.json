@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "scripts": {
+    "build:travelgroups": "vite build --config vite.travelgroups.config.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "latest",
+    "vite": "latest",
+    "vue": "latest"
+  },
+  "devDependencies": {}
+}
+

@@ -909,7 +909,7 @@
 
 .tg-application-person {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) 28px;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 10px;
@@ -973,17 +973,42 @@
   line-height: 1.55;
 }
 
+.tg-application-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.tg-application-approve,
 .tg-application-remove {
   width: 28px;
   height: 28px;
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: #c2412f;
   font-size: 18px;
   font-weight: 900;
 }
 
+.tg-application-approve {
+  color: #16866f;
+}
+
+.tg-application-remove {
+  color: #c2412f;
+}
+
+.tg-application-approve:hover,
+.tg-application-remove:hover {
+  background: rgba(22, 134, 111, .08);
+}
+
+.tg-application-remove:hover {
+  background: rgba(194, 65, 47, .08);
+}
+
+.tg-application-approve:disabled,
 .tg-application-remove:disabled {
   cursor: not-allowed;
   opacity: .6;

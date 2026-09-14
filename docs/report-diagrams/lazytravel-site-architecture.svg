@@ -1,0 +1,81 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title{font:700 42px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#1f342b}.subtitle{font:500 20px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#587166}.section{font:700 25px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#244438}.node-title{font:700 22px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#203b31}.node-text{font:500 17px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#5a6d65}.small{font:500 15px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#6b7d75}.box{fill:#fff;stroke:#c7ddd3;stroke-width:3}.main{fill:#edf8f3;stroke:#7fae9a;stroke-width:4}.accent{fill:#fff7f1;stroke:#e9b79f;stroke-width:3}.soft{fill:#f6fbf8;stroke:#d8e9e1;stroke-width:3}.line{stroke:#8aad9d;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.dash{stroke:#b8cfc5;stroke-width:3;stroke-dasharray:8 8;stroke-linecap:round}.tag{fill:#e4f3ec;stroke:#9ec5b4;stroke-width:2}.tagtext{font:700 15px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#2f6b56}
+    </style>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto"><path d="M2 2L12 7L2 12" fill="none" stroke="#8aad9d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+  <rect width="1600" height="900" fill="#fbfdfb"/>
+  <rect x="80" y="185" width="250" height="120" rx="24" class="main"/>
+  <text x="122" y="236" class="node-title">首頁</text>
+  <text x="122" y="268" class="node-text">輪播、搜尋列、導覽入口</text>
+
+  <rect x="470" y="145" width="310" height="190" rx="26" class="box"/>
+  <text x="515" y="194" class="section">揪團找旅伴</text>
+  <rect x="505" y="222" width="240" height="38" rx="19" class="tag"/><text x="528" y="247" class="tagtext">所有揪團 / 我的揪團</text>
+  <text x="505" y="285" class="node-text">搜尋：國家、日期區間</text>
+  <text x="505" y="313" class="node-text">卡片：收藏數、狀態、團主</text>
+
+  <rect x="470" y="385" width="310" height="210" rx="26" class="accent"/>
+  <text x="515" y="434" class="section">揪團詳細頁</text>
+  <text x="505" y="474" class="node-text">行程資訊、相簿、旅伴名單</text>
+  <text x="505" y="505" class="node-text">依會員身分顯示操作按鈕</text>
+  <text x="505" y="536" class="node-text">申請 / 退出 / 編輯 / 解散</text>
+  <text x="505" y="567" class="node-text">檢舉、收藏、查看申請</text>
+
+  <rect x="850" y="145" width="310" height="190" rx="26" class="box"/>
+  <text x="895" y="194" class="section">揪團行程分享</text>
+  <rect x="885" y="222" width="240" height="38" rx="19" class="tag"/><text x="910" y="247" class="tagtext">所有文章 / 我的文章</text>
+  <text x="885" y="285" class="node-text">搜尋：國家、日期區間</text>
+  <text x="885" y="313" class="node-text">卡片：收藏數、按讚數、作者</text>
+
+  <rect x="850" y="385" width="310" height="210" rx="26" class="accent"/>
+  <text x="895" y="434" class="section">文章詳細頁</text>
+  <text x="885" y="474" class="node-text">封面、標題、地點</text>
+  <text x="885" y="505" class="node-text">旅程前言、一句話亮點</text>
+  <text x="885" y="536" class="node-text">每日行程、作者資訊、相簿</text>
+  <text x="885" y="567" class="node-text">收藏、按讚、檢舉 / 編輯刪除</text>
+
+  <rect x="1220" y="185" width="290" height="150" rx="26" class="soft"/>
+  <text x="1260" y="235" class="section">收藏行程</text>
+  <text x="1250" y="276" class="node-text">收藏揪團 / 收藏文章切換</text>
+  <text x="1250" y="306" class="node-text">搜尋、排序、取消收藏復原</text>
+
+  <rect x="1220" y="385" width="290" height="210" rx="26" class="soft"/>
+  <text x="1260" y="434" class="section">會員 / 登入狀態</text>
+  <text x="1250" y="474" class="node-text">未登入：右側登入面板</text>
+  <text x="1250" y="505" class="node-text">已登入：可操作收藏與申請</text>
+  <text x="1250" y="536" class="node-text">個人中心連結作者 / 團員</text>
+  <text x="1250" y="567" class="node-text">會員資料提供作者資訊</text>
+
+  <rect x="470" y="655" width="310" height="140" rx="26" class="box"/>
+  <text x="515" y="704" class="section">新增 / 編輯揪團</text>
+  <text x="505" y="744" class="node-text">三步驟表單、圖片、旅伴條件</text>
+  <text x="505" y="774" class="node-text">送出後建立或更新揪團房間</text>
+
+  <rect x="850" y="655" width="310" height="140" rx="26" class="box"/>
+  <text x="895" y="704" class="section">新增 / 編輯文章</text>
+  <text x="885" y="744" class="node-text">行程資訊、封面、補充照片</text>
+  <text x="885" y="774" class="node-text">送出後建立或更新文章詳細頁</text>
+
+  <path d="M330 245H470" class="line" marker-end="url(#arrow)"/>
+  <path d="M330 245C390 315 404 442 470 490" class="line" marker-end="url(#arrow)"/>
+  <path d="M780 240H850" class="line" marker-end="url(#arrow)"/>
+  <path d="M780 490H850" class="line" marker-end="url(#arrow)"/>
+  <path d="M1160 240H1220" class="line" marker-end="url(#arrow)"/>
+  <path d="M1160 490H1220" class="line" marker-end="url(#arrow)"/>
+  <path d="M625 335V385" class="line" marker-end="url(#arrow)"/>
+  <path d="M1005 335V385" class="line" marker-end="url(#arrow)"/>
+  <path d="M625 595V655" class="line" marker-end="url(#arrow)"/>
+  <path d="M1005 595V655" class="line" marker-end="url(#arrow)"/>
+  <path d="M1365 385V335" class="dash"/>
+  <path d="M780 725H850" class="line" marker-end="url(#arrow)"/>
+
+  <rect x="80" y="390" width="250" height="150" rx="24" class="soft"/>
+  <text x="122" y="440" class="section">共用元件</text>
+  <text x="112" y="480" class="node-text">側邊欄導覽</text>
+  <text x="112" y="510" class="node-text">返回按鈕、彈窗、Toast</text>
+  <path d="M330 465H470" class="dash" marker-end="url(#arrow)"/>
+  <path d="M330 465C480 640 650 650 850 725" class="dash" marker-end="url(#arrow)"/>
+</svg>
+

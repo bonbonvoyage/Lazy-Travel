@@ -94,7 +94,7 @@ namespace LazyTravel.Controllers
         public async Task<IActionResult> Create()
         {
             var memberId = GetCurrentMemberId();
-            if (!memberId.HasValue) return Unauthorized();
+            if (!memberId.HasValue) return RedirectToAction(nameof(Index), new { authError = "請先登入，登入後即可新增文章。" });
             var now = DateTime.Now;
             var post = new VlogPost
             {
@@ -618,15 +618,4 @@ namespace LazyTravel.Controllers
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
 

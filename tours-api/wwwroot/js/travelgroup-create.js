@@ -526,6 +526,10 @@ function restoreDraft(sourceDraft) {
     updateIntroCount();
     const coverFileName = document.getElementById('coverFileName');
     if (coverFileName) coverFileName.textContent = draft.coverFileName || '';
+    if (coverUpload && draft.coverImageUrl) {
+        coverUpload.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, .08), rgba(31, 41, 55, .28)), url("${draft.coverImageUrl}")`;
+        coverUpload.classList.add('has-image');
+    }
 
     if (Array.isArray(draft.regions)) {
         document.querySelectorAll('.chip-editor .chip').forEach((chip) => chip.remove());
@@ -601,6 +605,16 @@ async function saveDraftToDatabase(draft) {
     }
 }
 
+function createSubmitFormData() {
+    const formData = new FormData();
+    formData.append('payload', JSON.stringify(collectDraft()));
+    const coverFile = coverFileInput?.files?.[0];
+    if (coverFile) {
+        formData.append('coverImage', coverFile);
+    }
+    return formData;
+}
+
 async function submitTravelGroup(button) {
     const endpoint = isEditMode ? updateEndpoint : submitEndpoint;
     if (!endpoint) return;
@@ -613,10 +627,9 @@ async function submitTravelGroup(button) {
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken(),
             },
-            body: JSON.stringify(collectDraft()),
+            body: createSubmitFormData(),
         });
 
         if (!response.ok) {
