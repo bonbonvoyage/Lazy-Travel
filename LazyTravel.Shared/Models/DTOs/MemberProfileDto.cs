@@ -19,6 +19,11 @@ namespace LazyTravel.Shared.Models.DTOs
         public string? Bio { get; set; }
         public string? City { get; set; } // 居住地，例如「台北・大安」
 
+        // 「給團長的話」草稿（Members.DefaultJoinMessage），跟 Phone/LineId 那幾格
+        // 一樣是隱私欄位：只有 IsSelf 是 true（看自己）才會有值，看別人的機票
+        // 這裡固定是 null（見 MemberProfileService.GetProfile）。
+        public string? DefaultJoinMessage { get; set; }
+
         // 技能標籤（旅行技能）
         public int SkillCount { get; set; }
         public int SkillTotal { get; set; }

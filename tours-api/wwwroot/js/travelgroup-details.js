@@ -55,6 +55,31 @@ async function postAction(action) {
 }
 
 
+// 🐛 修正：申請加入揪團原本點下去就直接用固定文字「想加入這個揪團！」送出
+// （見 TravelGroupsController.Join 的修正註解），後來發現這個 app 其實已經有一套
+// 現成的「機票」（BOARDING PASS）UI，就是會員自己手帳頁面裡本人可以編輯「給團長
+// 的話」草稿的那張機票（scene.dc.html，同一個元件也被 openTicketPreview() 用來
+// 唯讀顯示「別人」的機票）。原本那套設計是機票頁面自己完全不知道「現在是在申請
+// 哪個揪團」，所以「確認」只能存本地草稿，沒辦法真的送出 API（見 scene.dc.html
+// 裡的舊註解）。現在改成 openJoinTicket()：一樣用 iframe 嵌這張機票，但額外帶上
+// groupId，讓機票頁面知道這是「真的在申請加入某個揪團」，機票上的「確認」鈕改成
+// 直接送出真的 /TravelGroups/Join 請求（邏輯在 scene.dc.html 的 submitJoinRequest()
+// 裡），送出成功後用 postMessage 通知這裡把 iframe 關掉、重新整理揪團資料。
+//
+// 🐛 補上：草稿留言（給團長的話）原本存 localStorage，這裡本來還試過用 draftMessage
+// 這個 query string 把值從最外層轉給巢狀 iframe，繞過巢狀 iframe 讀不到 localStorage
+// 的問題。後來乾脆比照自我介紹（bio）的做法，把草稿真的存進資料庫（見
+// scene.dc.html 的 saveJoinDraftMessage／Member.cs 的 DefaultJoinMessage），
+// 機票一開就直接打 /Members/ProfileData 拿真資料，不管開在哪一層 iframe 裡都一樣，
+// 這裡不用再自己讀 localStorage、也不用帶 draftMessage 參數了。
+function openJoinTicket() {
+  document.getElementById('tg-ticket-preview-modal')?.remove();
+  const url = new URL('/Members/Profile', window.location.origin);
+  url.searchParams.set('ticketOnly', '1');
+  url.searchParams.set('groupId', String(groupId));
+  openTicketPreview(url.pathname + url.search, '申請加入揪團');
+}
+
 async function postOwnerApplicationAction(action, targetId) {
   const actionMap = {
     'remove-member': 'RemoveGroupMember',
@@ -336,11 +361,14 @@ function formatDateText(value) {
   return date.toLocaleDateString('zh-TW');
 }
 
-function openTicketPreview(url) {
+// label 是可選的第二個參數，讓 openJoinTicket() 可以蓋掉預設的「申請者機票」
+// 文字（那是給查看「別人」機票的既有用法用的，用在「申請加入」這裡語意不對）。
+function openTicketPreview(url, label) {
   if (!url) return;
   document.getElementById('tg-ticket-preview-modal')?.remove();
   const safeUrl = String(url).startsWith('/Members/Profile') ? url : '/Members/Profile';
-  document.body.insertAdjacentHTML('beforeend', '<div class="tg-ticket-preview-backdrop" id="tg-ticket-preview-modal" role="dialog" aria-modal="true" aria-label="申請者機票"><div class="tg-ticket-preview-frame"><button class="tg-ticket-preview-close" type="button" aria-label="關閉機票">×</button><div class="tg-ticket-preview-shell"><iframe src="' + safeUrl + '" title="申請者機票" loading="lazy"></iframe></div></div></div>');
+  const safeLabel = escapeHtml(label || '申請者機票');
+  document.body.insertAdjacentHTML('beforeend', '<div class="tg-ticket-preview-backdrop" id="tg-ticket-preview-modal" role="dialog" aria-modal="true" aria-label="' + safeLabel + '"><div class="tg-ticket-preview-frame"><button class="tg-ticket-preview-close" type="button" aria-label="關閉機票">×</button><div class="tg-ticket-preview-shell"><iframe src="' + safeUrl + '" title="' + safeLabel + '" loading="lazy"></iframe></div></div></div>');
   const modal = document.getElementById('tg-ticket-preview-modal');
   const close = () => modal?.remove();
   modal?.querySelector('.tg-ticket-preview-close')?.addEventListener('click', close);
@@ -575,11 +603,8 @@ function render(vm) {
     }
   });
 
-  document.getElementById('tg-join-btn')?.addEventListener('click', async event => {
-    const button = event.currentTarget;
-    button.disabled = true;
-    if (await postAction('Join')) await load();
-    else button.disabled = false;
+  document.getElementById('tg-join-btn')?.addEventListener('click', () => {
+    openJoinTicket();
   });
 
   document.getElementById('tg-cancel-join-btn')?.addEventListener('click', async event => {
@@ -619,8 +644,17 @@ async function load() {
 
 window.addEventListener('message', event => {
   if (event.origin !== window.location.origin) return;
-  if (event.data?.type !== 'lazytravel:close-ticket-preview') return;
-  document.getElementById('tg-ticket-preview-modal')?.remove();
+  if (event.data?.type === 'lazytravel:close-ticket-preview') {
+    document.getElementById('tg-ticket-preview-modal')?.remove();
+    return;
+  }
+  // 機票裡「確認申請」真的送出 /TravelGroups/Join 成功後會發這個訊息（見
+  // scene.dc.html 的 submitJoinRequest()），這裡收到就關掉機票、重新整理這個
+  // 揪團的資料，讓「申請加入」按鈕變成「取消申請」。
+  if (event.data?.type === 'lazytravel:join-request-submitted') {
+    document.getElementById('tg-ticket-preview-modal')?.remove();
+    load();
+  }
 });
 
 load();

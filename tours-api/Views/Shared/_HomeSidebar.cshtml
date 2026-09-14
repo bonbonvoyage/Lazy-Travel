@@ -90,21 +90,55 @@
             <span class="label">收藏行程</span>
         </a>
 
-        <!-- 個人中心：採 feature_TourGroups_怡茜 版本 -->
-        <a class="nav-item @(active == "Members" ? "active" : "")"
-           asp-controller="Members"
-           asp-action="Profile">
-            <svg viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
-            </svg>
-            <span class="label">個人中心</span>
-        </a>
+        <!-- 個人中心：採 feature_TourGroups_怡茜 版本。
+             🐛 修正：原本沒有判斷登入狀態，訪客點了會直接進到 Members/Profile（該
+             action 本身也沒有 [Authorize]，見 MembersController 的註解）。
+             🐛🐛 二次修正：原本想用「data-auth-open 的值是 null 時 Razor 會整個省略
+             這個屬性」的小技巧，跟下面「登入／會員帳號」按鈕共用同一套攔截機制。
+             但實測發現這個 <a> 因為同時掛了 asp-controller/asp-action（Anchor Tag
+             Helper），null 沒有被正常省略掉，而是被轉成空字串 data-auth-open=""——
+             這個屬性只要「存在」，account-panel.js 裡 `[data-auth-open]` 的 CSS
+             選擇器一樣會選到它、照樣攔截 preventDefault() 彈出登入視窗，即使值是空
+             字串也一樣，導致已登入時點擊還是誤跳登入 Modal。改成不依賴這個省略技巧，
+             直接用 @@if/@@else 整段拆成兩種 <a>：未登入時才「加上」data-auth-open
+             屬性（連結點擊會被攔下來彈出登入視窗），已登入時的 <a> 從頭到尾就沒有
+             寫這個屬性，不是「省略掉一個 null 值」，兩者在編譯後的結果保證不同。 -->
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="nav-item @(active == "Members" ? "active" : "")"
+               asp-controller="Members"
+               asp-action="Profile">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
+                </svg>
+                <span class="label">個人中心</span>
+            </a>
+        }
+        else
+        {
+            <a class="nav-item @(active == "Members" ? "active" : "")"
+               asp-controller="Members"
+               asp-action="Profile"
+               data-auth-open="login"
+               aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
+                </svg>
+                <span class="label">個人中心</span>
+            </a>
+        }
 
 
     </nav>

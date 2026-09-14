@@ -82,6 +82,7 @@ public partial class LazyTravelDBContext : IdentityDbContext<Member, IdentityRol
         {
             entity.Property(e => e.AvatarUrl).HasMaxLength(500);
             entity.Property(e => e.Bio).HasMaxLength(500);
+            entity.Property(e => e.DefaultJoinMessage).HasMaxLength(500);
             entity.Property(e => e.City).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
