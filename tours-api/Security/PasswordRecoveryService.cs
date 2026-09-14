@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using LazyTravel.Shared.Models.EfModels;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,21 +15,17 @@ public sealed class PasswordRecoveryService
 {
     private const string SecurityTokenProvider = "LazyTravel.AccountSecurity";
     private const string PasswordResetAfterToken = "PasswordResetAfter";
-    private const string AuthenticatorToken = "AuthenticatorSecret";
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IWebHostEnvironment _environment;
-    private readonly IDataProtector _authenticatorProtector;
     private readonly ConcurrentDictionary<string, RecoveryChallenge> _challenges = new();
     private static readonly PasswordHasher<Member> PasswordHasher = new();
 
     public PasswordRecoveryService(
         IServiceScopeFactory scopeFactory,
-        IWebHostEnvironment environment,
-        IDataProtectionProvider dataProtectionProvider)
+        IWebHostEnvironment environment)
     {
         _scopeFactory = scopeFactory;
         _environment = environment;
-        _authenticatorProtector = dataProtectionProvider.CreateProtector("LazyTravel.Authenticator.v1");
     }
 
     public async Task<RecoveryRequestResult> RequestCodeAsync(string email)
@@ -79,44 +74,7 @@ public sealed class PasswordRecoveryService
         if (member is null)
             return RecoveryStepResult.Failed("此帐号目前无法重设密码，请联系服务人员。");
 
-        if (!member.TwoFactorEnabled)
-            return RecoveryStepResult.Ok(false, "信箱验证完成，请设定新密码。");
-
-        var protectedSecret = await GetTokenValueAsync(db, member.Id, AuthenticatorToken);
-        if (string.IsNullOrWhiteSpace(protectedSecret))
-            return RecoveryStepResult.Failed("此帐号的 2FA 设定不完整，请联系服务人员协助恢复。");
-
-        lock (challenge.Gate)
-        {
-            challenge.RequiresAuthenticator = true;
-        }
-        return RecoveryStepResult.Ok(true, "信箱验证完成，请输入 Google Authenticator 验证码。");
-    }
-
-    public async Task<RecoveryStepResult> VerifyAuthenticatorCodeAsync(string requestId, string code)
-    {
-        if (!TryGetChallenge(requestId, out var challenge, out var error))
-            return RecoveryStepResult.Failed(error);
-
-        lock (challenge.Gate)
-        {
-            if (!challenge.EmailVerified)
-                return RecoveryStepResult.Failed("请先完成信箱验证码验证。");
-            if (!challenge.RequiresAuthenticator)
-                return RecoveryStepResult.Ok(false, "此帐号未启用 2FA，可直接设定新密码。");
-        }
-
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<LazyTravelDBContext>();
-        var protectedSecret = await GetTokenValueAsync(db, challenge.MemberId, AuthenticatorToken);
-        if (!IsValidAuthenticatorCode(protectedSecret, code))
-            return RecoveryStepResult.Failed("Authenticator 验证码错误，请确认装置时间后再试。");
-
-        lock (challenge.Gate)
-        {
-            challenge.AuthenticatorVerified = true;
-        }
-        return RecoveryStepResult.Ok(false, "2FA 验证完成，请设定新密码。");
+        return RecoveryStepResult.Ok("信箱验证完成，请设定新密码。");
     }
 
     public async Task<PasswordResetResult> ResetPasswordAsync(string requestId, string password, string confirmPassword)
@@ -130,8 +88,6 @@ public sealed class PasswordRecoveryService
         {
             if (!challenge.EmailVerified)
                 return PasswordResetResult.Failed("请先完成信箱验证码验证。");
-            if (challenge.RequiresAuthenticator && !challenge.AuthenticatorVerified)
-                return PasswordResetResult.Failed("请先完成 Google Authenticator 验证。");
         }
 
         await using var scope = _scopeFactory.CreateAsyncScope();
@@ -174,68 +130,12 @@ public sealed class PasswordRecoveryService
         return CryptographicOperations.FixedTimeEquals(candidate, challenge.CodeHash);
     }
 
-    private async Task<string?> GetTokenValueAsync(LazyTravelDBContext db, int memberId, string name)
-        => await db.Database.SqlQueryRaw<string>(
-                "SELECT [Value] FROM [dbo].[MemberTokens] WHERE [UserId] = {0} AND [LoginProvider] = {1} AND [Name] = {2}",
-                memberId, SecurityTokenProvider, name)
-            .SingleOrDefaultAsync();
-
     private async Task SaveTokenValueAsync(LazyTravelDBContext db, int memberId, string name, string value, DateTime expiresAt)
     {
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM [dbo].[MemberTokens] WHERE [UserId] = {memberId} AND [LoginProvider] = {SecurityTokenProvider} AND [Name] = {name}");
         await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO [dbo].[MemberTokens] ([UserId], [LoginProvider], [Name], [Value], [ExpiresAt]) VALUES ({memberId}, {SecurityTokenProvider}, {name}, {value}, {expiresAt})");
     }
 
-    private bool IsValidAuthenticatorCode(string? protectedSecret, string code)
-    {
-        if (string.IsNullOrWhiteSpace(protectedSecret) || code.Length != 6 || !code.All(char.IsAsciiDigit))
-            return false;
-
-        try
-        {
-            var secret = DecodeBase32(_authenticatorProtector.Unprotect(protectedSecret));
-            var currentStep = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 30;
-            return Enumerable.Range(-1, 3)
-                .Select(offset => CalculateTotp(secret, currentStep + offset))
-                .Any(candidate => CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(candidate), Encoding.UTF8.GetBytes(code)));
-        }
-        catch (CryptographicException)
-        {
-            return false;
-        }
-    }
-
-    private static string CalculateTotp(byte[] secret, long timestep)
-    {
-        var counter = BitConverter.GetBytes(timestep);
-        if (BitConverter.IsLittleEndian) Array.Reverse(counter);
-        using var hmac = new HMACSHA1(secret);
-        var hash = hmac.ComputeHash(counter);
-        var offset = hash[^1] & 0x0f;
-        var binary = ((hash[offset] & 0x7f) << 24) | (hash[offset + 1] << 16) | (hash[offset + 2] << 8) | hash[offset + 3];
-        return (binary % 1_000_000).ToString("D6");
-    }
-
-    private static byte[] DecodeBase32(string value)
-    {
-        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-        var buffer = 0;
-        var bitsLeft = 0;
-        var bytes = new List<byte>();
-        foreach (var raw in value.ToUpperInvariant().Where(c => c is not ' ' and not '-'))
-        {
-            var index = alphabet.IndexOf(raw);
-            if (index < 0) throw new CryptographicException("Invalid Base32 secret.");
-            buffer = (buffer << 5) | index;
-            bitsLeft += 5;
-            if (bitsLeft >= 8)
-            {
-                bytes.Add((byte)(buffer >> (bitsLeft - 8)));
-                bitsLeft -= 8;
-            }
-        }
-        return bytes.ToArray();
-    }
 
     private static string CreateOpaqueId() => Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     private static byte[] HashCode(string requestId, string code) => SHA256.HashData(Encoding.UTF8.GetBytes($"{requestId}:{code}"));
@@ -259,16 +159,14 @@ public sealed class PasswordRecoveryService
         public DateTimeOffset ExpiresAt { get; }
         public int Attempts { get; set; }
         public bool EmailVerified { get; set; }
-        public bool RequiresAuthenticator { get; set; }
-        public bool AuthenticatorVerified { get; set; }
     }
 }
 
 public sealed record RecoveryRequestResult(bool Success, string? RequestId, string Message, string? DemoCode);
-public sealed record RecoveryStepResult(bool Success, bool RequiresAuthenticator, string Message)
+public sealed record RecoveryStepResult(bool Success, string Message)
 {
-    public static RecoveryStepResult Failed(string message) => new(false, false, message);
-    public static RecoveryStepResult Ok(bool requiresAuthenticator, string message) => new(true, requiresAuthenticator, message);
+    public static RecoveryStepResult Failed(string message) => new(false, message);
+    public static RecoveryStepResult Ok(string message) => new(true, message);
 }
 public sealed record PasswordResetResult(bool Success, string Message)
 {
