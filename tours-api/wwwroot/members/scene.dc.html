@@ -590,7 +590,10 @@
           <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
             <div style="font-size:12px;letter-spacing:2px;color:#8d7c64;font-family:'IBM Plex Mono',monospace">給團長的話</div>
             <textarea value="{{ message }}" onChange="{{ changeMessage }}" placeholder="想對團長說的話、可配合的行程時間…" style="margin-top:10px;flex:1;font-size:13px;line-height:1.8;padding:11px;border:1px solid #d6c6a6;background:#fffdf7;resize:none;box-sizing:border-box;color:#3d342a"></textarea>
-            <div style="margin-top:10px;font-size:11px;line-height:1.7;color:#a2917a">預先編輯，申請入團時會帶入這段話</div>
+            <div style="margin-top:10px;font-size:11px;line-height:1.7;color:#a2917a">{{ draftHint }}</div>
+            <sc-if value="{{ hasJoinError }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:6px;font-size:11.5px;line-height:1.6;color:#b4622f">{{ joinErrorText }}</div>
+            </sc-if>
             <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
               <div style="font-size:11px;color:#a2917a">{{ msgCount }}</div>
               <div style="display:flex;gap:8px">
@@ -1256,10 +1259,27 @@ class Component extends DCLogic {
     newTag: "",
     ticketOpen: QUERY_PARAMS.get("openTicket") === "1" || QUERY_PARAMS.get("ticketOnly") === "1",
     ticketOnly: QUERY_PARAMS.get("ticketOnly") === "1",
+    // 有帶 groupId，代表這張機票不是自己在手帳裡預覽/編輯草稿，而是真的在申請
+    // 加入某個揪團——這時「確認」按鈕的行為要換成真的送出 /TravelGroups/Join
+    // 申請（見 submitJoinRequest()），不能只是存個本地草稿。由 TravelGroups
+    // 詳情頁的「申請加入」開這張機票時會帶上這個參數（見 travelgroup-details.js
+    // 的 openJoinTicket()），一路經過 Members/Profile.cshtml 轉給這個 iframe。
+    groupId: QUERY_PARAMS.get("groupId") ? Number(QUERY_PARAMS.get("groupId")) : null,
+    joinSubmitting: false,
+    joinError: "",
     tagOpen: false,
     confirmOpen: false,
     sent: false,
     contactPublic: false,
+    // 🐛 修正：「給團長的話」草稿原本只存在 localStorage，跟自我介紹（bio）不一樣，
+    // 不是真的存進資料庫——所以會出現「明明按了儲存，換一台裝置/瀏覽器、或是走
+    // 巢狀 iframe（TravelGroups 詳情頁 → Members/Profile 的 iframe → 這個
+    // scene.dc.html 的 iframe）打開機票就看不到剛剛編輯的字」這種情況。現在改成
+    // 跟 bio 完全同一套模式：草稿存進 Members 資料表新增的 DefaultJoinMessage
+    // 欄位（見 Member.cs／LazyTravelDBContext.cs），跟著 ProfileData 一起真的
+    // 從資料庫撈回來（見 applyProfileData 裡 data.defaultJoinMessage），不管是
+    // 從自己手帳打開、還是從「申請加入」的巢狀 iframe 打開，都是直接打
+    // /Members/ProfileData 拿真資料，沒有 localStorage 或 iframe 巢狀層數的問題。
     message: "",
     editOpen: false,
     editErrors: {},
@@ -1407,10 +1427,26 @@ class Component extends DCLogic {
       })),
     };
 
+    // 🐛 修正：「給團長的話」之前存草稿只是把 s.message 放在元件的 state 裡，
+    // 元件本身沒有跨 mount 保存任何東西——機票一關掉（元件整個卸載）、或重新整理
+    // 頁面，state 就整個重來，剛剛存的字其實從來沒有真的留下來過，使用者體感就是
+    // 「按了儲存，關掉再打開，字不見了」。後來改存 localStorage 又發現巢狀 iframe
+    // 讀不到。最後改成跟自我介紹（bio）完全同一套模式：草稿真的存進資料庫
+    // （Members.DefaultJoinMessage，見 Member.cs／MemberProfileService.
+    // UpdateJoinDraftMessage），這裡直接跟著 ProfileData 一起撈回來就好，
+    // 只在使用者自己都還沒打字（this.state.message 還是初始的空字串）時才拿草稿
+    // 回填，避免蓋掉使用者這次 session 已經在打的字。只有看自己的機票
+    // （data.isSelf）才有這欄位，看別人的機票後端本來就不會回傳。
+    let restoredDraftMessage = this.state.message;
+    if (data.isSelf && !restoredDraftMessage) {
+      restoredDraftMessage = data.defaultJoinMessage || "";
+    }
+
     this.setState({
       loading: false,
       loadError: null,
       memberId: data.memberId,
+      message: restoredDraftMessage,
       skillCatalog: data.skillCatalog || [],
       avatarUrl: data.avatarUrl || null,
       contactPublic: !!data.contactBookPublic,
@@ -1456,6 +1492,74 @@ class Component extends DCLogic {
 
     // 操作導覽只給看自己主頁的人看，現在才知道 isSelf，補開在這裡。
     if (!this._tourSeenAtMount && data.isSelf) this.setState({ tour: 0 });
+  }
+
+  // 把「給團長的話」存進資料庫（Members.DefaultJoinMessage），跟自我介紹
+  // （saveBio → persistProfile）是同一種模式，只是欄位小、不牽涉其他個人資料，
+  // 所以另外開一支輕量的 /Members/UpdateJoinDraftMessage，不用整包 UpdateProfile。
+  // 這裡刻意不管成功失敗都不擋 UI（存草稿失敗不是使用者能立刻處理的事，
+  // console.warn 留紀錄就好，不用跳錯誤訊息打斷操作）。
+  // 🐛 修正：原本這裡不管伺服器回什麼都當作成功——fetch() 只有連線層級的問題
+  // （斷線、DNS 失敗…）才會讓 await 丟例外，伺服器回 400/401/500 的時候 fetch
+  // 照樣正常 resolve，只是 res.ok 是 false，之前完全沒檢查 res.ok，所以就算後端
+  // 因為 CSRF 驗證失敗、沒登入、或任何原因拒絕存檔，畫面上還是照樣顯示「已儲存」
+  // ——使用者體感就是「明明按了確認，換頁再回來字卻不見了」，但其實根本沒真的
+  // 存進去過。現在會檢查 res.ok，存檔失敗就回傳 success:false 讓呼叫端把錯誤原因
+  // 顯示出來（見 saveDraft 用 joinError／hasJoinError 顯示，跟申請加入那條路共用
+  // 同一組錯誤訊息欄位）。
+  async saveJoinDraftMessage(message) {
+    if (!this.state.memberId) return { success: true };
+    try {
+      const res = await fetch(apiUrl("/Members/UpdateJoinDraftMessage"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "RequestVerificationToken": this.csrf },
+        body: JSON.stringify({ message: message || "" }),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.warn("儲存給團長的話失敗：", res.status, text);
+        return { success: false, message: text || "儲存失敗，請稍後再試（HTTP " + res.status + "）。" };
+      }
+      return { success: true };
+    } catch (err) {
+      console.warn("儲存給團長的話失敗：", err);
+      return { success: false, message: "連線發生問題，請稍後再試。" };
+    }
+  }
+
+  // 真的申請加入某個揪團（this.state.groupId 有值時）：打 TravelGroupsController
+  // 的 Join action，跟 travelgroup-details.js 原本簡易 Modal 打的是同一支 API，
+  // 差別只在這裡是從機票這邊送出、message 就是使用者在這張機票上編輯的內容。
+  // 成功之後：（1）把這段話也存回 DefaultJoinMessage，下次申請別的揪團或開自己
+  // 的機票還看得到上次寫的內容；（2）如果是用 iframe 嵌進 TravelGroups 詳情頁
+  // 開的（ticketOnly），用 postMessage 通知外層「申請已送出」，外層收到後會
+  // 關掉這個 iframe 並重新整理該揪團的資料。
+  async submitJoinRequest() {
+    if (this._joinSubmitting || !this.state.groupId) return;
+    this._joinSubmitting = true;
+    this.setState({ joinSubmitting: true, joinError: "" });
+    try {
+      const url = new URL("/TravelGroups/Join/" + this.state.groupId, window.location.origin);
+      url.searchParams.set("message", this.state.message || "");
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "RequestVerificationToken": this.csrf },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        this.setState({ joinSubmitting: false, joinError: text || "申請送出失敗，請稍後再試。" });
+        return;
+      }
+      await this.saveJoinDraftMessage(this.state.message);
+      this.setState({ joinSubmitting: false, sent: true });
+      if (this.state.ticketOnly) {
+        (window.top || window.parent)?.postMessage({ type: "lazytravel:join-request-submitted" }, window.location.origin);
+      }
+    } catch (err) {
+      this.setState({ joinSubmitting: false, joinError: "連線發生問題，請稍後再試。" });
+    } finally {
+      this._joinSubmitting = false;
+    }
   }
 
   // ---- 手帳第二頁的動作：接受/拒絕好友申請、解除黑名單、解除好友、取消追蹤 ----
@@ -2299,16 +2403,29 @@ class Component extends DCLogic {
       openTicket: () => this.set("ticketOpen", true),
       closeTicket: () => { if (s.ticketOnly) { (window.top || window.parent)?.postMessage({ type: "lazytravel:close-ticket-preview" }, window.location.origin); return; } this.set("ticketOpen", false); },
 
-      // 🚧 「給團長的話」這段草稿刻意先不接資料庫（已跟負責會員主頁的組員確認）：
-      // JoinRequests.GroupID 是必填欄位，一定要對應到一個真的揪團，但這個機票頁面
-      // 目前完全沒有「現在是在申請哪個揪團」這個資訊，沒有 GroupID 可以寫入。
-      // 等揪團／入團申請那邊做出「選定一個揪團、帶著 GroupID 開這張機票」的流程後，
-      // 這裡才把 message 直接存進對應那筆 JoinRequests.Message，現在維持前端暫存就好。
+      // 🐛 修正：以前這裡不管有沒有 groupId 都只是本地存草稿（見上面 submitJoinRequest
+      // 的註解、以及 TravelGroups 詳情頁 openJoinTicket() 帶 groupId 開這張機票的流程）。
+      // 有 groupId 代表使用者是真的在申請加入某個揪團，「確認」要送出真的 API 請求；
+      // 沒有 groupId（在自己手帳裡預覽/編輯）才維持原本「只存本地草稿」的行為。
       message: s.message,
       changeMessage: (e) => this.set("message", e.target.value),
       msgCount: s.message.length + " / 300 字",
-      draftLabel: s.sent ? "已儲存" : "確認",
-      saveDraft: () => this.set("sent", true),
+      draftLabel: s.groupId
+        ? (s.joinSubmitting ? "送出中…" : (s.sent ? "已送出" : "確認申請"))
+        : (s.sent ? "已儲存" : "確認"),
+      draftHint: s.groupId
+        ? "確認後會把這段話一起送給團主，送出這個揪團的入團申請。"
+        : "預先編輯，之後申請入團時會自動帶入這段話。",
+      hasJoinError: !!s.joinError,
+      joinErrorText: s.joinError || "",
+      saveDraft: () => {
+        if (s.groupId) { this.submitJoinRequest(); return; }
+        this.setState({ joinError: "" });
+        this.saveJoinDraftMessage(s.message).then((result) => {
+          if (result.success) this.set("sent", true);
+          else this.setState({ joinError: result.message || "儲存失敗，請稍後再試。" });
+        });
+      },
       // 看別人的機票時右側改顯示對方的自我介紹（p.bio，跟主頁手帳第一頁同一份資料），
       // 沒填自我介紹就給一句說明，不要留白。
       ticketBioText: p.bio && p.bio.trim() ? p.bio : "這位旅伴還沒有填寫自我介紹。",

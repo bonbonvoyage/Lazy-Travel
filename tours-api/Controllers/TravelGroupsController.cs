@@ -1003,9 +1003,13 @@ namespace LazyTravel.Controllers
         }
 
         // POST /TravelGroups/Join/5
+        // 🐛 修正：以前不管使用者填什麼，一律用固定文字「想加入這個揪團！」寫進
+        // JoinRequest.Message，前端 Modal 讓使用者編輯的留言其實沒有真的送到後端。
+        // 現在多收一個 message 參數（沒填或都是空白就退回原本的預設文字），
+        // 300 字上限跟前端 textarea 的 maxlength 對齊、跟 DB 欄位長度一致。
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Join(int id, int? viewerMemberId)
+        public async Task<IActionResult> Join(int id, int? viewerMemberId, string? message)
         {
             var group = await _context.TravelGroups.FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
             if (group is null)
@@ -1040,11 +1044,17 @@ namespace LazyTravel.Controllers
             {
                 return BadRequest("你目前在此揪團的已拒絕名單中，暫時無法再次申請。");
             }
+            var trimmedMessage = string.IsNullOrWhiteSpace(message) ? "想加入這個揪團！" : message.Trim();
+            // JoinRequests.Message 資料庫欄位是 nvarchar(500)（見 LazyTravelDBContext
+            // 的 Fluent API 設定），前端 textarea 也是 maxlength="500"，這裡再截一次
+            // 純粹是防呆，避免有人繞過前端限制直接打 API。
+            if (trimmedMessage.Length > 500) trimmedMessage = trimmedMessage[..500];
+
             _context.JoinRequests.Add(new JoinRequest
             {
                 GroupId = id,
                 MemberId = visitorMemberId.Value,
-                Message = "想加入這個揪團！",
+                Message = trimmedMessage,
                 RequestStatus = 0,
                 CreatedAt = DateTime.Now,
             });

@@ -20,6 +20,11 @@ namespace LazyTravel.Shared.Services
         // 旅遊 DNA 拉桿存檔，一樣只能改自己的。
         bool UpdateTravelDna(int memberId, List<TravelDnaScoreItem> scores);
 
+        // 「給團長的話」草稿（Members.DefaultJoinMessage），跟自我介紹（Bio）
+        // 是同一種「小欄位、自己編輯自己」的東西，只是不想跟一大包 UpdateProfile
+        // 綁在一起，所以另外開一支輕量的方法／API，一樣只能改自己的。
+        bool UpdateJoinDraftMessage(int memberId, string? message);
+
         // 上傳新大頭貼，回傳可以直接放進 <img src> 的網址，同時已經存回資料庫。
         Task<string> UpdateAvatarAsync(int memberId, IFormFile file);
 

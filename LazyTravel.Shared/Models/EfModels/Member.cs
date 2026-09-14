@@ -18,6 +18,9 @@ public partial class Member : IdentityUser<int>
 	public string? Occupation { get; set; }
 	public string? Mbti { get; set; }
 	public string? Bio { get; set; }
+	// 「給團長的話」草稿：申請加入揪團那張機票上的留言，跟 Bio 一樣是使用者自己
+	// 編輯、自己看得到的小欄位，見 MemberProfileService.UpdateJoinDraftMessage。
+	public string? DefaultJoinMessage { get; set; }
 	public byte Status { get; set; }
 	public DateTime CreatedAt { get; set; }
 	public DateTime? LastLoginAt { get; set; }

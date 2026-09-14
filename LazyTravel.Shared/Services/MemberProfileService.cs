@@ -125,6 +125,10 @@ namespace LazyTravel.Shared.Services
                 Mbti = member.Mbti,
                 Bio = member.Bio,
                 City = member.City,
+                // 「給團長的話」草稿是私人的、只有本人打開自己的機票才需要看到，
+                // 跟 Phone/LineId 那幾格用同一套「看不到的話後端就直接是 null」原則，
+                // 不要撈出來又靠前端藏。
+                DefaultJoinMessage = isSelf ? member.DefaultJoinMessage : null,
 
                 SkillCount = mySkillNames.Count,
                 SkillTotal = skillTotal,
@@ -258,6 +262,21 @@ namespace LazyTravel.Shared.Services
                     row.UpdatedAt = DateTime.Now;
                 }
             }
+
+            _context.SaveChanges();
+            return true;
+        }
+
+        // 「給團長的話」草稿存檔，跟 UpdateTravelDna 一樣是輕量的單欄位存檔，
+        // 不用像 UpdateProfile 那樣整包驗證一次所有個人資料欄位。
+        public bool UpdateJoinDraftMessage(int memberId, string? message)
+        {
+            var member = _context.Users.FirstOrDefault(m => m.Id == memberId && !m.IsDelete);
+            if (member == null) return false;
+
+            var trimmed = string.IsNullOrWhiteSpace(message) ? null : message.Trim();
+            if (trimmed != null && trimmed.Length > 500) trimmed = trimmed[..500];
+            member.DefaultJoinMessage = trimmed;
 
             _context.SaveChanges();
             return true;

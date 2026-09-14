@@ -122,6 +122,27 @@ public class MembersController(
         return ok ? Ok(new { success = true }) : NotFound(new { message = "找不到這個會員。" });
     }
 
+    public sealed class JoinDraftMessageInput
+    {
+        [StringLength(500)] public string? Message { get; set; }
+    }
+
+    // 「給團長的話」草稿存檔（Members.DefaultJoinMessage），跟自我介紹（Bio）
+    // 一樣是真的存進資料庫，不是本地草稿——另外開一支輕量的 action，不用像
+    // UpdateProfile 那樣整包送一次全部個人資料欄位（見 scene.dc.html 的
+    // saveJoinDraftMessage()）。
+    [HttpPost, ValidateAntiForgeryToken]
+    public IActionResult UpdateJoinDraftMessage([FromBody] JoinDraftMessageInput input)
+    {
+        if (!ModelState.IsValid) return BadRequest(new { message = "留言長度請在 500 字以內。" });
+
+        var memberId = currentMemberAccessor.GetCurrentMemberId();
+        if (!memberId.HasValue) return Unauthorized(new { message = "請先登入。" });
+
+        var ok = memberProfileService.UpdateJoinDraftMessage(memberId.Value, input.Message);
+        return ok ? Ok(new { success = true }) : NotFound(new { message = "找不到這個會員。" });
+    }
+
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(6 * 1024 * 1024)]
     public async Task<IActionResult> UploadAvatar(IFormFile file)
     {

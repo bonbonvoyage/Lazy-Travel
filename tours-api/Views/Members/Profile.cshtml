@@ -25,12 +25,19 @@
     var viewId = Context.Request.Query["id"].ToString();
     var openTicket = Context.Request.Query["openTicket"].ToString();
     var ticketOnly = Context.Request.Query["ticketOnly"].ToString();
+    // 🐛 補上：TravelGroups 詳情頁「申請加入」現在會帶著 groupId 開這張機票
+    // （見 travelgroup-details.js 的 openJoinTicket()），要跟 devMemberId/id/
+    // openTicket/ticketOnly 一樣原封不動轉給 iframe，scene.dc.html 才知道「現在
+    // 是真的在申請哪個揪團」，確認鈕才能真的送出 /TravelGroups/Join 請求，而不是
+    // 只存本地草稿（見 scene.dc.html 裡 submitJoinRequest() 的註解）。
+    var groupIdQs = Context.Request.Query["groupId"].ToString();
 
     var sceneQs = "";
     if (!string.IsNullOrEmpty(devMemberId)) sceneQs += "devMemberId=" + Uri.EscapeDataString(devMemberId);
     if (!string.IsNullOrEmpty(viewId)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "id=" + Uri.EscapeDataString(viewId);
     if (!string.IsNullOrEmpty(openTicket)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "openTicket=" + Uri.EscapeDataString(openTicket);
     if (!string.IsNullOrEmpty(ticketOnly)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "ticketOnly=" + Uri.EscapeDataString(ticketOnly);
+    if (!string.IsNullOrEmpty(groupIdQs)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "groupId=" + Uri.EscapeDataString(groupIdQs);
     var sceneSrc = "~/members/scene.dc.html" + (sceneQs.Length > 0 ? "?" + sceneQs : "");
 }
 <!DOCTYPE html>
