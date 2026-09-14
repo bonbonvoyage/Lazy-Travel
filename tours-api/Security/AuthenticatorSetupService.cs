@@ -8,7 +8,7 @@ using QRCoder;
 
 namespace LazyTravel.Security;
 
-/// <summary>Google Authenticator (RFC 6238 TOTP) setup without adding a database table.</summary>
+/// <summary>Provides voluntary RFC 6238 TOTP setup. It deliberately does not block normal sign-in.</summary>
 public sealed class AuthenticatorSetupService
 {
     private const string Provider = "LazyTravel.AccountSecurity";
@@ -27,7 +27,7 @@ public sealed class AuthenticatorSetupService
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<LazyTravelDBContext>();
-        var enabled = await db.Users.AsNoTracking().AnyAsync(m => m.Id == memberId && m.TwoFactorEnabled && !m.IsDelete && m.Status != 2);
+        var enabled = await db.Users.AsNoTracking().AnyAsync(member => member.Id == memberId && member.TwoFactorEnabled && !member.IsDelete && member.Status != 2);
         return new AuthenticatorStatus(enabled);
     }
 
@@ -35,9 +35,9 @@ public sealed class AuthenticatorSetupService
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<LazyTravelDBContext>();
-        var member = await db.Users.AsNoTracking().SingleOrDefaultAsync(m => m.Id == memberId && !m.IsDelete && m.Status != 2);
-        if (member is null) return SetupStartResult.Failed("找不到可設定的會員帳號。");
-        if (member.TwoFactorEnabled) return SetupStartResult.Failed("此帳號已啟用兩步驟驗證。");
+        var member = await db.Users.AsNoTracking().SingleOrDefaultAsync(candidate => candidate.Id == memberId && !candidate.IsDelete && candidate.Status != 2);
+        if (member is null) return SetupStartResult.Failed("找不到可設定的會員帳號。" );
+        if (member.TwoFactorEnabled) return SetupStartResult.Failed("此帳號已啟用登入雙重驗證。" );
 
         var secret = ToBase32(RandomNumberGenerator.GetBytes(20));
         var label = $"LazyTravel:{member.Email ?? member.Name}";
@@ -54,14 +54,14 @@ public sealed class AuthenticatorSetupService
     public async Task<SetupConfirmResult> ConfirmAsync(int memberId, string setupId, string code)
     {
         if (!_pending.TryGetValue(setupId, out var pending) || pending.MemberId != memberId || pending.ExpiresAt < DateTimeOffset.UtcNow)
-            return SetupConfirmResult.Failed("設定階段已逾時，請重新產生 QR Code。");
+            return SetupConfirmResult.Failed("這組 QR Code 已逾時，請重新開始設定。" );
         if (pending.Attempts++ >= 5 || !IsValidCode(pending.Secret, code))
-            return SetupConfirmResult.Failed("驗證碼錯誤。請確認 Google Authenticator 的時間後再試一次。");
+            return SetupConfirmResult.Failed("驗證碼不正確。請確認驗證器 App 的時間後再試。" );
 
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<LazyTravelDBContext>();
-        var member = await db.Users.SingleOrDefaultAsync(m => m.Id == memberId && !m.IsDelete && m.Status != 2);
-        if (member is null) return SetupConfirmResult.Failed("找不到可設定的會員帳號。");
+        var member = await db.Users.SingleOrDefaultAsync(candidate => candidate.Id == memberId && !candidate.IsDelete && candidate.Status != 2);
+        if (member is null) return SetupConfirmResult.Failed("找不到可設定的會員帳號。" );
 
         var protectedSecret = _protector.Protect(pending.Secret);
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM [dbo].[MemberTokens] WHERE [UserId] = {memberId} AND [LoginProvider] = {Provider} AND [Name] = {SecretName}");
@@ -71,18 +71,7 @@ public sealed class AuthenticatorSetupService
         member.ConcurrencyStamp = Guid.NewGuid().ToString();
         await db.SaveChangesAsync();
         _pending.TryRemove(setupId, out _);
-        return SetupConfirmResult.Ok("Google Authenticator 已啟用。重設密碼時將要求輸入驗證碼。");
-    }
-
-    public async Task<bool> VerifyEnabledCodeAsync(int memberId, string code)
-    {
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<LazyTravelDBContext>();
-        var member = await db.Users.AsNoTracking().SingleOrDefaultAsync(m => m.Id == memberId && m.TwoFactorEnabled && !m.IsDelete && m.Status != 2);
-        if (member is null) return false;
-        var protectedSecret = await db.Database.SqlQueryRaw<string>("SELECT [Value] FROM [dbo].[MemberTokens] WHERE [UserId] = {0} AND [LoginProvider] = {1} AND [Name] = {2}", memberId, Provider, SecretName).SingleOrDefaultAsync();
-        try { return !string.IsNullOrWhiteSpace(protectedSecret) && IsValidCode(_protector.Unprotect(protectedSecret), code); }
-        catch (CryptographicException) { return false; }
+        return SetupConfirmResult.Ok("登入雙重驗證已啟用。" );
     }
 
     private static bool IsValidCode(string secretText, string code)
@@ -116,9 +105,23 @@ public sealed class AuthenticatorSetupService
         return bytes.ToArray();
     }
 
-    private sealed class PendingSetup(int memberId, string secret, DateTimeOffset expiresAt) { public int MemberId { get; } = memberId; public string Secret { get; } = secret; public DateTimeOffset ExpiresAt { get; } = expiresAt; public int Attempts { get; set; } }
+    private sealed class PendingSetup(int memberId, string secret, DateTimeOffset expiresAt)
+    {
+        public int MemberId { get; } = memberId;
+        public string Secret { get; } = secret;
+        public DateTimeOffset ExpiresAt { get; } = expiresAt;
+        public int Attempts { get; set; }
+    }
 }
 
 public sealed record AuthenticatorStatus(bool Enabled);
-public sealed record SetupStartResult(bool Success, string? SetupId, string? QrCodeDataUri, string? ManualKey, string? Message) { public static SetupStartResult Failed(string message) => new(false, null, null, null, message); public static SetupStartResult Ok(string id, string qr, string key) => new(true, id, qr, key, null); }
-public sealed record SetupConfirmResult(bool Success, string Message) { public static SetupConfirmResult Failed(string message) => new(false, message); public static SetupConfirmResult Ok(string message) => new(true, message); }
+public sealed record SetupStartResult(bool Success, string? SetupId, string? QrCodeDataUri, string? ManualKey, string? Message)
+{
+    public static SetupStartResult Failed(string message) => new(false, null, null, null, message);
+    public static SetupStartResult Ok(string id, string qr, string key) => new(true, id, qr, key, null);
+}
+public sealed record SetupConfirmResult(bool Success, string Message)
+{
+    public static SetupConfirmResult Failed(string message) => new(false, message);
+    public static SetupConfirmResult Ok(string message) => new(true, message);
+}
