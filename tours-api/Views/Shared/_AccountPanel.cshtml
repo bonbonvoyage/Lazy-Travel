@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Authentication
 @inject IAuthenticationSchemeProvider AuthenticationSchemes
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
 @{
     var googleEnabled = await AuthenticationSchemes.GetSchemeAsync("Google") is not null;
     var facebookEnabled = await AuthenticationSchemes.GetSchemeAsync("Facebook") is not null;
@@ -24,11 +25,11 @@
     else { <button class="lt-social-button lt-google" type="button" disabled aria-label="Google 尚未設定" title="請先設定 Google OAuth 金鑰">@await Html.PartialAsync("_GoogleIcon")</button> }
 </div>
 <div class="lt-divider"><span>或使用電子信箱</span></div>
-<form id="ltRegisterForm" action="/Auth/Register" method="post">
+<form id="ltRegisterForm" action="/Auth/Register" method="post" data-demo-autofill="@WebHostEnvironment.IsDevelopment().ToString().ToLowerInvariant()">
 @Html.AntiForgeryToken()
-<label class="lt-field">個人名稱<input name="Name" autocomplete="nickname" placeholder="小陳" required maxlength="50" /></label>
+<label class="lt-field">旅人名稱<input name="Name" autocomplete="nickname" required maxlength="50" /></label>
 <label class="lt-field">電子信箱<input type="email" name="email" autocomplete="email" placeholder="name@example.com" required maxlength="254" /></label>
-<label class="lt-field">密碼<span class="lt-password"><input id="ltRegisterPassword" name="Password" type="password" autocomplete="new-password" placeholder="至少 8 個字元" required minlength="8" maxlength="128" /><button type="button" data-toggle-password="ltRegisterPassword" aria-label="顯示密碼">顯示</button></span></label>
+<label class="lt-field">密碼<span class="lt-password"><input id="ltRegisterPassword" name="Password" type="password" autocomplete="new-password" placeholder="至少 8 個字元" aria-describedby="ltPasswordRules" required minlength="8" maxlength="128" /><button type="button" data-toggle-password="ltRegisterPassword" aria-label="顯示密碼">顯示</button></span><small class="lt-password-rules" id="ltPasswordRules"><span class="lt-password-rule" data-password-rule="upper"><i aria-hidden="true"></i>英文大寫 A–Z</span><span class="lt-password-rule" data-password-rule="lower"><i aria-hidden="true"></i>英文小寫 a–z</span><span class="lt-password-rule" data-password-rule="number"><i aria-hidden="true"></i>數字 0–9</span></small></label>
 <label class="lt-field">確認密碼<span class="lt-password"><input id="ltConfirmPassword" name="ConfirmPassword" type="password" autocomplete="new-password" placeholder="再次輸入密碼" required maxlength="128" /><button type="button" data-toggle-password="ltConfirmPassword" aria-label="顯示確認密碼">顯示</button></span></label>
 <p class="lt-error" id="ltRegisterError" role="alert"></p>
 <button class="lt-primary lt-full" type="submit">建立帳號 <span aria-hidden="true">→</span></button>
@@ -58,8 +59,8 @@
 </section>
 <section data-auth-pane="recovery" hidden>
 <button class="lt-recovery-back" type="button" data-auth-switch="login">← 返回登入</button>
-<div class="lt-recovery-progress" aria-label="重設密碼進度"><span class="is-active"></span><span></span><span></span><span></span></div>
-<p class="lt-recovery-kicker" id="ltRecoveryKicker">ACCOUNT SECURITY · 1 / 4</p>
+<div class="lt-recovery-progress" aria-label="重設密碼進度"><span class="is-active"></span><span></span><span></span></div>
+<p class="lt-recovery-kicker" id="ltRecoveryKicker">ACCOUNT SECURITY · 1 / 3</p>
 <h2 id="ltRecoveryTitle">驗證你的身分</h2>
 <p class="lt-muted" id="ltRecoveryDescription">輸入註冊信箱，我們會寄送一次性驗證碼，作為重設密碼的身分驗證。</p>
 <form id="ltRecoveryForm" action="/Auth/PasswordRecovery/RequestCode" method="post">
@@ -79,11 +80,43 @@
     <strong>@User.Identity?.Name</strong>
 </div>
 <a class="lt-primary lt-full" href="/Members/Profile">前往個人中心 <span aria-hidden="true">→</span></a>
+<section class="lt-security-card" aria-labelledby="ltTwoFactorTitle">
+    <span class="lt-security-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.25 19 6v5.15c0 4.32-2.88 7.87-7 9.6-4.12-1.73-7-5.28-7-9.6V6l7-2.75Z"/><path d="m8.8 12.1 2.05 2.05 4.35-4.35"/></svg>
+    </span>
+    <div class="lt-security-copy">
+        <h3 id="ltTwoFactorTitle">登入雙重驗證</h3>
+        <p>為帳號多加一層保護</p>
+    </div>
+    <button class="lt-security-setup" type="button" data-auth-switch="two-factor" aria-label="設定登入雙重驗證">設定</button>
+</section>
 <form id="ltLogoutForm" action="/Auth/Logout" method="post">
 @Html.AntiForgeryToken()
 <p class="lt-error" id="ltLogoutError" role="alert"></p>
 <button class="lt-logout lt-full" type="submit">登出此帳號</button>
 </form>
+</section>
+<section data-auth-pane="two-factor" hidden>
+<button class="lt-recovery-back" type="button" data-auth-switch="member">← 返回我的帳號</button>
+<span class="lt-eyebrow">帳號安全</span>
+<h2>登入雙重驗證</h2>
+<p class="lt-muted" id="ltAuthenticatorIntro">使用 Google Authenticator 等驗證器 App，為帳號多加一層保護。</p>
+<form id="ltAuthenticatorForm" novalidate>
+@Html.AntiForgeryToken()
+<input id="ltAuthenticatorSetupId" type="hidden" name="SetupId" />
+<div class="lt-two-factor-notice" id="ltAuthenticatorStatus">
+    <span class="lt-security-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.25 19 6v5.15c0 4.32-2.88 7.87-7 9.6-4.12-1.73-7-5.28-7-9.6V6l7-2.75Z"/><path d="m8.8 12.1 2.05 2.05 4.35-4.35"/></svg></span>
+    <div><strong>尚未啟用</strong><p>按下開始設定後，掃描 QR Code 即可取得每 30 秒更新的 6 位驗證碼。</p></div>
+</div>
+<div id="ltAuthenticatorSetup" hidden>
+    <ol class="lt-authenticator-steps"><li>開啟 Google Authenticator，選擇新增帳戶。</li><li>掃描下方 QR Code。</li><li>輸入 App 顯示的 6 位驗證碼完成設定。</li></ol>
+    <figure class="lt-qr-card"><img id="ltAuthenticatorQr" alt="供 Google Authenticator 掃描的登入雙重驗證 QR Code" /><figcaption>無法掃描嗎？<button type="button" id="ltManualKeyToggle">使用手動設定金鑰</button></figcaption><code id="ltAuthenticatorManualKey" hidden></code></figure>
+    <label class="lt-field">驗證器 App 的 6 位驗證碼<input id="ltAuthenticatorCode" name="Code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" /></label>
+</div>
+<p class="lt-error" id="ltAuthenticatorError" role="alert"></p>
+<button class="lt-primary lt-full" id="ltAuthenticatorSubmit" type="submit">開始設定</button>
+</form>
+<p class="lt-security-hint">設定 QR Code 僅在本次 10 分鐘設定期間有效，不會影響目前登入狀態。</p>
 </section>
 </div>
 </dialog>

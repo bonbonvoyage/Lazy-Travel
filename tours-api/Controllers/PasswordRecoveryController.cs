@@ -24,14 +24,6 @@ public sealed class PasswordRecoveryController(PasswordRecoveryService recoveryS
     public async Task<IActionResult> VerifyEmailCode([FromForm] VerifyCodeInput input)
     {
         var result = await recoveryService.VerifyEmailCodeAsync(input.RequestId, input.Code);
-        return result.Success ? Ok(new { success = true, requiresAuthenticator = result.RequiresAuthenticator, message = result.Message }) : BadRequest(new { message = result.Message });
-    }
-
-    [HttpPost("VerifyAuthenticatorCode")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> VerifyAuthenticatorCode([FromForm] VerifyCodeInput input)
-    {
-        var result = await recoveryService.VerifyAuthenticatorCodeAsync(input.RequestId, input.Code);
         return result.Success ? Ok(new { success = true, message = result.Message }) : BadRequest(new { message = result.Message });
     }
 

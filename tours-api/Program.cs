@@ -159,7 +159,6 @@ app.UseRouting();
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseMiddleware<MemberActionAuthenticationMiddleware>();
-app.UseMiddleware<TwoFactorAuthenticationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(
