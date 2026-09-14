@@ -18,6 +18,8 @@ function switchPane(mode) {
 function open(mode, button) {
  trigger=button || document.activeElement;
  switchPane(mode);
+ const loginError=document.getElementById('ltLoginError');
+ if(mode==='login'&&button?.dataset?.loginMessage&&loginError) loginError.textContent=button.dataset.loginMessage;
  if(!dialog.open) dialog.showModal();
 }
 document.addEventListener('click',e=>{
@@ -75,3 +77,4 @@ const query=new URLSearchParams(location.search);const authError=query.get('auth
 if(authError){open('login');document.getElementById('ltLoginError').textContent=authError;history.replaceState({},'',location.pathname+location.hash);}
 if(document.body.hasAttribute('data-register-page'))open('register');
 })();
+

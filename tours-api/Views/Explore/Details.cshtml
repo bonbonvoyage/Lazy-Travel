@@ -32,7 +32,7 @@
 <div class="app">
     @await Html.PartialAsync("_HomeSidebar", "Explore")
     <main class="main article-main">
-        <button class="page-back-button article-back" type="button" data-back-fallback="@Url.Action("Index", "Explore")" aria-label="返回上一頁">＜</button>
+        <a class="page-back-button article-back" href="@Url.Action("Index", "Explore")" aria-label="返回行程文章首頁">＜</a>
         @if (Model.IsDraft)
         {
             <section class="article-draft">
@@ -172,6 +172,7 @@
 <script src="~/js/explore-details.js" asp-append-version="true"></script>
 </body>
 </html>
+
 
 
 

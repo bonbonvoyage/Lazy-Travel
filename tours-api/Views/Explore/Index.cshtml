@@ -1,7 +1,9 @@
 @model LazyTravel.ViewModels.ExploreCardsViewModel
+@inject LazyTravel.Shared.Services.ICurrentMemberAccessor CurrentMemberAccessor
 @{
     ViewData["Title"] = "揪團行程分享";
     Layout = null;
+    var canCreateArticle = CurrentMemberAccessor.GetCurrentMemberId().HasValue;
 }
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -73,7 +75,14 @@
                         <a class="@(Model.Scope == "mine" ? "active" : "")" asp-action="Index" asp-route-scope="mine" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">我的文章</a>
 
                     </nav>
-                    <a class="create-group" asp-action="Create"><span>＋</span> 新增文章</a>
+                    @if (canCreateArticle)
+                    {
+                        <a class="create-group" asp-action="Create"><span>＋</span> 新增文章</a>
+                    }
+                    else
+                    {
+                        <button class="create-group" type="button" data-auth-open="login" data-login-message="請先登入，登入後即可新增文章。"><span>＋</span> 新增文章</button>
+                    }
                 </div>
 
                 @if (Model.Articles.Count == 0)
@@ -84,7 +93,14 @@
                             <img class="empty-illustration" src="~/images/empty-states/my-articles-empty.svg" alt="尚未發表文章" asp-append-version="true" />
                             <h2>目前還沒有自己的文章</h2>
                             <p>新增一篇文章，保存旅行路線與回憶。</p>
-                            <a asp-action="Create">新增文章</a>
+                            @if (canCreateArticle)
+                            {
+                                <a asp-action="Create">新增文章</a>
+                            }
+                            else
+                            {
+                                <button type="button" class="empty-action-button" data-auth-open="login" data-login-message="請先登入，登入後即可新增文章。">新增文章</button>
+                            }
                         }
                         else
                         {
@@ -178,11 +194,4 @@
 <script src="~/js/travelgroups-index.js" asp-append-version="true"></script>
 </body>
 </html>
-
-
-
-
-
-
-
 

@@ -22,6 +22,20 @@
     box-shadow: 0 3px 12px rgba(62,87,80,.08);
 }
 .explore-page .create-group:disabled { cursor: not-allowed; opacity: .65; }
+.explore-page .empty-action-button {
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 20px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(0, 132, 100, .16);
+}
+.explore-page .empty-action-button:hover {
+    transform: translateY(-1px);
+}
 .explore-page .groups-pagination { margin-top: 28px; }
 @media (max-width: 760px) {
     .explore-page .card-cover { height: 210px; }

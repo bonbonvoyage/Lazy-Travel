@@ -16,11 +16,13 @@ namespace LazyTravel.Controllers
     {
         private readonly LazyTravelDBContext _context;
         private readonly ICurrentMemberAccessor _currentMemberAccessor;
+        private readonly IImageStorageService _imageStorage;
 
-        public TravelGroupsController(LazyTravelDBContext context, ICurrentMemberAccessor currentMemberAccessor)
+        public TravelGroupsController(LazyTravelDBContext context, ICurrentMemberAccessor currentMemberAccessor, IImageStorageService imageStorage)
         {
             _context = context;
             _currentMemberAccessor = currentMemberAccessor;
+            _imageStorage = imageStorage;
         }
 
         private static readonly Dictionary<string, string[]> RegionCountryMap = new(StringComparer.OrdinalIgnoreCase)
@@ -59,6 +61,7 @@ namespace LazyTravel.Controllers
             var draft = await _context.TravelGroups.AsNoTracking()
                 .Include(g => g.TravelGroupItineraryItems)
                 .Include(g => g.TravelGroupBudgets)
+                .Include(g => g.TravelGroupImages)
                 .Where(g => g.OwnerMemberId == ownerMemberId && !g.IsDelete && !g.IsPublic && g.GroupStatus == 0)
                 .OrderByDescending(g => g.UpdatedAt)
                 .FirstOrDefaultAsync();
@@ -144,9 +147,9 @@ namespace LazyTravel.Controllers
         // POST /TravelGroups/Submit —— 將新增揪團流程正式寫入資料庫並公開到列表。
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit([FromBody] JsonElement payload)
+        public async Task<IActionResult> Submit()
         {
-            var form = ReadDraftRequest(payload);
+            var (form, coverImage) = await ReadDraftRequestFromRequestAsync();
             if (form is null)
             {
                 return BadRequest(new { message = "沒有收到揪團資料，請重新整理頁面後再試一次。" });
@@ -160,6 +163,14 @@ namespace LazyTravel.Controllers
 
             var ownerMemberId = await GetOrCreateVisitorMemberIdAsync();
             var group = await UpsertTravelGroupDraftAsync(form, ownerMemberId, publish: true);
+            try
+            {
+                await SaveTravelGroupCoverImageAsync(group, coverImage, ownerMemberId);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             await _context.SaveChangesAsync();
 
             return Json(new
@@ -177,6 +188,7 @@ namespace LazyTravel.Controllers
             var group = await _context.TravelGroups.AsNoTracking()
                 .Include(g => g.TravelGroupItineraryItems)
                 .Include(g => g.TravelGroupBudgets)
+                .Include(g => g.TravelGroupImages)
                 .FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
 
             if (group is null)
@@ -197,9 +209,9 @@ namespace LazyTravel.Controllers
         // POST /TravelGroups/Update/5 —— 使用新增揪團表單送出的格式更新既有房間。
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(int id, int? viewerMemberId, [FromBody] JsonElement payload)
+        public async Task<IActionResult> Update(int id, int? viewerMemberId)
         {
-            var form = ReadDraftRequest(payload);
+            var (form, coverImage) = await ReadDraftRequestFromRequestAsync();
             if (form is null)
             {
                 return BadRequest(new { message = "沒有收到揪團資料，請重新整理頁面後再試一次。" });
@@ -214,6 +226,7 @@ namespace LazyTravel.Controllers
             var group = await _context.TravelGroups
                 .Include(g => g.TravelGroupItineraryItems)
                 .Include(g => g.TravelGroupBudgets)
+                .Include(g => g.TravelGroupImages)
                 .FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
 
             if (group is null)
@@ -229,6 +242,14 @@ namespace LazyTravel.Controllers
             }
 
             UpdateTravelGroupFromDraft(group, form, publish: true);
+            try
+            {
+                await SaveTravelGroupCoverImageAsync(group, coverImage, actingMemberId.Value);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             await _context.SaveChangesAsync();
 
             return Json(new
@@ -240,6 +261,19 @@ namespace LazyTravel.Controllers
         }
         // GET /TravelGroups —— 公開揪團列表，篩選與分頁都在資料庫端完成。
         public async Task<IActionResult> Index(string? country, string? startDate, string? endDate, string scope = "all", int take = 12)
+        {
+            ViewData["Title"] = "揪團找旅伴";
+            return View(await BuildIndexViewModelAsync(country, startDate, endDate, scope, take));
+        }
+
+        // GET /TravelGroups/ListData —— 揪團首頁 Vue 使用的 JSON 資料入口。
+        [HttpGet]
+        public async Task<IActionResult> ListData(string? country, string? startDate, string? endDate, string scope = "all", int take = 12)
+        {
+            return Json(await BuildIndexViewModelAsync(country, startDate, endDate, scope, take));
+        }
+
+        private async Task<TravelGroupIndexViewModel> BuildIndexViewModelAsync(string? country, string? startDate, string? endDate, string scope, int take)
         {
             const int pageSize = 12;
             take = Math.Clamp(take, pageSize, 120);
@@ -313,10 +347,7 @@ namespace LazyTravel.Controllers
             var totalCount = await query.CountAsync();
             var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
 
-            var groups = await query
-                .Take(take)
-                .ToListAsync();
-
+            var groups = await query.Take(take).ToListAsync();
             var groupIds = groups.Select(g => g.GroupId).ToList();
             var visitorMemberId = _currentMemberAccessor.GetCurrentMemberId();
             var favoriteCounts = await _context.TravelGroupInteractions.AsNoTracking()
@@ -336,15 +367,8 @@ namespace LazyTravel.Controllers
                 Title = g.GroupTitle,
                 Country = g.Country ?? "",
                 Region = g.Region ?? "",
-                DateText = g.StartDate.HasValue && g.EndDate.HasValue
-                    ? $"{g.StartDate:yyyy/MM/dd} - {g.EndDate:yyyy/MM/dd}"
-                    : "日期未定",
-                CoverImageUrl = g.TravelGroupImages
-                    .Where(i => !i.IsDeleted)
-                    .OrderByDescending(i => i.IsCover)
-                    .ThenBy(i => i.SortOrder)
-                    .Select(i => i.ImageUrl)
-                    .FirstOrDefault() ?? "",
+                DateText = g.StartDate.HasValue && g.EndDate.HasValue ? $"{g.StartDate:yyyy/MM/dd} - {g.EndDate:yyyy/MM/dd}" : "日期未定",
+                CoverImageUrl = g.TravelGroupImages.Where(i => !i.IsDeleted).OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).Select(i => i.ImageUrl).FirstOrDefault() ?? "",
                 CurrentPeople = g.CurrentPeople,
                 MaxPeople = g.MaxPeople,
                 OwnerName = g.OwnerMember?.Name ?? "旅人",
@@ -353,16 +377,10 @@ namespace LazyTravel.Controllers
                 StatusText = ToGroupStatusLabel(g.GroupStatus),
                 FavoriteCount = favoriteCounts.GetValueOrDefault(g.GroupId),
                 IsFavorited = favoriteSet.Contains(g.GroupId),
-                Tags = new[] { g.Country, g.Region, g.MaxPeople <= 6 ? "小團" : "多人同行" }
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Distinct()
-                    .Take(3)
-                    .Select(x => x!)
-                    .ToList(),
+                Tags = new[] { g.Country, g.Region, g.MaxPeople <= 6 ? "小團" : "多人同行" }.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().Take(3).Select(x => x!).ToList(),
             }).ToList();
 
-            ViewData["Title"] = "揪團找旅伴";
-            return View(new TravelGroupIndexViewModel
+            return new TravelGroupIndexViewModel
             {
                 Groups = cards,
                 Countries = countries,
@@ -375,9 +393,8 @@ namespace LazyTravel.Controllers
                 TotalPages = totalPages,
                 TotalCount = totalCount,
                 Take = take,
-            });
+            };
         }
-
         private static string? NormalizeRegion(string? region)
         {
             return !string.IsNullOrWhiteSpace(region) && RegionCountryMap.ContainsKey(region)
@@ -432,8 +449,46 @@ namespace LazyTravel.Controllers
             }
         }
 
+
+        private async Task<(TravelGroupDraftRequest? Form, IFormFile? CoverImage)> ReadDraftRequestFromRequestAsync()
+        {
+            if (Request.HasFormContentType)
+            {
+                var form = await Request.ReadFormAsync();
+                var payload = form["payload"].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(payload))
+                {
+                    return (null, null);
+                }
+
+                try
+                {
+                    return (JsonSerializer.Deserialize<TravelGroupDraftRequest>(payload, DraftJsonOptions), form.Files.GetFile("coverImage"));
+                }
+                catch (JsonException)
+                {
+                    return (null, null);
+                }
+            }
+
+            try
+            {
+                using var document = await JsonDocument.ParseAsync(Request.Body);
+                return (ReadDraftRequest(document.RootElement), null);
+            }
+            catch (JsonException)
+            {
+                return (null, null);
+            }
+        }
         private static object ToDraftResponse(TravelGroup group)
         {
+            var cover = group.TravelGroupImages
+                .Where(i => !i.IsDeleted)
+                .OrderByDescending(i => i.IsCover)
+                .ThenBy(i => i.SortOrder)
+                .FirstOrDefault();
+
             var days = group.TravelGroupItineraryItems
                 .Where(item => !string.IsNullOrWhiteSpace(item.Description))
                 .GroupBy(item => item.DayNumber)
@@ -471,8 +526,13 @@ namespace LazyTravel.Controllers
                     : (group.Region ?? "").Split('、', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
                 dateRange = ToDateRangeValue(group.StartDate, group.EndDate),
                 description = group.Description ?? "",
-                coverFileName = "",
-                supportFileNames = Array.Empty<string>(),
+                coverImageUrl = cover?.ImageUrl ?? "",
+                coverFileName = Path.GetFileName(cover?.ImageUrl ?? ""),
+                supportFileNames = group.TravelGroupImages
+                    .Where(i => !i.IsDeleted && !i.IsCover)
+                    .OrderBy(i => i.SortOrder)
+                    .Select(i => Path.GetFileName(i.ImageUrl))
+                    .ToArray(),
                 activeOptions = Array.Empty<string>(),
                 people = new[] { group.MinPeople.ToString(), group.MaxPeople.ToString() },
                 ageMin = "18",
@@ -548,6 +608,7 @@ namespace LazyTravel.Controllers
             var draft = await _context.TravelGroups
                 .Include(g => g.TravelGroupItineraryItems)
                 .Include(g => g.TravelGroupBudgets)
+                .Include(g => g.TravelGroupImages)
                 .Include(g => g.GroupMembers)
                 .Where(g => g.OwnerMemberId == ownerMemberId && !g.IsDelete && !g.IsPublic && g.GroupStatus == 0)
                 .OrderByDescending(g => g.UpdatedAt)
@@ -608,6 +669,48 @@ namespace LazyTravel.Controllers
             return draft;
         }
 
+
+        private async Task SaveTravelGroupCoverImageAsync(TravelGroup group, IFormFile? coverImage, int uploadedByMemberId)
+        {
+            if (coverImage is null || coverImage.Length == 0)
+            {
+                return;
+            }
+
+            if (!IsSupportedImageFile(coverImage))
+            {
+                throw new InvalidOperationException("封面圖片僅接受 JPG、PNG、WEBP 或 GIF。");
+            }
+
+            var now = DateTime.Now;
+            var imageUrl = await _imageStorage.UploadAsync(coverImage, "travelgroups/cover");
+
+            foreach (var oldCover in group.TravelGroupImages.Where(i => !i.IsDeleted && i.IsCover))
+            {
+                oldCover.IsDeleted = true;
+                oldCover.UpdatedAt = now;
+            }
+
+            group.TravelGroupImages.Add(new TravelGroupImage
+            {
+                ImageUrl = imageUrl,
+                ImageType = 0,
+                AltText = group.GroupTitle,
+                SortOrder = 0,
+                IsCover = true,
+                IsDeleted = false,
+                UploadedByMemberId = uploadedByMemberId,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        }
+
+        private static bool IsSupportedImageFile(IFormFile file)
+        {
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            return ext is ".jpg" or ".jpeg" or ".png" or ".webp" or ".gif"
+                && file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+        }
         private static string? ValidatePublishRequest(TravelGroupDraftRequest form)
         {
             if (string.IsNullOrWhiteSpace(form.GroupTitle))
@@ -762,13 +865,6 @@ namespace LazyTravel.Controllers
             ViewData["Title"] = "行程詳情";
             ViewData["GroupId"] = id;
             ViewData["ViewerMemberId"] = viewerMemberId;
-            ViewData["TestViewers"] = await _context.Set<Member>().AsNoTracking()
-                .Where(m => m.Email == "lt-test-outsider@lazytravel.local" ||
-                            m.Email == "lt-test-member@lazytravel.local" ||
-                            m.Email == "lt-test-owner@lazytravel.local")
-                .OrderBy(m => m.Email == "lt-test-outsider@lazytravel.local" ? 0 : m.Email == "lt-test-member@lazytravel.local" ? 1 : 2)
-                .Select(m => new { m.Id, m.Name, m.Email })
-                .ToListAsync();
             return View();
         }
 
@@ -780,6 +876,7 @@ namespace LazyTravel.Controllers
                 .Include(g => g.TravelGroupImages)
                 .Include(g => g.TravelGroupItineraryItems)
                 .Include(g => g.TravelGroupBudgets)
+                .Include(g => g.TravelGroupImages)
                 .Include(g => g.GroupMembers).ThenInclude(gm => gm.Member)
                 .Include(g => g.JoinRequests).ThenInclude(r => r.Member)
                 .FirstOrDefaultAsync(g => g.GroupId == id);
@@ -1104,6 +1201,80 @@ namespace LazyTravel.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveJoinRequest(int id, int requestId, int? viewerMemberId)
+        {
+            var ownerId = await GetActingMemberIdAsync(viewerMemberId);
+            if (!ownerId.HasValue) return LoginRequired();
+
+            var group = await _context.TravelGroups
+                .Include(g => g.GroupMembers)
+                .FirstOrDefaultAsync(g => g.GroupId == id && !g.IsDelete);
+            if (group is null) return NotFound();
+            if (group.OwnerMemberId != ownerId.Value) return StatusCode(403, "只有團主可以管理入團申請。");
+            if (group.GroupStatus != 0 && group.GroupStatus != 1) return BadRequest("此揪團目前不可再審核新的入團申請。");
+
+            var request = await _context.JoinRequests.FirstOrDefaultAsync(r => r.GroupId == id && r.RequestId == requestId);
+            if (request is null) return NotFound();
+            if (request.RequestStatus != 0) return BadRequest("這筆申請目前不是申請中狀態。");
+
+            var activeCount = group.GroupMembers.Count(gm => !gm.IsRemoved);
+            var existingMembership = group.GroupMembers.FirstOrDefault(gm => gm.MemberId == request.MemberId);
+            if (existingMembership is not null && !existingMembership.IsRemoved)
+            {
+                request.RequestStatus = 1;
+                request.ReviewedByMemberId = ownerId.Value;
+                request.ReviewedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+
+            if (activeCount >= group.MaxPeople)
+            {
+                group.GroupStatus = 1;
+                group.CurrentPeople = activeCount;
+                await _context.SaveChangesAsync();
+                return BadRequest("此揪團人數已滿，無法同意新的入團申請。");
+            }
+
+            var now = DateTime.Now;
+            request.RequestStatus = 1;
+            request.ReviewedByMemberId = ownerId.Value;
+            request.ReviewedAt = now;
+
+            if (existingMembership is null)
+            {
+                _context.GroupMembers.Add(new GroupMember
+                {
+                    GroupId = id,
+                    MemberId = request.MemberId,
+                    MemberRole = 0,
+                    JoinedAt = now,
+                    CreatedAt = now,
+                    IsRemoved = false,
+                });
+                activeCount += 1;
+            }
+            else
+            {
+                existingMembership.MemberRole = 0;
+                existingMembership.JoinedAt = now;
+                existingMembership.LeftAt = null;
+                existingMembership.IsRemoved = false;
+                existingMembership.RemovedAt = null;
+                existingMembership.RemovedByMemberId = null;
+                existingMembership.RemoveReason = null;
+                activeCount += 1;
+            }
+
+            group.CurrentPeople = activeCount;
+            if (group.CurrentPeople >= group.MaxPeople) group.GroupStatus = 1;
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectJoinRequest(int id, int requestId, int? viewerMemberId)
         {
             var ownerId = await GetActingMemberIdAsync(viewerMemberId);
@@ -1379,6 +1550,12 @@ namespace LazyTravel.Controllers
         }
     }
 }
+
+
+
+
+
+
 
 
 

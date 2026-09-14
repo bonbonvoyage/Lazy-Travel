@@ -57,6 +57,7 @@ async function postAction(action) {
 
 async function postOwnerApplicationAction(action, targetId) {
   const actionMap = {
+    'approve-request': 'ApproveJoinRequest',
     'remove-member': 'RemoveGroupMember',
     'reject-request': 'RejectJoinRequest',
     'release-rejected': 'ReleaseRejectedJoinRequest',
@@ -352,13 +353,19 @@ function renderApplicationPerson(item, status) {
   const action = status === 'joined' ? 'remove-member' : status === 'pending' ? 'reject-request' : 'release-rejected';
   const targetId = status === 'joined' ? item.memberId : item.requestId;
   const title = status === 'joined' ? '移除團員並加入已拒絕名單' : status === 'pending' ? '拒絕此申請' : '放出已拒絕名單';
+  const approveButton = status === 'pending'
+    ? `<button class="tg-application-approve" type="button" data-application-action="approve-request" data-target-id="${targetId}" title="同意此申請" aria-label="同意 ${escapeHtml(item.name)} 的入團申請">✓</button>`
+    : '';
   return `<div class="tg-application-person">
     <div class="tg-application-avatar">${item.avatarUrl ? `<img src="${escapeHtml(item.avatarUrl)}" alt="" onerror="this.remove()">` : personIconSvg()}</div>
     <div class="tg-application-copy">
       <button class="tg-application-name" type="button" data-ticket-url="${escapeHtml(item.profileUrl || `/Members/Profile?id=${item.memberId}&openTicket=1&ticketOnly=1`)}">${escapeHtml(item.name)}</button>
       ${appliedAt ? `<small>${appliedAt}</small>` : ''}
     </div>
-    <button class="tg-application-remove" type="button" data-application-action="${action}" data-target-id="${targetId}" title="${title}">×</button>
+    <div class="tg-application-actions">
+      ${approveButton}
+      <button class="tg-application-remove" type="button" data-application-action="${action}" data-target-id="${targetId}" title="${title}" aria-label="${title}">×</button>
+    </div>
   </div>`;
 }
 
@@ -535,9 +542,11 @@ function render(vm) {
       const targetId = actionButton.dataset.targetId;
       const confirmMessage = action === 'remove-member'
         ? '確定要移除此團員並加入已拒絕名單嗎？'
-        : action === 'reject-request'
-          ? '確定要拒絕此申請嗎？'
-          : '確定要將此會員移出已拒絕名單嗎？';
+        : action === 'approve-request'
+          ? '確定要同意此申請嗎？'
+          : action === 'reject-request'
+            ? '確定要拒絕此申請嗎？'
+            : '確定要將此會員移出已拒絕名單嗎？';
       if (!await openApplicationConfirmModal(confirmMessage)) return;
       actionButton.disabled = true;
       const ok = await postOwnerApplicationAction(action, targetId);

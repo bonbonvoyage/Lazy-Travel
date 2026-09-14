@@ -1,0 +1,48 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title{font:700 42px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#1f342b}.subtitle{font:500 20px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#587166}.lane{fill:#f6fbf8;stroke:#d6e8df;stroke-width:3}.lane-title{font:700 24px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#2f5f4a}.node{fill:#fff;stroke:#bad4c8;stroke-width:3}.decision{fill:#fff8f3;stroke:#e5ae95;stroke-width:3}.action{fill:#edf8f3;stroke:#7eae9a;stroke-width:4}.text{font:700 20px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#213c32}.note{font:500 15px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#667870}.line{stroke:#86aa9a;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.dash{stroke:#b8cfc5;stroke-width:3;stroke-dasharray:8 8;stroke-linecap:round}.danger{fill:#fff4f1;stroke:#d98777;stroke-width:3}.danger-text{font:700 20px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#b94c43}.small{font:600 14px 'Noto Sans TC','Microsoft JhengHei',sans-serif;fill:#537064}
+    </style>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto"><path d="M2 2L12 7L2 12" fill="none" stroke="#86aa9a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-danger" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto"><path d="M2 2L12 7L2 12" fill="none" stroke="#d98777" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+  <rect width="1600" height="900" fill="#fbfdfb"/>
+  <rect x="70" y="165" width="1460" height="160" rx="28" class="lane"/>
+  <text x="100" y="205" class="lane-title">A. 瀏覽與搜尋</text>
+  <rect x="110" y="230" width="190" height="58" rx="18" class="action"/><text x="151" y="267" class="text">進入首頁</text>
+  <rect x="370" y="230" width="210" height="58" rx="18" class="node"/><text x="405" y="267" class="text">選擇功能入口</text>
+  <rect x="650" y="230" width="220" height="58" rx="18" class="node"/><text x="682" y="267" class="text">搜尋 / 篩選</text>
+  <rect x="940" y="230" width="220" height="58" rx="18" class="node"/><text x="974" y="267" class="text">瀏覽卡片列表</text>
+  <rect x="1230" y="230" width="230" height="58" rx="18" class="node"/><text x="1268" y="267" class="text">載入更多 Ajax</text>
+  <path d="M300 259H370" class="line" marker-end="url(#arrow)"/><path d="M580 259H650" class="line" marker-end="url(#arrow)"/><path d="M870 259H940" class="line" marker-end="url(#arrow)"/><path d="M1160 259H1230" class="line" marker-end="url(#arrow)"/>
+
+  <rect x="70" y="365" width="1460" height="190" rx="28" class="lane"/>
+  <text x="100" y="405" class="lane-title">B. 揪團找旅伴</text>
+  <rect x="110" y="435" width="195" height="62" rx="18" class="node"/><text x="141" y="472" class="text">進入揪團詳細</text>
+  <rect x="365" y="435" width="185" height="62" rx="18" class="decision"/><text x="402" y="472" class="text">是否登入？</text>
+  <rect x="610" y="415" width="190" height="62" rx="18" class="action"/><text x="642" y="452" class="text">申請加入</text>
+  <rect x="610" y="495" width="190" height="42" rx="15" class="node"/><text x="659" y="522" class="small">切換取消申請</text>
+  <rect x="860" y="415" width="190" height="62" rx="18" class="node"/><text x="893" y="452" class="text">收藏 / 檢舉</text>
+  <rect x="1110" y="395" width="230" height="62" rx="18" class="action"/><text x="1140" y="432" class="text">團長管理申請</text>
+  <rect x="1110" y="475" width="230" height="62" rx="18" class="danger"/><text x="1148" y="512" class="danger-text">編輯 / 解散</text>
+  <rect x="1385" y="435" width="105" height="62" rx="18" class="decision"/><text x="1411" y="472" class="text">更新DB</text>
+  <path d="M305 466H365" class="line" marker-end="url(#arrow)"/><path d="M550 466H610" class="line" marker-end="url(#arrow)"/><path d="M800 446H860" class="line" marker-end="url(#arrow)"/><path d="M1050 446H1110" class="line" marker-end="url(#arrow)"/><path d="M1340 426H1385" class="line" marker-end="url(#arrow)"/><path d="M1340 506H1385" class="line" marker-end="url(#arrow-danger)"/>
+  <path d="M457 497C457 532 310 532 310 506C310 486 345 486 365 482" class="dash" marker-end="url(#arrow)"/>
+  <text x="190" y="532" class="note">未登入 → 右側登入面板</text>
+
+  <rect x="70" y="595" width="1460" height="190" rx="28" class="lane"/>
+  <text x="100" y="635" class="lane-title">C. 行程文章與收藏</text>
+  <rect x="110" y="665" width="195" height="62" rx="18" class="node"/><text x="141" y="702" class="text">進入文章詳細</text>
+  <rect x="365" y="665" width="190" height="62" rx="18" class="node"/><text x="395" y="702" class="text">收藏 / 按讚</text>
+  <rect x="615" y="665" width="190" height="62" rx="18" class="danger"/><text x="653" y="702" class="danger-text">檢舉文章</text>
+  <rect x="865" y="645" width="210" height="62" rx="18" class="action"/><text x="897" y="682" class="text">發文者編輯</text>
+  <rect x="865" y="725" width="210" height="42" rx="15" class="node"/><text x="912" y="752" class="small">送出後回詳細頁</text>
+  <rect x="1135" y="665" width="190" height="62" rx="18" class="node"/><text x="1172" y="702" class="text">收藏頁切換</text>
+  <rect x="1385" y="665" width="105" height="62" rx="18" class="decision"/><text x="1411" y="702" class="text">更新DB</text>
+  <path d="M305 696H365" class="line" marker-end="url(#arrow)"/><path d="M555 696H615" class="line" marker-end="url(#arrow)"/><path d="M805 696H865" class="line" marker-end="url(#arrow)"/><path d="M1075 676H1135" class="line" marker-end="url(#arrow)"/><path d="M1325 696H1385" class="line" marker-end="url(#arrow)"/>
+
+  <rect x="1030" y="110" width="430" height="72" rx="22" fill="#fff" stroke="#cbded5" stroke-width="3"/>
+  <text x="1060" y="143" class="small">視覺規則</text>
+  <text x="1060" y="167" class="note">綠色：主要流程　橘色：判斷/警示　虛線：例外或未登入導向</text>
+</svg>
+

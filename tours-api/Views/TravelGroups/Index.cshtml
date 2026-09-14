@@ -1,4 +1,5 @@
 @model LazyTravel.ViewModels.TravelGroupIndexViewModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "揪團找旅伴";
     Layout = null;
@@ -65,110 +66,29 @@
 
             @await Html.PartialAsync("_AiTravelMatcher")
 
-            <section class="groups-board" aria-labelledby="board-title">
-                <div class="board-toolbar">
-                    <nav class="groups-tabs" aria-label="揪團分類">
-                        <a class="@(Model.Scope == "all" ? "active" : "")" asp-action="Index" asp-route-scope="all" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" id="board-title">所有揪團</a>
-                        <a class="@(Model.Scope == "mine" ? "active" : "")" asp-action="Index" asp-route-scope="mine" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate">我的揪團</a>
-
-                    </nav>
-                    <a class="create-group" asp-action="Create"><span>＋</span> 新增揪團</a>
+            <section class="groups-board" id="travel-groups-vue-app" aria-labelledby="board-title">
+                <div class="groups-empty">
+                    <div class="empty-icon">⌁</div>
+                    <h2>載入揪團資料中…</h2>
                 </div>
-
-                @if (Model.Groups.Count == 0)
-                {
-                    <div class="groups-empty @(Model.Scope == "mine" ? "mine-empty" : "")">
-                        @if (Model.Scope == "mine")
-                        {
-                            <img class="empty-illustration" src="~/images/empty-states/my-groups-empty.svg" alt="尚未建立揪團" asp-append-version="true" />
-                            <h2>目前還沒有自己的揪團</h2>
-                            <p>建立一個揪團，邀請旅伴一起出發。</p>
-                            <a asp-action="Create">新增揪團</a>
-                        }
-                        else
-                        {
-                            <div class="empty-icon">⌁</div>
-                            <h2>目前沒有符合條件的揪團</h2>
-                            <p>換個國家或日期看看，也可以清除條件瀏覽全部。</p>
-                            <a asp-action="Index">清除篩選</a>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="groups-grid">
-                    @foreach (var group in Model.Groups)
-                    {
-                        <article class="group-card">
-                            <a class="card-cover" asp-action="Details" asp-route-id="@group.GroupId" aria-label="查看 @group.Title">
-                                @if (!string.IsNullOrWhiteSpace(group.CoverImageUrl))
-                                {
-                                    <img src="@group.CoverImageUrl" alt="@group.Title" />
-                                }
-                                else
-                                {
-                                    <span class="cover-fallback">LazyTravel</span>
-                                }
-                            </a>
-                            <button class="favorite-button" type="button" data-group-id="@group.GroupId" aria-label="@(group.IsFavorited ? "取消收藏" : "收藏") @group.Title" aria-pressed="@group.IsFavorited.ToString().ToLowerInvariant()">
-                                <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg>
-                            </button>
-                            <div class="card-content">
-                                <a class="card-title" asp-action="Details" asp-route-id="@group.GroupId">@group.Title</a>
-                                <p class="card-meta"><span>⌖</span> @group.Country@(string.IsNullOrWhiteSpace(group.Region) ? "" : $"・{group.Region}")</p>
-                                <p class="card-meta"><span>▣</span> @group.DateText</p>
-                                <div class="card-tags">
-                                    @foreach (var tag in group.Tags)
-                                    {
-                                        <span>@tag</span>
-                                    }
-                                </div>
-                                <div class="card-progress"><span>♙</span><strong>@group.CurrentPeople</strong> / @group.MaxPeople 人</div>
-                                <div class="group-card-stats" aria-label="揪團互動數據">
-                                    <span class="stat-pill stat-favorite @(group.IsFavorited ? "is-active" : "")" title="收藏數" data-group-favorite-stat data-group-id="@group.GroupId"><svg viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.8 4.8 0 0 1 8-3.5A4.8 4.8 0 0 1 20 10c0 6.2-8 11-8 11Z"/></svg><strong data-group-favorite-count>@group.FavoriteCount</strong></span>
-                                </div>
-                                <footer class="card-footer">
-                                    <div class="owner-avatar">
-                                        @if (!string.IsNullOrWhiteSpace(group.OwnerAvatarUrl))
-                                        {
-                                            <img src="@group.OwnerAvatarUrl" alt="" />
-                                        }
-                                        else
-                                        {
-                                            <span>@group.OwnerName[..1]</span>
-                                        }
-                                    </div>
-                                    <div class="owner-copy">
-                                        <strong>@group.OwnerName</strong>
-                                        <small>揪團發起人</small>
-                                    </div>
-                                    <span class="status-badge status-@group.Status">@group.StatusText</span>
-                                </footer>
-                            </div>
-                        </article>
-                    }
-                    </div>
-                }
-                @if (Model.Groups.Count < Model.TotalCount)
-                {
-                    <div class="groups-load-more">
-                        <a asp-action="Index" asp-route-take="@(Model.Take + 12)" asp-route-country="@Model.Country" asp-route-startDate="@Model.StartDate" asp-route-endDate="@Model.EndDate" asp-route-scope="@Model.Scope">載入更多</a>
-                    </div>
-                }
             </section>
+            <script type="application/json" id="travel-groups-initial-data">@Html.Raw(JsonSerializer.Serialize(Model, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))</script>
         </div>
         <div class="groups-toast" data-groups-toast hidden>
             <span data-toast-message>已加入收藏</span>
             <button type="button" data-toast-undo>復原</button>
-        </div>    </main>
+        </div>
+    </main>
 </div>
 
 <script src="~/lib/flatpickr/flatpickr.min.js" asp-append-version="true"></script>
 <script src="~/js/sidebar.js" asp-append-version="true"></script>
-<script src="~/js/travelgroups-index.js" asp-append-version="true"></script>
+<script type="module" src="~/dist/travelgroups/index.js" asp-append-version="true"></script>
 <script src="~/js/ai-travel-matcher.js" asp-append-version="true"></script>
 </body>
 </html>
+
+
 
 
 
