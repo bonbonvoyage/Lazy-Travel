@@ -32,6 +32,15 @@
     // 只存本地草稿（見 scene.dc.html 裡 submitJoinRequest() 的註解）。
     var groupIdQs = Context.Request.Query["groupId"].ToString();
 
+    // 📌 2026-09 新增：Vue demo小卡（見下面 #vueFriendWidget）用來判斷「現在是不是
+    // 在看自己的主頁」。跟 scene.dc.html 判斷 viewingOther 的邏輯對齊：網址沒帶 ?id=
+    // 就是看自己主頁，帶了 ?id=5 就是在看別人的主頁（這時候「搜尋陌生人加好友」
+    // 這個功能沒有意義，小卡完全不顯示）。這個小卡是獨立於下面 iframe/scene.dc.html
+    // 之外、直接掛在這個 Razor 頁面上的浮動元件，不會被 scene.dc.html 那個自訂
+    // render引擎的重繪邏輯動到，也完全沒有修改 scene.dc.html 裡任何一行。做法跟
+    // 下面「2FA 外掛式功能」同一個精神：外掛疊加、不改 scene.dc.html。
+    var isSelfView = string.IsNullOrEmpty(viewId);
+
     var sceneQs = "";
     if (!string.IsNullOrEmpty(devMemberId)) sceneQs += "devMemberId=" + Uri.EscapeDataString(devMemberId);
     if (!string.IsNullOrEmpty(viewId)) sceneQs += (sceneQs.Length > 0 ? "&" : "") + "id=" + Uri.EscapeDataString(viewId);
@@ -79,6 +88,160 @@
             }
             window.addEventListener('resize', fit);
             fit();
+        })();
+    </script>
+
+    <!-- 📱 2026-09 新增：Vue demo用的「搜尋好友」浮動小卡，外觀做成手機造型，點一下
+         展開/收合。這整塊（含下面的Vue script）是獨立掛在這個Razor頁面上的一份DOM，
+         跟上面 iframe 裡的 scene.dc.html 完全是兩份文件、兩棵DOM樹——沒有改
+         scene.dc.html 任何一行，也不會被它自訂render引擎的重繪邏輯動到，純粹疊加
+         在畫面最上層（跟上面的2FA外掛式功能是同一個做法）。功能是真的：呼叫既有的
+         /Members/SearchMembers、/Members/SendFriendRequest、/Members/CsrfToken
+         這幾支後端API（跟手帳頁裡「搜尋陌生人」用的是同一套，欄位名稱也對齊
+         scene.dc.html 的 strangerList 映射：memberId／name／relationshipStatus／
+         city／mbti），用 Vue 3（CDN、不用建置）寫的reactive元件。只有看自己主頁時
+         才顯示，看別人主頁時 isSelfView 是false，下面就直接不掛載，什麼都不會出現。
+
+         這個小卡疊在整個瀏覽器視窗右下角（不是疊在1440×900那個場景座標系裡面），
+         不管場景怎麼縮放都固定在同一個角落，桌面上原本的機票/手帳/吊牌都不會被
+         擋到。原本用純圖示怕不夠明顯，改成「圖示+文字」的膠囊按鈕，並加一圈持續
+         擴散的光暈動畫吸引注意力，比較容易在展示時被看到。 -->
+    <style>
+        @@keyframes ltFriendPulse {
+            0%   { box-shadow: 0 6px 14px rgba(20,26,26,.35), 0 0 0 0 rgba(176,154,120,.6); }
+            70%  { box-shadow: 0 6px 14px rgba(20,26,26,.35), 0 0 0 16px rgba(176,154,120,0); }
+            100% { box-shadow: 0 6px 14px rgba(20,26,26,.35), 0 0 0 0 rgba(176,154,120,0); }
+        }
+        #vueFriendWidget .lt-friend-fab { animation: ltFriendPulse 2.4s ease-out infinite; }
+    </style>
+    <div id="vueFriendWidget"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+    <script>
+        (function () {
+            if (!@Html.Raw(isSelfView ? "true" : "false")) return; // 看別人主頁時不顯示
+
+            // 跟 scene.dc.html 同一招：把網址上的 ?devMemberId= 原封不動帶給後端API，
+            // 讓 CurrentMemberAccessor 在開發後門模式下讀得到「現在是誰」。組長把正式
+            // 登入接上後，這一小段連同 devQs 一起刪掉即可（屆時瀏覽器會自動帶登入
+            // Cookie，不再需要這個查詢字串）。
+            var qp = new URLSearchParams(window.location.search);
+            var devMemberId = qp.get('devMemberId');
+            var devQs = devMemberId ? ('devMemberId=' + encodeURIComponent(devMemberId)) : '';
+            function apiUrl(path) {
+                return devQs ? (path + (path.indexOf('?') > -1 ? '&' : '?') + devQs) : path;
+            }
+
+            var createApp = Vue.createApp;
+            createApp({
+                data: function () {
+                    return { open: false, csrf: '', query: '', results: [], searching: false, busyId: null, showTip: false };
+                },
+                created: function () {
+                    var self = this;
+                    fetch(apiUrl('/Members/CsrfToken'))
+                        .then(function (res) { return res.json(); })
+                        .then(function (data) { self.csrf = (data && data.token) || ''; })
+                        .catch(function (err) { console.warn('取得CSRF token失敗：', err); });
+                    // 🆕 2026-09：呼應「操作導覽」的小提示——場景本身的導覽是畫在
+                    // scene.dc.html的1440×900座標系裡面，沒辦法從裡面精準指到這個
+                    // 疊在外層瀏覽器視窗角落的按鈕（座標系不一樣），所以這裡改成
+                    // 一個樣式對齊、但完全獨立實作的小紙卡提示，進頁面稍等一下自動
+                    // 彈出，點知道了或直接點按鈕開面板都會收掉。
+                    setTimeout(function () { self.showTip = true; }, 1200);
+                },
+                methods: {
+                    toggle: function () { this.open = !this.open; if (this.open) this.showTip = false; },
+                    dismissTip: function () { this.showTip = false; },
+                    onInput: function () {
+                        var self = this;
+                        clearTimeout(this._t);
+                        this._t = setTimeout(function () { self.search(); }, 300);
+                    },
+                    search: function () {
+                        var self = this;
+                        var q = this.query.trim();
+                        if (!q) { this.results = []; return; }
+                        this.searching = true;
+                        var myGen = (this._gen = (this._gen || 0) + 1);
+                        fetch(apiUrl('/Members/SearchMembers?q=' + encodeURIComponent(q)), { headers: { Accept: 'application/json' } })
+                            .then(function (res) {
+                                return res.json().catch(function () { return []; }).then(function (data) {
+                                    return { ok: res.ok, data: data };
+                                });
+                            })
+                            .then(function (r) {
+                                if (myGen !== self._gen) return;
+                                if (r.ok) self.results = Array.isArray(r.data) ? r.data : [];
+                            })
+                            .catch(function (err) { console.warn('搜尋會員失敗：', err); })
+                            .finally(function () { if (myGen === self._gen) self.searching = false; });
+                    },
+                    addFriend: function (member) {
+                        var self = this;
+                        if (this.busyId) return;
+                        this.busyId = member.memberId;
+                        fetch(apiUrl('/Members/SendFriendRequest'), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': this.csrf },
+                            body: JSON.stringify({ targetMemberId: member.memberId, message: null }),
+                        })
+                            .then(function (res) {
+                                if (!res.ok) throw new Error('HTTP ' + res.status);
+                                member.relationshipStatus = 'PendingSent';
+                            })
+                            .catch(function (err) { console.warn('送出好友申請失敗：', err); })
+                            .finally(function () { self.busyId = null; });
+                    },
+                    statusLabel: function (s) {
+                        if (s === 'Friend') return '已是好友';
+                        if (s === 'PendingSent') return '已送出邀請';
+                        if (s === 'PendingReceived') return '對方邀你了';
+                        return '加好友';
+                    },
+                    metaText: function (m) {
+                        var bits = [m.city, m.mbti].filter(Boolean);
+                        return bits.length ? bits.join(' · ') : '旅人';
+                    },
+                },
+                template:
+                    '<div>' +
+                    '<div v-if="showTip && !open" style="position:fixed;right:22px;bottom:98px;width:196px;z-index:1999;transform:rotate(-1.2deg)">' +
+                    '<div style="position:relative;padding:13px 26px 12px 15px;background:linear-gradient(150deg,#fdf8ea,#eee4cf);clip-path:polygon(0.8% 2%,99.2% 0,100% 98%,1.6% 100%);box-shadow:0 10px 22px rgba(20,26,26,.4);font-family:\'Noto Sans TC\',sans-serif">' +
+                    '<div v-on:click="dismissTip" style="position:absolute;right:9px;top:8px;font-size:11px;color:#a2957c;cursor:pointer">✕</div>' +
+                    '<div style="font-size:12px;line-height:1.7;color:#5b5140">在這裡可以搜尋暱稱、加旅伴！</div>' +
+                    '</div>' +
+                    '<div style="position:absolute;right:30px;bottom:-6px;width:13px;height:13px;background:#eee4cf;transform:rotate(45deg);box-shadow:2px 2px 4px rgba(20,26,26,.15)"></div>' +
+                    '</div>' +
+                    '<div v-on:click="toggle" v-if="!open" class="lt-friend-fab" title="搜尋好友" style="position:fixed;right:28px;bottom:28px;display:flex;align-items:center;gap:9px;padding:14px 22px 14px 16px;border-radius:32px;background:linear-gradient(150deg,#fdf8ea,#eee4cf);color:#5b5140;cursor:pointer;z-index:2000;user-select:none;font-family:\'Noto Sans TC\',sans-serif">' +
+                    '<span style="font-size:24px;line-height:1">📱</span>' +
+                    '<span style="font-size:15px;font-weight:600;letter-spacing:1.5px;white-space:nowrap;color:#5b5140">搜尋好友</span>' +
+                    '</div>' +
+                    '<div v-if="open" style="position:fixed;right:28px;bottom:96px;width:264px;height:480px;z-index:2001;background:#1b1712;border-radius:30px;padding:10px;box-shadow:0 14px 34px rgba(0,0,0,.5);box-sizing:border-box">' +
+                    '<div style="width:100%;height:100%;background:#fffaee;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;font-family:\'Noto Sans TC\',sans-serif">' +
+                    '<div style="flex:none;padding:14px 14px 10px;background:#f2e9d8;border-bottom:1px solid #dccdae;display:flex;align-items:center;justify-content:space-between">' +
+                    '<div style="font-size:13px;letter-spacing:2px;color:#8f4a20;font-weight:600">搜尋好友</div>' +
+                    '<div v-on:click="toggle" style="cursor:pointer;color:#a2917a;font-size:13px">✕</div>' +
+                    '</div>' +
+                    '<div style="flex:none;padding:10px 12px">' +
+                    '<input v-model="query" v-on:input="onInput" placeholder="輸入暱稱搜尋…" style="width:100%;box-sizing:border-box;font-size:13.5px;padding:8px 10px;border:1px solid #cbb99a;background:#fff;border-radius:6px" />' +
+                    '</div>' +
+                    '<div style="flex:1;overflow:auto;padding:0 10px 12px;display:flex;flex-direction:column;gap:8px">' +
+                    '<div v-for="m in results" :key="m.memberId" style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border:1px solid #e3d6bd;border-radius:8px">' +
+                    '<div style="width:30px;height:30px;flex:none;border-radius:50%;background:#d8c2a4;color:#5b4630;display:flex;align-items:center;justify-content:center;font-size:13px">{{ (m.name || \'?\').slice(0,1) }}</div>' +
+                    '<div style="flex:1;min-width:0">' +
+                    '<div style="font-size:12.5px;color:#4e4437;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.name }}</div>' +
+                    '<div style="font-size:10.5px;color:#a2917a">{{ metaText(m) }}</div>' +
+                    '</div>' +
+                    '<button v-on:click="addFriend(m)" :disabled="busyId === m.memberId || m.relationshipStatus !== \'Stranger\'" style="font-size:10.5px;padding:5px 8px;border:1px solid #b09a78;background:#f6eddb;color:#5b4c39;border-radius:5px;cursor:pointer;white-space:nowrap">{{ statusLabel(m.relationshipStatus) }}</button>' +
+                    '</div>' +
+                    '<div v-if="!searching && query.trim() && results.length === 0" style="text-align:center;color:#a2917a;font-size:12px;padding:20px 4px">找不到符合的會員</div>' +
+                    '<div v-if="searching" style="text-align:center;color:#a2917a;font-size:12px;padding:20px 4px">搜尋中…</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>',
+            }).mount('#vueFriendWidget');
         })();
     </script>
 </body>
