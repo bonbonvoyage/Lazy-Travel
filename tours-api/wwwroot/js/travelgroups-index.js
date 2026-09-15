@@ -193,7 +193,7 @@ if (countryInput && countryOptions) {
     function close() {
         countryOptions.hidden = true;
         countryInput.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-label', '展開國家選單');
+        toggle.setAttribute('aria-label', '展開選單');
         setActive(-1);
     }
     function open(showAll = false) {
@@ -206,7 +206,7 @@ if (countryInput && countryOptions) {
         empty.hidden = visible.length > 0;
         countryOptions.hidden = false;
         countryInput.setAttribute('aria-expanded', 'true');
-        toggle.setAttribute('aria-label', '收合國家選單');
+        toggle.setAttribute('aria-label', '收合選單');
         setActive(-1);
     }
     function clearError() {

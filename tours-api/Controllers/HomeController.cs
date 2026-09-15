@@ -18,12 +18,11 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         ViewData["Title"] = "首頁";
-        var countries = await _context.TravelGroups.AsNoTracking()
-            .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal && g.Country != null && g.Country != "")
-            .Select(g => g.Country!)
-            .Distinct()
-            .OrderBy(c => c)
-            .ToListAsync();
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var groups = _context.TravelGroups.AsNoTracking()
+            .Where(g => g.IsPublic && !g.IsDelete && g.ReviewStatus == TravelGroupReviewStatus.Normal)
+            .Where(g => g.GroupStatus == 0 && g.CurrentPeople < g.MaxPeople && (!g.StartDate.HasValue || g.StartDate.Value >= today));
+        var countries = await LazyTravel.Services.TravelGroupSearch.GetDestinationsAsync(groups);
 
         return View(new LazyTravel.ViewModels.TravelGroupIndexViewModel
         {

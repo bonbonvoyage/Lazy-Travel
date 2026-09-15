@@ -17,7 +17,7 @@
     <template v-else>
       <div class="empty-icon">⌁</div>
       <h2>目前沒有符合條件的揪團</h2>
-      <p>換個國家或日期看看，也可以清除條件瀏覽全部。</p>
+      <p>換個目的地或日期看看，也可以清除條件瀏覽全部。</p>
       <a href="/TravelGroups">清除篩選</a>
     </template>
   </div>
@@ -58,6 +58,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import { syncFilterForm } from './filters.js';
 
 const props = defineProps({ initialData: { type: Object, required: true } });
 
@@ -116,6 +117,7 @@ const applyData = (data) => {
   filters.country = data.country || '';
   filters.startDate = data.startDate || '';
   filters.endDate = data.endDate || '';
+  syncFilterForm(data);
 };
 
 const fetchData = async (nextTake = 12, replaceUrl = true) => {
@@ -125,7 +127,7 @@ const fetchData = async (nextTake = 12, replaceUrl = true) => {
   if (!response.ok) throw new Error('load groups failed');
   const data = await response.json();
   applyData(data);
-  if (replaceUrl) window.history.replaceState({}, '', `/TravelGroups?${params.toString()}`);
+  if (replaceUrl) window.history.replaceState({}, '', `/TravelGroups?${toQuery(filters, take.value).toString()}`);
 };
 
 const changeScope = async (scope) => {
@@ -172,6 +174,7 @@ const toggleFavorite = async (group) => {
 };
 
 document.querySelector('.groups-filter')?.addEventListener('submit', async (event) => {
+  if (event.defaultPrevented) return;
   event.preventDefault();
   take.value = 12;
   isReloading.value = true;
@@ -185,4 +188,3 @@ const detailsUrl = (id) => `/TravelGroups/Details/${id}`;
 const locationText = (group) => `${group.country || ''}${group.region ? `・${group.region}` : ''}`;
 const firstChar = (name) => (name || '旅人').slice(0, 1);
 </script>
-

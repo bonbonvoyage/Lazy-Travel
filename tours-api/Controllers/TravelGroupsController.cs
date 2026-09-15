@@ -289,12 +289,9 @@ namespace LazyTravel.Controllers
                 : _context.TravelGroups.AsNoTracking().Where(g => false);
             var scopedGroups = scope == "mine" ? myGroups : allGroups;
 
-            var allCountries = await scopedGroups
-                .Where(g => g.Country != null && g.Country != "")
-                .Select(g => g.Country!)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync();
+            // Keep the existing query parameter/JSON names for saved links.
+            // The destination selector includes both countries and regions.
+            var allCountries = await LazyTravel.Services.TravelGroupSearch.GetDestinationsAsync(scopedGroups);
 
             country = country?.Trim();
             var countries = allCountries;
@@ -310,7 +307,7 @@ namespace LazyTravel.Controllers
 
             if (!string.IsNullOrWhiteSpace(country))
             {
-                query = query.Where(g => g.Country == country);
+                query = query.Where(g => g.Country == country || g.Region.Contains(country));
             }
 
             var hasStart = DateOnly.TryParse(startDate, out var rangeStart);
